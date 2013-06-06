@@ -1,0 +1,385 @@
+#include <stdio.h>
+#include "graph.h"
+#include "dfs.h"
+
+
+/*************************************************************************************************/
+/*************************** List all spanning trees *********************************************/
+/*************************************************************************************************/
+
+// /**
+// * Finds an edge in g that is not in h
+// */
+//struct VertexList* findEdge(struct ShallowGraph* g, struct ShallowGraph* h) {
+//
+//}
+
+/** yeah stupid dfs */
+void markConnectedComponentsDFS(struct Vertex* v, int component) {
+	struct VertexList* e;
+
+	v->visited = component;
+	//debug
+	printf("markComponents::vertex %i belongs to %i\n", v->number, component);
+
+	for (e=v->neighborhood; e; e=e->next) {
+		if (!(e->endPoint->visited)) {
+			markConnectedComponentsDFS(e->endPoint, component);
+		}
+	}
+}
+
+
+/**
+ * marks the vertices belonging to different connected components of subgraph
+ * in g with different numbers >0.
+ * This method first does a cleanup through all vertices setting ->visited = 0
+ */
+void STmarkConnectedComponents(struct Graph* g) {
+	int i;
+	int component = 1;
+
+	/* do cleanup */
+	for (i=0; i<g->n; ++i) {
+		g->vertices[i]->visited = 0;
+	}
+
+	/* mark connected components */
+	for (i=0; i<g->n; ++i) {
+		if (g->vertices[i]->visited) {
+			continue;
+		} else {
+			markConnectedComponentsDFS(g->vertices[i], component);
+			++component;
+		}
+	}
+}
+
+
+/**
+ * return a new edge f s.t. it is an edge between the vertices in g having the same number
+ * as the vertices in e's old graph. This method is only save, if the old graph
+ * and the new graph have the same number of vertices.
+ */
+struct VertexList* switchGraph(struct VertexList* e, struct Graph* g, struct ListPool* lp) {
+	struct VertexList* f = getVertexList(lp);
+	f->startPoint = g->vertices[e->startPoint->number];
+	f->endPoint = g->vertices[e->endPoint->number];
+	f->label = e->label;
+	return f;
+}
+
+
+/**
+ * Splits the list into two.
+ * The result are two lists.
+ * The second contains all edges in list, that connect different connected components of h.
+ * the first contains all edges in list, that connect two vertices, that are already connected in h.
+ * The first list is thus the B that we want to select in step S1.
+ *
+ * Note that the usage in rec() is like this: the edges in list are edges in g (i.e. their endPoints point
+ * to vertices in g), but this method checks the connected components in h that have been computed
+ * by STmarkConnectedComponents()
+ */
+struct ShallowGraph* recGetEdge(struct ShallowGraph* list, struct Graph* h, struct ShallowGraphPool* sgp) {
+	struct VertexList* idx;
+	struct ShallowGraph* flagged = getShallowGraph(sgp);
+	struct ShallowGraph* unflagged = getShallowGraph(sgp);
+
+	struct Vertex* hv(struct Vertex* v) {
+		return h->vertices[v->number];
+	}
+
+	/* mark vertices */
+	for (idx=list->edges; idx; idx=idx->next) {
+		if (hv(idx->startPoint)->visited != hv(idx->endPoint)->visited) {
+			idx->flag = 1;
+		} else {
+			idx->flag = 0;
+		}
+	}
+
+	/* copy edges to the lists TODO may be sped up later */
+	for (idx=list->edges; idx; idx=idx->next) {
+		if (idx->flag) {
+			appendEdge(flagged, shallowCopyEdge(idx, sgp->listPool));
+		} else {
+			appendEdge(unflagged, shallowCopyEdge(idx, sgp->listPool));
+		}
+	}
+
+	unflagged->next = flagged;
+	flagged->prev = unflagged;
+	return unflagged;
+}
+
+
+struct ShallowGraph* cloneMergeShallowGraphs(struct ShallowGraph* g1, struct ShallowGraph* g2, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* g = getShallowGraph(sgp);
+	struct VertexList* idx;
+
+	for (idx=g1->edges; idx; idx=idx->next) {
+		appendEdge(g, shallowCopyEdge(idx, sgp->listPool));
+	}
+	for (idx=g2->edges; idx; idx=idx->next) {
+		appendEdge(g, shallowCopyEdge(idx, sgp->listPool));
+	}
+	return g;
+}
+
+
+/**
+ * g is the original graph
+ * h contains a temporary graph, storing mostly spanning tree edges
+ * tree and rest are lists storing edges in the current spanning tree and the remainder of the edges
+ */
+struct ShallowGraph* rec(struct Graph* g, struct Graph* h, struct ShallowGraph* tree, struct ShallowGraph* rest, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* B;
+	struct VertexList* e;
+	struct VertexList* f;
+	struct VertexList* idx;
+	struct ShallowGraph* bridge;
+	int i;
+
+	//debug
+	printf("rec::enter\n");
+	printf("tree=");
+	printShallowGraph(tree);
+	printf("rest=");
+	printShallowGraph(rest);
+	printf("g=");
+	printGraph(g);
+	printf("h=");
+	printGraph(h);
+
+	if (g->n - 1 == tree->m) {
+		/* TODO maybe copy? */
+
+		// debug
+		printf("rec::output\n");
+		printShallowGraph(tree);
+		return tree;
+	} else {
+		/* get edge that is not in spanning tree
+		 * and add it to the spanning tree graph */
+		e = popEdge(rest);
+
+		//debug
+		printf("adding (%i, %i) to spanning tree\n", e->startPoint->number, e->endPoint->number);
+
+		f = switchGraph(e, h, sgp->listPool);
+		pushEdge(tree, e);
+		addEdge(f->startPoint, f);
+		addEdge(f->endPoint, inverseEdge(f, sgp->listPool));
+		++(h->m);
+
+		//debug
+		printGraph(h);
+
+		STmarkConnectedComponents(h);
+
+		/* set B to contain all edges that join two different connected components of the partial tree */
+		B = recGetEdge(rest, h, sgp);
+		//debug
+		printf("B=");
+		printShallowGraph(B);
+
+		/* remove all elements in B from g, then add spanning tree edges and not-B-edges.
+		 * This is equivalent to removing all edges in B from g */
+		if (B->m > 0) {
+			//debug
+			printf("rec::entering deletion of B edges\n");
+
+			for (i=0; i<g->n; ++i) {
+				struct VertexList* tmp;
+				while (g->vertices[i]->neighborhood) {
+					tmp = g->vertices[i]->neighborhood->next;
+					dumpVertexList(sgp->listPool, g->vertices[i]->neighborhood);
+					g->vertices[i]->neighborhood = tmp;
+				}
+			}
+			for (idx=tree->edges; idx; idx=idx->next) {
+				addEdge(idx->startPoint, shallowCopyEdge(idx, sgp->listPool));
+				addEdge(idx->endPoint, inverseEdge(idx, sgp->listPool));
+			}
+			for (idx=B->next->edges; idx; idx=idx->next) {
+				addEdge(idx->startPoint, shallowCopyEdge(idx, sgp->listPool));
+				addEdge(idx->endPoint, inverseEdge(idx, sgp->listPool));
+			}
+		}
+
+		/* first recursive call */
+		//debug
+		printf("rec::first recursion\n");
+		rec(g, h, tree, B->next, sgp);
+
+		// there occurs a problem. somehow the neighborhood dumping destroys tree.
+		printf("we are done\n");
+		return NULL;
+
+		/* add all edges in B to g, again */
+		for (idx=B->edges; idx; idx=idx->next) {
+			addEdge(idx->startPoint, shallowCopyEdge(idx, sgp->listPool));
+			addEdge(idx->endPoint, inverseEdge(idx, sgp->listPool));
+		}
+
+		/* remove e from g and tree */
+		removeEdge(f->startPoint, f->endPoint, sgp->listPool);
+		removeEdge(f->endPoint, f->startPoint, sgp->listPool);
+		removeEdge(e->startPoint, e->endPoint, sgp->listPool);
+		removeEdge(e->endPoint, e->startPoint, sgp->listPool);
+		e = popEdge(tree); /* is the same edge as above */
+
+		/* get biconnected components */
+		struct ShallowGraph* blocksAndBridges = findBiconnectedComponents(g, sgp);
+
+		/* find bridges that are not in tree */
+		for (bridge=blocksAndBridges; bridge; bridge=bridge->next) {
+			/* if bridge is really a bridge */
+			if (bridge->m == 1) {
+				/* check if edge is in tree
+				 * TODO this should be improved */
+				for (idx=tree->edges; idx; idx=idx->next) {
+					if (((idx->startPoint->number == bridge->edges->startPoint->number) && (idx->endPoint->number == bridge->edges->endPoint->number)) ||
+						((idx->startPoint->number == bridge->edges->endPoint->number) && (idx->endPoint->number == bridge->edges->startPoint->number))) {
+						bridge->edges->flag = 1;
+						continue;
+					} else {
+						bridge->edges->flag = 0;
+					}
+				}
+			}
+		}
+
+		/* bridges no in tree have flag 0 */
+		struct ShallowGraph* newBridges = getShallowGraph(sgp);
+		for (bridge=blocksAndBridges; bridge; bridge=bridge->next) {
+			/* if bridge is really a bridge */
+			if (bridge->m == 1) {
+				if (bridge->edges->flag == 0) {
+					appendEdge(B, bridge->edges);
+					bridge->edges = NULL;
+				}
+			}
+		}
+
+		/* add all newBridges to graph and tree */
+		int newBridgeM = newBridges->m;
+		while(newBridges->m > 0) {
+			struct VertexList* b = popEdge(newBridges);
+			pushEdge(tree, b);
+			b = switchGraph(b, h, sgp->listPool);
+			addEdge(b->startPoint, b);
+			addEdge(b->endPoint, inverseEdge(b, sgp->listPool));
+		}
+
+		/* second recursive call */
+		//debug
+		printf("rec::second recursion\n");
+		rec(g, h, tree, rest, sgp);
+
+		/* remove all new bridges from tree */
+		for (i=0; i<newBridgeM; ++i) {
+			dumpVertexList(sgp->listPool, popEdge(tree));
+		}
+
+
+
+		/* garbage collection */
+		dumpShallowGraphCycle(sgp, blocksAndBridges);
+		dumpShallowGraphCycle(sgp, B);
+		dumpShallowGraph(sgp, newBridges);
+
+
+
+
+	}
+	return NULL;
+}
+
+
+
+struct ShallowGraph* readTarjanListAllSpanningTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp, char switchStringMaster) {
+
+	struct ShallowGraph* tree = getShallowGraph(sgp);
+	struct ShallowGraph* edges = getGraphEdges(g, sgp);
+	struct ShallowGraph* rest = getShallowGraph(sgp);
+
+	struct ShallowGraph* idx;
+	int i;
+	struct VertexList* e;
+	struct Graph* h;
+
+	/* little hack: we will dump edges from g, while maintaining a copy in some list.
+	 * but the edges in g are probably the stringMasters of their labels. We change that
+	 * if the switchStringMaster flag is set
+	 */
+	if (switchStringMaster) {
+		for (i=0; i<g->m; ++i) {
+			for (e=g->vertices[i]->neighborhood; e; e=e->next) {
+				e->isStringMaster = 0;
+			}
+		}
+	}
+
+	/* add all bridges to tree, the rest to the rest */
+	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(g, sgp);
+	for (idx=biconnectedComponents; idx; idx=idx->next) {
+		if (idx->m == 1) {
+			appendEdge(tree, popEdge(idx));
+		} else {
+			while (idx->edges) {
+				appendEdge(rest, popEdge(idx));
+			}
+		}
+	}
+
+
+	/* create an empty graph, which will store mostly tree edges
+	 * of the current spanning tree */
+	h = getGraph(gp);
+	setVertexNumber(h, g->n);
+	for (i=0; i<h->n; ++i) {
+		h->vertices[i] = getVertex(gp->vertexPool);
+		h->vertices[i]->number = i;
+	}
+
+	/* copy tree edges to h */
+	for (e=tree->edges; e; e=e->next) {
+		/* add a "hardcopy" of e to h. eprime is an edge between vertices
+		 * with the same NUMBER, but has different startPoint and endPoint ! */
+		struct VertexList* eprime = switchGraph(e, h, sgp->listPool);
+		addEdge(eprime->startPoint, eprime);
+		addEdge(eprime->endPoint, inverseEdge(eprime, sgp->listPool));
+		++(h->m);
+	}
+	//debug
+	printGraph(h);
+
+	/* now, h only contains edges that are bridges in g.
+	 * Start the backtracking */
+	struct ShallowGraph* result = rec(g, h, tree, rest, sgp);
+
+	/* Switch the isStringMaster to one
+	 * if the switchStringMaster flag is set
+	 */
+	if (switchStringMaster) {
+		for (i=0; i<g->m; ++i) {
+			for (e=g->vertices[i]->neighborhood; e; e=e->next) {
+				e->isStringMaster = 1;
+			}
+		}
+	}
+
+
+	/* garbage collection */
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	dumpShallowGraph(sgp, edges);
+	dumpShallowGraph(sgp, tree);
+	dumpShallowGraph(sgp, rest);
+	dumpGraph(gp, h);
+
+	return result;
+}
+
+
