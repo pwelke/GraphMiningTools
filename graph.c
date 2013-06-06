@@ -441,6 +441,46 @@ void freeGraphPool(struct GraphPool *p) {
 }
 
 
+/** Delete the directed edge between vertices v and w in g and return it */
+struct VertexList* deleteEdge(struct Graph* g, int v, int w) {
+	struct VertexList* e = g->vertices[v]->neighborhood;
+	struct VertexList* f = e->next;
+
+	if (e->endPoint->number == w) {
+		g->vertices[v]->neighborhood = e->next;
+		e->next = NULL;
+		return e;
+	}
+
+	for ( ; f!=NULL; e=f, f=f->next) {
+		if (f->endPoint->number == w) {
+			e->next = f->next;
+			f->next = NULL;
+			return f;
+		}
+	}
+}
+
+void deleteEdgeBetweenVertices(struct Graph* g, struct VertexList* idx, struct GraphPool* gp) {
+	struct VertexList* tmp = deleteEdge(g, idx->startPoint->number, idx->endPoint->number);
+	dumpVertexList(gp->listPool, tmp);
+	tmp = deleteEdge(g, idx->endPoint->number, idx->startPoint->number);
+	dumpVertexList(gp->listPool, tmp);
+}
+
+/**
+Delete the edges in list from g. Edges are considered to be undirected. That means,
+if e=(v,w) is present, this method tries to remove (v,w) and (w,v) from g.
+*/
+void deleteEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp) {
+	struct VertexList* idx;
+
+	for (idx=list->edges; idx!=NULL; idx=idx->next) {
+		deleteEdge(g, idx, gp);
+	}
+}
+
+
 /**
  * Get a graph from the specified GraphPool
  */
@@ -646,7 +686,6 @@ struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPoo
 }
 
 
-
 /**
  * Allocates an array of n pointers to vertices and sets the number of vertices of
  * g to n. The array is initialized to NULL.
@@ -692,6 +731,43 @@ struct ShallowGraph* getGraphEdges(struct Graph *g, struct ShallowGraphPool* sgp
 	}
 
 	return edges;
+}
+
+/**
+Add an undirected edge between vertex v and vertex w in g with label label
+*/
+void addEdgeBetweenVertices(int v, int w, char* label, struct Graph* g, struct GraphPool* gp) {
+	struct VertexList* e = getVertexList(gp->listPool);
+	e->startPoint = g->vertices[v];
+	e->endPoint = g->vertices[w];
+	e->label = label;
+
+	addEdge(g->vertices[v], e);
+	addEdge(g->vertices[w], inverseEdge(e, gp->listPool));
+}
+
+void addEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp) {
+	struct VertexList* e;
+
+	for (e=list->edges; e!=NULL; e=e->next) {
+		addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, g, gp);
+	}
+}
+
+/**
+Create a graph without edges that has the same vertex set as g.
+The vertices in the new graph are independent copies of the vertices
+of g and share only label and number.
+*/
+struct Graph* emptyGraph(struct Graph* g, struct GraphPool* gp) {
+	struct Graph* empty = getGraph(gp);
+	int v;
+	setVertexNumber(empty, g->n);
+
+	for (v=0; v<g->n; ++v) {
+		empty->vertices[v] = shallowCopyVertex(g->vertices[v], gp->vertexPool);
+	}
+	return empty;
 }
 
 
@@ -798,6 +874,27 @@ struct ShallowGraph* addComponent(struct ShallowGraph* g, struct ShallowGraph* h
 		/* if one of the two inputs is NULL, return the other without change */
 		return (g) ? g : h;
 	}
+}
+
+struct ShallowGraph* cloneShallowGraph(struct ShallowGraph* g, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* copy = getShallowGraph(sgp);
+	struct VertexList* edgeList = NULL;
+	struct VertexList* e;
+	int m = 0;
+	for (e=g->edges; e!=NULL; e=e->next) {
+		if (edgeList == NULL) {
+			edgeList = shallowCopyEdge(e, sgp->listPool);
+			copy->edges = edgeList;
+		} else {
+			edgeList->next = shallowCopyEdge(e, sgp->listPool);
+			edgeList = edgeList->next;
+		}
+		++m;
+	}
+	copy->lastEdge = edgeList;
+	copy->m = m;
+
+	return copy;
 }
 
 

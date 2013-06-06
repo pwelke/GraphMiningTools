@@ -122,7 +122,8 @@ struct ShallowGraph* getShallowGraph(struct ShallowGraphPool *p);
 void dumpShallowGraph(struct ShallowGraphPool *p, struct ShallowGraph* g);
 void dumpShallowGraphCycle(struct ShallowGraphPool *p, struct ShallowGraph* g);
 
-void appendEdge(struct ShallowGraph *g, struct VertexList *e);
+struct ShallowGraph* cloneShallowGraph(struct ShallowGraph* g, struct ShallowGraphPool* sgp);
+
 void pushEdge(struct ShallowGraph *g, struct VertexList *e);
 struct VertexList* popEdge(struct ShallowGraph* g);
 struct VertexList* assertLastPointer(struct ShallowGraph* g);
@@ -144,6 +145,12 @@ struct Graph* cloneInducedGraph(struct Graph* g, struct GraphPool* gp);
 void dumpGraph(struct GraphPool* p, struct Graph *g);
 
 struct Vertex** setVertexNumber(struct Graph* g, int n);
+struct Graph* emptyGraph(struct Graph* g, struct GraphPool* gp);
+void addEdgeBetweenVertices(int v, int w, char* label, struct Graph* g, struct GraphPool* gp);
+void addEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp);
+struct VertexList* deleteEdge(struct Graph* g, int v, int w);
+void deleteEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp);
+void deleteEdgeBetweenVertices(struct Graph* g, struct VertexList* idx, struct GraphPool* gp);
 
 struct ShallowGraph* getGraphEdges(struct Graph *g, struct ShallowGraphPool* sgp);
 struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPool* gp);
@@ -152,4 +159,4 @@ void printGraph(struct Graph* g);
 void printGraphEdges(struct Graph *g);
 
 
-#endif /* SLAVE_H */
+#endif /* GRAPH_H */
