@@ -13,6 +13,4 @@ struct ShallowGraph* backtrack(struct Graph* g, struct Vertex* v, struct Vertex*
 char DFS(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int allowance);
 char findPath(struct Vertex *v, struct Vertex* parent, struct Vertex *target, int allowance, struct ShallowGraph* path, struct ShallowGraphPool *sgp);
 
-struct ShallowGraph* readTarjanListAllSpanningTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp);
-
 #endif /* DFS_H_ */
