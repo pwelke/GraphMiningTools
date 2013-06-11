@@ -113,6 +113,11 @@ struct ShallowGraph* findBiconnectedComponents(struct Graph* g, struct ShallowGr
 	 * all biconnected components in the graph. */
 	struct ShallowGraph *allComponents = NULL;
 
+	/* init ->visited to zero */
+	for (i=0; i<g->n; ++i) {
+		g->vertices[i]->visited = 0;
+	}
+
 	for (i=0; i<g->n; ++i) {
 		if (g->vertices[i]->visited == 0) {
 			struct ShallowGraph* currentComponents = tarjanFBC(g->vertices[i], g->vertices[i], 0, headOfStack, gp->listPool, gp);
