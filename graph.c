@@ -936,6 +936,7 @@ struct VertexList* popEdge(struct ShallowGraph* g) {
 			g->lastEdge = NULL;
 		}
 	}
+	e->next = NULL;
 	return e;
 }
 
