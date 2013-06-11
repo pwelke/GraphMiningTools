@@ -670,6 +670,3 @@ struct ShallowGraph* readTarjanListAllCycles(struct Graph *g, struct ShallowGrap
 
 	return result;
 }
-
-
-
