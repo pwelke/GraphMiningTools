@@ -1,4 +1,6 @@
 #include <stdlib.h>
+//debug
+#include <stdio.h>
 
 #include "graph.h"
 #include "dfs.h"
@@ -49,18 +51,90 @@ struct ShallowGraph* selectB(struct Graph* partialTree, struct ShallowGraph* res
 	return B;
 }
 
-
-struct ShallowGraph* rec(struct Graph* graph, struct Graph* partialTree, struct ShallowGraph* rest, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+char existsEdge(struct Graph* g, int v, int w) {
 	struct VertexList* e;
+	for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint->number == w) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/**
+Split list into two new lists. the returned list r contains all edges in list that have a corresponding edge in graph. r->next contains all
+edges that are not contained in graph. list is consumed and dumped. Any access to the list lateron will result in strange things happening.
+*/
+struct ShallowGraph* getGraphAndNonGraphEdges(struct Graph* graph, struct ShallowGraph* list, struct ShallowGraphPool* sgp) {
+	struct VertexList* e;
+	struct ShallowGraph* graphEdges = getShallowGraph(sgp);
+	struct ShallowGraph* nonGraphEdges = getShallowGraph(sgp);
+
+	/* mark edges that are in graph */
+	for (e=list->edges; e!=NULL; e=e->next) {
+		e->flag = existsEdge(graph, e->startPoint->number, e->endPoint->number);
+	}
+
+	/* consume list putting differently flagged edges in different lists */
+	for (e=list->edges; e!=NULL; e=list->edges) {
+		if (e->flag == 1) {
+			pushEdge(graphEdges, popEdge(list));
+		} else {
+			pushEdge(nonGraphEdges, popEdge(list));
+		}
+	}
+	dumpShallowGraph(sgp, list);
+
+	graphEdges->next = nonGraphEdges;
+	nonGraphEdges->prev = graphEdges;
+	return graphEdges;
+}
+
+
+struct ShallowGraph* getNonTreeBridges(struct Graph* graph, struct Graph* partialTree, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* tmp = getShallowGraph(sgp);
+	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(graph, sgp);
+	struct ShallowGraph* idx;
+	struct ShallowGraph* B = getShallowGraph(sgp);
+
+	for (idx=biconnectedComponents; idx; idx=idx->next) {
+		if (idx->m == 1) {
+			pushEdge(tmp, popEdge(idx));
+		} 
+	}
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+
+	tmp = getGraphAndNonGraphEdges(partialTree, tmp, sgp);
+	B = tmp->next;
+	tmp->next = NULL;
+	dumpShallowGraph(sgp, tmp);
+
+	return B;
+}
+
+
+struct ShallowGraph* rec(struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct VertexList* e;
+	struct ShallowGraph* result1;
+	struct ShallowGraph* result2;
 	struct ShallowGraph* B;
+	struct ShallowGraph* bridges;
+	struct ShallowGraph* rest = getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
+	rest = rest->next;
 
 	if (graph->m == partialTree->m) {
-		// debug
-		printGraph(partialTree);
-		return getGraphEdges(partialTree, sgp);
+		struct ShallowGraph* tree = getGraphEdges(partialTree, sgp);
+		tree->next = tree->prev = tree;
+		// //debug
+		// printf("Spanning tree has %i edges\n", tree->m);
+		return tree;
 	}
 
 	e = popEdge(rest);
+	//debug
+	printf("popping ");
+	printVertexList(e);
+
 	addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, partialTree, gp);
 
 	/* S1 */
@@ -69,7 +143,10 @@ struct ShallowGraph* rec(struct Graph* graph, struct Graph* partialTree, struct 
 
 	deleteEdges(graph, B, gp);
 
-	rec(graph, partialTree, B->next, components, n, sgp, gp);
+	result1 = rec(graph, partialTree, components, n, sgp, gp);
+	//debug 
+	dumpShallowGraphCycle(sgp, result1);
+	result1 = NULL;
 
 	addEdges(graph, B, gp);
 
@@ -77,40 +154,55 @@ struct ShallowGraph* rec(struct Graph* graph, struct Graph* partialTree, struct 
 	deleteEdgeBetweenVertices(partialTree, e, gp);
 
 	/* S2 */
+	bridges = getNonTreeBridges(graph, partialTree, sgp);
+	addEdges(partialTree, bridges, gp);
+	result2 = rec(graph, partialTree, components, n, sgp, gp);
+	//debug 
+	dumpShallowGraphCycle(sgp, result2);
+	result2 = NULL;
 
+	deleteEdges(partialTree, bridges, gp);
+	addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, graph, gp);
 
-	return NULL;
+	/* garbage collection */
+	dumpShallowGraphCycle(sgp, B);
+	dumpShallowGraphCycle(sgp, bridges);
+	dumpShallowGraphCycle(sgp, rest->prev);
+
+	// at this point, spanningTree and graph need to be same as above.
+
+	return addComponent(result1, result2);
 }
 
 struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	
 	struct Graph* graph = cloneGraph(original, gp);
 	struct Graph* partialTree = emptyGraph(original, gp);
-	struct ShallowGraph* rest = getShallowGraph(sgp);
 	struct ShallowGraph* result = NULL;
-	int* components = malloc(original->n * sizeof(int));
-
+	int* components = malloc(sizeof(int) * original->n);
 	struct ShallowGraph* idx;
 
-	/* add all bridges to partialTree, all other to graph */
+	/* add all bridges to partialTree */
 	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(original, sgp);
 	for (idx=biconnectedComponents; idx; idx=idx->next) {
 		struct VertexList* e = idx->edges;
 		if (idx->m == 1) {
 			addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, partialTree, gp);
-		} else {
-			while (idx->edges != NULL) {
-				pushEdge(rest, popEdge(idx));
-			}
 		}
 	}
-	dumpShallowGraph(sgp, biconnectedComponents);
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	
+
+	//debug
+	printf("Graph %i has %i vertices and %i edges\n", original->number, original->n, original->m);
 
 	/* do the backtrack, baby */
-	result = rec(graph, partialTree, rest, components, original->n, sgp, gp);
+	result = rec(graph, partialTree, components, graph->n, sgp, gp);
 
+	/* garbage collection */
 	free(components);
+	dumpGraph(gp, graph);
+	dumpGraph(gp, partialTree);
 
 	return result;
 }
-
