@@ -125,6 +125,7 @@ void dumpShallowGraphCycle(struct ShallowGraphPool *p, struct ShallowGraph* g);
 struct ShallowGraph* cloneShallowGraph(struct ShallowGraph* g, struct ShallowGraphPool* sgp);
 
 void pushEdge(struct ShallowGraph *g, struct VertexList *e);
+void appendEdge(struct ShallowGraph *g, struct VertexList *e);
 struct VertexList* popEdge(struct ShallowGraph* g);
 struct VertexList* assertLastPointer(struct ShallowGraph* g);
 

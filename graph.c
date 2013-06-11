@@ -459,12 +459,17 @@ struct VertexList* deleteEdge(struct Graph* g, int v, int w) {
 			return f;
 		}
 	}
+	/* returns NULL, if there is no edge between v and w */
+	return NULL;
 }
 
 void deleteEdgeBetweenVertices(struct Graph* g, struct VertexList* idx, struct GraphPool* gp) {
 	struct VertexList* tmp = deleteEdge(g, idx->startPoint->number, idx->endPoint->number);
 	dumpVertexList(gp->listPool, tmp);
 	tmp = deleteEdge(g, idx->endPoint->number, idx->startPoint->number);
+	if (tmp != NULL) {
+		--(g->m);
+	}
 	dumpVertexList(gp->listPool, tmp);
 }
 
@@ -476,7 +481,7 @@ void deleteEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* g
 	struct VertexList* idx;
 
 	for (idx=list->edges; idx!=NULL; idx=idx->next) {
-		deleteEdge(g, idx, gp);
+		deleteEdgeBetweenVertices(g, idx, gp);
 	}
 }
 
@@ -744,6 +749,8 @@ void addEdgeBetweenVertices(int v, int w, char* label, struct Graph* g, struct G
 
 	addEdge(g->vertices[v], e);
 	addEdge(g->vertices[w], inverseEdge(e, gp->listPool));
+
+	++(g->m);
 }
 
 void addEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp) {
