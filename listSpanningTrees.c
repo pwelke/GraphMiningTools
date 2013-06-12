@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <limits.h>
 //debug
 #include <stdio.h>
 #include <string.h>
@@ -317,6 +318,102 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 	result = rec(0, graph, partialTree, components, graph->n, sgp, gp);
 	result->prev->next = NULL;
 	result->prev = NULL;
+
+	/* garbage collection */
+	free(components);
+	dumpGraph(gp, graph);
+	dumpGraph(gp, partialTree);
+
+	return result;
+}
+
+
+long int recCount(int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct VertexList* e;
+	struct ShallowGraph* B;
+	struct ShallowGraph* bridges;
+	struct ShallowGraph* graphEdges = getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
+	struct ShallowGraph* rest = graphEdges->next;
+	long int result1;
+	long int result2;
+
+	if (rest->m == 0) {
+		/* garbage collection */
+		dumpShallowGraphCycle(sgp, graphEdges);
+		return 1;
+	}
+
+	/* get edge that will be included and excluded in this recursive step */
+	e = popEdge(rest);
+
+	/* add e to partialTree (already contained in graph) to find spanning trees containing e */
+	addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, partialTree, gp);
+
+	/* S1 */
+	/* let B be the set of all edges (in graph) joining edges already connected in partialTree */
+	B = selectB(partialTree, rest, components, n, sgp);
+
+	/* ensures, that adding an edge of graph to partialTree results in a tree in the recursive call */
+	deleteEdges(graph, B, gp);
+
+	result1 = recCount(d+1, graph, partialTree, components, n, sgp, gp);
+
+	/* add edges to graph again */
+	addEdges(graph, B, gp);
+
+	/* preliminary garbage collection */
+	dumpShallowGraphCycle(sgp, B);
+
+	/* delete e from partialTree and graph to find spanning trees not containing e */
+	deleteEdgeBetweenVertices(graph, e, gp);
+	deleteEdgeBetweenVertices(partialTree, e, gp);
+
+	/* S2 */
+	bridges = getNonTreeBridges(graph, partialTree, sgp);
+
+	addEdges(partialTree, bridges, gp);
+	result2 = recCount(d+1, graph, partialTree, components, n, sgp, gp);
+	deleteEdges(partialTree, bridges, gp);
+
+	/* At the end, spanningTree and graph need to be same as in the beginning. */
+	addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, graph, gp);
+
+	/* garbage collection */
+	dumpVertexList(sgp->listPool, e);
+	dumpShallowGraphCycle(sgp, bridges);
+	dumpShallowGraphCycle(sgp, graphEdges);
+
+	if ((result1 > LONG_MAX / 2) || (result2 > LONG_MAX / 2)) {
+		return -1;
+	} else {
+		return result1 + result2;
+	}
+}
+
+long int countSpanningTrees(struct Graph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	
+	struct Graph* graph = cloneGraph(original, gp);
+	struct Graph* partialTree = emptyGraph(original, gp);
+	long int result;
+	int* components = malloc(sizeof(int) * original->n);
+	struct ShallowGraph* idx;
+
+	/* add all bridges to partialTree */
+	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(original, sgp);
+	for (idx=biconnectedComponents; idx; idx=idx->next) {
+		struct VertexList* e = idx->edges;
+		if (idx->m == 1) {
+			addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, partialTree, gp);
+		}
+	}
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	
+
+	// //debug
+	// printf("Graph %i has %i vertices and %i edges\n", original->number, original->n, original->m);
+
+	/* do the backtrack, baby */
+	result = recCount(0, graph, partialTree, components, graph->n, sgp, gp);
 
 	/* garbage collection */
 	free(components);
