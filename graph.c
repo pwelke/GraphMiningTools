@@ -2,6 +2,8 @@
 #include "graph.h"
 #include <stdio.h>
 
+int MEM_DEBUG = 1;
+
 /* does not fit anywhere */
 
 /**
@@ -141,9 +143,13 @@ void dumpVertexList(struct ListPool* p, struct VertexList* l) {
 		free(l->label);
 	}
 
-	/* add l to the unused list */
-	l->next = p->unused;
-	p->unused = l;
+	if (MEM_DEBUG) {
+		free(l);
+	} else {
+		/* add l to the unused list */
+		l->next = p->unused;
+		p->unused = l;
+	}
 }
 
 
@@ -268,14 +274,18 @@ If the dumped element is the holder of label information, then that string is fr
 "real" vertex not before using one of its copies.
 */
 void dumpVertex(struct VertexPool* p, struct Vertex* v){
+	
 	if (v->isStringMaster) {
 		free(v->label);
 	}
 
-	/* add v to the unused list */
-	v->next = p->unused;
-	p->unused = v;
-
+	if (MEM_DEBUG) {
+		free(v);
+	} else {
+		/* add v to the unused list */
+		v->next = p->unused;
+		p->unused = v;
+	}
 }
 
 
@@ -801,9 +811,13 @@ void dumpGraph(struct GraphPool* p, struct Graph *g) {
 		free(g->vertices);
 	}
 	
-	/* append g to the unused list */
-	g->next = p->unused;
-	p->unused = g;
+	if (MEM_DEBUG) {
+		free(g);
+	} else {
+		/* append g to the unused list */
+		g->next = p->unused;
+		p->unused = g;
+	}
 }
 
 
@@ -1043,9 +1057,13 @@ void dumpShallowGraph(struct ShallowGraphPool *p, struct ShallowGraph* g) {
 		dumpVertexList(p->listPool, p->listPool->tmp);
 	}
 
-	/* add g to the unused list */
-	g->next = p->unused;
-	p->unused = g;
+	if (MEM_DEBUG) {
+		free(g);
+	} else {
+		/* add g to the unused list */
+		g->next = p->unused;
+		p->unused = g;
+	}
 }
 
 
