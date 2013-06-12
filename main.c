@@ -2,13 +2,15 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <limits.h>
 
+#include "myconstants.h"
 #include "graph.h"
 #include "canonicalString.h"
 #include "loading.h"
-#include "dfs.h"
+#include "listSpanningTrees.h"
 #include "main.h"
-#include "opk.h"
+/* #include "opk.h" */
 
 
 /**
@@ -155,6 +157,10 @@ int main(int argc, char** argv) {
 
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
+				
+				struct ShallowGraph* spanningTrees = NULL;
+				struct ShallowGraph* idx;
+				long int stcount = 0;
 
 				/* filter out moderately active molecules, if 'i' otherwise set labels */
 				if (labelOption == 'i') {
@@ -168,9 +174,19 @@ int main(int argc, char** argv) {
 					labelProcessing(g, labelOption);
 				}
 
-				readTarjanListAllSpanningTrees(g, sgp, gp);
-				// freeOuterplanarKernel(g, depth, sgp, gp, outputOption, globalTreeSet, &intermediateResults, &imrSize);
+				spanningTrees = listSpanningTrees(g, sgp, gp);
+				
+				/* count number of spanning trees */
+				for (idx=spanningTrees; idx; idx=idx->next) {
+					if (!(stcount == LONG_MAX)) {
+						++stcount;
+					}
+				}
+				printf("%i %li\n", g->number, stcount);
 
+				//debug
+				dumpShallowGraphCycle(sgp, spanningTrees);
+				// freeOuterplanarKernel(g, depth, sgp, gp, outputOption, globalTreeSet, &intermediateResults, &imrSize);
 
 				/***** do not alter ****/
 
