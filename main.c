@@ -158,9 +158,7 @@ int main(int argc, char** argv) {
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
 				
-				struct ShallowGraph* spanningTrees = NULL;
-				struct ShallowGraph* idx;
-				long int stcount = 0;
+				long int spanningTrees;
 
 				/* filter out moderately active molecules, if 'i' otherwise set labels */
 				if (labelOption == 'i') {
@@ -174,19 +172,11 @@ int main(int argc, char** argv) {
 					labelProcessing(g, labelOption);
 				}
 
-				spanningTrees = listSpanningTrees(g, sgp, gp);
+				spanningTrees = countSpanningTrees(g, 500, sgp, gp);
 				
-				/* count number of spanning trees */
-				for (idx=spanningTrees; idx; idx=idx->next) {
-					if (!(stcount == LONG_MAX)) {
-						++stcount;
-					}
-				}
-				printf("%i %li\n", g->number, stcount);
+				printf("%i %li\n", g->number, spanningTrees);
 
-				//debug
-				dumpShallowGraphCycle(sgp, spanningTrees);
-				// freeOuterplanarKernel(g, depth, sgp, gp, outputOption, globalTreeSet, &intermediateResults, &imrSize);
+				if (i % 500 == 0) { fprintf(stderr, "."); }
 
 				/***** do not alter ****/
 
