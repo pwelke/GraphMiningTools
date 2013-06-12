@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <limits.h>
-//debug
-#include <stdio.h>
-#include <string.h>
+#include <malloc.h>
 
 #include "graph.h"
 #include "dfs.h"
@@ -97,31 +95,6 @@ struct ShallowGraph* getGraphAndNonGraphEdges(struct Graph* graph, struct Shallo
 	return graphEdges;
 }
 
-/**
- * Print information about the edges contained in a graph to the screen
- */
-void printGraphEdgesOfTwoGraphs(char* name, struct Graph *g, struct Graph* h) {
-	int i;
-	printf("%s 1 has %i vertices and %i edges:\n", name, g->n, g->m);
-	printf("%s 2 has %i vertices and %i edges:\n", name, h->n, h->m);
-	for (i=0; i<g->n; ++i) {
-		printf("%i: ", i);
-		if (g->vertices[i]) {
-			struct VertexList *idx;
-			for (idx = g->vertices[i]->neighborhood; idx; idx = idx->next) {
-				printf("%i ", idx->endPoint->number);	
-			}
-		}
-		printf("\n%i: ", i);
-		if (h->vertices[i]) {
-			struct VertexList *idx;
-			for (idx = h->vertices[i]->neighborhood; idx; idx = idx->next) {
-				printf("%i ", idx->endPoint->number);	
-			}
-		}
-		printf("\n\n");
-	}
-}
 
 struct ShallowGraph* getNonTreeBridges(struct Graph* graph, struct Graph* partialTree, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* tmp = getShallowGraph(sgp);
@@ -145,65 +118,6 @@ struct ShallowGraph* getNonTreeBridges(struct Graph* graph, struct Graph* partia
 	return nonTreeBridges;
 }
 
-void cleanString(char* s, int n) {
-	int i;
-	for (i=0; i<n; ++i) {
-		s[i] = 0;
-	}
-}
-
-char diffGraphs(char* name, struct Graph *g, struct Graph* h) {
-	int n = 300;
-	int diffs = 0;
-	char* s1 = malloc(n * sizeof(char));
-	char* s2 = malloc(n * sizeof(char));
-	int i;
-	cleanString(s1,n);
-	cleanString(s2,n);
-
-	sprintf(s1, "%s has %i vertices and %i edges:\n", name, g->n, g->m);
-	sprintf(s2, "%s has %i vertices and %i edges:\n", name, h->n, h->m);
-
-	if (strcmp(s1, s2) != 0) {
-		++diffs;
-	}
-	for (i=0; i<g->n; ++i) {
-		int store1 = 0;
-		int store2 = 0;
-		cleanString(s1, n);
-		cleanString(s2, n);
-		store1 += sprintf(s1, "%i: ", i);
-		if (g->vertices[i]) {
-			struct VertexList *idx;
-			for (idx = g->vertices[i]->neighborhood; idx; idx = idx->next) {
-				store1 += sprintf(s1+store1, "%i ", idx->endPoint->number);	
-			}
-		}
-			store2 += sprintf(s2, "%i: ", i);
-		if (h->vertices[i]) {
-			struct VertexList *idx;
-			for (idx = h->vertices[i]->neighborhood; idx; idx = idx->next) {
-				store2 += sprintf(s2+store2, "%i ", idx->endPoint->number);	
-			}
-		}
-		if (strcmp(s1, s2) != 0) {
-			printf(s1);
-			printf("\n");
-			printf(s2);
-			printf("\n\n");
-			++diffs;
-		}
-	}
-	free(s1);
-	free(s2);
-
-	if (diffs > 0) {
-		printf("%s has %i vertices and %i edges:\n", name, g->n, g->m);
-		printf("%s has %i vertices and %i edges:\n", name, h->n, h->m);
-	}
-	return diffs;
-}
-
 
 struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 
@@ -215,14 +129,9 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 	struct ShallowGraph* graphEdges = getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
 	struct ShallowGraph* rest = graphEdges->next;
 
-	//printShallowGraph(graphEdges);
-
 	if (rest->m == 0) {
 		struct ShallowGraph* tree = getGraphEdges(partialTree, sgp);
 		tree->next = tree->prev = tree;
-
-		// //debug
-		// printf("Output has %i edges\n", tree->m);
 
 		/* garbage collection */
 		dumpShallowGraphCycle(sgp, graphEdges);
@@ -231,13 +140,6 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 	}
 	/* get edge that will be included and excluded in this recursive step */
 	e = popEdge(rest);
-
-	// //debug
-	// printf("popping ");
-	// printVertexList(e);
-	// if (existsEdge(partialTree, e->startPoint->number, e->endPoint->number)) {
-	// 	printf("e = (%i, %i) should not be contained in partialTree\n", e->startPoint->number, e->endPoint->number);
-	// }
 
 	/* add e to partialTree (already contained in graph) to find spanning trees containing e */
 	addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, partialTree, gp);
@@ -250,14 +152,6 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 	deleteEdges(graph, B, gp);
 
 	result1 = rec(d+1, graph, partialTree, components, n, sgp, gp);
-	// //debug 
-	// dumpShallowGraphCycle(sgp, result1);
-	// result1 = NULL;
-
-	// //debug
-	// printGraphEdges(partialTree);
-	// printShallowGraph(B);
-	// return;
 
 	/* add edges to graph again */
 	addEdges(graph, B, gp);
@@ -274,9 +168,6 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 
 	addEdges(partialTree, bridges, gp);
 	result2 = rec(d+1, graph, partialTree, components, n, sgp, gp);
-	// //debug 
-	// dumpShallowGraphCycle(sgp, result2);
-	// result2 = NULL;
 
 	deleteEdges(partialTree, bridges, gp);
 
@@ -289,7 +180,6 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 	dumpShallowGraphCycle(sgp, graphEdges);
 
 	return addComponent(result1, result2);
-	// return NULL;
 }
 
 struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
@@ -310,10 +200,6 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 	}
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	
-
-	// //debug
-	// printf("Graph %i has %i vertices and %i edges\n", original->number, original->n, original->m);
-
 	/* do the backtrack, baby */
 	result = rec(0, graph, partialTree, components, graph->n, sgp, gp);
 	result->prev->next = NULL;
@@ -328,7 +214,7 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 }
 
 
-long int recCount(int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+long int recCount(long int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct VertexList* e;
 	struct ShallowGraph* B;
 	struct ShallowGraph* bridges;
@@ -356,13 +242,23 @@ long int recCount(int d, struct Graph* graph, struct Graph* partialTree, int* co
 	/* ensures, that adding an edge of graph to partialTree results in a tree in the recursive call */
 	deleteEdges(graph, B, gp);
 
-	result1 = recCount(d+1, graph, partialTree, components, n, sgp, gp);
+	result1 = recCount(d, graph, partialTree, components, n, sgp, gp);
 
 	/* add edges to graph again */
 	addEdges(graph, B, gp);
 
 	/* preliminary garbage collection */
 	dumpShallowGraphCycle(sgp, B);
+
+	/* at this point, graph and partialTree are as at the start of this call.
+	If there are already too many spanning Trees found (indicated by return value -1)
+	return at this point and prune the second recursive call */
+	if (result1 == -1) {
+		/* garbage collection */
+		dumpVertexList(sgp->listPool, e);
+		dumpShallowGraphCycle(sgp, graphEdges);
+		return -1;
+	}
 
 	/* delete e from partialTree and graph to find spanning trees not containing e */
 	deleteEdgeBetweenVertices(graph, e, gp);
@@ -372,7 +268,7 @@ long int recCount(int d, struct Graph* graph, struct Graph* partialTree, int* co
 	bridges = getNonTreeBridges(graph, partialTree, sgp);
 
 	addEdges(partialTree, bridges, gp);
-	result2 = recCount(d+1, graph, partialTree, components, n, sgp, gp);
+	result2 = recCount(d, graph, partialTree, components, n, sgp, gp);
 	deleteEdges(partialTree, bridges, gp);
 
 	/* At the end, spanningTree and graph need to be same as in the beginning. */
@@ -383,14 +279,25 @@ long int recCount(int d, struct Graph* graph, struct Graph* partialTree, int* co
 	dumpShallowGraphCycle(sgp, bridges);
 	dumpShallowGraphCycle(sgp, graphEdges);
 
-	if ((result1 > LONG_MAX / 2) || (result2 > LONG_MAX / 2)) {
+	if (result2 == -1) {
+		/* if there were too many spanning trees in the second recursion... */ 
 		return -1;
 	} else {
-		return result1 + result2;
+		/* user set threshold on number of spanning trees */
+		if ((result1 > d) || (result2 > d)) {
+			return -1;
+		} else {
+			/* avoid overflow */
+			if ((result1 > LONG_MAX / 2) || (result2 > LONG_MAX / 2)) {
+				return -1;
+			} else {
+				return result1 + result2;
+			}
+		}
 	}
 }
 
-long int countSpanningTrees(struct Graph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+long int countSpanningTrees(struct Graph* original, long int maxBound, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	
 	struct Graph* graph = cloneGraph(original, gp);
 	struct Graph* partialTree = emptyGraph(original, gp);
@@ -408,12 +315,8 @@ long int countSpanningTrees(struct Graph* original, struct ShallowGraphPool* sgp
 	}
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	
-
-	// //debug
-	// printf("Graph %i has %i vertices and %i edges\n", original->number, original->n, original->m);
-
 	/* do the backtrack, baby */
-	result = recCount(0, graph, partialTree, components, graph->n, sgp, gp);
+	result = recCount(maxBound, graph, partialTree, components, graph->n, sgp, gp);
 
 	/* garbage collection */
 	free(components);

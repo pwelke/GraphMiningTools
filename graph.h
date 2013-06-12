@@ -94,7 +94,6 @@ void dumpVertexListRecursively(struct ListPool* p, struct VertexList* e);
 struct VertexList* push(struct VertexList* list, struct VertexList* e);
 struct VertexList* shallowCopyEdge(struct VertexList* e, struct ListPool* p);
 struct VertexList* inverseEdge(struct VertexList* e, struct ListPool* p);
-void printVertexList(struct VertexList *f);
 
 
 /******* Vertex ***********************************************/
@@ -130,10 +129,7 @@ struct VertexList* popEdge(struct ShallowGraph* g);
 struct VertexList* assertLastPointer(struct ShallowGraph* g);
 
 struct ShallowGraph* inverseCycle(struct ShallowGraph* cycle, struct ShallowGraphPool *sgp);
-
 struct ShallowGraph* addComponent(struct ShallowGraph* g, struct ShallowGraph* h);
-void printShallowGraph(struct ShallowGraph* g);
-int printShallowGraphCount(struct ShallowGraph* g, char silent);
 
 
 /******* Graph *************************************************/
@@ -155,9 +151,5 @@ void deleteEdgeBetweenVertices(struct Graph* g, struct VertexList* idx, struct G
 
 struct ShallowGraph* getGraphEdges(struct Graph *g, struct ShallowGraphPool* sgp);
 struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPool* gp);
-
-void printGraph(struct Graph* g);
-void printGraphEdges(struct Graph *g);
-
 
 #endif /* GRAPH_H */

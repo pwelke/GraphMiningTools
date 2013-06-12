@@ -177,19 +177,6 @@ struct VertexList* push(struct VertexList* list, struct VertexList* e) {
 }
 
 
-/**
- * Print some information about a single edge,
- * and all edges reachable from it, to the screen
- */
-void printVertexList(struct VertexList *f) {
-	struct VertexList* e;
-	for (e=f; e; e=e->next) {
-		printf("(%i, %i)", e->startPoint->number, e->endPoint->number);
-		fflush(stdout);
-		printf(" %s\n", e->label);
-	}
-}
-
 
 /********************************************************************************************************
 ******************************* Methods that deal with Vertices ***************************************
@@ -821,57 +808,6 @@ void dumpGraph(struct GraphPool* p, struct Graph *g) {
 }
 
 
-/**
- * Print some information about a graph to the screen
- */
-void printGraph(struct Graph* g) {
-	
-	struct Graph* index = g;
-	int i= 0,j;
-
-	do {
-		if (index) {
-			printf("Graph %i has %i edges:\n", i, index->m);
-			for (j=0; j<index->n; ++j) {
-				if (index->vertices[j]) {
-					printf("Neighbors of vertex %i:\n", index->vertices[j]->number);
-					printVertexList(index->vertices[j]->neighborhood);
-				} else {
-					printf("Vertex %i is not used by the current (induced) graph\n", j);
-				}
-				
-			}
-			printf("\n");
-			index = index->next;
-			++i;
-		} else {
-			/* if index is NULL, the input pointed to a list and not to a cycle */
-			break;
-		}
-	} while (index != g);
-	
-}
-
-
-/**
- * Print information about the edges contained in a graph to the screen
- */
-void printGraphEdges(struct Graph *g) {
-	int i;
-	printf("Graph has %i vertices and %i edges:\n", g->n, g->m);
-	for (i=0; i<g->n; ++i) {
-		if (g->vertices[i]) {
-			struct VertexList *idx;
-			for (idx = g->vertices[i]->neighborhood; idx; idx = idx->next) {
-				if (idx->endPoint->number > i) {
-					printf("(%i, %i) %s d: (%i, %i) visited: (%i,  %i)\n", idx->startPoint->number, idx->endPoint->number, idx->label, idx->startPoint->d, idx->endPoint->d, idx->startPoint->visited, idx->endPoint->visited);
-				}
-			}
-		}
-	}
-}
-
-
 
 /********************************************************************************************************
 ******************************* Methods that deal with ShallowGraphs ********************************
@@ -1128,52 +1064,4 @@ void freeShallowGraphPool(struct ShallowGraphPool *p) {
 		p->unused = p->tmp;
 	}
 	free(p);
-}
-
-
-/**
- * Print some information about a ShallowGraph
- */
-void printShallowGraph(struct ShallowGraph* g) {
-	
-	struct ShallowGraph* index = g;
-	int i = 0;
-	do {
-		if (index) {
-			printf("Graph %i has %i edges:\n", i, index->m);
-			printVertexList(index->edges);
-			printf("\n");
-			index = index->next;
-			++i;
-		} else {
-			/* if index is NULL, the input pointed to a list and not to a cycle */
-			break;
-		}
-	} while (index != g);
-	
-}
-
-
-/**
- * returns the number of ShallowGraphs in the list or cycle of ShallowGraphs
- */
-int printShallowGraphCount(struct ShallowGraph* g, char silent) {
-
-	struct ShallowGraph* index = g;
-	int i = 0;
-	do {
-		if (index) {
-			index = index->next;
-			++i;
-		} else {
-			/* if index is NULL, the input pointed to a list and not to a cycle */
-			break;
-		}
-	} while (index != g);
-
-	if (!silent)
-		printf("Result contains %i structures\n", i);
-
-	return i;
-
 }
