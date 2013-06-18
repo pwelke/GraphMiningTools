@@ -2,7 +2,7 @@
 #include "graph.h"
 #include <stdio.h>
 
-int MEM_DEBUG = 1;
+int MEM_DEBUG = 0;
 
 /* does not fit anywhere */
 
@@ -886,7 +886,9 @@ struct VertexList* popEdge(struct ShallowGraph* g) {
 			g->lastEdge = NULL;
 		}
 	}
-	e->next = NULL;
+	if (e != NULL) {
+		e->next = NULL;
+	}
 	return e;
 }
 
