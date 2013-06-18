@@ -4,6 +4,7 @@
 
 #include "graph.h"
 #include "dfs.h"
+#include "listSpanningTrees.h"
 
 void visit(struct Vertex* v, int component, int* components) {
 	struct VertexList* e;

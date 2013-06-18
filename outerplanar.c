@@ -29,12 +29,13 @@ int edgeComparator(const void* p1, const void* p2) {
 
 
 /**
- * Check if g is outerplanar (mop) using the algorithm
+ * Check if g is outerplanar using the algorithm
  * of Sarah Mitchell, except that instead of the linear
  * bucket sort, stdlibs qsort is used.
  *
- * This algorithm returns a ShallowGraph containing the canonical String of
- * the outerplanar block g or NULL, if g is not outerplanar.
+ * This algorithm returns a ShallowGraph c containing the hamiltonian cycle of g.
+ * c->next points to a ShallowGraph d containing the diagonals of g.
+ * If g is not outerplanar, NULL is returned. 
  *
  * The algorithm alters g but does not dump the remainder.
  *
@@ -42,7 +43,7 @@ int edgeComparator(const void* p1, const void* p2) {
  * Maximal Outerplanar Graphs, Information Processing Letters Volume 9,
  * number 5, 16.12.1979
  */
-struct ShallowGraph* opCS(struct Graph* g, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* getCycleAndDiagonals(struct Graph* g, struct ShallowGraphPool* sgp) {
 	/* data structures described by Mitchell[1979] */
 	struct ShallowGraph* list = getShallowGraph(sgp);
 	struct ShallowGraph* pairs = getShallowGraph(sgp);
@@ -424,7 +425,8 @@ struct ShallowGraph* opCS(struct Graph* g, struct ShallowGraphPool* sgp) {
 
 		/* now hamiltonianCycle is a cycle and
 		 * diagonals contains the diagonals of the block. hurra! */
-		return getCanonicalStringOfOuterplanarBlock(hamiltonianCycle, diagonals, sgp);
+		hamiltonianCycle->next = diagonals;
+		return hamiltonianCycle;
 
 
 	} else {
@@ -440,9 +442,18 @@ struct ShallowGraph* opCS(struct Graph* g, struct ShallowGraphPool* sgp) {
 
 struct ShallowGraph* getOuterplanarCanonicalString(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct Graph* g = shallowGraphToGraph(original, gp);
-	struct ShallowGraph* cString = opCS(g, sgp);
-	dumpGraph(gp, g);
-	return cString;
+	struct ShallowGraph* hamiltonianCycle = getCycleAndDiagonals(g, sgp);
+	if (hamiltonianCycle != NULL) {
+		struct ShallowGraph* diagonals = hamiltonianCycle->next;	
+		struct ShallowGraph* cString;
+		hamiltonianCycle->next = NULL;
+		cString = getCanonicalStringOfOuterplanarBlock(hamiltonianCycle, diagonals, sgp);
+		dumpGraph(gp, g);
+		return cString;
+	} else {
+		dumpGraph(gp, g);
+		return NULL;
+	}
 }
 
 

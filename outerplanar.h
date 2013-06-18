@@ -29,6 +29,10 @@ struct BBTree{
 char mopTest(struct Graph* g, struct ShallowGraphPool* sgp);
 char isOuterplanar(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 
+struct ShallowGraph* getCycleAndDiagonals(struct Graph* g, struct ShallowGraphPool* sgp);
+struct ShallowGraph* opCS(struct Graph* g, struct ShallowGraphPool* sgp);
+struct ShallowGraph* getOuterplanarCanonicalString(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp);
+
 struct BBTree* createBlockAndBridgeTree(struct ShallowGraph* list, struct Graph *original, struct GraphPool* gp, struct ShallowGraphPool *sgp);
 void dumpBBTree(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct BBTree* tree);
 
