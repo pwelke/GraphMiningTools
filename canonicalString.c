@@ -1291,7 +1291,7 @@ struct ShallowGraph* permutateBlock(struct ShallowGraph* cycle, struct ShallowGr
  * This method assumes that graph, the start- and endpoints of the edges point to, contains no edges.
  *
  * If you want to use this method in a context, where the underlying graph is not empty, you either
- * have to delete all edges from him or you have to grate an empty new graph and change the start-
+ * have to delete all edges from it or you have to grate an empty new graph and change the start-
  * and endpoints of edges in hamiltonianCycle and diagonals accordingly.
  */
 struct ShallowGraph* getCanonicalStringOfOuterplanarBlock(struct ShallowGraph* hamiltonianCycle, struct ShallowGraph* diagonals, struct ShallowGraphPool* sgp) {
