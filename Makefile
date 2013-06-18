@@ -1,4 +1,4 @@
-PROJECTNAME = opk
+PROJECTNAME = tpk
 CPPFLAGS = -g  -O3 -Wall -pedantic -W -ggdb
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 
