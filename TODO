@@ -1,10 +1,10 @@
 TODO
-- clean up listSpanningTrees.c
-- documentation of listSpanningTrees
-- refactor or remove printing methods
 
-- debugGraphs.c / h :
-	- contains all printing methods for graphs, edges etc
-	- declutter graph.c
+- documentation of listSpanningTrees!
+- declutter graph.c
+- how to go on?
 
-- countSpanningTrees
+- how does the canonical string stuff work, again?
+- save patterns / "model" to disk and load it, again...
+- subtree isomorphism...
+
