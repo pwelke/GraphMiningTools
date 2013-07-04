@@ -103,7 +103,10 @@ int* findLeaves(struct Graph* g, int root) {
 		if (v != root) {
 			if (isLeaf(g->vertices[v]) {
 				++nLeaves;
-			}		
+				g->vertices[v]->flag = 1;
+			} else {
+				g->vertices[v]->flag = 0;
+			}	
 		}
 	}
 	leaves = malloc((nLeaves+1) * sizeof(int));
