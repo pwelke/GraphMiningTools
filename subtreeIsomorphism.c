@@ -80,6 +80,20 @@ void freeCube(int*** cube, int x, int y) {
 	free(cube);
 }
 
+char isleaf(struct Vertex* v) {
+	// check if v has a neigbor at all
+	if (v->neighborhood) {
+		// check if v has exactly one neighbor, thus is a leaf
+		if (v->neighborhood->next == NULL) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		return 0;
+	}
+}
+
 int* findLeaves(struct Graph* g, int root) {
 	int nLeaves = 0;
 	int* leaves;
@@ -87,13 +101,9 @@ int* findLeaves(struct Graph* g, int root) {
 
 	for (v=0; v<g->n; ++v) {
 		if (v != root) {
-			// if g is a tree with more than one vertex, this should always be true. 
-			if (g->vertices[v]->neighborhood) {
-				// check if u has exactly one neighbor, thus is a leaf
-				if (g->vertices[v]->neighborhood->next == NULL) {
-					++nLeaves;
-				}
-			}
+			if (isLeaf(g->vertices[v]) {
+				++nLeaves;
+			}		
 		}
 	}
 	leaves = malloc((nLeaves+1) * sizeof(int));
@@ -102,12 +112,9 @@ int* findLeaves(struct Graph* g, int root) {
 	for (v=0; v<g->n; ++v) {
 		if (v != root) {
 			// if g is a tree with more than one vertex, this should always be true. 
-			if (g->vertices[v]->neighborhood) {
-				// check if u has exactly one neighbor, thus is a leaf
-				if (g->vertices[v]->neighborhood->next == NULL) {
-					leaves[nLeaves+1] = v;
-					++nLeaves;
-				}
+			if (isLeaf(g->vertices[v])) {
+				leaves[nLeaves+1] = v;
+				++nLeaves;	
 			}
 		}
 	}
@@ -144,6 +151,8 @@ int* getPostorder(struct Graph* g, int root) {
 	return order;
 }
 
+struct Graph* makeBipartiteInstance()
+
 
 char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 	// iterators
@@ -173,50 +182,10 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 
 	for (v=0; v<g->n; ++v) {
 		struct Vertex* current = g->vertices[postorder[v]];
-		if ((current->neighborhood->next != NULL) || (current->number == root->number)) {
+		if (isLeaf(current) || (current->number == root->number)) {
 
 		}
 	}
 	return 0;
 }
 
-struct Table* recursiveSubtreeCheck(struct Vertex* v, struct Vertex* pv, struct Graph* H, struct Table* I, struct GraphPool* gp) {
-	struct VertexList* e;
-	struct Table** childTables;
-	
-	/* count number of children of v in G */
-	int children = 0;
-	for (e=v->neighborhood; e!=NULL; e=e->next) {
-		if (!(e->endPoint == pv)) {
-			++children;
-		}
-	}
-
-	/* leaf case. return map */ 
-	if (children == 0) {
-		// TODO
-		struct Table* Svu = getTable(0,0,1);
-	}
-
-	/* otherwise: compute maps for children recursively */
-	childTables = malloc(children * sizeof(struct Table*));
-	children = 0;
-	for (e=v->neighborhood; e!=NULL; e=e->next) {
-		if (!(e->endPoint == pv)) {
-			childTables[children] = recursiveSubtreeCheck(e->endPoint, v, H, I, gp);
-		++children;
-		}
-	}
-
-	/* do the matching */
-	// TODO
-}
-
-/**
-g is the root of a tree G, h is the root of a tree H. We check, 
-if H is a rooted subtree of G. **/
-char isSubtree(struct Vertex* g, struct Graph* H, struct GraphPool* gp) {
-	// TODO
-	struct Vertex* h = H->vertices[0];
-	return recursiveSubtreeCheck(g,g,h,h,gp);
-}
