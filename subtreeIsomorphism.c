@@ -1,54 +1,14 @@
 #include <malloc.h>
 #include "graph.h"
 
-
-
-struct RootedTree {
-	struct Vertex* root;
-	int n;
-};
-
-struct Table {
-	void* data;
-	int itemSize;
-	int n;
-	int m;
-};
-
-struct Table* getTable(int n, int m, int size) {
-	struct Table* table = malloc(sizeof(struct Table));
-	table->data = malloc(n * m * size);
-	table->n = n;
-	table->m = m;
-	table->itemSize = size;
-	return table;
-}
-
-int dumpTable(struct Table* table) {
-	free(table->data);
-	free(table);
-}
-
-void* getValue(struct Table* table, int i, int j) {
-	int pos = (i * table->n + j) * table->itemSize;
-	/* cast to char to have pointer arithmetic for one byte steps */
-	return &(((char*)table->data)[pos]);
-}
-
-void setValue(struct Table* table, int i, int j, int value) {
-	int pos = (i * table->n + j) * table->itemSize;
-	/* cast to char to have pointer arithmetic for one byte steps */
-	((char*)table->data)[pos] = value;
-} 
-
 int*** createCube(int x, int y) {
 	int*** cube;
 	int i, j;
-	if (cube = malloc(x * sizeof(int**))) {
+	if ((cube = malloc(x * sizeof(int**)))) {
 		for (i=0; i<x; ++i) {
 			cube[i] = malloc(y * sizeof(int*));
 			if (cube[i] != NULL) {
-				for (int j=0; j<y; ++j) {
+				for (j=0; j<y; ++j) {
 					cube[i][j] = NULL;
 				}
 			} else {
@@ -80,10 +40,10 @@ void freeCube(int*** cube, int x, int y) {
 	free(cube);
 }
 
-char isleaf(struct Vertex* v) {
-	// check if v has a neigbor at all
+char isLeaf(struct Vertex* v) {
+	/* check if v has a neigbor at all */
 	if (v->neighborhood) {
-		// check if v has exactly one neighbor, thus is a leaf
+		/* check if v has exactly one neighbor, thus is a leaf */
 		if (v->neighborhood->next == NULL) {
 			return 1;
 		} else {
@@ -94,6 +54,14 @@ char isleaf(struct Vertex* v) {
 	}
 }
 
+/**
+Find all leaves of g that are not equal to r.
+
+The method returns an int array leaves. leaves[0] contains the length of
+leaves, i.e. number of leaves plus one.
+Subsequent positions of leaves contain the vertex numbers of leaves in ascending order. 
+The method sets the ->d members of leaf vertices in g to 1 all other to 0.
+*/
 int* findLeaves(struct Graph* g, int root) {
 	int nLeaves = 0;
 	int* leaves;
@@ -101,11 +69,11 @@ int* findLeaves(struct Graph* g, int root) {
 
 	for (v=0; v<g->n; ++v) {
 		if (v != root) {
-			if (isLeaf(g->vertices[v]) {
+			if (isLeaf(g->vertices[v])) {
 				++nLeaves;
-				g->vertices[v]->flag = 1;
+				g->vertices[v]->d = 1;
 			} else {
-				g->vertices[v]->flag = 0;
+				g->vertices[v]->d = 0;
 			}	
 		}
 	}
@@ -154,7 +122,31 @@ int* getPostorder(struct Graph* g, int root) {
 	return order;
 }
 
-struct Graph* makeBipartiteInstance() {}
+/* vertices of g have their ->visited values set to the postorder. Thus, 
+children of v are vertices u that are neighbors of v and have u->visited < v->visited */
+struct Graph* makeBipartiteInstance() {struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp} {
+	struct Graph* B;
+
+	int sizeofX = 0;
+	int sizeofY = 0;
+	struct VertexList* e;
+
+	/* get size of neighborhoods to construct graph */
+	int orderofV = g->vertices[v]->visited;
+	for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint->visited < orderofV) {
+			++sizeofX;
+		}
+	}
+	for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+		++sizeofY;
+	}
+
+ 	/* construct bipartite graph B(v,u) */ 
+	B = createGraph(sizeofX + sizeofY, gp);
+
+
+}
 
 
 char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
