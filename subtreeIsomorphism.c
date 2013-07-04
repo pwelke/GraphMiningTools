@@ -151,7 +151,7 @@ int* getPostorder(struct Graph* g, int root) {
 	return order;
 }
 
-struct Graph* makeBipartiteInstance()
+struct Graph* makeBipartiteInstance() {}
 
 
 char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
