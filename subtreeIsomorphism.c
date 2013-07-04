@@ -82,7 +82,6 @@ int* findLeaves(struct Graph* g, int root) {
 	nLeaves = 0;
 	for (v=0; v<g->n; ++v) {
 		if (v != root) {
-			// if g is a tree with more than one vertex, this should always be true. 
 			if (isLeaf(g->vertices[v])) {
 				leaves[nLeaves+1] = v;
 				++nLeaves;	
@@ -95,6 +94,9 @@ int* findLeaves(struct Graph* g, int root) {
 int dfs(struct Vertex* v, int value) {
 	struct VertexList* e;
 
+	/* to make this method save for graphs that are not trees */
+	v->visited = -2;
+
 	for (e=v->neighborhood; e!=NULL; e=e->next) {
 		if (e->endPoint->visited == -1) {
 			value = 1 + dfs(e->endPoint, value);
@@ -104,15 +106,23 @@ int dfs(struct Vertex* v, int value) {
 	return value;
 }
 
+/**
+Compute a dfs order or postorder on g starting at vertex root.
+The ->visited members of vertices are set to the position they have in the order 
+(starting with 0). Vertices that cannot be reached from root get ->visited = -1
+The method returns an array of length g->n where position i contains the vertex number 
+of the ith vertex in the order. 
+*/
 int* getPostorder(struct Graph* g, int root) {
 	int i;
 	int* order = malloc(g->n * sizeof(int));
-	for (int i=0; i<g->n; ++i) {
-		g->vertices[i]->visited = -1;
-	}
-	dfs(root, 0);
 	for (i=0; i<g->n; ++i) {
-		if (g->vertices[i]->visited] != -1) {
+		g->vertices[i]->visited = -1;
+		order[i] = -1;
+	}
+	dfs(g->vertices[root], 0);
+	for (i=0; i<g->n; ++i) {
+		if (g->vertices[i]->visited != -1) {
 			order[g->vertices[i]->visited] = i;
 		} else {
 			// debug
@@ -124,7 +134,7 @@ int* getPostorder(struct Graph* g, int root) {
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstance() {struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp} {
+struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp) {
 	struct Graph* B;
 
 	int sizeofX = 0;
@@ -145,7 +155,7 @@ struct Graph* makeBipartiteInstance() {struct Graph* g, int v, struct Graph* h, 
  	/* construct bipartite graph B(v,u) */ 
 	B = createGraph(sizeofX + sizeofY, gp);
 
-
+	return B;
 }
 
 
@@ -177,7 +187,7 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 
 	for (v=0; v<g->n; ++v) {
 		struct Vertex* current = g->vertices[postorder[v]];
-		if (isLeaf(current) || (current->number == root->number)) {
+		if (isLeaf(current) || (current->number == r->number)) {
 
 		}
 	}
