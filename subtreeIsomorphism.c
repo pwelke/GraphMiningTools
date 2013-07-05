@@ -136,25 +136,57 @@ int* getPostorder(struct Graph* g, int root) {
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
 struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp) {
 	struct Graph* B;
+	int i, j;
 
 	int sizeofX = 0;
 	int sizeofY = 0;
 	struct VertexList* e;
 
-	/* get size of neighborhoods to construct graph */
-	int orderofV = g->vertices[v]->visited;
-	for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
-		if (e->endPoint->visited < orderofV) {
-			++sizeofX;
-		}
+	/* get size of neighborhoods to construct graph.
+	   note that we count the parent of v in sizeofY and will add it
+	   to B. this allows for an easy mapping of S to B.
+	   we will make sure that it is not disturbing
+	   the algorithm.  */
+	for (e=h->vertices[u]->neighborhood; e!=NULL; e=e->next) {
+		++sizeofX;
 	}
 	for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
 		++sizeofY;
 	}
 
+
  	/* construct bipartite graph B(v,u) */ 
 	B = createGraph(sizeofX + sizeofY, gp);
+	/* store size of first partitioning set */
+	g->activity = sizeofX;
 
+	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B */
+	i = 0;
+	for (e=h->vertices[u]->neighborhood; e!=NULL; e=e->next) {
+		B->vertices[i]->lowPoint = e->endPoint->number;
+		++i;
+	}
+	for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+		B->vertices[i]->lowPoint = e->endPoint->number;
+		++i;
+	}
+
+	/* add edge (x,y) if u in S(y,x) */
+	for (i=0; i<sizeofX; ++i) {
+		for (j=sizeofX; j<B->n; ++j) {
+			int x = B->vertices[i]->lowPoint;
+			int y = B->vertices[j]->lowPoint;
+			int k;
+			/* y has to be a child of v */
+			if (g->vertices[y]->visited < g->vertices[v]->visited) {
+				for (k=1; k<S[y][x][0]; ++k) {
+					if (S[y][x][k] == u) {
+						addEdgeBetweenVertices(i, j, NULL, B, gp);
+					}
+				}
+			}
+		}
+	} 
 	return B;
 }
 
@@ -187,10 +219,23 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 
 	for (v=0; v<g->n; ++v) {
 		struct Vertex* current = g->vertices[postorder[v]];
+		int currentDegree = degree(current);
 		if (isLeaf(current) || (current->number == r->number)) {
+			for (u=0; u<h->n; ++u) {
+				if (degree(h->vertices[u]) <= currentDegree + 1) {
+					struct Graph* B = makeBipartiteInstance(g, postorder[v], h, u, S, gp);
+
+					dumpGraph(gp, B);
+				}
+			}
 
 		}
 	}
+
+	/* garbage collection */
+	free(postorder);
+	freeCube(S, g->n, h->n);
+
 	return 0;
 }
 
