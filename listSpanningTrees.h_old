@@ -1,6 +1,0 @@
-#ifndef LIST_SPANNING_TREES_H_
-#define LIST_SPANNING_TREES_H_
-
-struct ShallowGraph* readTarjanListAllSpanningTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp, char switchStringMaster);
-
-#endif /* LIST_SPANNING_TREES_H_ */
