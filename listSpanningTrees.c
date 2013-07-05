@@ -190,6 +190,7 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 	struct ShallowGraph* result = NULL;
 	int* components = malloc(sizeof(int) * original->n);
 	struct ShallowGraph* idx;
+	struct VertexList* e;
 
 	/* add all bridges to partialTree */
 	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(original, sgp);
@@ -205,6 +206,14 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 	result = rec(0, graph, partialTree, components, graph->n, sgp, gp);
 	result->prev->next = NULL;
 	result->prev = NULL;
+
+	/* edges in result point to vertices in partialTree this has to be changed */
+	for (idx=result; idx!=NULL; idx=idx->next) {
+		for (e=idx->edges; e!=NULL; e=e->next) {
+			e->startPoint = original->vertices[e->startPoint->number];
+			e->endPoint = original->vertices[e->endPoint->number];
+		}
+	}
 
 	/* garbage collection */
 	free(components);
