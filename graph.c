@@ -2,7 +2,7 @@
 #include "graph.h"
 #include <stdio.h>
 
-int MEM_DEBUG = 0;
+int MEM_DEBUG = 1;
 
 /* does not fit anywhere */
 
@@ -285,6 +285,15 @@ struct Vertex* shallowCopyVertex(struct Vertex *v, struct VertexPool *p) {
 	new->number = v->number;
 	new->label = v->label;
 	return new;
+}
+
+int degree(struct Vertex* v) {
+	struct VertexList* e;
+	int deg = 0;
+	for (e=v->neighborhood; e!=NULL; e=e->next) {
+		++deg;
+	}
+	return deg;
 }
 
 
@@ -685,7 +694,7 @@ struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPoo
 	}
 
 	return g;
-}
+} 
 
 
 /**
@@ -770,6 +779,22 @@ struct Graph* emptyGraph(struct Graph* g, struct GraphPool* gp) {
 
 	for (v=0; v<g->n; ++v) {
 		empty->vertices[v] = shallowCopyVertex(g->vertices[v], gp->vertexPool);
+	}
+	return empty;
+}
+
+
+/**
+Create a graph without edges that has n vertices.
+*/
+struct Graph* createGraph(int n, struct GraphPool* gp) {
+	struct Graph* empty = getGraph(gp);
+	int v;
+	setVertexNumber(empty, n);
+
+	for (v=0; v<n; ++v) {
+		empty->vertices[v] = getVertex(gp->vertexPool);
+		empty->vertices[v]->number = v;
 	}
 	return empty;
 }

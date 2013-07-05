@@ -108,6 +108,7 @@ struct Vertex* shallowCopyVertex(struct Vertex *v, struct VertexPool *p);
 void removeEdge(struct Vertex* v, struct Vertex* w, struct ListPool* p);
 void addEdge(struct Vertex* v, struct VertexList* e);
 
+int degree(struct Vertex* v);
 int commonNeighborCount(struct Vertex* v, struct Vertex* w);
 char isIncident(struct Vertex* v, struct Vertex* w);
 char isDeg2Vertex(struct Vertex* v);
@@ -143,6 +144,7 @@ void dumpGraph(struct GraphPool* p, struct Graph *g);
 
 struct Vertex** setVertexNumber(struct Graph* g, int n);
 struct Graph* emptyGraph(struct Graph* g, struct GraphPool* gp);
+struct Graph* createGraph(int n, struct GraphPool* gp);
 void addEdgeBetweenVertices(int v, int w, char* label, struct Graph* g, struct GraphPool* gp);
 void addEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp);
 struct VertexList* deleteEdge(struct Graph* g, int v, int w);
