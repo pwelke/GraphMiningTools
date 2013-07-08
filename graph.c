@@ -2,7 +2,7 @@
 #include "graph.h"
 #include <stdio.h>
 
-int MEM_DEBUG = 1;
+int MEM_DEBUG = 0;
 
 /* does not fit anywhere */
 
@@ -837,6 +837,26 @@ void dumpGraph(struct GraphPool* p, struct Graph *g) {
 /********************************************************************************************************
 ******************************* Methods that deal with ShallowGraphs ********************************
 ********************************************************************************************************/
+
+/**
+Given a list of ShallowGraphs that have edges where the start- and endPoints
+are pointers to some graph, reset these pointers to point to the vertices of
+newBase with the same number. i.e. 
+e->startPoint = newBase->vertices[e->startPoint->number];
+Expects list to be a list, not a cycle.
+*/
+void rebaseShallowGraph(struct ShallowGraph* list, struct Graph* newBase) {
+	struct ShallowGraph* idx;
+	struct VertexList* e;
+
+	for (idx=list; idx!=NULL; idx=idx->next) {
+		for (e=idx->edges; e!=NULL; e=e->next) {
+			e->startPoint = newBase->vertices[e->startPoint->number];
+			e->endPoint = newBase->vertices[e->endPoint->number];
+		}
+	}
+}
+
 
 /** 
 This method should take two ShallowGraph Cycles and return a cycle that is some concatenation

@@ -123,6 +123,7 @@ void dumpShallowGraph(struct ShallowGraphPool *p, struct ShallowGraph* g);
 void dumpShallowGraphCycle(struct ShallowGraphPool *p, struct ShallowGraph* g);
 
 struct ShallowGraph* cloneShallowGraph(struct ShallowGraph* g, struct ShallowGraphPool* sgp);
+void rebaseShallowGraph(struct ShallowGraph* list, struct Graph* newBase);
 
 void pushEdge(struct ShallowGraph *g, struct VertexList *e);
 void appendEdge(struct ShallowGraph *g, struct VertexList *e);
