@@ -10,7 +10,11 @@
 #include "listSpanningTrees.h"
 #include "main.h"
 #include "upperBoundsForSpanningTrees.h"
+#include "subtreeIsomorphism.h"
+#include "graphPrinting.h"
 /* #include "opk.h" */
+
+char DEBUG_INFO = 1;
 
 
 /**
@@ -33,16 +37,16 @@ void printHelp() {
 		   "        i \"CA vs. CI\" active - 1 | inactive - -1 moderately active removed\n"
 		   "        m \"moderately active\" active, moderately active  - 1 | inactive - -1\n\n");
 	printf("    -output O: write output to stdout\n");
-	printf("        a \"all\" (default) output the feature vector for each graph in the\n"
+	/*printf("        a \"all\" (default) output the feature vector for each graph in the\n"
 		   "            format specified by SVMlight the label of each graph has to be\n"
-		   "            either 0, 1 or -1 to be compliant with the specs of SVMlight.\n");
-	printf("        o returns if a graph is outerplanar\n"
+		   "            either 0, 1 or -1 to be compliant with the specs of SVMlight.\n");*/
+	printf(/*"        o returns if a graph is outerplanar\n"*/
 		   "        e returns the estimated number of spanning trees\n"
 		   "        s returns true number of spanning trees or -1 if\n"
 		   "            there are more than depth\n"
-		   "        t returns the time spent to compute the patterns\n"
+		   /*"        t returns the time spent to compute the patterns\n"
 		   "        b returns the number of vertices in the BBTree\n"
-		   "        d returns the numbers of diagonals in each block\n\n");
+		   "        d returns the numbers of diagonals in each block\n\n"*/);
 
 	printf("    -limit N: process the first N graphs in F\n\n");
 	printf("    -h | --help: display this help\n\n");
@@ -116,7 +120,7 @@ int main(int argc, char** argv) {
 		char outputOption = 0;
 		char labelOption = 0;
 		int param;
-		int depth = 1000;
+		long int depth = 1000;
 
 		/* i counts the number of graphs read */
 		int i = 0;
@@ -143,8 +147,11 @@ int main(int argc, char** argv) {
 			if (strcmp(argv[param], "-label") == 0) {
 				labelOption = argv[param+1][0];
 			}
-			if (strcmp(argv[param], "-depth") == 0) {
-				sscanf(argv[param+1], "%i", &depth);
+			if (strcmp(argv[param], "-filter") == 0) {
+				sscanf(argv[param+1], "%li", &depth);
+				if (depth < 1) {
+					depth = LONG_MAX / 2;
+				}
 			}
 		}
 
@@ -185,12 +192,31 @@ int main(int argc, char** argv) {
 					spanningTreeEstimate = getGoodEstimate(g, sgp, gp);
 					fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 					break;
+					case 't':
+					if (getGoodEstimate(g, sgp, gp) < depth) {
+						// debug
+						struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+
+						// printShallowGraph(trees);			
+						struct Graph* h = shallowGraphToGraph(trees, gp);
+						struct Graph* i = shallowGraphToGraph(trees, gp);
+
+						char isSubgraph = subtreeCheck(h, i, gp);
+
+						dumpShallowGraphCycle(sgp, trees);
+						dumpGraph(gp, h);
+						dumpGraph(gp, i);
+
+					}
+
+					break; 
 				}
 				
 				
 				
-
-				if (i % 500 == 0) { fprintf(stderr, "."); }
+				if (DEBUG_INFO) {
+					if (i % 500 == 0) { fprintf(stderr, "."); }
+				}
 
 				/***** do not alter ****/
 
