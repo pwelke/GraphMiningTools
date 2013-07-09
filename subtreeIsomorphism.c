@@ -1,5 +1,7 @@
 #include <malloc.h>
 #include "graph.h"
+#include "bipartiteMatching.h"
+#include "graphPrinting.h"
 
 int*** createCube(int x, int y) {
 	int*** cube;
@@ -179,10 +181,19 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 			int k;
 			/* y has to be a child of v */
 			if (g->vertices[y]->visited < g->vertices[v]->visited) {
+				//debug
+				fprintf(stdout, "S(%i, %i)\n", y, x);
+				fflush(stdout);
+				
 				for (k=1; k<S[y][x][0]; ++k) {
 					if (S[y][x][k] == u) {
 						addEdgeBetweenVertices(i, j, NULL, B, gp);
+						/* set ->label of edges to point to the residual edge 
+						This is how bipartiteMatching requires the graph*/
+						B->vertices[x]->neighborhood->label = (char*)B->vertices[y]->neighborhood; 
+						B->vertices[y]->neighborhood->label = (char*)B->vertices[x]->neighborhood; 
 					}
+
 				}
 			}
 		}
@@ -190,15 +201,77 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 	return B;
 }
 
-
-char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
-	// iterators
+struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* temp = getShallowGraph(sgp);
 	struct VertexList* e;
+	struct VertexList* f;
+	struct VertexList* g;	
+	int w;
+
+
+	/* mark edges that will be removed */
+	for (e=B->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+		e->used = 1;
+		((struct VertexList*)e->label)->used = 1;
+	}
+
+	/* remove edges from v */
+	for (e=B->vertices[v]->neighborhood; e!=NULL; e=f) {
+		f = e->next;
+		appendEdge(temp, e);
+	}
+
+	/* remove residual edges */
+	f = NULL;
+	g = NULL;
+	for (w=B->number; w<B->n; ++w) {
+		/* partition edges */
+		for (e=B->vertices[w]->neighborhood; e!=NULL; e=B->vertices[w]->neighborhood) {
+			B->vertices[w]->neighborhood = e->next;
+			if (e->used == 1) {
+				e->next = f;
+				f = e;
+			} else {
+				e->next = g;
+				g = e;
+			}
+		}
+		/* set neighborhood to unused, append used to temp */
+		B->vertices[w]->neighborhood = g;
+		while (f!=NULL) {
+			e = f;
+			f = f->next;
+			appendEdge(temp, e);
+		}
+	}
+	return temp;
+}
+
+void addVertexToBipartiteInstance(struct ShallowGraph* temp) {
+	struct VertexList* e;
+
+	for (e=popEdge(temp); e!=NULL; e=popEdge(temp)) {
+		e->used = 0;
+		addEdge(e->startPoint, e);
+	}
+}
+
+
+char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	// iterators
 	int u, v;
 
 	struct Vertex* r = g->vertices[0];
 	int*** S = createCube(g->n, h->n);
 	int* postorder = getPostorder(g, r->number);
+
+	// //debug
+	// for (u=0; u<g->n; ++u) {
+	// 	printf("%i ", postorder[u]);
+	// }
+	// printf("\n\n");
+	// printGraph(g);
+	// return 0;
 
 	/* init the S(v,u) for v and u leaves */
 	int* gLeaves = findLeaves(g, 0);
@@ -220,15 +293,54 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 	for (v=0; v<g->n; ++v) {
 		struct Vertex* current = g->vertices[postorder[v]];
 		int currentDegree = degree(current);
-		if (isLeaf(current) || (current->number == r->number)) {
+		if (!isLeaf(current) || (current->number == r->number)) {
 			for (u=0; u<h->n; ++u) {
-				if (degree(h->vertices[u]) <= currentDegree + 1) {
+				int i;
+				//int* Svu;
+				int degU = degree(h->vertices[u]);
+				if (degU <= currentDegree + 1) {
 					struct Graph* B = makeBipartiteInstance(g, postorder[v], h, u, S, gp);
+					int* matchings = malloc((degU + 1) * sizeof(int));
 
+					matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
+					if (matchings[0] == degU) {
+						free(matchings);
+						freeCube(S, g->n, h->n);
+						dumpGraph(gp, B);
+						return 1;
+					} else {
+						matchings[0] = degU + 1;
+					}
+
+					for (i=0; i<B->number; ++i) {
+						struct ShallowGraph* storage = removeVertexFromBipartiteInstance(B, i, sgp);
+						matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
+						if (matchings[i+1] == degU - 1) {
+							matchings[i+1] = 1;
+						} else {
+							matchings[i+1] = 0;
+						}
+						addVertexToBipartiteInstance(storage);
+						dumpShallowGraph(sgp, storage);
+					}
+					S[current->number][u] = matchings;
 					dumpGraph(gp, B);
 				}
-			}
+				
+				// /* if u is in S(v, u) then we are done */
+				// Svu = S[current->number][u];
+				// for (i=1; i<Svu[0]; ++i) {
+				// 	if (Svu[i] == u) {
+						
+				// 		/* garbage collection */
+				// 		free(postorder);
+				// 		freeCube(S, g->n, h->n);
 
+				// 		return 1;
+				// 	}
+				// }
+			}
+			
 		}
 	}
 
