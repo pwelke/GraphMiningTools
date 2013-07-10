@@ -1,6 +1,10 @@
 #include "graph.h"
-#include "stdlib.h"
+#include "stdio.h"
 
+void setFlag(struct VertexList* e, int flag) {
+	e->flag = flag;
+	((struct VertexList*)e->label)->flag = 1 - flag;
+}
 
 char augment(struct Vertex* s, struct Vertex* t) {
 	struct VertexList* e;
@@ -8,17 +12,18 @@ char augment(struct Vertex* s, struct Vertex* t) {
 	if (s == t) {
 		return 1;
 	}
+	s->visited = 1;
 	for (e=s->neighborhood; e!=NULL; e=e->next) {
-		if (e->flag == 0) {
+		if ((e->flag == 0) && (e->endPoint->visited == 0)) {
 			char found = augment(e->endPoint, t);
 			if (found) {
-				e->flag = 1;
-				/* label points to other residual edge */
-				((struct VertexList*)e->label)->flag = 0;
-				break;
+				setFlag(e, 1);
+				s->visited = 0;
+				return 1;
 			}
 		}
 	}
+	s->visited = 0;
 	return 0;
 }
 
@@ -74,7 +79,7 @@ void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct Gra
 		((struct VertexList*)e->label)->used = 1;
 	}
 
-	/* remove edges from v */
+	/* remove edges from s and t */
 	for (e=s->neighborhood; e!=NULL; e=f) {
 		f = e->next;
 		e->next = temp;
@@ -87,9 +92,9 @@ void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct Gra
 	}
 
 	/* remove residual edges */
-	f = NULL;
-	g = NULL;
 	for (w=0; w<B->n; ++w) {
+		f = NULL;
+		g = NULL;
 		/* partition edges */
 		for (e=B->vertices[w]->neighborhood; e!=NULL; e=B->vertices[w]->neighborhood) {
 			B->vertices[w]->neighborhood = e->next;
@@ -129,7 +134,9 @@ The algorithm changes the ->flag values of edges in g
 */
 int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 	struct Vertex* s = getVertex(gp->vertexPool);
+	s->number = -1;
 	struct Vertex* t = getVertex(gp->vertexPool);
+	t->number = -2;
 
 	int v;
 	int matchingSize = 0;
@@ -149,6 +156,10 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 	}
 
 	removeSandT(g, s, t, gp);
+
+	// debug
+	printf("m size %i\n", matchingSize);
+
 	return matchingSize;
 }
 
