@@ -203,6 +203,7 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 					for (k=1; k<S[y][x][0]; ++k) {
 						if (S[y][x][k] == u) {
 							addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+							++B->m;
 						}
 
 					}
@@ -239,9 +240,9 @@ struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, s
 	}
 
 	/* remove residual edges */
-	f = NULL;
-	g = NULL;
 	for (w=B->number; w<B->n; ++w) {
+		f = NULL;
+		g = NULL;
 		/* partition edges */
 		for (e=B->vertices[w]->neighborhood; e!=NULL; e=B->vertices[w]->neighborhood) {
 			B->vertices[w]->neighborhood = e->next;
@@ -312,8 +313,21 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 				if (degU <= currentDegree + 1) {
 					struct Graph* B = makeBipartiteInstance(g, postorder[v], h, u, S, gp);
 					int* matchings = malloc((degU + 1) * sizeof(int));
+					// debug
+					printGraph(B);
+					fflush(stdout);
 
 					matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
+
+					// debug 
+					printf("All:\n");
+					printGraph(B);
+					struct ShallowGraph* m = getMatching(B, sgp);
+					printShallowGraph(m);
+					printf("\n");
+					fflush(stdout);
+					dumpShallowGraph(sgp, m);
+
 					if (matchings[0] == degU) {
 						free(matchings);
 						freeCube(S, g->n, h->n);
@@ -326,11 +340,22 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 					for (i=0; i<B->number; ++i) {
 						struct ShallowGraph* storage = removeVertexFromBipartiteInstance(B, i, sgp);
 						matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
-						// if (matchings[i+1] == degU - 1) {
-						// 	matchings[i+1] = B->vertices[i]->lowPoint;
-						// } else {
-						// 	matchings[i+1] = -1;
-						// }
+						
+						// debug 
+						printf("%i:\n", i);
+						printGraph(B);
+						struct ShallowGraph* m = getMatching(B, sgp);
+						printShallowGraph(m);
+						printf("\n");
+						fflush(stdout);
+						dumpShallowGraph(sgp, m);
+
+						if (matchings[i+1] == degU - 1) {
+							matchings[i+1] = B->vertices[i]->lowPoint;
+						} else {
+							matchings[i+1] = -1;
+						}
+
 						addVertexToBipartiteInstance(storage);
 						dumpShallowGraph(sgp, storage);
 					}
