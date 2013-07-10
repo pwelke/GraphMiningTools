@@ -201,7 +201,13 @@ int main(int argc, char** argv) {
 						struct Graph* h = shallowGraphToGraph(trees, gp);
 						struct Graph* i = shallowGraphToGraph(trees, gp);
 
-						char isSubgraph = subtreeCheck(h, i, gp);
+						char isSubgraph = subtreeCheck(h, i, gp, sgp);
+
+						if (isSubgraph) {
+							printf("is subgraph\n");
+						} else {
+							printf("is no subgraph\n");
+						}
 
 						dumpShallowGraphCycle(sgp, trees);
 						dumpGraph(gp, h);
