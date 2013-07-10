@@ -167,7 +167,7 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
  	/* construct bipartite graph B(v,u) */ 
 	B = createGraph(sizeofX + sizeofY, gp);
 	/* store size of first partitioning set */
-	g->activity = sizeofX;
+	B->number = sizeofX;
 
 	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B */
 	i = 0;
