@@ -55,6 +55,66 @@ struct Graph* cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 	return h;
 }
 
+
+void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct GraphPool* gp) {
+	struct VertexList* temp = NULL;
+	struct VertexList* e;
+	struct VertexList* f;
+	struct VertexList* g;	
+	int w;
+
+
+	/* mark edges that will be removed */
+	for (e=s->neighborhood; e!=NULL; e=e->next) {
+		e->used = 1;
+		((struct VertexList*)e->label)->used = 1;
+	}
+	for (e=t->neighborhood; e!=NULL; e=e->next) {
+		e->used = 1;
+		((struct VertexList*)e->label)->used = 1;
+	}
+
+	/* remove edges from v */
+	for (e=s->neighborhood; e!=NULL; e=f) {
+		f = e->next;
+		e->next = temp;
+		temp = e;
+	}
+	for (e=t->neighborhood; e!=NULL; e=f) {
+		f = e->next;
+		e->next = temp;
+		temp = e;
+	}
+
+	/* remove residual edges */
+	f = NULL;
+	g = NULL;
+	for (w=0; w<B->n; ++w) {
+		/* partition edges */
+		for (e=B->vertices[w]->neighborhood; e!=NULL; e=B->vertices[w]->neighborhood) {
+			B->vertices[w]->neighborhood = e->next;
+			if (e->used == 1) {
+				e->next = f;
+				f = e;
+			} else {
+				e->next = g;
+				g = e;
+			}
+		}
+		/* set neighborhood to unused, append used to temp */
+		B->vertices[w]->neighborhood = g;
+		while (f!=NULL) {
+			e = f;
+			f = f->next;
+			e->next = temp;
+			temp = e;
+		}
+	}
+	dumpVertexListRecursively(gp->listPool, temp);
+	dumpVertex(gp->vertexPool, s);
+	dumpVertex(gp->vertexPool, t);
+}
+
 /**
 Return a maximum matching of the biapartite graph g.
 
@@ -88,6 +148,7 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 		++matchingSize;
 	}
 
+	removeSandT(g, s, t, gp);
 	return matchingSize;
 }
 
