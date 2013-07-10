@@ -42,6 +42,20 @@ void freeCube(int*** cube, int x, int y) {
 	free(cube);
 }
 
+void printS(int*** S, int v, int u) {
+	int i;
+	printf("S(%i, %i)={", v, u);
+	if (S[v][u]) {
+		for (i=1; i<S[v][u][0]-1; ++i) {
+			printf("%i, ", S[v][u][i]);
+		}
+		printf("%i}\n", S[v][u][S[v][u][0]-1]);
+	} else {
+		printf("}\n");
+	}
+	fflush(stdout);
+}
+
 char isLeaf(struct Vertex* v) {
 	/* check if v has a neigbor at all */
 	if (v->neighborhood) {
@@ -134,6 +148,7 @@ int* getPostorder(struct Graph* g, int root) {
 	return order;
 }
 
+
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
 struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp) {
@@ -143,6 +158,10 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 	int sizeofX = 0;
 	int sizeofY = 0;
 	struct VertexList* e;
+
+	//debug
+	printf("Call for v=%i u=%i\n", v, u);
+	fflush(stdout);
 
 	/* get size of neighborhoods to construct graph.
 	   note that we count the parent of v in sizeofY and will add it
@@ -179,25 +198,28 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 			int x = B->vertices[i]->lowPoint;
 			int y = B->vertices[j]->lowPoint;
 			int k;
+
 			/* y has to be a child of v */
 			if (g->vertices[y]->visited < g->vertices[v]->visited) {
 				//debug
-				fprintf(stdout, "S(%i, %i)\n", y, x);
-				fflush(stdout);
-				
-				for (k=1; k<S[y][x][0]; ++k) {
-					if (S[y][x][k] == u) {
-						addEdgeBetweenVertices(i, j, NULL, B, gp);
-						/* set ->label of edges to point to the residual edge 
-						This is how bipartiteMatching requires the graph*/
-						B->vertices[x]->neighborhood->label = (char*)B->vertices[y]->neighborhood; 
-						B->vertices[y]->neighborhood->label = (char*)B->vertices[x]->neighborhood; 
-					}
+				printS(S, y, x);
 
+				if (S[y][x] != NULL) {
+					for (k=1; k<S[y][x][0]; ++k) {
+						if (S[y][x][k] == u) {
+							addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+						}
+
+					}
 				}
 			}
 		}
 	} 
+
+	//debug
+	printGraph(B);
+	fflush(stdout);
+
 	return B;
 }
 
@@ -265,13 +287,6 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 	int*** S = createCube(g->n, h->n);
 	int* postorder = getPostorder(g, r->number);
 
-	// //debug
-	// for (u=0; u<g->n; ++u) {
-	// 	printf("%i ", postorder[u]);
-	// }
-	// printf("\n\n");
-	// printGraph(g);
-	// return 0;
 
 	/* init the S(v,u) for v and u leaves */
 	int* gLeaves = findLeaves(g, 0);
@@ -296,7 +311,6 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 		if (!isLeaf(current) || (current->number == r->number)) {
 			for (u=0; u<h->n; ++u) {
 				int i;
-				//int* Svu;
 				int degU = degree(h->vertices[u]);
 				if (degU <= currentDegree + 1) {
 					struct Graph* B = makeBipartiteInstance(g, postorder[v], h, u, S, gp);
@@ -316,14 +330,19 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 						struct ShallowGraph* storage = removeVertexFromBipartiteInstance(B, i, sgp);
 						matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
 						if (matchings[i+1] == degU - 1) {
-							matchings[i+1] = 1;
+							matchings[i+1] = B->vertices[i]->lowPoint;
 						} else {
-							matchings[i+1] = 0;
+							matchings[i+1] = -1;
 						}
 						addVertexToBipartiteInstance(storage);
 						dumpShallowGraph(sgp, storage);
 					}
 					S[current->number][u] = matchings;
+
+					//debug
+					printf("matching ");
+					printS(S, current->number, u);
+
 					dumpGraph(gp, B);
 				}
 				
