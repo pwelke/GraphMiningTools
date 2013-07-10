@@ -1,5 +1,6 @@
 PROJECTNAME = tpk
-CPPFLAGS = -g  -O3 -Wall -pedantic -W -ggdb
+CPPFLAGS = -g -Wall -pedantic -W -ggdb
+# -O3
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 
 main: $(OBJECTS)
