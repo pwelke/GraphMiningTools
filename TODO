@@ -1,5 +1,8 @@
 TODO
 
+- move isLeaf() from subtreeIsomorphism to graph
+- remove printing debug
+
 - documentation of listSpanningTrees!
 - declutter graph.c
 - how to go on?
