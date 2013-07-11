@@ -1,7 +1,8 @@
 TODO
 
 - move isLeaf() from subtreeIsomorphism to graph
-- remove printing debug
+- subtree iso for labelled trees
+- maybe add a prefix for private methods (that are not exposed in the header files)
 
 - documentation of listSpanningTrees!
 - declutter graph.c
