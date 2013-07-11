@@ -56,6 +56,27 @@ void printS(int*** S, int v, int u) {
 	fflush(stdout);
 }
 
+/**
+ * Print some information about a ShallowGraph
+ */
+void printStrangeMatching(struct ShallowGraph* g) {
+	
+	struct ShallowGraph* index = g;
+	struct VertexList* e;
+	do {
+		if (index) {
+			printf("matching ");
+			for (e=index->edges; e; e=e->next) {
+				printf("(%i, %i) ", e->startPoint->lowPoint, e->endPoint->lowPoint);
+			}
+			printf("\n");
+		} else {
+			/* if index is NULL, the input pointed to a list and not to a cycle */
+			break;
+		}
+	} while (index != g);
+}
+
 char isLeaf(struct Vertex* v) {
 	/* check if v has a neigbor at all */
 	if (v->neighborhood) {
@@ -159,9 +180,9 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 	int sizeofY = degree(g->vertices[v]);
 	struct VertexList* e;
 
-	//debug
-	printf("Call for v=%i u=%i\n", v, u);
-	fflush(stdout);
+	// //debug
+	// printf("Call for v=%i u=%i\n", v, u);
+	// fflush(stdout);
 
 
  	/* construct bipartite graph B(v,u) */ 
@@ -180,12 +201,12 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 		++i;
 	}
 
-	//debug
-	printf("lowPoints ");
-	for (i=0; i<B->n; ++i) {
-		printf("%i ", B->vertices[i]->lowPoint);
-	}
-	printf("\n");
+	// //debug
+	// printf("lowPoints ");
+	// for (i=0; i<B->n; ++i) {
+	// 	printf("%i ", B->vertices[i]->lowPoint);
+	// }
+	// printf("\n");
 
 	/* add edge (x,y) if u in S(y,x) */
 	for (i=0; i<sizeofX; ++i) {
@@ -196,8 +217,8 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 
 			/* y has to be a child of v */
 			if (g->vertices[y]->visited < g->vertices[v]->visited) {
-				//debug
-				printS(S, y, x);
+				// //debug
+				// printS(S, y, x);
 
 				if (S[y][x] != NULL) {
 					for (k=1; k<S[y][x][0]; ++k) {
@@ -238,6 +259,7 @@ struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, s
 		f = e->next;
 		appendEdge(temp, e);
 	}
+	B->vertices[v]->neighborhood = NULL;
 
 	/* remove residual edges */
 	for (w=B->number; w<B->n; ++w) {
@@ -313,22 +335,23 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 				if (degU <= currentDegree + 1) {
 					struct Graph* B = makeBipartiteInstance(g, postorder[v], h, u, S, gp);
 					int* matchings = malloc((degU + 1) * sizeof(int));
-					// debug
-					printGraph(B);
-					fflush(stdout);
+					// // debug
+					// printf("v=%i, u=%i\n", current->number, u);
+					// // printGraph(B);
+					// // fflush(stdout);
 
 					matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
 
-					// debug 
-					printf("All:\n");
-					printGraph(B);
-					struct ShallowGraph* m = getMatching(B, sgp);
-					printShallowGraph(m);
-					printf("\n");
-					fflush(stdout);
-					dumpShallowGraph(sgp, m);
+					// // debug 
+					// printf("All: ");
+					// //printGraph(B);
+					// struct ShallowGraph* m = getMatching(B, sgp);
+					// printStrangeMatching(m);
+					// fflush(stdout);
+					// dumpShallowGraph(sgp, m);
 
 					if (matchings[0] == degU) {
+						free(postorder);
 						free(matchings);
 						freeCube(S, g->n, h->n);
 						dumpGraph(gp, B);
@@ -339,16 +362,15 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 
 					for (i=0; i<B->number; ++i) {
 						struct ShallowGraph* storage = removeVertexFromBipartiteInstance(B, i, sgp);
+						initBipartite(B);
 						matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
 						
-						// debug 
-						printf("%i:\n", i);
-						printGraph(B);
-						struct ShallowGraph* m = getMatching(B, sgp);
-						printShallowGraph(m);
-						printf("\n");
-						fflush(stdout);
-						dumpShallowGraph(sgp, m);
+						// // debug 
+						// printf("%i:\n", i);
+						// struct ShallowGraph* m = getMatching(B, sgp);
+						// printStrangeMatching(m);
+						// fflush(stdout);
+						// dumpShallowGraph(sgp, m);
 
 						if (matchings[i+1] == degU - 1) {
 							matchings[i+1] = B->vertices[i]->lowPoint;
@@ -361,9 +383,9 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 					}
 					S[current->number][u] = matchings;
 
-					//debug
-					printf("matching ");
-					printS(S, current->number, u);
+					// //debug
+					// // printf("matching ");
+					// printS(S, current->number, u);
 
 					dumpGraph(gp, B);
 				}
