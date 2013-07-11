@@ -133,13 +133,13 @@ That is, the cast ((struct VertexList*)e->label) is valid
 The algorithm changes the ->flag values of edges in g
 */
 int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
-	struct Vertex* s = getVertex(gp->vertexPool);
-	s->number = -1;
-	struct Vertex* t = getVertex(gp->vertexPool);
-	t->number = -2;
-
 	int v;
 	int matchingSize = 0;
+
+	struct Vertex* s = getVertex(gp->vertexPool);
+	struct Vertex* t = getVertex(gp->vertexPool);
+	s->number = -1;
+	t->number = -2;
 
 	/* Add s, t and edges from s to A and from B to t.
 	Also, set residual capacities for these edges correctly */
