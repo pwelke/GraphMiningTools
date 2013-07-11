@@ -1,7 +1,7 @@
 #include <malloc.h>
 #include "graph.h"
 #include "bipartiteMatching.h"
-#include "graphPrinting.h"
+
 
 int*** createCube(int x, int y) {
 	int*** cube;
@@ -27,6 +27,7 @@ int*** createCube(int x, int y) {
 	return cube;
 }
 
+
 void freeCube(int*** cube, int x, int y) {
 	int i, j;
 	for (i=0; i<x; ++i) {
@@ -42,6 +43,7 @@ void freeCube(int*** cube, int x, int y) {
 	free(cube);
 }
 
+
 void printS(int*** S, int v, int u) {
 	int i;
 	printf("S(%i, %i)={", v, u);
@@ -55,6 +57,7 @@ void printS(int*** S, int v, int u) {
 	}
 	fflush(stdout);
 }
+
 
 /**
  * Print some information about a ShallowGraph
@@ -77,6 +80,7 @@ void printStrangeMatching(struct ShallowGraph* g) {
 	} while (index != g);
 }
 
+
 char isLeaf(struct Vertex* v) {
 	/* check if v has a neigbor at all */
 	if (v->neighborhood) {
@@ -90,6 +94,7 @@ char isLeaf(struct Vertex* v) {
 		return 0;
 	}
 }
+
 
 /**
 Find all leaves of g that are not equal to r.
@@ -128,6 +133,7 @@ int* findLeaves(struct Graph* g, int root) {
 	return leaves;
 }
 
+
 int dfs(struct Vertex* v, int value) {
 	struct VertexList* e;
 
@@ -142,6 +148,7 @@ int dfs(struct Vertex* v, int value) {
 	v->visited = value;
 	return value;
 }
+
 
 /**
 Compute a dfs order or postorder on g starting at vertex root.
@@ -162,8 +169,8 @@ int* getPostorder(struct Graph* g, int root) {
 		if (g->vertices[i]->visited != -1) {
 			order[g->vertices[i]->visited] = i;
 		} else {
-			// debug
-			fprintf(stderr, "Vertex %i was not visited by dfs\n", i);
+			/* should never happen if g is a tree */
+			fprintf(stderr, "Vertex %i was not visited by dfs.\nThis can not happen, if g is a tree.\n", i);
 		}
 	}
 	return order;
@@ -179,11 +186,6 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 	int sizeofX = degree(h->vertices[u]);
 	int sizeofY = degree(g->vertices[v]);
 	struct VertexList* e;
-
-	// //debug
-	// printf("Call for v=%i u=%i\n", v, u);
-	// fflush(stdout);
-
 
  	/* construct bipartite graph B(v,u) */ 
 	B = createGraph(sizeofX + sizeofY, gp);
@@ -201,13 +203,6 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 		++i;
 	}
 
-	// //debug
-	// printf("lowPoints ");
-	// for (i=0; i<B->n; ++i) {
-	// 	printf("%i ", B->vertices[i]->lowPoint);
-	// }
-	// printf("\n");
-
 	/* add edge (x,y) if u in S(y,x) */
 	for (i=0; i<sizeofX; ++i) {
 		for (j=sizeofX; j<B->n; ++j) {
@@ -217,8 +212,6 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 
 			/* y has to be a child of v */
 			if (g->vertices[y]->visited < g->vertices[v]->visited) {
-				// //debug
-				// printS(S, y, x);
 
 				if (S[y][x] != NULL) {
 					for (k=1; k<S[y][x][0]; ++k) {
@@ -233,12 +226,9 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 		}
 	} 
 
-	// //debug
-	// printGraph(B);
-	// fflush(stdout);
-
 	return B;
 }
+
 
 struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* temp = getShallowGraph(sgp);
@@ -298,7 +288,7 @@ void addVertexToBipartiteInstance(struct ShallowGraph* temp) {
 
 
 char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	// iterators
+	/* iterators */
 	int u, v;
 
 	struct Vertex* r = g->vertices[0];
@@ -335,20 +325,8 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 				if (degU <= currentDegree + 1) {
 					struct Graph* B = makeBipartiteInstance(g, postorder[v], h, u, S, gp);
 					int* matchings = malloc((degU + 1) * sizeof(int));
-					// // debug
-					// printf("v=%i, u=%i\n", current->number, u);
-					// // printGraph(B);
-					// // fflush(stdout);
 
 					matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
-
-					// // debug 
-					// printf("All: ");
-					// //printGraph(B);
-					// struct ShallowGraph* m = getMatching(B, sgp);
-					// printStrangeMatching(m);
-					// fflush(stdout);
-					// dumpShallowGraph(sgp, m);
 
 					if (matchings[0] == degU) {
 						free(postorder);
@@ -364,13 +342,6 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 						struct ShallowGraph* storage = removeVertexFromBipartiteInstance(B, i, sgp);
 						initBipartite(B);
 						matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
-						
-						// // debug 
-						// printf("%i:\n", i);
-						// struct ShallowGraph* m = getMatching(B, sgp);
-						// printStrangeMatching(m);
-						// fflush(stdout);
-						// dumpShallowGraph(sgp, m);
 
 						if (matchings[i+1] == degU - 1) {
 							matchings[i+1] = B->vertices[i]->lowPoint;
@@ -383,27 +354,9 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 					}
 					S[current->number][u] = matchings;
 
-					// //debug
-					// // printf("matching ");
-					// printS(S, current->number, u);
-
 					dumpGraph(gp, B);
 				}
-				
-				// /* if u is in S(v, u) then we are done */
-				// Svu = S[current->number][u];
-				// for (i=1; i<Svu[0]; ++i) {
-				// 	if (Svu[i] == u) {
-						
-				// 		/* garbage collection */
-				// 		free(postorder);
-				// 		freeCube(S, g->n, h->n);
-
-				// 		return 1;
-				// 	}
-				// }
-			}
-			
+			}		
 		}
 	}
 
@@ -413,4 +366,3 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 
 	return 0;
 }
-
