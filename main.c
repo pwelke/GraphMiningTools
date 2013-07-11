@@ -196,22 +196,21 @@ int main(int argc, char** argv) {
 					if (getGoodEstimate(g, sgp, gp) < depth) {
 						// debug
 						struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+						struct ShallowGraph* idx = trees;
+						for (idx=trees; idx; idx=idx->next) {			
+							struct Graph* h = shallowGraphToGraph(idx, gp);
+							struct Graph* i = shallowGraphToGraph(idx, gp);
 
-						// printShallowGraph(trees);			
-						struct Graph* h = shallowGraphToGraph(trees, gp);
-						struct Graph* i = shallowGraphToGraph(trees, gp);
+							char isSubgraph = subtreeCheck(h, i, gp, sgp);
 
-						char isSubgraph = subtreeCheck(h, i, gp, sgp);
+							if (!isSubgraph) {
+								printf("is no subgraph\n");
+							}
 
-						if (isSubgraph) {
-							printf("is subgraph\n");
-						} else {
-							printf("is no subgraph\n");
+							dumpGraph(gp, h);
+							dumpGraph(gp, i);
 						}
-
 						dumpShallowGraphCycle(sgp, trees);
-						dumpGraph(gp, h);
-						dumpGraph(gp, i);
 
 					}
 
