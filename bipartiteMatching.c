@@ -1,10 +1,12 @@
 #include "graph.h"
 #include "stdio.h"
 
+
 void setFlag(struct VertexList* e, int flag) {
 	e->flag = flag;
 	((struct VertexList*)e->label)->flag = 1 - flag;
 }
+
 
 /**
  * Print some information about a graph to the screen
@@ -42,6 +44,7 @@ void printStrangeGraph(struct Graph* g) {
 	
 }
 
+
 char augment(struct Vertex* s, struct Vertex* t) {
 	struct VertexList* e;
 
@@ -63,6 +66,7 @@ char augment(struct Vertex* s, struct Vertex* t) {
 	return 0;
 }
 
+
 void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp) {
 	struct VertexList* f1;
 	struct VertexList* f2;
@@ -81,6 +85,7 @@ void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp) {
 	addEdge(w, f2);
 }
 
+
 struct Graph* cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 	int v; 
 	struct VertexList* e;
@@ -95,6 +100,7 @@ struct Graph* cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 	}
 	return h;
 }
+
 
 void initBipartite(struct Graph* B) {
 	int i;
@@ -166,6 +172,7 @@ void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct Gra
 	dumpVertex(gp->vertexPool, t);
 }
 
+
 /**
 Return a maximum matching of the biapartite graph g.
 
@@ -187,10 +194,6 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 	s->number = -1;
 	t->number = -2;
 
-	// //debug 
-	// printStrangeGraph(g);
-	// fflush(stdout);
-
 	/* Add s, t and edges from s to A and from B to t.
 	Also, set residual capacities for these edges correctly */
 	for (v=0; v<g->number; ++v) {
@@ -206,9 +209,6 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 	}
 
 	removeSandT(g, s, t, gp);
-
-	// // debug
-	// printf("m size %i\n", matchingSize);
 
 	return matchingSize;
 }
