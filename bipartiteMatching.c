@@ -6,6 +6,42 @@ void setFlag(struct VertexList* e, int flag) {
 	((struct VertexList*)e->label)->flag = 1 - flag;
 }
 
+/**
+ * Print some information about a graph to the screen
+ */
+void printStrangeGraph(struct Graph* g) {
+	
+	struct Graph* index = g;
+	int i= 0,j;
+
+	do {
+		if (index) {
+			printf("Graph %i has %i edges:\n", i, index->m);
+			for (j=0; j<index->n; ++j) {
+				if (index->vertices[j]) {
+					struct VertexList* e;
+					printf("Neighbors of vertex %i:\n", index->vertices[j]->lowPoint);
+					for (e=index->vertices[j]->neighborhood; e; e=e->next) {
+						printf("(%i, %i) ", e->startPoint->lowPoint, e->endPoint->lowPoint);
+					}
+					printf("\n");
+				} else {
+					printf("Vertex %i is not used by the current (induced) graph\n", j);
+				}
+				
+			}
+			printf("\n");
+			index = index->next;
+			++i;
+		} else {
+			/* if index is NULL, the input pointed to a list and not to a cycle */
+			break;
+		}
+	} while (index != g);
+	fflush(stdout);
+	
+}
+
 char augment(struct Vertex* s, struct Vertex* t) {
 	struct VertexList* e;
 
@@ -58,6 +94,16 @@ struct Graph* cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 		}
 	}
 	return h;
+}
+
+void initBipartite(struct Graph* B) {
+	int i;
+	struct VertexList* e;
+	for (i=0; i<B->number; ++i) {
+		for (e=B->vertices[i]->neighborhood; e!=NULL; e=e->next) {
+			setFlag(e, 0);
+		}
+	}
 }
 
 
@@ -141,6 +187,10 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 	s->number = -1;
 	t->number = -2;
 
+	// //debug 
+	// printStrangeGraph(g);
+	// fflush(stdout);
+
 	/* Add s, t and edges from s to A and from B to t.
 	Also, set residual capacities for these edges correctly */
 	for (v=0; v<g->number; ++v) {
@@ -157,8 +207,8 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 
 	removeSandT(g, s, t, gp);
 
-	// debug
-	printf("m size %i\n", matchingSize);
+	// // debug
+	// printf("m size %i\n", matchingSize);
 
 	return matchingSize;
 }
