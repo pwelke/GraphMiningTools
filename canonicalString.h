@@ -42,8 +42,8 @@ void markConnectedComponents(struct Vertex *v, int component);
 
 struct ShallowGraph* getCanonicalStringOfOuterplanarBlock(struct ShallowGraph* hamiltonianCycle, struct ShallowGraph* diagonals, struct ShallowGraphPool* sgp);
 
-void printCanonicalString(struct ShallowGraph *s);
-void printCanonicalStrings(struct ShallowGraph *s);
+void printCanonicalString(struct ShallowGraph *s, FILE* stream);
+void printCanonicalStrings(struct ShallowGraph *s, FILE* stream);
 
 char* canonicalStringToChar(struct ShallowGraph* string);
 

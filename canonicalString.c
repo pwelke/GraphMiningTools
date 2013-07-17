@@ -1376,12 +1376,12 @@ char* canonicalStringToChar(struct ShallowGraph* string) {
 Print the canonical string, represented by the ShallowGraph s to 
 the screen.
  */
-void printCanonicalString(struct ShallowGraph *s) {
+void printCanonicalString(struct ShallowGraph* s, FILE* stream) {
 	struct VertexList *i;
 	for (i=s->edges; i; i = i->next) {
-		printf("%s", i->label);
+		fprintf(stream, "%s ", i->label);
 	}
-	printf("\n");
+	fprintf(stream, "\n");
 }
 
 
@@ -1389,9 +1389,9 @@ void printCanonicalString(struct ShallowGraph *s) {
 Print the canonical strings represented by the list of
 ShallowGraphs s 
  */
-void printCanonicalStrings(struct ShallowGraph *s) {
+void printCanonicalStrings(struct ShallowGraph *s, FILE* stream) {
 	struct ShallowGraph* i;
 	for (i=s; i; i=i->next) {
-		printCanonicalString(i);
+		printCanonicalString(i, stream);
 	}
 }
