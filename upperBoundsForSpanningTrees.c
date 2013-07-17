@@ -4,10 +4,6 @@
 #include "outerplanar.h"
 #include "dfs.h"
 
-//debug
-#include "graphPrinting.h"
-
-
 /* return n choose r */
 long int nCr(long int n, long int r) {
 	long int numer = 1;
@@ -69,25 +65,6 @@ int getVertexNumberOfInducedGraph(struct ShallowGraph* g, int n, int* vertices) 
 		}
 	}
 	return nInd;
-}
-
-
-/** lots of stuff remain to do **/
-long int exactNumberOfSpanningTrees(struct ShallowGraph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	// debug
-	struct Graph* comp = shallowGraphToGraph(g, gp);
-	struct ShallowGraph* hamiltonianCycle = getCycleAndDiagonals(comp, sgp);
-	struct ShallowGraph* diagonals = hamiltonianCycle->next;
-	struct VertexList* e;
-
-	for (e=diagonals->edges; e!=NULL; e=e->next) {
-		e->flag = 0;
-	}
-
-	dumpShallowGraphCycle(sgp, hamiltonianCycle);
-	dumpGraph(gp, comp);
-
-	return -1;
 }
 
 
