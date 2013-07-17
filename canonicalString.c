@@ -80,6 +80,8 @@ int compareVertexLists(const struct VertexList* e1, const struct VertexList* e2)
 	} 
 }
 
+char getTerminatorSymbol() { return ')'; }
+char getInitialisatorSymbol() { return '('; }
 
 /**
 Returns a VertexList object that represents the end of a canonical String.
@@ -88,7 +90,7 @@ Currently the ) sign is used for that.
 struct VertexList* getTerminatorEdge(struct ListPool *p) {
 	struct VertexList* e = getVertexList(p);
 	e->label = malloc(2*sizeof(char));
-	sprintf(e->label, ")");
+	sprintf(e->label, "%c", getTerminatorSymbol());
 	e->isStringMaster = 1;
 	return e;
 }
@@ -101,7 +103,7 @@ Currently the ( sign is used for that.
 struct VertexList* getInitialisatorEdge(struct ListPool *p) {
 	struct VertexList* e = getVertexList(p);
 	e->label = malloc(2*sizeof(char));
-	sprintf(e->label, "(");
+	sprintf(e->label, "%c", getInitialisatorSymbol());
 	e->isStringMaster = 1;
 	return e;
 }
@@ -664,22 +666,24 @@ struct ShallowGraph* getCyclePatterns(struct ShallowGraph* cycles, struct Shallo
  * The string is consumed
  * This method DOES NOT INCREASE the current number of strings contained in the search tree.
  * You have to maintain the correct number of strings in the search tree yourself.
+ * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
  */
-void addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p) {
+char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p) {
 
 	/* if edge == NULL, stop recursion, remember, that some string ends here */
 	if (edge == NULL) {
 		root->visited += 1;
+		return 0;
 	} else {
 		struct VertexList* idx;
 		for (idx=root->neighborhood; idx; idx=idx->next) {
 			/* if the next label is already in the tree, continue recursively */
 			if (strcmp(idx->label, edge->label) == 0) {
-				addStringToSearchTree(idx->endPoint, edge->next, p);
+				char isNew = addStringToSearchTree(idx->endPoint, edge->next, p);
 				/* edges dangling at edge are consumed or dumped by the following recursion steps */
 				edge->next = NULL;
 				dumpVertexList(p->listPool, edge);
-				return;
+				return isNew;
 			}
 		}
 
@@ -689,6 +693,7 @@ void addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
 		edge->endPoint = getVertex(p->vertexPool);
 		addEdge(root, edge);
 		addStringToSearchTree(edge->endPoint, idx, p);
+		return 1;
 	}
 }
 
@@ -700,20 +705,62 @@ list of ShallowGraphs. The list is consumed and dumped.
 The resulting structure is a tree rooted at the return value where a path from the root
 to some vertex v in the tree represents v->visited many strings.
 
+root->number gives the size of strings, root->d gives the number of unique elements in strings. 
+
  */
 struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph *idx;
 	struct Vertex* root = getVertex(gp->vertexPool);
 
 	for (idx=strings; idx; idx=idx->next) {
-		addStringToSearchTree(root, idx->edges, gp);
+		root->d += addStringToSearchTree(root, idx->edges, gp);
 		root->number += 1;
+
 		idx->edges = NULL;
 	}
 
 	dumpShallowGraphCycle(sgp, strings);
 
 	return root;
+}
+
+void recPrint(struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, FILE* stream, struct ShallowGraphPool* sgp) {
+	struct VertexList* e;
+
+	if (root->visited != 0) {
+		fprintf(stream, "%i\t", root->visited);
+		printCanonicalString(prefix, stream);
+	}
+
+	for (e=root->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint != parent) {
+			/* after finishing this block, we want prefix to be as before, thus we have
+			   to do some list magic */
+			struct VertexList* lastEdge = prefix->lastEdge;
+			appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
+
+			recPrint(e->endPoint, root, prefix, stream, sgp);
+
+			dumpVertexList(sgp->listPool, prefix->lastEdge);
+			prefix->lastEdge = lastEdge;
+			--prefix->m;
+
+			if (prefix->m == 0) {
+				prefix->edges = NULL;
+			} else {
+				lastEdge->next = NULL;
+			}
+		}
+	}
+}
+
+
+void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* prefix = getShallowGraph(sgp);
+
+	recPrint(root, root, prefix, stream, sgp);
+
+	dumpShallowGraph(sgp, prefix);
 }
 
 
@@ -1382,6 +1429,24 @@ void printCanonicalString(struct ShallowGraph* s, FILE* stream) {
 		fprintf(stream, "%s ", i->label);
 	}
 	fprintf(stream, "\n");
+}
+
+struct ShallowGraph* readCanonicalString(FILE* stream, int maxLabelSize, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* string = getShallowGraph(sgp);
+	int openInitializators = 0;	
+	do {
+		char* label = malloc((maxLabelSize + 1) * sizeof(char));
+		fscanf(stream, "%s", label);
+		if ((label[0] == getInitialisatorSymbol()) && (label[1] = EOF)) {
+			++openInitializators;
+		}
+		if ((label[0] == getTerminatorSymbol()) && (label[1] = EOF)) {
+			++openInitializators;
+		}
+	} while (openInitializators != 0);
+
+
+	return string;
 }
 
 

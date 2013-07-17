@@ -18,9 +18,10 @@ int compareVertexLists(const struct VertexList* e1, const struct VertexList* e2)
 
 
 struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p);
+char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p);
 void dumpSearchTree(struct GraphPool* p, struct Vertex* root);
 void printSearchTree(struct Vertex* root, int level);
+void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp);
 
 /* should be private */
 struct VertexList* getTerminatorEdge(struct ListPool *p);
