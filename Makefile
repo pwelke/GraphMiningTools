@@ -11,6 +11,7 @@ main: $(OBJECTS)
 
 clean:
 	rm *.o
+	rm tpk
 	
 new: clean main
 
