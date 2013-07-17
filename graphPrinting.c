@@ -187,9 +187,9 @@ char diffGraphs(char* name, struct Graph *g, struct Graph* h) {
 			}
 		}
 		if (strcmp(s1, s2) != 0) {
-			printf(s1);
+			printf("%s", s1);
 			printf("\n");
-			printf(s2);
+			printf("%s", s2);
 			printf("\n\n");
 			++diffs;
 		}
