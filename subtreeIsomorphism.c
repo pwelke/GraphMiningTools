@@ -81,21 +81,6 @@ void printStrangeMatching(struct ShallowGraph* g) {
 }
 
 
-char isLeaf(struct Vertex* v) {
-	/* check if v has a neigbor at all */
-	if (v->neighborhood) {
-		/* check if v has exactly one neighbor, thus is a leaf */
-		if (v->neighborhood->next == NULL) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} else {
-		return 0;
-	}
-}
-
-
 /**
 Find all leaves of g that are not equal to r.
 
