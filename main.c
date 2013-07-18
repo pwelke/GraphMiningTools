@@ -12,6 +12,7 @@
 #include "upperBoundsForSpanningTrees.h"
 #include "subtreeIsomorphism.h"
 #include "graphPrinting.h"
+#include "treeCenter.h"
 /* #include "opk.h" */
 
 char DEBUG_INFO = 1;
@@ -194,9 +195,10 @@ int main(int argc, char** argv) {
 					break;
 					case 't':
 					if (getGoodEstimate(g, sgp, gp) < depth) {
-						// debug
+
 						struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-						struct ShallowGraph* idx = trees;
+						struct ShallowGraph* idx;
+
 						for (idx=trees; idx; idx=idx->next) {			
 							struct Graph* h = shallowGraphToGraph(idx, gp);
 							struct Graph* i = shallowGraphToGraph(idx, gp);
@@ -213,8 +215,36 @@ int main(int argc, char** argv) {
 						dumpShallowGraphCycle(sgp, trees);
 
 					}
-
 					break; 
+					case 'p':
+					if (getGoodEstimate(g, sgp, gp) < depth) {
+						struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+						struct ShallowGraph* idx;
+						struct ShallowGraph* cStrings = NULL;
+						int nTrees = 0;
+						struct Vertex* searchTree;
+
+						for (idx=trees; idx; idx=idx->next) {	
+							struct Graph* tree = shallowGraphToGraph(idx, gp);
+
+							struct ShallowGraph* cString = treeCenterCanonicalString(tree, sgp);
+							cString->next = cStrings;
+							cStrings = cString;
+							++nTrees;
+
+							/* garbage collection */
+							dumpGraph(gp, tree);
+						}
+
+						dumpShallowGraphCycle(sgp, trees);
+						searchTree = buildSearchTree(cStrings, gp, sgp);
+						printf("# %i %i\n", g->number, searchTree->d);
+						printStringsInSearchTree(searchTree, stdout, sgp);
+						fflush(stdout);
+
+						dumpSearchTree(gp, searchTree);
+					}
+					break;
 				}
 				
 				
