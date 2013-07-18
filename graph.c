@@ -296,6 +296,20 @@ int degree(struct Vertex* v) {
 	return deg;
 }
 
+char isLeaf(struct Vertex* v) {
+	/* check if v has a neigbor at all */
+	if (v->neighborhood) {
+		/* check if v has exactly one neighbor, thus is a leaf */
+		if (v->neighborhood->next == NULL) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		return 0;
+	}
+}
+
 
 /**
  * Given two vertices v, w this method returns the number of common neighbors.
@@ -695,6 +709,21 @@ struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPoo
 
 	return g;
 } 
+
+
+char existsEdge(struct Graph* g, int v, int w) {
+	struct VertexList* e;
+	if ((g->vertices[v]) && (g->vertices[v]->neighborhood)) {
+		for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+			if (e->endPoint->number == w) {
+				return 1;
+			}
+		}
+	}
+	/* if there is no vertex, or no neighborhood at all, or w does not occur
+	as endpoint of any edge incident to v, return false */
+	return 0;
+}
 
 
 /**
