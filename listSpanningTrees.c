@@ -53,20 +53,6 @@ struct ShallowGraph* selectB(struct Graph* partialTree, struct ShallowGraph* res
 	return B;
 }
 
-char existsEdge(struct Graph* g, int v, int w) {
-	struct VertexList* e;
-	if ((g->vertices[v]) && (g->vertices[v]->neighborhood)) {
-		for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
-			if (e->endPoint->number == w) {
-				return 1;
-			}
-		}
-	}
-	/* if there is no vertex, or no neighborhood at all, or w does not occur
-	as endpoint of any edge incident to v, return false */
-	return 0;
-}
-
 /**
 Split list into two new lists. the returned list r contains all edges in list that have a corresponding edge in graph. r->next contains all
 edges that are not contained in graph. list is consumed and dumped. Any access to the list lateron will result in strange things happening.
