@@ -238,8 +238,8 @@ int main(int argc, char** argv) {
 
 						dumpShallowGraphCycle(sgp, trees);
 						searchTree = buildSearchTree(cStrings, gp, sgp);
-						printf("# %i %i\n", g->number, searchTree->d);
-						printStringsInSearchTree(searchTree, stdout, sgp);
+						// printf("# %i %i\n", g->number, searchTree->d);
+						// printStringsInSearchTree(searchTree, stdout, sgp);
 						fflush(stdout);
 
 						dumpSearchTree(gp, searchTree);
