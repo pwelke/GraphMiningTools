@@ -3,6 +3,8 @@
 #include "bipartiteMatching.h"
 
 
+/** Utility data structure creator.
+Cube will store, what is called S in the paper. */
 int*** createCube(int x, int y) {
 	int*** cube;
 	int i, j;
@@ -28,6 +30,7 @@ int*** createCube(int x, int y) {
 }
 
 
+/** Utility data structure destructor */
 void freeCube(int*** cube, int x, int y) {
 	int i, j;
 	for (i=0; i<x; ++i) {
@@ -44,6 +47,8 @@ void freeCube(int*** cube, int x, int y) {
 }
 
 
+
+/** Print a single entry in the cube */
 void printS(int*** S, int v, int u) {
 	int i;
 	printf("S(%i, %i)={", v, u);
