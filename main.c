@@ -13,10 +13,12 @@
 #include "subtreeIsomorphism.h"
 #include "graphPrinting.h"
 #include "treeCenter.h"
+#include "connectedComponents.h"
 /* #include "opk.h" */
 
 char DEBUG_INFO = 1;
 
+int MINGRAPH = -1;
 
 /**
  * Print --help message
@@ -167,86 +169,108 @@ int main(int argc, char** argv) {
 		/* iterate over all graphs in the database */
 		while (((i < maxGraphs) || (maxGraphs == -1)) && (g = iterateFile(&aids99VertexLabel, &aids99EdgeLabel))) {
 
+			
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
-				
-				long int spanningTreeEstimate;
+				if (i > MINGRAPH) {
+					long int spanningTreeEstimate;
 
-				/* filter out moderately active molecules, if 'i' otherwise set labels */
-				if (labelOption == 'i') {
-					if (g->activity == 1) {
-						dumpGraph(gp, g);
-						continue;
-					} else {
-						labelProcessing(g, 'a');
+					/* filter out moderately active molecules, if 'i' otherwise set labels */
+					if (labelOption == 'i') {
+						if (g->activity == 1) {
+							dumpGraph(gp, g);
+							continue;
+						} else {
+							labelProcessing(g, 'a');
+						}
+					}else {
+						labelProcessing(g, labelOption);
 					}
-				}else {
-					labelProcessing(g, labelOption);
-				}
 
-				switch (outputOption) {
-					case 's':
-					spanningTreeEstimate = countSpanningTrees(g, depth, sgp, gp);
-					fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
-					break;
-					case 'e':
-					spanningTreeEstimate = getGoodEstimate(g, sgp, gp);
-					fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
-					break;
-					case 't':
-					if (getGoodEstimate(g, sgp, gp) < depth) {
+					switch (outputOption) {
+						case 's':
+						spanningTreeEstimate = countSpanningTrees(g, depth, sgp, gp);
+						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
+						break;
+						case 'e':
+						spanningTreeEstimate = getGoodEstimate(g, sgp, gp);
+						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
+						break;
+						case 't':
+						if (getGoodEstimate(g, sgp, gp) < depth) {
 
-						struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-						struct ShallowGraph* idx;
+							struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+							struct ShallowGraph* idx;
 
-						for (idx=trees; idx; idx=idx->next) {			
-							struct Graph* h = shallowGraphToGraph(idx, gp);
-							struct Graph* i = shallowGraphToGraph(idx, gp);
+							for (idx=trees; idx; idx=idx->next) {			
+								struct Graph* h = shallowGraphToGraph(idx, gp);
+								struct Graph* i = shallowGraphToGraph(idx, gp);
 
-							char isSubgraph = subtreeCheck(h, i, gp, sgp);
+								char isSubgraph = subtreeCheck(h, i, gp, sgp);
 
-							if (!isSubgraph) {
-								printf("is no subgraph\n");
+								if (!isSubgraph) {
+									printf("is no subgraph\n");
+								}
+
+								dumpGraph(gp, h);
+								dumpGraph(gp, i);
 							}
+							dumpShallowGraphCycle(sgp, trees);
 
-							dumpGraph(gp, h);
-							dumpGraph(gp, i);
 						}
-						dumpShallowGraphCycle(sgp, trees);
+						break; 
+						case 'p':
+						if (getGoodEstimate(g, sgp, gp) < depth) {
 
-					}
-					break; 
-					case 'p':
-					if (getGoodEstimate(g, sgp, gp) < depth) {
-						struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-						struct ShallowGraph* idx;
-						struct ShallowGraph* cStrings = NULL;
-						int nTrees = 0;
-						struct Vertex* searchTree;
+							/* need to split g into connected components */
+							struct ShallowGraph* component;
+							struct ShallowGraph* connectedComponents = getConnectedComponents(g, sgp);
 
-						for (idx=trees; idx; idx=idx->next) {	
-							struct Graph* tree = shallowGraphToGraph(idx, gp);
+							for (component = connectedComponents; component; component=component->next) {
+								/** TODO is it ok to just ignore single vertices ?? */
+								if (component->m > 0) {
+									struct Graph* inducedGraph = shallowGraphToGraph(component, gp);
+									struct ShallowGraph* trees = listSpanningTrees(inducedGraph, sgp, gp);
+									struct ShallowGraph* idx;
+									struct ShallowGraph* cStrings = NULL;
+									int nTrees = 0;
+									struct Vertex* searchTree;
 
-							struct ShallowGraph* cString = treeCenterCanonicalString(tree, sgp);
-							cString->next = cStrings;
-							cStrings = cString;
-							++nTrees;
+									// //debug
+									// printGraph(inducedGraph);
 
-							/* garbage collection */
-							dumpGraph(gp, tree);
+									for (idx=trees; idx; idx=idx->next) {	
+										struct Graph* tree = shallowGraphToGraph(idx, gp);
+										
+										// // debug
+										// printGraph(tree);
+
+										/* assumes that tree is a tree */
+										struct ShallowGraph* cString = treeCenterCanonicalString(tree, sgp);
+										cString->next = cStrings;
+										cStrings = cString;
+										++nTrees;
+
+										/* garbage collection */
+										dumpGraph(gp, tree);
+									}
+
+									dumpShallowGraphCycle(sgp, trees);
+
+									searchTree = buildSearchTree(cStrings, gp, sgp);
+									printf("# %i %i\n", g->number, searchTree->d);
+									printStringsInSearchTree(searchTree, stdout, sgp);
+									fflush(stdout);
+
+									dumpSearchTree(gp, searchTree);
+									dumpGraph(gp, inducedGraph);
+								}
+							}	
+							dumpShallowGraphCycle(sgp, connectedComponents);
 						}
-
-						dumpShallowGraphCycle(sgp, trees);
-						searchTree = buildSearchTree(cStrings, gp, sgp);
-						// printf("# %i %i\n", g->number, searchTree->d);
-						// printStringsInSearchTree(searchTree, stdout, sgp);
-						fflush(stdout);
-
-						dumpSearchTree(gp, searchTree);
+						break;
 					}
-					break;
 				}
-				
 				
 				
 				if (DEBUG_INFO) {
