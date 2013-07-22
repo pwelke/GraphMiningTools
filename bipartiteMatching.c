@@ -1,7 +1,10 @@
+#include <stdio.h>
 #include "graph.h"
-#include "stdio.h"
 
 
+/**
+set edge to flag (either 0 or 1) and residual edge
+to 1-flag */
 void setFlag(struct VertexList* e, int flag) {
 	e->flag = flag;
 	((struct VertexList*)e->label)->flag = 1 - flag;
@@ -45,6 +48,11 @@ void printStrangeGraph(struct Graph* g) {
 }
 
 
+/**
+dfs that searches for a path from s to t and augments it, 
+if found.
+returns 1 if there is a path or 0 otherwise.
+*/
 char augment(struct Vertex* s, struct Vertex* t) {
 	struct VertexList* e;
 
@@ -67,6 +75,13 @@ char augment(struct Vertex* s, struct Vertex* t) {
 }
 
 
+/**
+Method for constructing the residual graph. 
+Creates an edge e between v and w and its residual edge f
+between w and v.
+e->flag = 0, f->flag = 1
+e->label = f, f->label = e (for constant time augmenting)
+*/
 void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp) {
 	struct VertexList* f1;
 	struct VertexList* f2;
@@ -86,6 +101,12 @@ void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp) {
 }
 
 
+/**
+Safety utility function. Given a bipartite graph, the
+matching algorithm needs some strange modifications to 
+work. If the bipartite graph should be used somewhere else
+lateron, it is better to create a local copy. 
+*/
 struct Graph* cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 	int v; 
 	struct VertexList* e;
@@ -102,6 +123,10 @@ struct Graph* cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 }
 
 
+/**
+Init the bipartite graph such that edges have flag 0, residual 
+edges have flag 1.
+*/
 void initBipartite(struct Graph* B) {
 	int i;
 	struct VertexList* e;
@@ -119,7 +144,6 @@ void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct Gra
 	struct VertexList* f;
 	struct VertexList* g;	
 	int w;
-
 
 	/* mark edges that will be removed */
 	for (e=s->neighborhood; e!=NULL; e=e->next) {
@@ -174,7 +198,7 @@ void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct Gra
 
 
 /**
-Return a maximum matching of the biapartite graph g.
+Return a maximum matching of the bipartite graph g.
 
 Input is a bipartite graph g. That is: V(g) = A \dot{\cup} B,
 g->number = |A| and vertices 0 to |A|-1 belong to A.
