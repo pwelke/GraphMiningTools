@@ -25,9 +25,9 @@ int markEdges(struct Vertex* root, int value) {
 			int current = markEdges(e->endPoint, value + 1);
 			e->used = current;
 
-			//debug
-			printf("(%i %i) %i\n", e->startPoint->number, e->endPoint->number, e->used);
-			fflush(stdout);
+			// //debug
+			// printf("(%i %i) %i\n", e->startPoint->number, e->endPoint->number, e->used);
+			// fflush(stdout);
 
 			if (current > max) {
 				max = current;
