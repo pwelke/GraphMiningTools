@@ -1,8 +1,8 @@
 #include <malloc.h>
-
 #include "graph.h"
 #include "outerplanar.h"
 #include "dfs.h"
+
 
 /* return n choose r */
 long int nCr(long int n, long int r) {
@@ -24,10 +24,29 @@ long int nCr(long int n, long int r) {
 	return numer / denom;
 }
 
+
+/**
+The simplest upper bound for the number of spanning trees
+is just the number of all subsets of the edge set of cardinality
+n - 1
+*/
 long int trivialBound(int m, int n) {
 	return nCr(m, n-1);
 }
 
+
+/**
+For biconnected outerplanar graphs on n vertices and m edges, 
+there is a better bound.
+Each diagonal creates a facet, from which exactly one edge 
+can be removed to obtain a spanning tree of that facet. 
+
+we obtain an upper bound: For each subset of the diagonals 
+with cardinality a, x = n/(a+1)^(a+1) is an upper bound on the number of 
+spanning trees. 
+thus we sum over all cardinalities a <= m and multiply
+x * nCr(m, a).
+*/
 long int outerplanarBound(long int m, long int n) {
 	double estimate = 0;
 	int i;
