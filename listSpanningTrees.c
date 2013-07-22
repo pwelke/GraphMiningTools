@@ -6,6 +6,19 @@
 #include "dfs.h"
 #include "listSpanningTrees.h"
 
+
+/** Implements Read&Tarjans listing algorithm for spanning 
+trees of a graph. 
+
+Two variants are given. A listing algorithm that returns a
+list of all spanning trees, and a version that counts all spanning
+trees. The second method works, if the number of spanning trees is 
+too large to be materialized at once in main memory. However, 
+the runtime of the algorithm still is O(n * nSpanningTrees).
+There is a parameter for stopping the computation, if the number 
+of trees already found superceeds a threshold. */
+
+
 void visit(struct Vertex* v, int component, int* components) {
 	struct VertexList* e;
 
@@ -19,6 +32,7 @@ void visit(struct Vertex* v, int component, int* components) {
 		visit(e->endPoint, component, components);
 	}
 }
+
 
 struct ShallowGraph* selectB(struct Graph* partialTree, struct ShallowGraph* rest, int* components, int n, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* B = getShallowGraph(sgp);
@@ -52,6 +66,7 @@ struct ShallowGraph* selectB(struct Graph* partialTree, struct ShallowGraph* res
 	}
 	return B;
 }
+
 
 /**
 Split list into two new lists. the returned list r contains all edges in list that have a corresponding edge in graph. r->next contains all
@@ -168,6 +183,7 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 
 	return addComponent(result1, result2);
 }
+
 
 struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	
@@ -286,6 +302,7 @@ long int recCount(long int d, struct Graph* graph, struct Graph* partialTree, in
 		}
 	}
 }
+
 
 long int countSpanningTrees(struct Graph* original, long int maxBound, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	
