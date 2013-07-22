@@ -699,8 +699,8 @@ char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
 
 
 /**
-This function builds a search tree likeish structure given a NULL terminated
-list of ShallowGraphs. The list is consumed and dumped.
+This function adds a NULL terminated list of ShallowGraphs to a search tree likeish structure 
+given by its root. The list is consumed and dumped.
 
 The resulting structure is a tree rooted at the return value where a path from the root
 to some vertex v in the tree represents v->visited many strings.
@@ -708,9 +708,8 @@ to some vertex v in the tree represents v->visited many strings.
 root->number gives the size of strings, root->d gives the number of unique elements in strings. 
 
  */
-struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct Vertex* addToSearchTree(struct Vertex* root, struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph *idx;
-	struct Vertex* root = getVertex(gp->vertexPool);
 
 	for (idx=strings; idx; idx=idx->next) {
 		root->d += addStringToSearchTree(root, idx->edges, gp);
@@ -723,6 +722,23 @@ struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* g
 
 	return root;
 }
+
+
+/**
+This function builds a search tree likeish structure given a NULL terminated
+list of ShallowGraphs. The list is consumed and dumped.
+
+The resulting structure is a tree rooted at the return value where a path from the root
+to some vertex v in the tree represents v->visited many strings.
+
+root->number gives the size of strings, root->d gives the number of unique elements in strings. 
+
+ */
+struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Vertex* root = getVertex(gp->vertexPool);
+	return addToSearchTree(root, strings, gp, sgp);
+}
+
 
 void recPrint(struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, FILE* stream, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
