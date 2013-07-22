@@ -25,7 +25,7 @@ void printShallowGraph(struct ShallowGraph* g) {
 			break;
 		}
 	} while (index != g);
-	
+	fflush(stdout);
 }
 
 
@@ -46,9 +46,11 @@ int printShallowGraphCount(struct ShallowGraph* g, char silent) {
 		}
 	} while (index != g);
 
-	if (!silent)
+	if (!silent) {
 		printf("Result contains %i structures\n", i);
-
+		fflush(stdout);
+	}
+	
 	return i;
 
 }
@@ -82,7 +84,7 @@ void printGraph(struct Graph* g) {
 			break;
 		}
 	} while (index != g);
-	
+	fflush(stdout);
 }
 
 
@@ -102,6 +104,7 @@ void printGraphEdges(struct Graph *g) {
 			}
 		}
 	}
+	fflush(stdout);
 }
 
 /**
@@ -115,6 +118,7 @@ void printVertexList(struct VertexList *f) {
 		fflush(stdout);
 		printf(" %s\n", e->label);
 	}
+	fflush(stdout);
 }
 
 
@@ -142,6 +146,7 @@ void printGraphEdgesOfTwoGraphs(char* name, struct Graph *g, struct Graph* h) {
 		}
 		printf("\n\n");
 	}
+	fflush(stdout);
 }
 
 
@@ -201,5 +206,6 @@ char diffGraphs(char* name, struct Graph *g, struct Graph* h) {
 		printf("%s has %i vertices and %i edges:\n", name, g->n, g->m);
 		printf("%s has %i vertices and %i edges:\n", name, h->n, h->m);
 	}
+	fflush(stdout);
 	return diffs;
 }
