@@ -5,123 +5,102 @@
 #include "canonicalString.h"
 #include "treeCenter.h"
 
-int* getLeaves(struct Graph* tree) {
-	int v;
-	int i = 1;
-	int* leaves = malloc((tree->n + 1) * sizeof(int));
-
-	for (v=0; v<tree->n; ++v) {
-		tree->vertices[v]->lowPoint = -1;
-
-		if (isLeaf(tree->vertices[v])) {
-			tree->vertices[v]->lowPoint = 0;
-			leaves[i] = v;
-			++i;
-		}
-	} 
-	leaves[0] = i;
-	return leaves;
-}
-
-void printParents(struct Graph* tree, int* parents) {
-	int i;
-	for(i=1; i<parents[0]; ++i) {
-		if (parents[i] != -1) {
-			printf("(%i, %i) ", parents[i], tree->vertices[parents[i]]->lowPoint);
-		} else {
-			printf("(%i, %i) ", parents[i], -1);
-		}
-	}
-	printf("\n");
-	fflush(stdout);
-}
-
-/**
-leaves contains parents of leaf nodes or -1 if a parent already came up before 
-*/
-void getParents(int step, struct Graph* tree, int* leaves) {
-	int v;
+int markEdges(struct Vertex* root, int value) {
 	struct VertexList* e;
+	int max = value;
 
-	for (v=1; v<leaves[0]; ++v) {
-		if (tree->vertices[leaves[v]]->lowPoint == step) {
-			int neighbors = 0;
-			struct Vertex* parent;
-			for (e=tree->vertices[leaves[v]]->neighborhood; e!=NULL; e=e->next) {
-				if ((e->endPoint->lowPoint == -1) || (e->endPoint->lowPoint >= step)) {
-					++neighbors;
-					parent = e->endPoint;
-				}
+	root->lowPoint = value;
+
+	for (e=root->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint->lowPoint > value) {
+			int current = markEdges(e->endPoint, value + 1);
+			e->used = current;
+			if (current > max) {
+				max = current;
 			}
-			if (neighbors == 1) {
-				if (parent->lowPoint == step + 1) {
-					leaves[v] = -1;
-				} else {
-					parent->lowPoint = step + 1;
-					leaves[v] = parent->number;
-				}
-			} else {
-				++tree->vertices[leaves[v]]->lowPoint;
-				leaves[v] = -1;
-			}
+		}
+	}
+
+	return max;
+}
+
+void moveCenter(struct Vertex* root, struct Vertex* parent, int value, int* centers) {
+	struct VertexList* e;
+	int max = INT_MIN;
+	struct VertexList* max1;
+	struct VertexList* max2;
+	struct VertexList* parentEdge = NULL;
+
+	for (e=root->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint != parent) {
+			e->used -= value;
 		} else {
-			leaves[v] = -1;
+			parentEdge = e;
 		}
 	}
-}
 
-void compressLeaves(int* leaves) {
-	int i;
-	int j;
-
-	for (i=j=1; i<leaves[0]; ++i) {
-		if (leaves[i] != -1) {
-			leaves[j] = leaves[i];
-			++j;
+	for (e=root->neighborhood; e!=NULL; e=e->next) {
+		if (e->used > max) {
+			max = e->used;
+			max1 = e;
 		}
 	}
-	leaves[0] = j;	
-}
 
-int* findTreeCenter(struct Graph* tree) {
-	int step;
-	int* leaves = getLeaves(tree);
-
-	for (step=0; 1; ++step) {
-		if (leaves[0] == 2) {
-			/* if there is only a single leaf left, it is the center */
-			break;
-		}
-		if (leaves[0] == 3) {
-			/* if there are two vertices left, and they are connected, 
-			they form the center togeter */
-			if (existsEdge(tree, leaves[1], leaves[2])) {
-				break;
+	max = INT_MIN;
+	for (e=root->neighborhood; e!=NULL; e=e->next) {
+		if (e != max1) {
+			if (e->used > max) {
+				max = e->used;
+				max2 = e;
 			}
 		}
+	}
 
-		getParents(step, tree, leaves);
+	if (max1->used == max2->used) {
+		centers[0] = 2;
+		centers[1] = root->number;
+		return;
+	}
 
-		// //debug
-		// printf("p%i ", step);
-		// printParents(tree, leaves);
+	if (max1->used == max2->used + 1) {
+		centers[0] = 3;
+		centers[1] = root->number;
+		centers[2] = max1->endPoint->number;
+		return;
+	}
 
-		compressLeaves(leaves);
-		
-		// //debug
-		// printf("c ");
-		// printParents(tree, leaves);
-	} 
+	if (max2->used == max1->used + 1) {
+		centers[0] = 3;
+		centers[1] = root->number;
+		centers[2] = max2->endPoint->number;
+		return;
+	}
 
-	return leaves;
+	if (parentEdge != NULL) {
+		parentEdge->used = max2->used + 1;
+	}
+	moveCenter(max1->endPoint, root, value + 1, centers);
 }
 
+int* treeCenter(struct Graph* tree) {
+	int* centers = malloc(3 * sizeof(int));
+	int i;
+
+
+	for (i=0; i<tree->n; ++i) {
+		tree->vertices[i]->lowPoint = INT_MAX;
+	}
+
+	markEdges(tree->vertices[0], 0);
+
+	moveCenter(tree->vertices[0], NULL, 0, centers);
+
+	return centers;
+}
 
 struct ShallowGraph* treeCenterCanonicalString(struct Graph* tree, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* cString;
-	int* center = findTreeCenter(tree);
-	printParents(tree, center);
-
+	int* center = treeCenter(tree);
 
 	cString = canonicalStringOfRootedTree(tree->vertices[center[1]], tree->vertices[center[1]], sgp);
 	
