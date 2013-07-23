@@ -7,10 +7,15 @@ struct ShallowGraph* getComp(struct Vertex* v, int compNumber, struct ShallowGra
 	v->lowPoint = compNumber;
 
 	for (e=v->neighborhood; e!=NULL; e=e->next) {
+		/* go to the vertex, if it was not visited before */
 		if (e->endPoint->lowPoint == -1) {
-			pushEdge(comp, shallowCopyEdge(e, lp));
 			getComp(e->endPoint, compNumber, comp, lp);
 		} 
+		/* add e = (v,w) to comp, if v<w. This is to have only one 
+		copy of each edge in comp */
+		if (e->startPoint->number < e->endPoint->number) {
+			pushEdge(comp, shallowCopyEdge(e, lp));
+		}
 	}
 	return comp;
 }
