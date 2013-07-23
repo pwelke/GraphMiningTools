@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "graph.h"
 #include "dfs.h"
+#include "searchTree.h"
 #include "canonicalString.h"
 #include "outerplanar.h"
 #include "treeKernels.h"

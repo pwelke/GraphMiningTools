@@ -6,6 +6,7 @@
 
 #include "graph.h"
 #include "canonicalString.h"
+#include "searchTree.h"
 #include "loading.h"
 #include "listSpanningTrees.h"
 #include "main.h"
@@ -226,6 +227,8 @@ int main(int argc, char** argv) {
 							struct ShallowGraph* component;
 							struct ShallowGraph* connectedComponents = getConnectedComponents(g, sgp);
 
+							struct Vertex* searchTree = getVertex(gp->vertexPool);
+
 							for (component = connectedComponents; component; component=component->next) {
 								/** TODO is it ok to just ignore single vertices ?? */
 								if (component->m > 0) {
@@ -234,7 +237,7 @@ int main(int argc, char** argv) {
 									struct ShallowGraph* idx;
 									struct ShallowGraph* cStrings = NULL;
 									int nTrees = 0;
-									struct Vertex* searchTree;
+									
 
 									// //debug
 									// printGraph(inducedGraph);
@@ -257,16 +260,16 @@ int main(int argc, char** argv) {
 
 									dumpShallowGraphCycle(sgp, trees);
 
-									searchTree = buildSearchTree(cStrings, gp, sgp);
-									printf("# %i %i\n", g->number, searchTree->d);
-									printStringsInSearchTree(searchTree, stdout, sgp);
-									fflush(stdout);
-
-									dumpSearchTree(gp, searchTree);
+									searchTree = addToSearchTree(searchTree, cStrings, gp, sgp);
 									dumpGraph(gp, inducedGraph);
 								}
 							}	
 							dumpShallowGraphCycle(sgp, connectedComponents);
+
+							printf("# %i %i\n", g->number, searchTree->d);
+							printStringsInSearchTree(searchTree, stdout, sgp);
+							fflush(stdout);
+							dumpSearchTree(gp, searchTree);
 						}
 						break;
 					}
