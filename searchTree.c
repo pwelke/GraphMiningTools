@@ -366,8 +366,13 @@ void recPrint(struct Vertex* root, struct Vertex* parent, struct ShallowGraph* p
 
 void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
-
 	recPrint(root, root, prefix, stream, sgp);
-
 	dumpShallowGraph(sgp, prefix);
+}
+
+
+struct Vertex* loadSearchTree(FILE* stream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Vertex* root = getVertex(gp->vertexPool);
+	//todo
+	return root;
 }
