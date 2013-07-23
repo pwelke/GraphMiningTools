@@ -1,14 +1,13 @@
 TODO
 
-- move isLeaf() from subtreeIsomorphism to graph
 - subtree iso for labelled trees
 - maybe add a prefix for private methods (that are not exposed in the header files)
 
 - documentation of listSpanningTrees!
-- declutter graph.c
 - how to go on?
 
 - how does the canonical string stuff work, again?
 - save patterns / "model" to disk and load it, again...
-- subtree isomorphism...
 
+THEORY
+- is it useful to choose particular roots for subgraph iso checks, e.g. canonical roots?
