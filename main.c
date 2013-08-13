@@ -9,12 +9,12 @@
 #include "searchTree.h"
 #include "loading.h"
 #include "listSpanningTrees.h"
-#include "main.h"
 #include "upperBoundsForSpanningTrees.h"
 #include "subtreeIsomorphism.h"
 #include "graphPrinting.h"
 #include "treeCenter.h"
 #include "connectedComponents.h"
+#include "main.h" 
 /* #include "opk.h" */
 
 char DEBUG_INFO = 1;
@@ -110,7 +110,6 @@ int main(int argc, char** argv) {
 
 		/* global search trees for mapping of strings to numbers */
 		struct Vertex* globalTreeSet = getVertex(vp);
-		struct Vertex* globalCycleSet = getVertex(vp);
 
 		/* pointer to the current graph which is returned by the input iterator */
 		struct Graph* g = NULL;
@@ -166,13 +165,12 @@ int main(int argc, char** argv) {
 		/* try to load a file */
 		createFileIterator(argv[1], gp);
 
-
 		/* iterate over all graphs in the database */
 		while (((i < maxGraphs) || (maxGraphs == -1)) && (g = iterateFile(&aids99VertexLabel, &aids99EdgeLabel))) {
-
-			
+		
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
+				// TODO make a parameter
 				if (i > MINGRAPH) {
 					long int spanningTreeEstimate;
 
@@ -295,7 +293,6 @@ int main(int argc, char** argv) {
 		/* global garbage collection */
 		free(intermediateResults);
 
-		dumpSearchTree(gp, globalCycleSet);
 		dumpSearchTree(gp, globalTreeSet);
 
 		destroyFileIterator();
