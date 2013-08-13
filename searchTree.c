@@ -49,6 +49,37 @@ char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
 	}
 }
 
+/**
+ * Recursively add a string represented by a list of edges to a search tree given by its root.
+ * The string is consumed
+ * This method DOES NOT INCREASE the current number of strings contained in the search tree.
+ * You have to maintain the correct number of strings in the search tree yourself.
+ * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
+ */
+char containsStringRec(struct Vertex* root, struct VertexList* edge) {
+
+	/* if edge == NULL, we are done. check if visited > 0.  */
+	if (edge == NULL) {
+		return root->visited;
+	} else {
+		struct VertexList* idx;
+		for (idx=root->neighborhood; idx; idx=idx->next) {
+			/* if the next label is already in the tree, continue recursively */
+			if (strcmp(idx->label, edge->label) == 0) {
+				char found = addStringToSearchTree(idx->endPoint, edge->next, p);
+				return found;
+			}
+		}
+
+		/* otherwise add the current edge to the tree and continue recursively */
+		return 0;
+	}
+}
+
+char containsString(struct Vertex* root, struct ShallowGraph* string) {
+	return containsStringRec(root, string->edges);
+}
+
 
 /**
  * returns an uninitialized result vector of size n
@@ -378,7 +409,7 @@ char fpeekc(FILE* stream) {
 	return c;
 }
 
-void parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* string = getShallowGraph(sgp);
 	struct VertexList* e;
 	
@@ -392,19 +423,20 @@ void parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
 			e->label = label;
 			e->isStringMaster = 1;
 			appendEdge(string, e);
-
 		} else {
 			fprintf(stderr, "Error reading string from stream\n");
+			dumpShallowGraph(sgp, string);
+			return NULL;
 		}
 	}
-	
+	return string;
 }
 
-int streamBuildSearchTree(FILE* stream, struct Vertex* root, int size_max, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int number;
 	int nPatterns;
 	int i;
-	char* buffer = malloc(size_max * sizeof(char));
+	char* buffer = malloc(bufferSize * sizeof(char));
 	int head = fscanf(stream, "# %i %i\n", &number, &nPatterns);
 	if (head != 2) {
 		return 0;
@@ -414,7 +446,7 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int size_max, struc
 		int multiplicity;
 		struct ShallowGraph* string;
 		fscanf(stream, "%i\t", &multiplicity);
-		string = parseCString(stream, sgp);
+		string = parseCString(stream, buffer, sgp);
 		addToSearchTree(root, string, gp, sgp);
 	}	
 	free(buffer);
@@ -423,7 +455,7 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int size_max, struc
 
 struct Vertex* loadSearchTree(FILE* stream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Vertex* root = getVertex(gp->vertexPool);
-
-	streamBuildSearchTree(root, stream, gp, sgp);
+	int bufferSize = 100;
+	streamBuildSearchTree(stream, root, bufferSize, gp, sgp);
 	return root;
 }
