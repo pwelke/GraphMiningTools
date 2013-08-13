@@ -1,13 +1,21 @@
 PROJECTNAME = tpk
-CPPFLAGS = -g -Wall -pedantic -W -ggdb
+GCCFLAGS = -g -Wall -pedantic -W -ggdb
 # -O3
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 
-main: $(OBJECTS)
-	gcc -o $(PROJECTNAME) $(OBJECTS) $(CPPFLAGS)
+TPKOBJECTS = $(filter-out levelwiseMain.o, $(OBJECTS))
+LWMOBJECTS = $(filter-out main.o, $(OBJECTS))
+
+main: tpk
+
+tpk: $(TPKOBJECTS)
+	gcc -o $(PROJECTNAME) $(TPKOBJECTS) $(GCCFLAGS)
+
+lwm: $(LWMOBJECTS)
+	gcc -o lwm $(LWMOBJECTS) $(GCCFLAGS)
 
 %.o : %.c %.h
-	gcc $(CPPFLAGS) -c $< -o $@
+	gcc $(GCCFLAGS) -c $< -o $@
 
 clean:
 	rm *.o
