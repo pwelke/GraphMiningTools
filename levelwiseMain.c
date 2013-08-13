@@ -20,7 +20,7 @@
 char DEBUG_INFO = 1;
 
 
-void iterateDB(char* fileName, int minGraph, int maxGraph, ) {
+void iterateGraphDB(char* fileName, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* g = NULL;
 	
 	/* try to load a file */
@@ -54,6 +54,7 @@ void iterateDB(char* fileName, int minGraph, int maxGraph, ) {
 	destroyFileIterator();
 		
 }
+
 
 /**
  * Print --help message
@@ -90,9 +91,6 @@ int main(int argc, char** argv) {
 		struct ShallowGraphPool *sgp = createShallowGraphPool(1, lp);
 		struct GraphPool *gp = createGraphPool(1, vp, lp);
 
-		/* global search trees for mapping of strings to numbers */
-		struct Vertex* globalTreeSet = getVertex(vp);
-
 		/* pointer to the current graph which is returned by the input iterator */
 		struct Graph* g = NULL;
 
@@ -127,9 +125,37 @@ int main(int argc, char** argv) {
 			outputOption = 'a';
 		}
 
-		iterateDB();
+		// init params
+		int threshold = 2000;
+		char* featureFileName = "results/features.txt";
+		char* countFileName = "results/counts.txt";
+		char* inputFileName = "../opk/AIDS99.txt";
+		char* patternFileName = "results/patterns.txt";
 
-		dumpSearchTree(gp, globalTreeSet);
+		// internal init
+		struct Vertex* patterns = getVertex(vp);
+		struct Vertex* currentLevel;
+		int patternSize = 0;
+
+		FILE* featureFile = fopen(featureFileName);
+		FILE* countFile = fopen(countFileName);
+		FILE* patternFile = fopen(patternFileName);
+
+		// find frequent single vertices
+		// find frequent edges
+
+		for (currentLevel = patterns; (currentLevel->visited > 0) && (patternSize < maxPatternSize); ++patternSize) {
+			patterns = getVertex(gp->VertexPool);
+			
+			
+
+			/* search tree for two levels below is not needed, as patterns are written to file anyhow */
+			dumpSearchTree(currentLevel);
+		}
+
+
+
+		dumpSearchTree(gp, frequentPatterns);
 		freeGraphPool(gp);
 		freeShallowGraphPool(sgp);
 		freeListPool(lp);
