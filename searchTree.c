@@ -453,6 +453,30 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, str
 	return 1;
 }
 
+struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, struct ShallowGraphPool* sgp) {
+	int number;
+	int nPatterns;
+	int i;
+	struct ShallowGraph* patterns = NULL;
+
+	char* buffer = malloc(bufferSize * sizeof(char));
+	int head = fscanf(stream, "# %i %i\n", &number, &nPatterns);
+	if (head != 2) {
+		return NULL;
+	}
+
+	for (i=0; i<nPatterns; ++i) {
+		int multiplicity;
+		struct ShallowGraph* string;
+		fscanf(stream, "%i\t", &multiplicity);
+		string = parseCString(stream, buffer, sgp);
+		string->next = patterns;
+		patterns = string;
+	}	
+	free(buffer);
+	return patterns;
+}
+
 struct Vertex* loadSearchTree(FILE* stream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Vertex* root = getVertex(gp->vertexPool);
 	int bufferSize = 100;
