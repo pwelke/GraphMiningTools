@@ -1,5 +1,6 @@
 #include "graph.h"
 #include "treeCenter.h"
+#include "searchTree.h"
 #include "levelwiseMining.h"
 
 /**
@@ -182,7 +183,61 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* patternSea
 				filteredExtension = current;
 			}
 		}
+	}
+	return filteredExtension;
+}
 
+void iteratePatternDB(char* fileName, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	FILE* stream = fopen(fileName);
+	struct ShallowGraph* patterns = NULL;
+	
+	/* iterate over all graphs in the database */
+	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, 100, sgp))) {
+		// TODO what needs to be done
+	}
+	fclose(stream);
+}
+
+
+void recAccess(struct Vertex* frequentPatterns, struct ShallowGraph* frequentEdges, struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct VertexList* e;
+
+	if (root->visited != 0) {
+		/* at this point, we have found a pattern, we want to make a tree from it, get the refinements,
+		filter interesting candidates and then scan the db of patterns  */
+		struct Graph* pattern = canonicalString2Graph(prefix, gp);
+		struct Graph* refinements = extendPattern(pattern, frequentEdges gp);
+		refinements = filterExtension(pattern, frequentPatterns, gp);
 
 	}
+
+	/* recursively access the subtree dangling from root */
+	for (e=root->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint != parent) {
+			/* after finishing this block, we want prefix to be as before, thus we have
+			   to do some list magic */
+			struct VertexList* lastEdge = prefix->lastEdge;
+			appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
+
+			recPrint(e->endPoint, root, prefix, stream, sgp);
+
+			dumpVertexList(sgp->listPool, prefix->lastEdge);
+			prefix->lastEdge = lastEdge;
+			--prefix->m;
+
+			if (prefix->m == 0) {
+				prefix->edges = NULL;
+			} else {
+				lastEdge->next = NULL;
+			}
+		}
+	}
+}
+
+
+void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* prefix = getShallowGraph(sgp);
+	recPrint(root, root, prefix, stream, sgp);
+	dumpShallowGraph(sgp, prefix);
 }
