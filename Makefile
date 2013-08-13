@@ -1,10 +1,22 @@
-PROJECTNAME = tpk
+TPKNAME = tpk
+LWMNAME = lwm
 CPPFLAGS = -g -Wall -pedantic -W -ggdb
 # -O3
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
+TPKOBJECTS = $(filter-out levelwiseMain.o, $(OBJECTS))
+LWMOBJECTS = $(filter-out main.o, $(OBJECTS))
 
-main: $(OBJECTS)
-	gcc -o $(PROJECTNAME) $(OBJECTS) $(CPPFLAGS)
+main: tpk
+	
+
+all: main
+	
+
+tpk: $(TPKOBJECTS)
+	gcc -o $(TPKNAME) $(TPKOBJECTS) $(CPPFLAGS)
+
+lwm: $(LWMOBJECTS)
+	gcc -o $(LWMNAME) $(LWMOBJECTS) $(CPPFLAGS)
 
 %.o : %.c %.h
 	gcc $(CPPFLAGS) -c $< -o $@
@@ -12,7 +24,3 @@ main: $(OBJECTS)
 clean:
 	rm *.o
 	rm tpk
-	
-new: clean main
-
-all: main
