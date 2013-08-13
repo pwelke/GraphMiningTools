@@ -370,8 +370,32 @@ void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowG
 	dumpShallowGraph(sgp, prefix);
 }
 
+char fpeekc(FILE* stream) {
+	fpos_t currentPosition = fgetpos(stream);
+	char c = fgetc(stream);
+	fsetpos(stream, currentPosition);
+	return c;
+}
 
-void parseCString(FILE* stream, struct ShallowGraph* string, struct ListPool* lp) {
+void parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* string = getShallowGraph(sgp);
+	struct VertexList* e;
+	
+	while ((fpeekc(stream) != '\n') || (fpeekc(stream != feof))) {
+		if (fscanf(stream, "%s ", buffer) == 1) {
+			int length = strlen(stream) + 1;
+			char* label = malloc(length * sizeof(char));
+			strcpy(buffer, label);
+
+			e = getVertexList(sgp->listPool);
+			e->label = label;
+			e->isStringMaster = 1;
+			appendEdge(string, e);
+
+		} else {
+			fprintf(stderr, "Error reading string from stream\n");
+		}
+	}
 	
 }
 
@@ -379,6 +403,7 @@ int streamBuildSearchTree(struct Vertex* root, FILE* stream, struct GraphPool* g
 	int number;
 	int nPatterns;
 	int i;
+	char* buffer = malloc(size_max * sizeof(char));
 	int head = fscanf(stream, "# %i %i\n", &number, &nPatterns);
 	if (head != 2) {
 		return 0;
@@ -386,12 +411,12 @@ int streamBuildSearchTree(struct Vertex* root, FILE* stream, struct GraphPool* g
 
 	for (i=0; i<nPatterns; ++i) {
 		int multiplicity;
-		struct ShallowGraph* string = getShallowGraph(sgp);
+		struct ShallowGraph* string;
 		fscanf(stream, "%i\t", &multiplicity);
-		parseCString(stream, string, sgp->listPool);
+		string = parseCString(stream, sgp);
 		addToSearchTree(root, string, gp, sgp);
 	}	
-
+	free(buffer);
 	return 1;
 }
 
