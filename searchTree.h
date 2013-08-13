@@ -17,6 +17,8 @@ char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
 void dumpSearchTree(struct GraphPool* p, struct Vertex* root);
 void printSearchTree(struct Vertex* root, int level);
 void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp);
+int streamBuildSearchTree(FILE* stream, struct Vertex* root, int size_max, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+
 
 struct Vertex* addToSearchTree(struct Vertex* root, struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void mergeSearchTrees(struct Vertex* globalTree, struct Vertex* localTree, int divisor, struct compInfo* results, int* pos, struct Vertex* trueRoot, int depth, struct GraphPool* p);

@@ -56,7 +56,6 @@ char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
  * TODO some error, if there is not enough memory
  */
 struct compInfo* getResultVector(int n) {
-
 	return malloc(n * sizeof(struct compInfo));
 }
 
@@ -371,9 +370,11 @@ void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowG
 }
 
 char fpeekc(FILE* stream) {
-	fpos_t currentPosition = fgetpos(stream);
-	char c = fgetc(stream);
-	fsetpos(stream, currentPosition);
+	fpos_t currentPosition; 
+	char c;
+	fgetpos(stream, &currentPosition);
+	c = fgetc(stream);
+	fsetpos(stream, &currentPosition);
 	return c;
 }
 
@@ -381,9 +382,9 @@ void parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* string = getShallowGraph(sgp);
 	struct VertexList* e;
 	
-	while ((fpeekc(stream) != '\n') || (fpeekc(stream != feof))) {
+	while ((fpeekc(stream) != '\n') || (fpeekc(stream) != 0)) {
 		if (fscanf(stream, "%s ", buffer) == 1) {
-			int length = strlen(stream) + 1;
+			int length = strlen(buffer) + 1;
 			char* label = malloc(length * sizeof(char));
 			strcpy(buffer, label);
 
@@ -399,7 +400,7 @@ void parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
 	
 }
 
-int streamBuildSearchTree(struct Vertex* root, FILE* stream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int streamBuildSearchTree(FILE* stream, struct Vertex* root, int size_max, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int number;
 	int nPatterns;
 	int i;
