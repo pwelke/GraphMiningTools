@@ -28,5 +28,6 @@ void printCanonicalString(struct ShallowGraph *s, FILE* stream);
 void printCanonicalStrings(struct ShallowGraph *s, FILE* stream);
 
 char* canonicalStringToChar(struct ShallowGraph* string);
+struct Graph* canonicalString2Graph(struct ShallowGraph* pattern, struct GraphPool* gp);
 
 #endif /* CANONICALSTRING_H */
