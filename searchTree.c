@@ -66,7 +66,7 @@ char containsStringRec(struct Vertex* root, struct VertexList* edge) {
 		for (idx=root->neighborhood; idx; idx=idx->next) {
 			/* if the next label is already in the tree, continue recursively */
 			if (strcmp(idx->label, edge->label) == 0) {
-				char found = addStringToSearchTree(idx->endPoint, edge->next, p);
+				char found = containsStringRec(idx->endPoint, edge->next);
 				return found;
 			}
 		}
@@ -440,7 +440,7 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 		if (fscanf(stream, "%s ", buffer) == 1) {
 			int length = strlen(buffer) + 1;
 			char* label = malloc(length * sizeof(char));
-			strcpy(buffer, label);
+			strcpy(label, buffer);
 
 			e = getVertexList(sgp->listPool);
 			e->label = label;

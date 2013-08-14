@@ -1,5 +1,10 @@
+#include <stdio.h>
+#include <malloc.h>
+#include <string.h>
+
 #include "graph.h"
 #include "treeCenter.h"
+#include "canonicalString.h"
 #include "searchTree.h"
 #include "levelwiseMining.h"
 
@@ -16,21 +21,22 @@ how to store results - check each pattern against db separately. just count how 
 
 */
 
-void iteratePatternDB(char* fileName, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+// void iteratePatternDB(char* fileName, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
-	FILE* stream = fopen(fileName);
-	struct ShallowGraph* patterns = NULL;
+// 	FILE* stream = fopen(fileName, "r");
+// 	struct ShallowGraph* patterns = NULL;
+// 	int i = 0;
 	
-	/* iterate over all graphs in the database */
-	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, 100, sgp))) {
-		// TODO what needs to be done
+// 	// /* iterate over all graphs in the database */
+// 	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, 100, sgp))) {
+// 		// TODO what needs to be done
 
-		/* do not alter */
-		++i;
-		dumpShallowGraphCycle(sgp, patterns);
-	}
-	fclose(stream);
-}
+// 		/* do not alter */
+// 		++i;
+// 		dumpShallowGraphCycle(sgp, patterns);
+// 	}
+// 	fclose(stream);
+// }
 
 /**
 return the frequent vertices in a db in a search tree and the frequent edges (for extension) as a ShallowGraph
@@ -38,7 +44,8 @@ both output parameters should be initialized to "empty" structs
 */
 void getFrequentVerticesAndEdges(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
-	FILE* stream = fopen(fileName);
+	int i = 0;
+	FILE* stream = fopen(fileName, "r");
 	struct ShallowGraph* patterns = NULL;
 	
 	/* iterate over all graphs in the database */
@@ -53,18 +60,18 @@ void getFrequentVerticesAndEdges(char* fileName, int minGraph, int maxGraph, str
 		struct Vertex* containedVertices = getVertex(gp->vertexPool);
 
 		/* get frequent vertices */
-		struct Graph* patternGraph = canonicalString2Graph(pattern, gp);
+		struct Graph* patternGraph = canonicalString2Graph(patterns, gp);
 		/* auxiliary contains a single vertex */
 		struct Graph* auxiliary = createGraph(1, gp);
 		int v;
 		for (v=0; v<patternGraph->n; ++v) {
 			struct ShallowGraph* cString;
 			auxiliary->vertices[0]->label = patternGraph->vertices[v]->label;
-			cString = treeCenterCanonicalString(auxiliary, gp, sgp);
+			cString = treeCenterCanonicalString(auxiliary, sgp);
 			addToSearchTree(containedVertices, cString, gp, sgp);
 		}
-		resetToUnique(auxiliary);
-		mergeSearchTrees(frequentVertices, auxiliary, gp, sgp);
+		resetToUnique(containedVertices);
+		mergeSearchTrees(frequentVertices, containedVertices, 1, NULL, NULL, frequentVertices, 0, gp);
 		dumpGraph(gp, auxiliary);
 
 		// /* get frequent Edges */
@@ -109,9 +116,9 @@ struct Graph* refinementGraph(struct Graph* g, int currentVertex, struct VertexL
 	}
 
 	/* copy new vertex and edge */
-	copy->vertices[copy->n - 1] = shallowCopyVertex(newEdge->endPoint);
+	copy->vertices[copy->n - 1] = shallowCopyVertex(newEdge->endPoint, gp->vertexPool);
 	copy->vertices[copy->n - 1]->number = copy->n - 1;
-	addEdgeBetweenVertices(currentVertex, copy->n - 1, newEdge->label, gp);
+	addEdgeBetweenVertices(currentVertex, copy->n - 1, newEdge->label, copy, gp);
 
 	/* copy edges */
 	for (i=0; i<g->n; ++i) {
@@ -168,7 +175,7 @@ char alreadyEnumerated(struct Graph* pattern, struct Vertex* searchTree, struct 
 /**
  * Removes vertex w from the adjacency list of vertex v
  */
-void snatchEdge(struct Vertex* v, struct Vertex* w) {
+struct VertexList* snatchEdge(struct Vertex* v, struct Vertex* w) {
 	struct VertexList* idx, *tmp;
 
 	if (v->neighborhood->endPoint == w) {
@@ -186,6 +193,7 @@ void snatchEdge(struct Vertex* v, struct Vertex* w) {
 			return idx;
 		}
 	}
+	return NULL;
 }
 
 char subtreeIsInfrequent(struct Graph* pattern, struct Vertex* searchTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
@@ -195,26 +203,31 @@ char subtreeIsInfrequent(struct Graph* pattern, struct Vertex* searchTree, struc
 	// TODO small speedup, if we go to n-1, as last vertex is the newest leaf
 	for (v=0; v<pattern->n; ++v) {
 		if (isLeaf(pattern->vertices[v])) {
+			struct Vertex* leaf;
+			struct VertexList* e;
+			struct Graph* subPattern;
+			struct ShallowGraph* string;
+
 			/* remove vertex and edge from graph */
-			struct Vertex* leaf = pattern->vertices[v];
+			leaf = pattern->vertices[v];
 			pattern->vertices[v] = NULL;
-			struct VertexList* e = snatchEdge(leaf->neighborhood->endPoint, leaf);
+			e = snatchEdge(leaf->neighborhood->endPoint, leaf);
 
 			/* get induced subgraph, add vertex and leaf to graph again */
 			// TODO speedup by reusing inducedSubgraph
-			struct Graph* subPattern = cloneInducedSubgraph(pattern, gp);
-			struct ShallowGraph* string = treeCenterCanonicalString(subPattern, sgp);
+			subPattern = cloneInducedGraph(pattern, gp);
+			string = treeCenterCanonicalString(subPattern, sgp);
 			pattern->vertices[v] = leaf;
 			addEdge(e->startPoint, e);
 
 			/* check if infrequent, if so return 1 otherwise continue */
-			if (!alreadyEnumerated(string, searchTree)) {
+			if (!containsString(searchTree, string)) {
 				dumpShallowGraph(sgp, string);
 				dumpGraph(gp, subPattern);
 				return 1;
 			} else {
 				dumpShallowGraph(sgp, string);
-				dumpGraph(sgp, subPattern);
+				dumpGraph(gp, subPattern);
 			}
 		}
 	}
@@ -228,7 +241,7 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* patternSea
 	struct Graph* idx = extension; 
 	struct Graph* filteredExtension = NULL;
 	
-	for (idx!=NULL) {
+	while (idx != NULL) {
 		struct Graph* current = idx;
 		idx = idx->next;
 		current->next = NULL;
@@ -251,15 +264,15 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* patternSea
 }
 
 
-void recAccess(struct Vertex* frequentPatterns, struct ShallowGraph* frequentEdges, struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+void recAccess(struct Vertex* frequentPatterns, struct ShallowGraph* frequentEdges, struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
 	if (root->visited != 0) {
 		/* at this point, we have found a pattern, we want to make a tree from it, get the refinements,
 		filter interesting candidates and then scan the db of patterns  */
 		struct Graph* pattern = canonicalString2Graph(prefix, gp);
-		struct Graph* refinements = extendPattern(pattern, frequentEdges gp);
-		refinements = filterExtension(pattern, frequentPatterns, gp);
+		struct Graph* refinements = extendPattern(pattern, frequentEdges, gp);
+		refinements = filterExtension(pattern, frequentPatterns, gp, sgp);
 
 	}
 
@@ -271,7 +284,7 @@ void recAccess(struct Vertex* frequentPatterns, struct ShallowGraph* frequentEdg
 			struct VertexList* lastEdge = prefix->lastEdge;
 			appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
 
-			recPrint(e->endPoint, root, prefix, stream, sgp);
+			recAccess(frequentPatterns, frequentEdges, e->endPoint, root, prefix, gp, sgp);
 
 			dumpVertexList(sgp->listPool, prefix->lastEdge);
 			prefix->lastEdge = lastEdge;
@@ -287,8 +300,8 @@ void recAccess(struct Vertex* frequentPatterns, struct ShallowGraph* frequentEdg
 }
 
 
-void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp) {
+void accessSearchTree(struct Vertex* root, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
-	recPrint(root, root, prefix, stream, sgp);
+	//recAccess(root, root, prefix, stream, sgp);
 	dumpShallowGraph(sgp, prefix);
 }

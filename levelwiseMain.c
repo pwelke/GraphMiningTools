@@ -22,6 +22,7 @@ char DEBUG_INFO = 1;
 
 void iterateGraphDB(char* fileName, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* g = NULL;
+	int i = 0;
 	
 	/* try to load a file */
 	createFileIterator(fileName, gp);
@@ -127,35 +128,45 @@ int main(int argc, char** argv) {
 
 		// init params
 		int threshold = 2000;
+		int maxPatternSize = 10;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
-		char* inputFileName = "../opk/AIDS99.txt";
+		char* inputFileName = "results/2013-07-18_spanningTreePatterns.txt";
 		char* patternFileName = "results/patterns.txt";
+		int minGraph = 0;
+		int maxGraph = 10;
 
 		// internal init
 		struct Vertex* patterns = getVertex(vp);
+		struct Vertex* frequentEdgeSearchTree = getVertex(vp);
 		struct Vertex* currentLevel;
 		int patternSize = 0;
 
-		FILE* featureFile = fopen(featureFileName);
-		FILE* countFile = fopen(countFileName);
-		FILE* patternFile = fopen(patternFileName);
+		FILE* featureFile = fopen(featureFileName, "w");
+		FILE* countFile = fopen(countFileName, "w");
+		FILE* patternFile = fopen(patternFileName, "w");
 
-		// find frequent single vertices
-		// find frequent edges
+		/* find frequent single vertices and frequent edges */
+		patterns = getFrequentVerticesAndEdges(inputFileName, minGraph, maxGraph, patterns, frequentEdgeSearchTree, gp, sgp);
 
-		for (currentLevel = patterns; (currentLevel->visited > 0) && (patternSize < maxPatternSize); ++patternSize) {
-			patterns = getVertex(gp->VertexPool);
+		// for (currentLevel = patterns; (currentLevel->visited > 0) && (patternSize < maxPatternSize); ++patternSize) {
+		// 	dumpSearchTree(gp, patterns);
+		// 	patterns = getVertex(gp->vertexPool);
 			
-			
 
-			/* search tree for two levels below is not needed, as patterns are written to file anyhow */
-			dumpSearchTree(currentLevel);
-		}
+		// 	/* search tree for two levels below is not needed, as patterns are written to file anyhow */
+		// 	dumpSearchTree(gp, currentLevel);
+		// }
 
+		// debug garbage collection
+		dumpSearchTree(gp, frequentEdgeSearchTree);
+		dumpSearchTree(gp, patterns);
 
+		/* garbage collection */
+		fclose(featureFile);
+		fclose(countFile);
+		fclose(patternFile);
 
-		dumpSearchTree(gp, frequentPatterns);
 		freeGraphPool(gp);
 		freeShallowGraphPool(sgp);
 		freeListPool(lp);
