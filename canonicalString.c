@@ -108,6 +108,60 @@ struct VertexList* getInitialisatorEdge(struct ListPool *p) {
 	return e;
 }
 
+int canonicalString2GraphRec(struct Graph* g, int current, int parent, struct VertexList* suffix, struct VertexList* initEdge, struct VertexList* termEdge, struct GraphPool* gp) {
+	
+	if (strcmp(suffix->label, termEdge->label) == 0) {
+		return current;
+	}
+
+	/* for all children of parent */
+	while (suffix != NULL) {
+		char* edgeLabel;
+		
+		/* first comes edge label */
+		suffix = suffix->next;
+		edgeLabel = suffix->label;
+
+		/* now comes the vertex label */
+		suffix = suffix->next;
+		g->vertices[current]->label = suffix->label;
+
+		addEdgeBetweenVertices(parent, current, edgeLabel, g, gp);
+
+		/* recursive call */
+		current = canonicalString2GraphRec(g, current + 1, current, suffix->next, initEdge, termEdge, gp);
+	}
+
+	/* return position of next free vertex in g */
+	return current;
+}
+
+struct Graph* canonicalString2Graph(struct ShallowGraph* pattern, struct GraphPool* gp) {
+	struct VertexList* initEdge = getInitialisatorEdge(gp->listPool);
+	struct VertexList* termEdge = getTerminatorEdge(gp->listPool);
+	struct VertexList* e;
+	int n = 0;
+	struct Graph* g;
+
+	/* find number of vertices, create graph */
+	for (e=pattern->edges; e!=NULL; e=e->next) {
+		if (strcmp(e->label, initEdge->label) == 0) {
+			++n;
+		}
+	}
+	g = createGraph(n + 1, gp);
+
+	/* create tree from canonical string recursively */
+	g->vertices[0]->label = pattern->edges->label;
+	canonicalString2GraphRec(g, 0, 1, pattern->edges->next, initEdge, termEdge, gp);
+
+	/* cleanup */
+	dumpVertexList(gp->listPool, initEdge);
+	dumpVertexList(gp->listPool, termEdge);
+
+	return g;
+}
+
 
 /**
 Given a tree $T$ and a vertex $ v \in V(T) $ this function returns
