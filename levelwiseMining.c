@@ -16,6 +16,69 @@ how to store results - check each pattern against db separately. just count how 
 
 */
 
+void iteratePatternDB(char* fileName, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	FILE* stream = fopen(fileName);
+	struct ShallowGraph* patterns = NULL;
+	
+	/* iterate over all graphs in the database */
+	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, 100, sgp))) {
+		// TODO what needs to be done
+
+		/* do not alter */
+		++i;
+		dumpShallowGraphCycle(sgp, patterns);
+	}
+	fclose(stream);
+}
+
+/**
+return the frequent vertices in a db in a search tree and the frequent edges (for extension) as a ShallowGraph
+both output parameters should be initialized to "empty" structs
+*/
+void getFrequentVerticesAndEdges(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int bufferSize = 100;
+	FILE* stream = fopen(fileName);
+	struct ShallowGraph* patterns = NULL;
+	
+	/* iterate over all graphs in the database */
+	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, bufferSize, sgp))) {
+		/* frequency of an edge increases by one if there exists a pattern for the current graph (a spanning tree) 
+		that contains the edge. Thus we need to find all edges contained in any spanning tree and then add them 
+		to frequentEdges once omitting multiplicity */
+		struct Vertex* containedEdges = getVertex(gp->vertexPool);
+
+		/* the vertices contained in g can be obtained from a single spanning tree, as all spanning trees contain
+		the same vertex set. However, to omit multiplicity, we again resort to a temporary searchTree */
+		struct Vertex* containedVertices = getVertex(gp->vertexPool);
+
+		/* get frequent vertices */
+		struct Graph* patternGraph = canonicalString2Graph(pattern, gp);
+		/* auxiliary contains a single vertex */
+		struct Graph* auxiliary = createGraph(1, gp);
+		int v;
+		for (v=0; v<patternGraph->n; ++v) {
+			struct ShallowGraph* cString;
+			auxiliary->vertices[0]->label = patternGraph->vertices[v]->label;
+			cString = treeCenterCanonicalString(auxiliary, gp, sgp);
+			addToSearchTree(containedVertices, cString, gp, sgp);
+		}
+		resetToUnique(auxiliary);
+		mergeSearchTrees(frequentVertices, auxiliary, gp, sgp);
+		dumpGraph(gp, auxiliary);
+
+		// /* get frequent Edges */
+		// auxiliary = createGraph(2, gp);
+		// addEdgeBetweenVertices(0, 1, NULL, gp->listPool);
+
+
+		/* do not alter */
+		++i;
+		dumpShallowGraphCycle(sgp, patterns);
+	}
+	fclose(stream);
+}
+
 
 /**
  * Creates a hard copy of g. Vertices and edges have the same numbers and
@@ -185,18 +248,6 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* patternSea
 		}
 	}
 	return filteredExtension;
-}
-
-void iteratePatternDB(char* fileName, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-
-	FILE* stream = fopen(fileName);
-	struct ShallowGraph* patterns = NULL;
-	
-	/* iterate over all graphs in the database */
-	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, 100, sgp))) {
-		// TODO what needs to be done
-	}
-	fclose(stream);
 }
 
 
