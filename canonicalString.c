@@ -129,10 +129,6 @@ int canonicalString2GraphRec(struct Graph* g, int current, int parent, struct Sh
 
 		addEdgeBetweenVertices(parent, current, edgeLabel, g, gp);
 
-		//debug
-		fprintf(stderr, "%i is child of %i. ", current, parent);
-		fprintf(stderr, "[%s]%s[%s]\n", g->vertices[parent]->label, edgeLabel, suffix->edges->label);
-
 		/* recursive call */
 		suffix->edges = suffix->edges->next;
 		current = canonicalString2GraphRec(g, current + 1, current, suffix, initEdge, termEdge, gp);
