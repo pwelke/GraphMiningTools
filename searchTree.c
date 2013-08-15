@@ -492,8 +492,10 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, struct Sha
 	struct ShallowGraph* patterns = NULL;
 
 	char* buffer = malloc(bufferSize * sizeof(char));
-	int head = fscanf(stream, "# %i %i\n", &number, &nPatterns);
+	int head = fscanf(stream, " # %i %i\n", &number, &nPatterns);
 	if (head != 2) {
+		fprintf(stderr, "error reading patterns\n");
+		free(buffer);
 		return NULL;
 	}
 
