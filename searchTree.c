@@ -441,9 +441,6 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 	while ((fpeekc(stream) != '\0') && (fpeekc(stream) != '\n') && (fpeekc(stream) != ' ')) {
 		if (fscanf(stream, "%s", buffer) == 1) {
 
-			// debug
-			fprintf(stderr, "%s ", buffer);
-
 			int length = strlen(buffer) + 1;
 			char* label = malloc(length * sizeof(char));
 			strcpy(label, buffer);
@@ -463,9 +460,6 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 			fgetc(stream);
 		}
 	}
-	//debug
-	fprintf(stderr, "\n");
-	fflush(stderr);
 
 	return string;
 }
@@ -503,17 +497,10 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, struct Sha
 		return NULL;
 	}
 
-	// debug
-	fprintf(stderr, "reading graph %i's %i patterns:\n", number, nPatterns);
-
 	for (i=0; i<nPatterns; ++i) {
 		int multiplicity;
 		struct ShallowGraph* string;
 		fscanf(stream, "%i\t", &multiplicity);
-
-		// debug
-		fprintf(stderr, "pattern: multiplicity %i\n", multiplicity);
-
 		string = parseCString(stream, buffer, sgp);
 		string->next = patterns;
 		patterns = string;
