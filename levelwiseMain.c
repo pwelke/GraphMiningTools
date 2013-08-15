@@ -146,8 +146,11 @@ int main(int argc, char** argv) {
 		FILE* countFile = fopen(countFileName, "w");
 		FILE* patternFile = fopen(patternFileName, "w");
 
+		// debug
+		fprintf(stderr, "prep done\n");
+
 		/* find frequent single vertices and frequent edges */
-		patterns = getFrequentVerticesAndEdges(inputFileName, minGraph, maxGraph, patterns, frequentEdgeSearchTree, gp, sgp);
+		getFrequentVerticesAndEdges(inputFileName, minGraph, maxGraph, patterns, frequentEdgeSearchTree, gp, sgp);
 
 		// for (currentLevel = patterns; (currentLevel->visited > 0) && (patternSize < maxPatternSize); ++patternSize) {
 		// 	dumpSearchTree(gp, patterns);
