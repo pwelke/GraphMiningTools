@@ -71,13 +71,14 @@ void getFrequentVerticesAndEdges(char* fileName, int minGraph, int maxGraph, str
 			addToSearchTree(containedVertices, cString, gp, sgp);
 		}
 		resetToUnique(containedVertices);
-		mergeSearchTrees(frequentVertices, containedVertices, 1, NULL, NULL, frequentVertices, 0, gp);
-		dumpGraph(gp, auxiliary);
 
+		mergeSearchTrees(frequentVertices, containedVertices, 1, NULL, NULL, frequentVertices, 0, gp);
+		
 		// /* get frequent Edges */
 		// auxiliary = createGraph(2, gp);
 		// addEdgeBetweenVertices(0, 1, NULL, gp->listPool);
 
+		dumpGraph(gp, auxiliary);
 
 		/* do not alter */
 		++i;
