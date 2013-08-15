@@ -39,8 +39,12 @@ how to store results - check each pattern against db separately. just count how 
 // }
 
 /**
-return the frequent vertices in a db in a search tree and the frequent edges (for extension) as a ShallowGraph
-both output parameters should be initialized to "empty" structs
+return the histogram of vertices and edges in a db in a search tree.
+
+the db is expected to have the format outputted by printStringsInSearchTree().
+both output parameters (frequent* ) should be initialized to "empty" structs.
+fileName specifies the file the db is contained in.
+mingraph and maxgraph specify a range in which to read patterns.
 */
 void getFrequentVerticesAndEdges(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
@@ -50,6 +54,8 @@ void getFrequentVerticesAndEdges(char* fileName, int minGraph, int maxGraph, str
 	
 	/* iterate over all graphs in the database */
 	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, bufferSize, sgp))) {
+		struct ShallowGraph* pattern = patterns;
+
 		/* frequency of an edge increases by one if there exists a pattern for the current graph (a spanning tree) 
 		that contains the edge. Thus we need to find all edges contained in any spanning tree and then add them 
 		to frequentEdges once omitting multiplicity */
@@ -60,7 +66,8 @@ void getFrequentVerticesAndEdges(char* fileName, int minGraph, int maxGraph, str
 		struct Vertex* containedVertices = getVertex(gp->vertexPool);
 
 		/* get frequent vertices */
-		struct Graph* patternGraph = canonicalString2Graph(patterns, gp);
+		struct Graph* patternGraph = canonicalString2Graph(pattern, gp);
+
 		/* auxiliary contains a single vertex */
 		struct Graph* auxiliary = createGraph(1, gp);
 		int v;
@@ -70,14 +77,47 @@ void getFrequentVerticesAndEdges(char* fileName, int minGraph, int maxGraph, str
 			cString = treeCenterCanonicalString(auxiliary, sgp);
 			addToSearchTree(containedVertices, cString, gp, sgp);
 		}
+
+		/* set multiplicity of patterns to 1 and add to global vertex pattern set */
 		resetToUnique(containedVertices);
-
 		mergeSearchTrees(frequentVertices, containedVertices, 1, NULL, NULL, frequentVertices, 0, gp);
-		
-		// /* get frequent Edges */
-		// auxiliary = createGraph(2, gp);
-		// addEdgeBetweenVertices(0, 1, NULL, gp->listPool);
 
+		/* garbage collection */
+		dumpGraph(gp, auxiliary);
+		dumpSearchTree(gp, containedVertices);
+		
+		/* get frequent Edges */
+		auxiliary = createGraph(2, gp);
+		addEdgeBetweenVertices(0, 1, NULL, auxiliary, gp);
+
+		for (pattern=pattern->next; pattern!=NULL; pattern=pattern->next) {
+			for (v=0; v<patternGraph->n; ++v) {
+				struct VertexList* e;
+				for (e=patternGraph->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+					int w = e->endPoint->number;
+					if (w > v) {
+						struct ShallowGraph* cString;
+						auxiliary->vertices[0]->neighborhood->label = e->label;
+						auxiliary->vertices[1]->neighborhood->label = e->label;
+						auxiliary->vertices[0]->label = e->startPoint->label;
+						auxiliary->vertices[1]->label = e->endPoint->label;
+
+						cString = treeCenterCanonicalString(auxiliary, sgp);
+						addToSearchTree(containedEdges, cString, gp, sgp);
+					} 
+				}
+			}
+			dumpGraph(gp, patternGraph);
+			if (pattern->next != NULL) {
+				patternGraph = canonicalString2Graph(pattern, gp);
+			}
+		}
+		/* set multiplicity of patterns to 1 and add to global edge pattern set */
+		resetToUnique(containedEdges);
+		mergeSearchTrees(frequentEdges, containedEdges, 1, NULL, NULL, frequentEdges, 0, gp);
+
+		/* garbage collection */
+		dumpSearchTree(gp, containedEdges);
 		dumpGraph(gp, auxiliary);
 
 		/* do not alter */
