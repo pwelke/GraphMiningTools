@@ -461,6 +461,9 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 		}
 	}
 
+	dumpVertexList(sgp->listPool, init);
+	dumpVertexList(sgp->listPool, term);
+
 	return string;
 }
 
