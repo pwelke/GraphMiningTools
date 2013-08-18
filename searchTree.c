@@ -261,6 +261,55 @@ void resetToUnique(struct Vertex* root) {
 	resetToUniqueRec(root, root);
 }
 
+
+char frequentPatterns(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp) {
+	struct VertexList* e;
+	struct VertexList* dump =-NULL;
+	struct VertexList* good = NULL;
+
+	for (e=current->neighborhood; e!=NULL; e=e->next) {
+		e->used = frequentPatternsRec(e->endPoint, threshold, root, gp);
+	}
+
+	for (e=current->neighborhood; e!=NULL; ) {
+		struct VertexList* next = e->next;
+		if (e->used) {
+			e->next = good;
+			good = e;
+		} else {
+			e->next = dump;
+			dump = e;
+		}
+		e = next;
+	}
+
+	for (e=good, current->neighborhood=NULL; e!=NULL; ) {
+		struct VertexList* next = e->next;
+		e->next = current->neighborhood;
+		current->neighborhood = e;
+	}
+	dumpVertexListRecursively(gp->listPool, dump);
+
+	/* if all children of current were deleted and current is not end of frequent
+	string, delete current and notify caller that we can delete the edge */
+	if (current->neighborhood == NULL) {
+		if (current->visited < threshold) {
+			if (current->visited > 0) {
+				--root->visited;
+			}
+			/* an empty search tree still consists of the root */
+			if (current != root) {
+				dumpVertex(gp->vertexPool, current);
+			}
+		}
+		return 0;
+	} else {
+		return 1;
+	}
+
+}
+
+
 /*
  * updates search tree structure.
  * labels of strings are stored in edges,
@@ -424,12 +473,18 @@ void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowG
 }
 
 char fpeekc(FILE* stream) {
-	fpos_t currentPosition; 
-	char c;
-	fgetpos(stream, &currentPosition);
-	c = fgetc(stream);
-	fsetpos(stream, &currentPosition);
-	return c;
+	// fpos_t currentPosition; 
+	// char c;
+	// fgetpos(stream, &currentPosition);
+	// c = fgetc(stream);
+	// fsetpos(stream, &currentPosition);
+	// return c;
+	int c;
+
+    c = fgetc(stream);
+    ungetc(c, stream);
+
+    return c;
 }
 
 struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
@@ -494,10 +549,18 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, struct Sha
 	int i;
 	struct ShallowGraph* patterns = NULL;
 
+	// if (fpeekc(stream) == '\0') {
+	// 	return NULL;
+	// }
+
 	char* buffer = malloc(bufferSize * sizeof(char));
 	int head = fscanf(stream, " # %i %i\n", &number, &nPatterns);
+
+	//debug
+	fprintf(stderr,"# %i %i\n", number, nPatterns);
+
 	if (head != 2) {
-		fprintf(stderr, "error reading patterns\n");
+		//fprintf(stderr, "error reading patterns\n");
 		free(buffer);
 		return NULL;
 	}
@@ -510,6 +573,10 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, struct Sha
 		string->next = patterns;
 		patterns = string;
 	}	
+
+	// //debug
+	// printCanonicalString(patterns, stderr);
+
 	free(buffer);
 	return patterns;
 }
