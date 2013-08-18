@@ -14,7 +14,8 @@
 #include "graphPrinting.h"
 #include "treeCenter.h"
 #include "connectedComponents.h"
-#include "main.h" 
+#include "levelwiseMain.h" 
+#include "levelwiseMining.h"
 /* #include "opk.h" */
 
 char DEBUG_INFO = 1;
@@ -131,10 +132,10 @@ int main(int argc, char** argv) {
 		int maxPatternSize = 10;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
-		char* inputFileName = "results/2013-07-18_spanningTreePatterns.txt";
+		char* inputFileName = "results/2013-07-23_spanningTreePatterns.txt";
 		char* patternFileName = "results/patterns.txt";
 		int minGraph = 0;
-		int maxGraph = 10;
+		int maxGraph = 2;
 
 		// internal init
 		struct Vertex* patterns = getVertex(vp);
@@ -150,7 +151,14 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "prep done\n");
 
 		/* find frequent single vertices and frequent edges */
-		getFrequentVerticesAndEdges(inputFileName, minGraph, maxGraph, patterns, frequentEdgeSearchTree, gp, sgp);
+		getVertexAndEdgeHistograms(inputFileName, minGraph, maxGraph, patterns, frequentEdgeSearchTree, gp, sgp);
+
+		// debug
+		fprintf(stderr, "vertices:\n");
+		printStringsInSearchTree(patterns, stdout, sgp); 
+		fprintf(stderr, "edges:\n");
+		printStringsInSearchTree(frequentEdgeSearchTree, stdout, sgp); 
+
 
 		// for (currentLevel = patterns; (currentLevel->visited > 0) && (patternSize < maxPatternSize); ++patternSize) {
 		// 	dumpSearchTree(gp, patterns);
