@@ -69,9 +69,6 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 
 			/* get frequent vertices */
 			struct Graph* patternGraph = canonicalString2Graph(pattern, gp);
-
-			/* auxiliary contains a single vertex */
-			struct Graph* auxiliary;
 			int v;
 			for (v=0; v<patternGraph->n; ++v) {
 				/* See commented out how it would look if done by the book.
@@ -86,12 +83,9 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 				containedVertices->d += addStringToSearchTree(containedVertices, cString, gp);
 				containedVertices->number += 1;
 			}
-
 			/* set multiplicity of patterns to 1 and add to global vertex pattern set */
 			resetToUnique(containedVertices);
 			mergeSearchTrees(frequentVertices, containedVertices, 1, NULL, NULL, frequentVertices, 0, gp);
-
-			/* garbage collection */
 			dumpSearchTree(gp, containedVertices);
 			
 			/* get frequent Edges */
@@ -101,47 +95,51 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 					struct VertexList* e;
 					for (e=patternGraph->vertices[v]->neighborhood; e!=NULL; e=e->next) {
 						int w = e->endPoint->number;
+						/* edges occur twice in patternGraph. just add them once to the search tree */
 						if (w > v) {
+							/* as for vertices, I use specialized code to generate 
+							the canonical string of a single edge */
 							struct VertexList* cString;
-						if (strcmp(e->startPoint->label, e->endPoint->label) < 0) {
-							/* cString = v e (w) */
-							struct VertexList* tmp = getVertexList(gp->listPool);
-							tmp->label = e->endPoint->label;
+							if (strcmp(e->startPoint->label, e->endPoint->label) < 0) {
+								/* cString = v e (w) */
+								struct VertexList* tmp = getVertexList(gp->listPool);
+								tmp->label = e->endPoint->label;
 
-							cString = getTerminatorEdge(gp->listPool);
-							tmp->next = cString;
+								cString = getTerminatorEdge(gp->listPool);
+								tmp->next = cString;
 
-							cString = getVertexList(gp->listPool);
-							cString->label = e->label;
-							cString->next = tmp;
+								cString = getVertexList(gp->listPool);
+								cString->label = e->label;
+								cString->next = tmp;
 
-							tmp = getInitialisatorEdge(gp->listPool);
-							tmp->next = cString;
+								tmp = getInitialisatorEdge(gp->listPool);
+								tmp->next = cString;
 
-							cString = getVertexList(gp->listPool);
-							cString->label = e->startPoint->label;
-							cString->next = tmp;
-						} else {
-							/* cString = w e (v) */
-							struct VertexList* tmp = getVertexList(gp->listPool);
-							tmp->label = e->startPoint->label;
+								cString = getVertexList(gp->listPool);
+								cString->label = e->startPoint->label;
+								cString->next = tmp;
+							} else {
+								/* cString = w e (v) */
+								struct VertexList* tmp = getVertexList(gp->listPool);
+								tmp->label = e->startPoint->label;
 
-							cString = getTerminatorEdge(gp->listPool);
-							tmp->next = cString;
+								cString = getTerminatorEdge(gp->listPool);
+								tmp->next = cString;
 
-							cString = getVertexList(gp->listPool);
-							cString->label = e->label;
-							cString->next = tmp;
+								cString = getVertexList(gp->listPool);
+								cString->label = e->label;
+								cString->next = tmp;
 
-							tmp = getInitialisatorEdge(gp->listPool);
-							tmp->next = cString;
+								tmp = getInitialisatorEdge(gp->listPool);
+								tmp->next = cString;
 
-							cString = getVertexList(gp->listPool);
-							cString->label = e->endPoint->label;
-							cString->next = tmp;
-						}
-						containedEdges->d += addStringToSearchTree(containedEdges, cString, gp);
-						containedEdges->number += 1;
+								cString = getVertexList(gp->listPool);
+								cString->label = e->endPoint->label;
+								cString->next = tmp;
+							}
+							/* add the string to the search tree */
+							containedEdges->d += addStringToSearchTree(containedEdges, cString, gp);
+							containedEdges->number += 1;
 						} 
 					}
 				}
@@ -150,13 +148,10 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 			/* set multiplicity of patterns to 1 and add to global edge pattern set */
 			resetToUnique(containedEdges);
 			mergeSearchTrees(frequentEdges, containedEdges, 1, NULL, NULL, frequentEdges, 0, gp);
-
-			/* garbage collection */
 			dumpSearchTree(gp, containedEdges);
-			//dumpGraph(gp, auxiliary);
 		}
 
-		/* do not alter */
+		/* counting of read graphs and garbage collection */
 		++i;
 		dumpShallowGraphCycle(sgp, patterns);
 	}
