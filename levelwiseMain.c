@@ -152,8 +152,8 @@ int main(int argc, char** argv) {
 
 		/* find frequent single vertices and frequent edges */
 		getVertexAndEdgeHistograms(inputFileName, minGraph, maxGraph, patterns, frequentEdgeSearchTree, gp, sgp);
-		frequentPatterns(patterns, threshold, patterns, gp, 0);
-		frequentPatterns(frequentEdgeSearchTree, threshold, frequentEdgeSearchTree, gp, 0);
+		frequentPatterns(patterns, threshold, patterns, gp);
+		frequentPatterns(frequentEdgeSearchTree, threshold, frequentEdgeSearchTree, gp);
 
 		// debug
 		fprintf(stderr, "vertices:\n");
