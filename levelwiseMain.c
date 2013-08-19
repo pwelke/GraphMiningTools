@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
 		}
 
 		// init params
-		int threshold = 2000;
+		int threshold = 2;
 		int maxPatternSize = 10;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
@@ -152,6 +152,8 @@ int main(int argc, char** argv) {
 
 		/* find frequent single vertices and frequent edges */
 		getVertexAndEdgeHistograms(inputFileName, minGraph, maxGraph, patterns, frequentEdgeSearchTree, gp, sgp);
+		frequentPatterns(patterns, threshold, patterns, gp, 0);
+		frequentPatterns(frequentEdgeSearchTree, threshold, frequentEdgeSearchTree, gp, 0);
 
 		// debug
 		fprintf(stderr, "vertices:\n");

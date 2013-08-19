@@ -6,6 +6,9 @@
 #include "canonicalString.h"
 #include "searchTree.h"
 
+//debug
+#include "graphPrinting.h"
+
 
 /**************************************************************************************
  ******************************** Search Tree *****************************************
@@ -262,13 +265,20 @@ void resetToUnique(struct Vertex* root) {
 }
 
 
-char frequentPatterns(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp) {
+char frequentPatterns(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp, int off) {
 	struct VertexList* e;
-	struct VertexList* dump =-NULL;
+	struct VertexList* dump = NULL;
 	struct VertexList* good = NULL;
+	
+	//debug
+	int c;
+	for (c=0;c<off;++c) {fprintf(stderr," ");}
+	fprintf(stderr, "recursion\n");
 
 	for (e=current->neighborhood; e!=NULL; e=e->next) {
-		e->used = frequentPatternsRec(e->endPoint, threshold, root, gp);
+		e->used = frequentPatterns(e->endPoint, threshold, root, gp, off+1);
+		for (c=0;c<off;++c) {fprintf(stderr," ");}
+		fprintf(stderr, "e %s used=%i\n", e->label, e->used);
 	}
 
 	for (e=current->neighborhood; e!=NULL; ) {
@@ -283,27 +293,46 @@ char frequentPatterns(struct Vertex* current, int threshold, struct Vertex* root
 		e = next;
 	}
 
+	for (c=0;c<off;++c) {fprintf(stderr," ");}
+	fprintf(stderr, "remaining edges\n");
+
 	for (e=good, current->neighborhood=NULL; e!=NULL; ) {
 		struct VertexList* next = e->next;
 		e->next = current->neighborhood;
 		current->neighborhood = e;
+		for (c=0;c<off;++c) {fprintf(stderr," ");}
+		fprintf(stderr, "e %s used=%i\n", e->label, e->used);
+		e = next;
 	}
 	dumpVertexListRecursively(gp->listPool, dump);
+
+	for (c=0;c<off;++c) {fprintf(stderr," ");}
+	fprintf(stderr, "goto if: %i\n", current->neighborhood == NULL);
 
 	/* if all children of current were deleted and current is not end of frequent
 	string, delete current and notify caller that we can delete the edge */
 	if (current->neighborhood == NULL) {
 		if (current->visited < threshold) {
+			for (c=0;c<off;++c) {fprintf(stderr," ");}
+			fprintf(stderr, "remove vertex, if not root\n");
 			if (current->visited > 0) {
-				--root->visited;
+				root->visited -= current->visited;
 			}
 			/* an empty search tree still consists of the root */
 			if (current != root) {
+				for (c=0;c<off;++c) {fprintf(stderr," ");}
+				fprintf(stderr, "...it's not\n");
 				dumpVertex(gp->vertexPool, current);
 			}
+			return 0;
+		} else {
+			for (c=0;c<off;++c) {fprintf(stderr," ");}
+			fprintf(stderr, "keep vertex, end\n");
+			return 1;
 		}
-		return 0;
 	} else {
+		for (c=0;c<off;++c) {fprintf(stderr," ");}
+		fprintf(stderr, "keep vertex, intermed\n");
 		return 1;
 	}
 
@@ -473,17 +502,9 @@ void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowG
 }
 
 char fpeekc(FILE* stream) {
-	// fpos_t currentPosition; 
-	// char c;
-	// fgetpos(stream, &currentPosition);
-	// c = fgetc(stream);
-	// fsetpos(stream, &currentPosition);
-	// return c;
 	int c;
-
     c = fgetc(stream);
     ungetc(c, stream);
-
     return c;
 }
 
