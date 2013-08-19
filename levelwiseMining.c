@@ -90,7 +90,9 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 			
 			/* get frequent Edges */
 			for ( ; pattern!=NULL; pattern=pattern->next) {
-				patternGraph = canonicalString2Graph(pattern, gp);
+				if (patternGraph == NULL) {
+					patternGraph = canonicalString2Graph(pattern, gp);
+				}
 				for (v=0; v<patternGraph->n; ++v) {
 					struct VertexList* e;
 					for (e=patternGraph->vertices[v]->neighborhood; e!=NULL; e=e->next) {
@@ -144,6 +146,7 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 					}
 				}
 				dumpGraph(gp, patternGraph);
+				patternGraph = NULL;
 			}
 			/* set multiplicity of patterns to 1 and add to global edge pattern set */
 			resetToUnique(containedEdges);
@@ -349,7 +352,7 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 }
 
 
-void recAccess(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
 	if (root->visited != 0) {
@@ -359,6 +362,13 @@ void recAccess(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct Sh
 		struct Graph* refinements = extendPattern(pattern, frequentEdges, gp);
 		refinements = filterExtension(pattern, lowerLevel, currentLevel, gp, sgp);
 
+		/* to just generate the search tree of candidates, we do not need the graphs any more */
+		while (refinements != NULL) {
+			struct Graph* next = refinements->next;
+			refinements->next = NULL;
+			dumpGraph(gp, refinements);
+			refinements = next;
+		}
 	}
 
 	/* recursively access the subtree dangling from root */
@@ -369,7 +379,7 @@ void recAccess(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct Sh
 			struct VertexList* lastEdge = prefix->lastEdge;
 			appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
 
-			recAccess(lowerLevel, currentLevel, frequentEdges, e->endPoint, root, prefix, gp, sgp);
+			generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, e->endPoint, root, prefix, gp, sgp);
 
 			dumpVertexList(sgp->listPool, prefix->lastEdge);
 			prefix->lastEdge = lastEdge;
@@ -385,8 +395,38 @@ void recAccess(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct Sh
 }
 
 
-void accessSearchTree(struct Vertex* root, struct ShallowGraphPool* sgp) {
+struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Vertex* currentLevel = getVertex(gp->vertexPool);
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
-	//recAccess(root, root, prefix, stream, sgp);
+	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, lowerLevel, lowerLevel, prefix, gp, sgp);
 	dumpShallowGraph(sgp, prefix);
+	return currentLevel;
+}
+
+struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* result = getShallowGraph(sgp);
+	struct VertexList* e;
+
+	for (e=frequentEdges->neighborhood; e!=NULL; e=e->next) {
+		struct Vertex* v = getVertex(gp->vertexPool);
+		struct VertexList* f;
+		v->label = e->label;
+		for (f=e->endPoint->neighborhood->endPoint->neighborhood; f!=NULL; f=f->next) {
+			struct VertexList* g;
+			for (g=f->endPoint->neighborhood; g!=NULL; g=g->next) {
+				struct VertexList* new = getVertexList(sgp->listPool);
+				new->startPoint = v;
+				new->label = f->label;
+				new->endPoint = getVertex(gp->vertexPool);
+				new->endPoint->label = g->label;
+				pushEdge(result, new);
+				/* if the edge has not identical vertex labels at both vertices,
+				add the reverse edge to the output */ 
+				if (strcmp(v->label, new->endPoint->label) != 0) {
+					pushEdge(result, inverseEdge(new, sgp->listPool));
+				}
+			}
+		}
+	}
+	return result;
 }

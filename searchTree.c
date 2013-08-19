@@ -262,13 +262,13 @@ void resetToUnique(struct Vertex* root) {
 }
 
 
-char frequentPatterns(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp) {
+char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp) {
 	struct VertexList* e;
 	struct VertexList* dump = NULL;
 	struct VertexList* good = NULL;
 
 	for (e=current->neighborhood; e!=NULL; e=e->next) {
-		e->used = frequentPatterns(e->endPoint, threshold, root, gp);
+		e->used = filterSearchTree(e->endPoint, threshold, root, gp);
 	}
 
 	for (e=current->neighborhood; e!=NULL; ) {

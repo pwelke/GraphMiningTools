@@ -137,43 +137,48 @@ int main(int argc, char** argv) {
 		int minGraph = 0;
 		int maxGraph = 2;
 
-		// internal init
-		struct Vertex* patterns = getVertex(vp);
-		struct Vertex* frequentEdgeSearchTree = getVertex(vp);
-		struct Vertex* currentLevel;
-		int patternSize = 0;
-
+		/* internal init */
 		FILE* featureFile = fopen(featureFileName, "w");
 		FILE* countFile = fopen(countFileName, "w");
 		FILE* patternFile = fopen(patternFileName, "w");
 
-		// debug
-		fprintf(stderr, "prep done\n");
+		struct Vertex* frequentPatterns;
+
+		struct Vertex* frequentVertices = getVertex(vp);
+		struct Vertex* frequentEdges = getVertex(vp);
+		struct ShallowGraph* extensionEdges;
+		int patternSize;
 
 		/* find frequent single vertices and frequent edges */
-		getVertexAndEdgeHistograms(inputFileName, minGraph, maxGraph, patterns, frequentEdgeSearchTree, gp, sgp);
-		frequentPatterns(patterns, threshold, patterns, gp);
-		frequentPatterns(frequentEdgeSearchTree, threshold, frequentEdgeSearchTree, gp);
+		getVertexAndEdgeHistograms(inputFileName, minGraph, maxGraph, frequentVertices, frequentEdges, gp, sgp);
+		filterSearchTree(frequentVertices, threshold, frequentVertices, gp);
+		filterSearchTree(frequentEdges, threshold, frequentEdges, gp);
 
 		// debug
 		fprintf(stderr, "vertices:\n");
-		printStringsInSearchTree(patterns, stdout, sgp); 
+		printStringsInSearchTree(frequentVertices, stderr, sgp); 
 		fprintf(stderr, "edges:\n");
-		printStringsInSearchTree(frequentEdgeSearchTree, stdout, sgp); 
+		printStringsInSearchTree(frequentEdges, stderr, sgp); 
+
+		/* convert frequentEdges to ShallowGraph */
+		extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, gp, sgp);
+
+		//debug 
+		printShallowGraph(extensionEdges);
 
 
-		// for (currentLevel = patterns; (currentLevel->visited > 0) && (patternSize < maxPatternSize); ++patternSize) {
-		// 	dumpSearchTree(gp, patterns);
-		// 	patterns = getVertex(gp->vertexPool);
-			
+		for (frequentPatterns = frequentEdges, patternSize = 0; (frequentPatterns->visited > 0) && (patternSize < maxPatternSize); ++patternSize) {
+			struct Vertex* candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
 
-		// 	/* search tree for two levels below is not needed, as patterns are written to file anyhow */
-		// 	dumpSearchTree(gp, currentLevel);
-		// }
+			// debug
+			fprintf(stderr, "vertices:\n");
+			printStringsInSearchTree(candidateSet, stderr, sgp); 
+			dumpSearchTree(gp, candidateSet);
+		}
 
 		// debug garbage collection
-		dumpSearchTree(gp, frequentEdgeSearchTree);
-		dumpSearchTree(gp, patterns);
+		dumpSearchTree(gp, frequentEdges);
+		dumpSearchTree(gp, frequentVertices);
 
 		/* garbage collection */
 		fclose(featureFile);
