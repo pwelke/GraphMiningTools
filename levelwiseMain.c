@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 
 		// init params
 		int threshold = 2;
-		int maxPatternSize = 10;
+		int maxPatternSize = 3;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
 		char* inputFileName = "results/2013-07-23_spanningTreePatterns.txt";
@@ -157,28 +157,30 @@ int main(int argc, char** argv) {
 		// debug
 		fprintf(stderr, "vertices:\n");
 		printStringsInSearchTree(frequentVertices, stderr, sgp); 
+		//fprintf(stderr, "frequentVertices d %i v %i n %i\n", frequentVertices->d, frequentVertices->visited, frequentVertices->number);
 		fprintf(stderr, "edges:\n");
 		printStringsInSearchTree(frequentEdges, stderr, sgp); 
+		//fprintf(stderr, "frequentEdges d %i v %i n %i\n", frequentEdges->d, frequentEdges->visited, frequentEdges->number);
 
 		/* convert frequentEdges to ShallowGraph */
-		extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, gp, sgp);
+		extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, gp, sgp);	
 
-		//debug 
-		printShallowGraph(extensionEdges);
-
-
-		for (frequentPatterns = frequentEdges, patternSize = 0; (frequentPatterns->visited > 0) && (patternSize < maxPatternSize); ++patternSize) {
+		for (frequentPatterns = frequentEdges, patternSize = 0; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
 			struct Vertex* candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
 
 			// debug
-			fprintf(stderr, "vertices:\n");
+			fprintf(stderr, "candidates size %i:\n", patternSize);
 			printStringsInSearchTree(candidateSet, stderr, sgp); 
-			dumpSearchTree(gp, candidateSet);
+
+			dumpSearchTree(gp, frequentPatterns);
+			frequentPatterns = candidateSet;
 		}
 
 		// debug garbage collection
-		dumpSearchTree(gp, frequentEdges);
+		//dumpSearchTree(gp, frequentEdges);
+		freeFrequentEdgeShallowGraph(gp, sgp, extensionEdges);
 		dumpSearchTree(gp, frequentVertices);
+		dumpSearchTree(gp, frequentPatterns);
 
 		/* garbage collection */
 		fclose(featureFile);

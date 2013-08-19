@@ -165,9 +165,13 @@ void mergeSearchTrees(struct Vertex* globalTree, struct Vertex* localTree, int d
 
 	/* if some string ends here, write it to the output array and update data structure */
 	if (localTree->visited) {
+		if (globalTree->visited == 0) {
+			++trueRoot->d;
+		}
 
 		/* add current number of elements (divided by divisor) to global number */
 		globalTree->visited += localTree->visited / divisor;
+		trueRoot->number += localTree->visited / divisor;
 
 		/* if the current string has no global id yet, get the next one */
 		if (globalTree->lowPoint == 0) {
@@ -247,7 +251,8 @@ void resetToUniqueRec(struct Vertex* root, struct Vertex* current) {
 	if (current != root) {
 		if (current->visited > 0) {
 			current->visited = 1;
-			++root->visited;
+			++root->d;
+			++root->number;
 		}
 	}
 
@@ -257,7 +262,8 @@ void resetToUniqueRec(struct Vertex* root, struct Vertex* current) {
 }
 
 void resetToUnique(struct Vertex* root) {
-	root->visited = 0;
+	root->d = 0;
+	root->number = 0;
 	resetToUniqueRec(root, root);
 }
 
@@ -296,7 +302,8 @@ char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root
 	if (current->neighborhood == NULL) {
 		if (current->visited < threshold) {
 			if (current->visited > 0) {
-				root->visited -= current->visited;
+				root->number -= current->visited;
+				--root->d;
 			}
 			/* an empty search tree still consists of the root */
 			if (current != root) {
@@ -333,6 +340,7 @@ void shallowMergeSearchTrees(struct Vertex* globalTree, struct Vertex* localTree
 
 		/* add current number of elements (divided by divisor) to global number */
 		globalTree->visited += localTree->visited / divisor;
+		trueRoot->d += localTree->visited / divisor;
 
 		/* if the current string has no global id yet, get the next one */
 		if (globalTree->lowPoint == 0) {
@@ -437,33 +445,35 @@ struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* g
 }
 
 
-void recPrint(struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, FILE* stream, struct ShallowGraphPool* sgp) {
+void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph* prefix, FILE* stream, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
-	if (root->visited != 0) {
-		fprintf(stream, "%i\t", root->visited);
-		printCanonicalString(prefix, stream);
-	}
+	if (root != trueRoot) {
+		if (root->visited != 0) {
+			fprintf(stream, "%i\t", root->visited);
+			printCanonicalString(prefix, stream);
+		}
+	}																																																																								
 
 	for (e=root->neighborhood; e!=NULL; e=e->next) {
-		if (e->endPoint != parent) {
-			/* after finishing this block, we want prefix to be as before, thus we have
-			   to do some list magic */
-			struct VertexList* lastEdge = prefix->lastEdge;
-			appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
+		
+		/* after finishing this block, we want prefix to be as before, thus we have
+		   to do some list magic */																																																								
+		struct VertexList* lastEdge = prefix->lastEdge;
+		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
 
-			recPrint(e->endPoint, root, prefix, stream, sgp);
+		recPrint(e->endPoint, root, prefix, stream, sgp);
 
-			dumpVertexList(sgp->listPool, prefix->lastEdge);
-			prefix->lastEdge = lastEdge;
-			--prefix->m;
+		dumpVertexList(sgp->listPool, prefix->lastEdge);
+		prefix->lastEdge = lastEdge;
+		--prefix->m;
 
-			if (prefix->m == 0) {
-				prefix->edges = NULL;
-			} else {
-				lastEdge->next = NULL;
-			}
+		if (prefix->m == 0) {
+			prefix->edges = NULL;
+		} else {
+			lastEdge->next = NULL;
 		}
+		
 	}
 }
 

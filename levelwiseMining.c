@@ -8,6 +8,9 @@
 #include "searchTree.h"
 #include "levelwiseMining.h"
 
+//debug
+#include "graphPrinting.h"
+
 /**
 levelwise algorithm 
 
@@ -225,7 +228,7 @@ struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges
 		int v;
 		for (v=0; v<g->n; ++v) {
 			/* if the labels are compatible */
-			if (strcmp(g->vertices[v]->label, e->label) == 0) {
+			if (strcmp(g->vertices[v]->label, e->startPoint->label) == 0) {
 				struct Graph* h = refinementGraph(g, v, e, gp);
 				h->next = rho;
 				rho = h;
@@ -342,6 +345,13 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 				dumpShallowGraph(sgp, string);
 				dumpGraph(gp, current);
 			} else {
+				struct VertexList* e;
+				for (e=string->edges; e!=NULL; e=e->next) {
+					if (!e->isStringMaster) {
+						e->isStringMaster = 1;
+						e->label = copyString(e->label);
+					}
+				}
 				current->next = filteredExtension;
 				filteredExtension = current;
 				addToSearchTree(currentLevel, string, gp, sgp);
@@ -352,17 +362,18 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 }
 
 
-void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Vertex* root, struct Vertex* parent, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Vertex* root, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
-	if (root->visited != 0) {
+	if ((root->visited != 0) && (root != lowerLevel)) {
 		/* at this point, we have found a pattern, we want to make a tree from it, get the refinements,
 		filter interesting candidates and then scan the db of patterns  */
 		struct Graph* pattern = canonicalString2Graph(prefix, gp);
 		struct Graph* refinements = extendPattern(pattern, frequentEdges, gp);
-		refinements = filterExtension(pattern, lowerLevel, currentLevel, gp, sgp);
+		refinements = filterExtension(refinements, lowerLevel, currentLevel, gp, sgp);
 
 		/* to just generate the search tree of candidates, we do not need the graphs any more */
+		dumpGraph(gp, pattern);
 		while (refinements != NULL) {
 			struct Graph* next = refinements->next;
 			refinements->next = NULL;
@@ -372,24 +383,22 @@ void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLe
 	}
 
 	/* recursively access the subtree dangling from root */
-	for (e=root->neighborhood; e!=NULL; e=e->next) {
-		if (e->endPoint != parent) {
-			/* after finishing this block, we want prefix to be as before, thus we have
-			   to do some list magic */
-			struct VertexList* lastEdge = prefix->lastEdge;
-			appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
+	for (e=root->neighborhood; e!=NULL; e=e->next) {	
+		/* after finishing this block, we want prefix to be as before, thus we have
+			to do some list magic */
+		struct VertexList* lastEdge = prefix->lastEdge;
+		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
 
-			generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, e->endPoint, root, prefix, gp, sgp);
+		generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, e->endPoint, prefix, gp, sgp);
 
-			dumpVertexList(sgp->listPool, prefix->lastEdge);
-			prefix->lastEdge = lastEdge;
-			--prefix->m;
+		dumpVertexList(sgp->listPool, prefix->lastEdge);
+		prefix->lastEdge = lastEdge;
+		--prefix->m;
 
-			if (prefix->m == 0) {
-				prefix->edges = NULL;
-			} else {
-				lastEdge->next = NULL;
-			}
+		if (prefix->m == 0) {
+			prefix->edges = NULL;
+		} else {
+			lastEdge->next = NULL;
 		}
 	}
 }
@@ -398,7 +407,7 @@ void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLe
 struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Vertex* currentLevel = getVertex(gp->vertexPool);
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
-	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, lowerLevel, lowerLevel, prefix, gp, sgp);
+	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, lowerLevel, prefix, gp, sgp);
 	dumpShallowGraph(sgp, prefix);
 	return currentLevel;
 }
@@ -428,5 +437,52 @@ struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, s
 			}
 		}
 	}
+
+	/* to avoid memory leaks, make hardcopies of the labels */
+	for (e=result->edges; e!=NULL; e=e->next) {
+		if (!e->isStringMaster) {
+			e->isStringMaster = 1;
+			e->label = copyString(e->label);
+		}
+		if (!e->startPoint->isStringMaster) {
+			e->startPoint->isStringMaster = 1;
+			e->startPoint->label = copyString(e->startPoint->label);
+		}
+		if (!e->endPoint->isStringMaster) {
+			e->endPoint->isStringMaster = 1;
+			e->endPoint->label = copyString(e->endPoint->label);
+		}
+	}
 	return result;
+}
+
+/**
+Not threadsafe!!!
+*/
+void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges) {
+	struct VertexList* e = edges->edges;
+	struct Vertex* list = NULL;
+
+
+	for (e=edges->edges; e!=NULL; e=e->next) {
+		e->startPoint->d = e->endPoint->d = 1;
+	}
+	for (e=edges->edges; e!=NULL; e=e->next) {
+		if (e->startPoint->d == 1) {
+			e->startPoint->d = 0;
+			e->startPoint->next = list;
+			list = e->startPoint;
+		}
+		if (e->endPoint->d == 1) {
+			e->endPoint->d = 0;
+			e->endPoint->next = list;
+			list = e->endPoint;
+		}
+	}
+	while (list != NULL) {
+		struct Vertex* next = list->next;
+		dumpVertex(gp->vertexPool, list);
+		list = next;
+	}
+	dumpShallowGraph(sgp, edges);
 }
