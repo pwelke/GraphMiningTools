@@ -28,6 +28,31 @@ void printShallowGraph(struct ShallowGraph* g) {
 	fflush(stdout);
 }
 
+/**
+ * Print some information about a ShallowGraph
+ */
+void printLabelledShallowGraph(struct ShallowGraph* g) {
+	
+	struct ShallowGraph* index = g;
+	int i = 0;
+	do {
+		if (index) {
+			struct VertexList* e;
+			printf("Graph %i has %i edges:\n", i, index->m);
+			for (e=index->edges; e!=NULL; e=e->next) {
+				printf("(%s)%s(%s)\n",e->startPoint->label, e->label, e->endPoint->label);
+			}
+			printf("\n");
+			index = index->next;
+			++i;
+		} else {
+			/* if index is NULL, the input pointed to a list and not to a cycle */
+			break;
+		}
+	} while (index != g);
+	fflush(stdout);
+}
+
 
 /**
  * returns the number of ShallowGraphs in the list or cycle of ShallowGraphs
