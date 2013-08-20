@@ -1,7 +1,6 @@
 TPKNAME = tpk
 LWMNAME = lwm
-CPPFLAGS = -g -Wall -pedantic -W -ggdb
-# -O3
+CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 TPKOBJECTS = $(filter-out levelwiseMain.o, $(OBJECTS))
 LWMOBJECTS = $(filter-out main.o, $(OBJECTS))
@@ -23,4 +22,3 @@ lwm: $(LWMOBJECTS)
 
 clean:
 	rm *.o
-	rm tpk
