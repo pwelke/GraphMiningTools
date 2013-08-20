@@ -91,13 +91,9 @@ Currently the ) sign is used for that.
  */
 struct VertexList* getTerminatorEdge(struct ListPool *p) {
 	struct VertexList* e = getVertexList(p);
-	// e->label = malloc(2*sizeof(char));
-	// sprintf(e->label, "%c", getTerminatorSymbol());
-	// e->isStringMaster = 0;
 	e->label = termString;
 	return e;
 }
-
 
 /**
 Returns a VertexList object that represents the beginning of a canonical String.
@@ -105,9 +101,6 @@ Currently the ( sign is used for that.
  */
 struct VertexList* getInitialisatorEdge(struct ListPool *p) {
 	struct VertexList* e = getVertexList(p);
-	// e->label = malloc(2*sizeof(char));
-	// sprintf(e->label, "%c", getInitialisatorSymbol());
-	// e->isStringMaster = 1;
 	e->label = initString;
 	return e;
 }
