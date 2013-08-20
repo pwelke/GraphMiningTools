@@ -494,8 +494,6 @@ char fpeekc(FILE* stream) {
 struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* string = getShallowGraph(sgp);
 	struct VertexList* e;
-	struct VertexList* init = getInitialisatorEdge(sgp->listPool);
-	struct VertexList* term = getTerminatorEdge(sgp->listPool);
 	
 	while ((fpeekc(stream) != '\0') && (fpeekc(stream) != '\n') && (fpeekc(stream) != ' ')) {
 		if (fscanf(stream, "%s", buffer) == 1) {
@@ -519,10 +517,6 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 			fgetc(stream);
 		}
 	}
-
-	dumpVertexList(sgp->listPool, init);
-	dumpVertexList(sgp->listPool, term);
-
 	return string;
 }
 
@@ -547,8 +541,7 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, str
 	return 1;
 }
 
-struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, struct ShallowGraphPool* sgp) {
-	int number;
+struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* number, struct ShallowGraphPool* sgp) {
 	int nPatterns;
 	int i;
 	struct ShallowGraph* patterns = NULL;
@@ -558,10 +551,7 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, struct Sha
 	// }
 
 	char* buffer = malloc(bufferSize * sizeof(char));
-	int head = fscanf(stream, " # %i %i\n", &number, &nPatterns);
-
-	//debug
-	fprintf(stderr,"# %i %i\n", number, nPatterns);
+	int head = fscanf(stream, " # %i %i\n", number, &nPatterns);
 
 	if (head != 2) {
 		//fprintf(stderr, "error reading patterns\n");
