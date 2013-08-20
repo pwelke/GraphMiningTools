@@ -128,14 +128,14 @@ int main(int argc, char** argv) {
 		}
 
 		// init params
-		int threshold = 2;
-		int maxPatternSize = 3;
+		int threshold = 50;
+		int maxPatternSize = 1;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
 		char* inputFileName = "results/2013-07-23_spanningTreePatterns.txt";
 		char* patternFileName = "results/patterns.txt";
 		int minGraph = 0;
-		int maxGraph = 2;
+		int maxGraph = 100;
 
 		/* internal init */
 		FILE* featureFile = fopen(featureFileName, "w");
@@ -151,8 +151,18 @@ int main(int argc, char** argv) {
 
 		/* find frequent single vertices and frequent edges */
 		getVertexAndEdgeHistograms(inputFileName, minGraph, maxGraph, frequentVertices, frequentEdges, gp, sgp);
+		fprintf(stderr, "loading done\n");
 		filterSearchTree(frequentVertices, threshold, frequentVertices, gp);
 		filterSearchTree(frequentEdges, threshold, frequentEdges, gp);
+		fprintf(stderr, "filtering done\n");
+
+
+		// //debug 
+		// struct TreeDB* ti;
+		// for (ti=spanningTrees; ti; ti=ti->next) {
+		// 	printGraph(ti->treeSet);
+		// }
+		// printf("treeset done\n");
 
 		// debug
 		fprintf(stderr, "vertices:\n");
@@ -168,6 +178,11 @@ int main(int argc, char** argv) {
 		for (frequentPatterns = frequentEdges, patternSize = 0; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
 			struct Vertex* candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
 
+			// computeFrequencies(candidateSet, inputFileName, minGraph, maxGraph);
+			// /* threshold + 1 as candidateSet contains each candidate once, already */
+			// filterSearchTree(candidateSet, threshold + 1, candidateSet, gp);
+			// resetToUnique(candidateSet);
+
 			// debug
 			fprintf(stderr, "candidates size %i:\n", patternSize);
 			printStringsInSearchTree(candidateSet, stderr, sgp); 
@@ -181,6 +196,7 @@ int main(int argc, char** argv) {
 		freeFrequentEdgeShallowGraph(gp, sgp, extensionEdges);
 		dumpSearchTree(gp, frequentVertices);
 		dumpSearchTree(gp, frequentPatterns);
+		//dumpTreeDB(gp, spanningTrees);
 
 		/* garbage collection */
 		fclose(featureFile);

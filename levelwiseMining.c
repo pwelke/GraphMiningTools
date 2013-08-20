@@ -55,9 +55,10 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 	int i = 0;
 	FILE* stream = fopen(fileName, "r");
 	struct ShallowGraph* patterns = NULL;
+	int number;
 	
 	/* iterate over all graphs in the database */
-	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, bufferSize, sgp))) {
+	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, bufferSize, &number, sgp))) {
 		if (i >= minGraph) {
 			struct ShallowGraph* pattern = patterns;
 
@@ -168,6 +169,8 @@ struct TreeDB* getTreeDB() {
 	struct TreeDB* db = malloc(sizeof(struct TreeDB));
 	db->next = NULL;
 	db->treeSet = NULL;
+	db->boring = 0;
+	db->number = 0;
 	return db;
 }
 
@@ -202,12 +205,15 @@ struct TreeDB* getVertexAndEdgeHistogramsAndTreeSet(char* fileName, int minGraph
 	FILE* stream = fopen(fileName, "r");
 	struct ShallowGraph* patterns = NULL;
 	struct TreeDB* spanningTrees = NULL;
+	struct TreeDB* end = NULL;
+	int number;
 	
 	/* iterate over all graphs in the database */
-	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, bufferSize, sgp))) {
+	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, bufferSize, &number, sgp))) {
 		if (i >= minGraph) {
 			struct ShallowGraph* pattern = patterns;
 			struct TreeDB* tmp = getTreeDB();
+			tmp->number = number;
 
 			/* frequency of an edge increases by one if there exists a pattern for the current graph (a spanning tree) 
 			that contains the edge. Thus we need to find all edges contained in any spanning tree and then add them 
@@ -306,8 +312,13 @@ struct TreeDB* getVertexAndEdgeHistogramsAndTreeSet(char* fileName, int minGraph
 			dumpSearchTree(gp, containedEdges);
 
 			/* set treeset */
-			tmp->next = spanningTrees;
-			spanningTrees = tmp;
+			if (spanningTrees == NULL) {
+				spanningTrees = tmp;
+				end = tmp;
+			} else {
+				end->next = tmp;
+				end = tmp;
+			}
 		}
 
 		/* counting of read graphs and garbage collection */
@@ -640,3 +651,43 @@ void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool*
 	}
 	dumpShallowGraph(sgp, edges);
 }
+
+// void computeFrequencies(struct Vertex* candidateSet, char* inputFileName, int minGraph, int maxGraph) {
+// 	struct VertexList* e;
+
+// 	if ((root->visited != 0) && (root != lowerLevel)) {
+// 		/* at this point, we have found a pattern, we want to make a tree from it, check for   */
+// 		struct Graph* pattern = canonicalString2Graph(prefix, gp);
+// 		struct Graph* refinements = extendPattern(pattern, frequentEdges, gp);
+// 		refinements = filterExtension(refinements, lowerLevel, currentLevel, gp, sgp);
+
+// 		/* to just generate the search tree of candidates, we do not need the graphs any more */
+// 		dumpGraph(gp, pattern);
+// 		while (refinements != NULL) {
+// 			struct Graph* next = refinements->next;
+// 			refinements->next = NULL;
+// 			dumpGraph(gp, refinements);
+// 			refinements = next;
+// 		}
+// 	}
+
+// 	/* recursively access the subtree dangling from root */
+// 	for (e=root->neighborhood; e!=NULL; e=e->next) {	
+// 		/* after finishing this block, we want prefix to be as before, thus we have
+// 			to do some list magic */
+// 		struct VertexList* lastEdge = prefix->lastEdge;
+// 		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
+
+// 		generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, e->endPoint, prefix, gp, sgp);
+
+// 		dumpVertexList(sgp->listPool, prefix->lastEdge);
+// 		prefix->lastEdge = lastEdge;
+// 		--prefix->m;
+
+// 		if (prefix->m == 0) {
+// 			prefix->edges = NULL;
+// 		} else {
+// 			lastEdge->next = NULL;
+// 		}
+// 	}
+// }
