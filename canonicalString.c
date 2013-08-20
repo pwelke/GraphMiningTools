@@ -2,26 +2,47 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
+
 #include "graph.h"
 #include "canonicalString.h"
 
 
-/** canonicalString.c */
-
-
-/** Maybe I can implement the whole string things without strings and just with the search tree idea. 
-Let's try that. Every function with something like canonical string in its name returns a path. */
-
+/**
+A canonical string in the sense of this module is a ShallowGraph containing a NULL 
+terminated list of VertexLists. ->startPoint and ->endPoint of vertex lists are not
+considered. Instead, only the ->label is important.
+*/ 
 
 
 /**********************************************************************************
- *************************** canonical strings for trees **************************
+ ****************************** Utility methods ***********************************
  **********************************************************************************/
 
+/* internalized strings for initializator and terminator edges */
 char* initString = "(";
 char* termString = ")";
 char getTerminatorSymbol() { return ')'; }
 char getInitialisatorSymbol() { return '('; }
+
+/**
+Returns a VertexList object that represents the end of a canonical String.
+Currently the ) sign is used for that.
+ */
+struct VertexList* getTerminatorEdge(struct ListPool *p) {
+	struct VertexList* e = getVertexList(p);
+	e->label = termString;
+	return e;
+}
+
+/**
+Returns a VertexList object that represents the beginning of a canonical String.
+Currently the ( sign is used for that.
+ */
+struct VertexList* getInitialisatorEdge(struct ListPool *p) {
+	struct VertexList* e = getVertexList(p);
+	e->label = initString;
+	return e;
+}
 
 /**
  * Wrapper method for use in qsort
@@ -85,25 +106,11 @@ int compareVertexLists(const struct VertexList* e1, const struct VertexList* e2)
 }
 
 
-/**
-Returns a VertexList object that represents the end of a canonical String.
-Currently the ) sign is used for that.
- */
-struct VertexList* getTerminatorEdge(struct ListPool *p) {
-	struct VertexList* e = getVertexList(p);
-	e->label = termString;
-	return e;
-}
 
-/**
-Returns a VertexList object that represents the beginning of a canonical String.
-Currently the ( sign is used for that.
- */
-struct VertexList* getInitialisatorEdge(struct ListPool *p) {
-	struct VertexList* e = getVertexList(p);
-	e->label = initString;
-	return e;
-}
+/**********************************************************************************
+ *************************** canonical strings for trees **************************
+ **********************************************************************************/
+
 
 int canonicalString2GraphRec(struct Graph* g, int current, int parent, struct ShallowGraph* suffix, struct VertexList* initEdge, struct VertexList* termEdge, struct GraphPool* gp) {
 
@@ -135,6 +142,10 @@ int canonicalString2GraphRec(struct Graph* g, int current, int parent, struct Sh
 	return current;
 }
 
+
+/**
+Return a graph that belongs to the isomorphism class that is represented by pattern.
+*/
 struct Graph* canonicalString2Graph(struct ShallowGraph* pattern, struct GraphPool* gp) {
 	struct VertexList* initEdge = getInitialisatorEdge(gp->listPool);
 	struct VertexList* termEdge = getTerminatorEdge(gp->listPool);
@@ -1096,7 +1107,7 @@ struct ShallowGraph* getCanonicalStringOfOuterplanarBlock(struct ShallowGraph* h
 
 
 /*****************************************************************************************
- ************************************ User Output ****************************************
+ **************************************  Output  *****************************************
  *****************************************************************************************/
 
 
@@ -1148,6 +1159,12 @@ void printCanonicalStrings(struct ShallowGraph *s, FILE* stream) {
 		printCanonicalString(i, stream);
 	}
 }
+
+
+
+/*****************************************************************************************
+ **************************************  Input  ******************************************
+ *****************************************************************************************/
 
 
 /** 
