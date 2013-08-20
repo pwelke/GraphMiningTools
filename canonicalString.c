@@ -1201,7 +1201,6 @@ implementation.
 */
 void readLabel(FILE* stream, char* buffer) {
 	int i = 0;
-	int c;
 	for (buffer[i] = fgetc(stream); buffer[i] != ' '; buffer[++i] = fgetc(stream));
 	buffer[i] = '\0';
 }
