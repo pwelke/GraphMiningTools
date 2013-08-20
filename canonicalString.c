@@ -18,6 +18,8 @@ Let's try that. Every function with something like canonical string in its name 
  *************************** canonical strings for trees **************************
  **********************************************************************************/
 
+char* initString = "(";
+char* termString = ")";
 
 /**
  * Wrapper method for use in qsort
@@ -89,9 +91,10 @@ Currently the ) sign is used for that.
  */
 struct VertexList* getTerminatorEdge(struct ListPool *p) {
 	struct VertexList* e = getVertexList(p);
-	e->label = malloc(2*sizeof(char));
-	sprintf(e->label, "%c", getTerminatorSymbol());
-	e->isStringMaster = 1;
+	// e->label = malloc(2*sizeof(char));
+	// sprintf(e->label, "%c", getTerminatorSymbol());
+	// e->isStringMaster = 0;
+	e->label = termString;
 	return e;
 }
 
@@ -102,9 +105,10 @@ Currently the ( sign is used for that.
  */
 struct VertexList* getInitialisatorEdge(struct ListPool *p) {
 	struct VertexList* e = getVertexList(p);
-	e->label = malloc(2*sizeof(char));
-	sprintf(e->label, "%c", getInitialisatorSymbol());
-	e->isStringMaster = 1;
+	// e->label = malloc(2*sizeof(char));
+	// sprintf(e->label, "%c", getInitialisatorSymbol());
+	// e->isStringMaster = 1;
+	e->label = initString;
 	return e;
 }
 
