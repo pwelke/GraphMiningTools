@@ -1157,10 +1157,17 @@ char fpeekc(FILE* stream) {
 }
 
 char notDone(FILE* stream) {
-		int c;
-    c = fgetc(stream);
+	int c;
+    for (c = fgetc(stream); c == ' '; c = fgetc(stream));
     ungetc(c, stream);
-	return (c != '\0') && (c != '\n') && (c != ' ');
+	return (c != '\0') && (c != '\n'); /* && (c != ' '); */
+}
+
+void readLabel(FILE* stream, char* buffer) {
+	int i = 0;
+	int c;
+	for (buffer[i] = fgetc(stream); buffer[i] != ' '; buffer[++i] = fgetc(stream));
+	buffer[i] = '\0';
 }
 
 
@@ -1169,32 +1176,48 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 	struct VertexList* e;
 	
 	while (notDone(stream)) {
-		if (fscanf(stream, "%s", buffer) == 1) {
-			e = getVertexList(sgp->listPool);
-			if (strcmp(buffer, termString) == 0) {
-				e->label = termString;
-			} else {
-				if (strcmp(buffer, initString) == 0) {
-					e->label = initString;
-				} else {
-					int length = strlen(buffer) + 1;
-					char* label = malloc(length * sizeof(char));
-					strcpy(label, buffer);
-					e->label = label;
-					e->isStringMaster = 1;
-				}
-			}
-			appendEdge(string, e);
+		// if (fscanf(stream, "%s", buffer) == 1) {
+		// 	e = getVertexList(sgp->listPool);
+		// 	if (strcmp(buffer, termString) == 0) {
+		// 		e->label = termString;
+		// 	} else {
+		// 		if (strcmp(buffer, initString) == 0) {
+		// 			e->label = initString;
+		// 		} else {
+		// 			int length = strlen(buffer) + 1;
+		// 			char* label = malloc(length * sizeof(char));
+		// 			strcpy(label, buffer);
+		// 			e->label = label;
+		// 			e->isStringMaster = 1;
+		// 		}
+		// 	}
+		// 	appendEdge(string, e);
+		// } else {
+		// 	fprintf(stderr, "Error reading string from stream\n");
+		// 	dumpShallowGraph(sgp, string);
+		// 	return NULL;
+		// }
+		readLabel(stream, buffer);
+		e = getVertexList(sgp->listPool);
+		if (strcmp(buffer, termString) == 0) {
+			e->label = termString;
 		} else {
-			fprintf(stderr, "Error reading string from stream\n");
-			dumpShallowGraph(sgp, string);
-			return NULL;
+			if (strcmp(buffer, initString) == 0) {
+				e->label = initString;
+			} else {
+				int length = strlen(buffer) + 1;
+				char* label = malloc(length * sizeof(char));
+				strcpy(label, buffer);
+				e->label = label;
+				e->isStringMaster = 1;
+			}
 		}
-
+		appendEdge(string, e);
+		
 		/* remove leading spaces. right format => happens at most once */
-		while (fpeekc(stream) == ' ') {
+		/*while (fpeekc(stream) == ' ') {
 			fgetc(stream);
-		}
+		}*/
 	}
 	return string;
 }
