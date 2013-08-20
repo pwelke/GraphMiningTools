@@ -1149,6 +1149,11 @@ void printCanonicalStrings(struct ShallowGraph *s, FILE* stream) {
 	}
 }
 
+
+/** 
+Return the next char in stream and reset the position in the stream.
+"As if the char was not read..."
+*/
 char fpeekc(FILE* stream) {
 	int c;
     c = fgetc(stream);
@@ -1156,13 +1161,27 @@ char fpeekc(FILE* stream) {
     return c;
 }
 
+
+/**
+We are not done reading a canonical string from stream, if there is a non-space
+character before the next line break or the end of file (whichever comes first)
+*/
 char notDone(FILE* stream) {
 	int c;
     for (c = fgetc(stream); c == ' '; c = fgetc(stream));
     ungetc(c, stream);
-	return (c != '\0') && (c != '\n'); /* && (c != ' '); */
+	return (c != '\0') && (c != '\n');
 }
 
+
+/**
+Write chars in stream to buffer until a space is encountered.
+buffer needs to be large enough to hold the number of chars
+written. readLabel consumes the space, but replaces its occurrence in
+buffer with '\0'. this is actually quite good for the use case in parseCString,
+as there, all labels are terminated by a space due to the printCanonicalString() 
+implementation.
+*/
 void readLabel(FILE* stream, char* buffer) {
 	int i = 0;
 	int c;
@@ -1171,32 +1190,14 @@ void readLabel(FILE* stream, char* buffer) {
 }
 
 
+/**
+parses a canonical string from stream that was written using printCanonicalString().
+*/
 struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* string = getShallowGraph(sgp);
 	struct VertexList* e;
 	
 	while (notDone(stream)) {
-		// if (fscanf(stream, "%s", buffer) == 1) {
-		// 	e = getVertexList(sgp->listPool);
-		// 	if (strcmp(buffer, termString) == 0) {
-		// 		e->label = termString;
-		// 	} else {
-		// 		if (strcmp(buffer, initString) == 0) {
-		// 			e->label = initString;
-		// 		} else {
-		// 			int length = strlen(buffer) + 1;
-		// 			char* label = malloc(length * sizeof(char));
-		// 			strcpy(label, buffer);
-		// 			e->label = label;
-		// 			e->isStringMaster = 1;
-		// 		}
-		// 	}
-		// 	appendEdge(string, e);
-		// } else {
-		// 	fprintf(stderr, "Error reading string from stream\n");
-		// 	dumpShallowGraph(sgp, string);
-		// 	return NULL;
-		// }
 		readLabel(stream, buffer);
 		e = getVertexList(sgp->listPool);
 		if (strcmp(buffer, termString) == 0) {
@@ -1213,12 +1214,6 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 			}
 		}
 		appendEdge(string, e);
-		
-		/* remove leading spaces. right format => happens at most once */
-		/*while (fpeekc(stream) == ' ') {
-			fgetc(stream);
-		}*/
 	}
 	return string;
 }
-
