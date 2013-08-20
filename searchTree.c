@@ -484,41 +484,6 @@ void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowG
 	dumpShallowGraph(sgp, prefix);
 }
 
-char fpeekc(FILE* stream) {
-	int c;
-    c = fgetc(stream);
-    ungetc(c, stream);
-    return c;
-}
-
-struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* string = getShallowGraph(sgp);
-	struct VertexList* e;
-	
-	while ((fpeekc(stream) != '\0') && (fpeekc(stream) != '\n') && (fpeekc(stream) != ' ')) {
-		if (fscanf(stream, "%s", buffer) == 1) {
-
-			int length = strlen(buffer) + 1;
-			char* label = malloc(length * sizeof(char));
-			strcpy(label, buffer);
-
-			e = getVertexList(sgp->listPool);
-			e->label = label;
-			e->isStringMaster = 1;
-			appendEdge(string, e);
-		} else {
-			fprintf(stderr, "Error reading string from stream\n");
-			dumpShallowGraph(sgp, string);
-			return NULL;
-		}
-
-		/* remove leading spaces. right format => happens at most once */
-		while (fpeekc(stream) == ' ') {
-			fgetc(stream);
-		}
-	}
-	return string;
-}
 
 int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int number;

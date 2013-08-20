@@ -20,6 +20,8 @@ Let's try that. Every function with something like canonical string in its name 
 
 char* initString = "(";
 char* termString = ")";
+char getTerminatorSymbol() { return ')'; }
+char getInitialisatorSymbol() { return '('; }
 
 /**
  * Wrapper method for use in qsort
@@ -82,8 +84,6 @@ int compareVertexLists(const struct VertexList* e1, const struct VertexList* e2)
 	} 
 }
 
-char getTerminatorSymbol() { return ')'; }
-char getInitialisatorSymbol() { return '('; }
 
 /**
 Returns a VertexList object that represents the end of a canonical String.
@@ -1137,24 +1137,6 @@ void printCanonicalString(struct ShallowGraph* s, FILE* stream) {
 	fprintf(stream, "\n");
 }
 
-struct ShallowGraph* readCanonicalString(FILE* stream, int maxLabelSize, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* string = getShallowGraph(sgp);
-	int openInitializators = 0;	
-	do {
-		char* label = malloc((maxLabelSize + 1) * sizeof(char));
-		fscanf(stream, "%s", label);
-		if ((label[0] == getInitialisatorSymbol()) && (label[1] = EOF)) {
-			++openInitializators;
-		}
-		if ((label[0] == getTerminatorSymbol()) && (label[1] = EOF)) {
-			++openInitializators;
-		}
-	} while (openInitializators != 0);
-
-
-	return string;
-}
-
 
 /**
 Print the canonical strings represented by the list of
@@ -1166,3 +1148,54 @@ void printCanonicalStrings(struct ShallowGraph *s, FILE* stream) {
 		printCanonicalString(i, stream);
 	}
 }
+
+char fpeekc(FILE* stream) {
+	int c;
+    c = fgetc(stream);
+    ungetc(c, stream);
+    return c;
+}
+
+char notDone(FILE* stream) {
+		int c;
+    c = fgetc(stream);
+    ungetc(c, stream);
+	return (c != '\0') && (c != '\n') && (c != ' ');
+}
+
+
+struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* string = getShallowGraph(sgp);
+	struct VertexList* e;
+	
+	while (notDone(stream)) {
+		if (fscanf(stream, "%s", buffer) == 1) {
+			e = getVertexList(sgp->listPool);
+			if (strcmp(buffer, termString) == 0) {
+				e->label = termString;
+			} else {
+				if (strcmp(buffer, initString) == 0) {
+					e->label = initString;
+				} else {
+					int length = strlen(buffer) + 1;
+					char* label = malloc(length * sizeof(char));
+					strcpy(label, buffer);
+					e->label = label;
+					e->isStringMaster = 1;
+				}
+			}
+			appendEdge(string, e);
+		} else {
+			fprintf(stderr, "Error reading string from stream\n");
+			dumpShallowGraph(sgp, string);
+			return NULL;
+		}
+
+		/* remove leading spaces. right format => happens at most once */
+		while (fpeekc(stream) == ' ') {
+			fgetc(stream);
+		}
+	}
+	return string;
+}
+

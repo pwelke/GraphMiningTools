@@ -6,7 +6,6 @@ int lexComp(const void* e1, const void* e2);
 int lexicographicComparison(const struct ShallowGraph *g1, const struct ShallowGraph *g2);
 int compareVertexLists(const struct VertexList* e1, const struct VertexList* e2);
 
-
 /* should be private */
 struct VertexList* getTerminatorEdge(struct ListPool *p);
 struct VertexList* getInitialisatorEdge(struct ListPool *p);
@@ -26,6 +25,8 @@ struct ShallowGraph* getCanonicalStringOfOuterplanarBlock(struct ShallowGraph* h
 
 void printCanonicalString(struct ShallowGraph *s, FILE* stream);
 void printCanonicalStrings(struct ShallowGraph *s, FILE* stream);
+
+struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp);
 
 char* canonicalStringToChar(struct ShallowGraph* string);
 struct Graph* canonicalString2Graph(struct ShallowGraph* pattern, struct GraphPool* gp);
