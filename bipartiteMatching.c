@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include "graph.h"
 
 
@@ -138,6 +139,9 @@ void initBipartite(struct Graph* B) {
 }
 
 
+/**
+Removes the vertices s and t that were added to B by bipartiteMatchingFastAndDirty()
+*/
 void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct GraphPool* gp) {
 	struct VertexList* temp = NULL;
 	struct VertexList* e;
@@ -238,6 +242,10 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 }
 
 
+/**
+Returns ShallowGraph containing a copy of each edge that has ->flag == 1.
+These edges form a matching, if bipartiteMatchingFastAndDirty was invoked on g
+*/
 struct ShallowGraph* getMatching(struct Graph* g, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* matching = getShallowGraph(sgp);
 	struct VertexList* e;
@@ -257,7 +265,7 @@ struct ShallowGraph* getMatching(struct Graph* g, struct ShallowGraphPool* sgp) 
 
 
 /**
-Return a maximum matching of the biapartite graph h.
+Return a maximum matching of the bipartite graph h.
 
 Input is a bipartite graph h. That is: V(h) = A \dot{\cup} B,
 h->number = |A| and vertices 0 to |A|-1 belong to A.
