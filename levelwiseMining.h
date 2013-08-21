@@ -22,5 +22,6 @@ struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges
 struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges);
-
+int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 #endif

@@ -54,18 +54,9 @@ int main(int argc, char** argv) {
 		struct ShallowGraphPool *sgp = createShallowGraphPool(1, lp);
 		struct GraphPool *gp = createGraphPool(1, vp, lp);
 
-		/* pointer to the current graph which is returned by the input iterator */
-		struct Graph* g = NULL;
-
-		/* pointer to an array managed by CyclicPatternKernel to store output results */
-		int imrSize = 0;
-
 		/* user input handling variables */
 		char outputOption = 0;
 		int param;
-
-		/* i counts the number of graphs read */
-		int i = 0;
 
 		/* graph delimiter */
 		int maxGraphs = -1;
@@ -89,14 +80,14 @@ int main(int argc, char** argv) {
 		}
 
 		// init params
-		int threshold = 50;
+		int threshold = 1;
 		int maxPatternSize = 1;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
 		char* inputFileName = "results/2013-07-23_spanningTreePatterns.txt";
 		char* patternFileName = "results/patterns.txt";
 		int minGraph = 0;
-		int maxGraph = 100;
+		int maxGraph = 1;
 
 		/* internal init */
 		FILE* featureFile = fopen(featureFileName, "w");
@@ -129,18 +120,32 @@ int main(int argc, char** argv) {
 		extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, gp, sgp);	
 
 		for (frequentPatterns = frequentEdges, patternSize = 0; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
-			struct Vertex* candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
+			int i;
+			struct ShallowGraph* prefix = getShallowGraph(sgp);
 
-			// computeFrequencies(candidateSet, inputFileName, minGraph, maxGraph);
+			struct Vertex* candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
+			struct Vertex** pointers = malloc(candidateSet->d * sizeof(struct Vertex*));
+			struct Graph** refinements = malloc(candidateSet->d * sizeof(struct Graph*));
+
+			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp);
+			scanDB(inputFileName, candidateSet, refinements, pointers, candidateSet->d, minGraph, maxGraph, gp, sgp);
+
+			//	computeFrequencies(candidateSet, inputFileName, minGraph, maxGraph);
 			// /* threshold + 1 as candidateSet contains each candidate once, already */
-			// filterSearchTree(candidateSet, threshold + 1, candidateSet, gp);
-			// resetToUnique(candidateSet);
+			//filterSearchTree(candidateSet, threshold + 1, candidateSet, gp);
+			//resetToUnique(candidateSet);
 
 			// debug
 			fprintf(stderr, "candidates size %i:\n", patternSize);
 			printStringsInSearchTree(candidateSet, stderr, sgp); 
 
 			dumpSearchTree(gp, frequentPatterns);
+			dumpShallowGraph(sgp, prefix);
+			free(pointers);
+			for (i=0; i<candidateSet->d; ++i) {
+				dumpGraph(gp, refinements[i]);
+			}
+			free(refinements);
 			frequentPatterns = candidateSet;
 		}
 

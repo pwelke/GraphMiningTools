@@ -4,42 +4,11 @@
 
 #include "graph.h"
 #include "treeCenter.h"
+#include "subtreeIsomorphism.h"
 #include "canonicalString.h"
 #include "searchTree.h"
 #include "levelwiseMining.h"
 
-//debug
-#include "graphPrinting.h"
-
-/**
-levelwise algorithm 
-
-input: the spanning tree pattern db of a graph db, some constraining parameters?, threshold 
-output: frequent subtrees of the db
-
-questions:
-how to represent the spanning trees? 
-how to extend a pattern?
-how to store results - check each pattern against db separately. just count how many times it is contained. 
-
-*/
-
-// void iteratePatternDB(char* fileName, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-
-// 	FILE* stream = fopen(fileName, "r");
-// 	struct ShallowGraph* patterns = NULL;
-// 	int i = 0;
-	
-// 	// /* iterate over all graphs in the database */
-// 	while (((i < maxGraph) || (maxGraph == -1)) && (patterns = streamReadPatterns(stream, 100, sgp))) {
-// 		// TODO what needs to be done
-
-// 		/* do not alter */
-// 		++i;
-// 		dumpShallowGraphCycle(sgp, patterns);
-// 	}
-// 	fclose(stream);
-// }
 
 /**
 return the histogram of vertices and edges in a db in a search tree.
@@ -213,7 +182,6 @@ struct TreeDB* getVertexAndEdgeHistogramsAndTreeSet(char* fileName, int minGraph
 		if (i >= minGraph) {
 			struct ShallowGraph* pattern = patterns;
 			struct TreeDB* tmp = getTreeDB();
-			tmp->number = number;
 
 			/* frequency of an edge increases by one if there exists a pattern for the current graph (a spanning tree) 
 			that contains the edge. Thus we need to find all edges contained in any spanning tree and then add them 
@@ -311,7 +279,8 @@ struct TreeDB* getVertexAndEdgeHistogramsAndTreeSet(char* fileName, int minGraph
 			mergeSearchTrees(frequentEdges, containedEdges, 1, NULL, NULL, frequentEdges, 0, gp);
 			dumpSearchTree(gp, containedEdges);
 
-			/* set treeset */
+			/* store number, of current graph, update treeset */
+			tmp->number = number;
 			if (spanningTrees == NULL) {
 				spanningTrees = tmp;
 				end = tmp;
@@ -448,7 +417,7 @@ char subtreeIsInfrequent(struct Graph* pattern, struct Vertex* searchTree, struc
 	int v;
 
 	/* mark leaves */
-	// TODO small speedup, if we go to n-1, as last vertex is the newest leaf
+	/* TODO small speedup, if we go to n-1, as last vertex is the newest leaf */
 	for (v=0; v<pattern->n; ++v) {
 		if (isLeaf(pattern->vertices[v])) {
 			struct Vertex* leaf;
@@ -462,7 +431,7 @@ char subtreeIsInfrequent(struct Graph* pattern, struct Vertex* searchTree, struc
 			e = snatchEdge(leaf->neighborhood->endPoint, leaf);
 
 			/* get induced subgraph, add vertex and leaf to graph again */
-			// TODO speedup by reusing inducedSubgraph
+			/* TODO speedup by reusing inducedSubgraph */
 			subPattern = cloneInducedGraph(pattern, gp);
 			string = treeCenterCanonicalString(subPattern, sgp);
 			pattern->vertices[v] = leaf;
@@ -622,12 +591,15 @@ struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, s
 }
 
 /**
-Not threadsafe!!!
+frequentEdgeShallowGraph is a list of VertexLists that point to Vertices
+that are only accessible from there. These vertices have to be dumped, 
+but there may be more than one vertexlist referencing a Vertex.
+thus the algorithm has to find and store the first occurrence of each Vertex, 
+dump them and just then dump the shallowgraph.
 */
 void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges) {
 	struct VertexList* e = edges->edges;
 	struct Vertex* list = NULL;
-
 
 	for (e=edges->edges; e!=NULL; e=e->next) {
 		e->startPoint->d = e->endPoint->d = 1;
@@ -652,42 +624,97 @@ void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool*
 	dumpShallowGraph(sgp, edges);
 }
 
-// void computeFrequencies(struct Vertex* candidateSet, char* inputFileName, int minGraph, int maxGraph) {
-// 	struct VertexList* e;
 
-// 	if ((root->visited != 0) && (root != lowerLevel)) {
-// 		/* at this point, we have found a pattern, we want to make a tree from it, check for   */
-// 		struct Graph* pattern = canonicalString2Graph(prefix, gp);
-// 		struct Graph* refinements = extendPattern(pattern, frequentEdges, gp);
-// 		refinements = filterExtension(refinements, lowerLevel, currentLevel, gp, sgp);
+/**
+Walk through the db, checking for each graph g \in db which refinements are subtrees of at least one of its spanning 
+trees. for all these refinements, the visited counter of its cString in currentLevel is increased. 
+*/
+void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int bufferSize = 100;
+	int i = 0;
+	FILE* stream = fopen(fileName, "r");
+	struct ShallowGraph* spanningTreeStrings = NULL;
+	int number;
+	
+	/* iterate over all graphs in the database */
+	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
+		if (i >= minGraph) {
+			struct ShallowGraph* spanningTreeString;
+			struct Graph* spanningTree = NULL;
+			int refinement;
 
-// 		/* to just generate the search tree of candidates, we do not need the graphs any more */
-// 		dumpGraph(gp, pattern);
-// 		while (refinements != NULL) {
-// 			struct Graph* next = refinements->next;
-// 			refinements->next = NULL;
-// 			dumpGraph(gp, refinements);
-// 			refinements = next;
-// 		}
-// 	}
+			/* set d to one, meaning that all refinements have not yet been recognized to be subtree
+			of current graph */
+			for (refinement=0; refinement<n; ++refinement) {
+				pointers[refinement]->d = 1;
+			}
 
-// 	/* recursively access the subtree dangling from root */
-// 	for (e=root->neighborhood; e!=NULL; e=e->next) {	
-// 		/* after finishing this block, we want prefix to be as before, thus we have
-// 			to do some list magic */
-// 		struct VertexList* lastEdge = prefix->lastEdge;
-// 		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
+			/* for each spanning tree */
+			for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
+				/* convert streamed spanning tree string to graph */
+				if (spanningTree != NULL) {
+					int v;
+					for (v=0; v<spanningTree->n; ++v) {
+						dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
+						spanningTree->vertices[v]->neighborhood = NULL;
+					}
+					canonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
+				} else {
+					spanningTree = canonicalString2Graph(spanningTreeString, gp);
+				}
+			
+				/* for each refinement */
+				for (refinement=0; refinement<n; ++refinement) {
+					/* if refinement is not already found to be subtree of current graph */
+					if (pointers[refinement]->d) {
+						/* if refinement is contained in spanning tree */
+						if (subtreeCheck(spanningTree, refinements[refinement], gp, sgp)) {
+							/* currentLevel refinementstring visited +1 and continue with next refinement */
+							pointers[refinement]->d = 0;
+							++pointers[refinement]->visited;
+							++currentLevel->number;
+						}
+					}
+				}
+			}
+			dumpGraph(gp, spanningTree);
+		}
 
-// 		generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, e->endPoint, prefix, gp, sgp);
+		/* counting of read graphs and garbage collection */
+		++i;
+		dumpShallowGraphCycle(sgp, spanningTreeStrings);
+	}
+	fclose(stream);
+}
 
-// 		dumpVertexList(sgp->listPool, prefix->lastEdge);
-// 		prefix->lastEdge = lastEdge;
-// 		--prefix->m;
 
-// 		if (prefix->m == 0) {
-// 			prefix->edges = NULL;
-// 		} else {
-// 			lastEdge->next = NULL;
-// 		}
-// 	}
-// }
+int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct VertexList* e;
+
+	if ((current->visited != 0) && (current != root))  {
+		patterns[i] = canonicalString2Graph(prefix, gp);
+		pointers[i] = current;
+		return i+1;
+	}
+
+	/* recursively access the subtree dangling from current */
+	for (e=current->neighborhood; e!=NULL; e=e->next) {	
+		/* after finishing this block, we want prefix to be as before, thus we have
+			to do some list magic */
+		struct VertexList* lastEdge = prefix->lastEdge;
+		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
+
+		i = makeGraphsAndPointers(root, e->endPoint, patterns, pointers, i, prefix, gp, sgp);
+
+		dumpVertexList(sgp->listPool, prefix->lastEdge);
+		prefix->lastEdge = lastEdge;
+		--prefix->m;
+
+		if (prefix->m == 0) {
+			prefix->edges = NULL;
+		} else {
+			lastEdge->next = NULL;
+		}
+	}
+	return i;
+}
