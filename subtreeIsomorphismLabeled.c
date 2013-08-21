@@ -1,4 +1,6 @@
 #include <malloc.h>
+#include <string.h>
+
 #include "graph.h"
 #include "bipartiteMatching.h"
 
@@ -292,11 +294,17 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 	int* hLeaves = findLeavesL(h, -1);
 	for (v=1; v<gLeaves[0]; ++v) {
 		for (u=1; u<hLeaves[0]; ++u) {
-			S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
-			/* 'header' of array stores its length */
-			S[gLeaves[v]][hLeaves[u]][0] = 2;
-			/* the number of the unique neighbor of u in h*/
-			S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
+			/* check compatibility of leaf labels */
+			if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
+				/* check for compatibility of edges */
+				if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
+					S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
+					/* 'header' of array stores its length */
+					S[gLeaves[v]][hLeaves[u]][0] = 2;
+					/* the number of the unique neighbor of u in h*/
+					S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
+				}
+			}
 		}
 	}
 	/* garbage collection for init */
