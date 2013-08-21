@@ -16,6 +16,7 @@ struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct V
 struct ShallowGraph* canonicalStringOfRootedLevelTree(struct Vertex* vertex, struct Vertex* parent, int maxDepth, struct ShallowGraphPool *p);
 struct ShallowGraph* canonicalStringOfLevelTree(struct ShallowGraph* vertexList, int maxDepth, struct ShallowGraphPool* sgp);
 struct Graph* canonicalString2Graph(struct ShallowGraph* pattern, struct GraphPool* gp);
+void canonicalString2ExistingGraph(struct ShallowGraph* pattern, struct Graph* g, struct GraphPool* gp);
 
 /* canonical strings for cycles */ 
 struct ShallowGraph* permutateCycle(struct ShallowGraph* g);

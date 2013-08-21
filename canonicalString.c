@@ -177,6 +177,27 @@ struct Graph* canonicalString2Graph(struct ShallowGraph* pattern, struct GraphPo
 
 
 /**
+Return a graph that belongs to the isomorphism class that is represented by pattern.
+pattern is expected to have at most g->n vertices. g must not contain edges.
+*/
+void canonicalString2ExistingGraph(struct ShallowGraph* pattern, struct Graph* g, struct GraphPool* gp) {
+	struct VertexList* initEdge = getInitialisatorEdge(gp->listPool);
+	struct VertexList* termEdge = getTerminatorEdge(gp->listPool);
+	struct VertexList* head = pattern->edges;
+
+	/* create tree from canonical string recursively */
+	g->vertices[0]->label = pattern->edges->label;
+	pattern->edges = pattern->edges->next;
+	canonicalString2GraphRec(g, 1, 0, pattern, initEdge, termEdge, gp);
+	pattern->edges = head;
+
+	/* cleanup */
+	dumpVertexList(gp->listPool, initEdge);
+	dumpVertexList(gp->listPool, termEdge);
+}
+
+
+/**
 Given a tree $T$ and a vertex $ v \in V(T) $ this function returns
 a string $ \pi (T) $ s.t. $ \pi (T) = \pi(T') $ iff $ T $ and $ T' $ are isomorphic.
  */
