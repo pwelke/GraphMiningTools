@@ -127,7 +127,16 @@ int main(int argc, char** argv) {
 			struct Vertex** pointers = malloc(candidateSet->d * sizeof(struct Vertex*));
 			struct Graph** refinements = malloc(candidateSet->d * sizeof(struct Graph*));
 
+			// debug
+			fprintf(stderr, "candidates size %i:\n", patternSize);
+			printStringsInSearchTree(candidateSet, stderr, sgp); 
+
 			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp);
+
+			// debug
+			fprintf(stderr, "makeGraphsAndPointers:\n");
+			printStringsInSearchTree(candidateSet, stderr, sgp); 
+
 			scanDB(inputFileName, candidateSet, refinements, pointers, candidateSet->d, minGraph, maxGraph, gp, sgp);
 
 			//	computeFrequencies(candidateSet, inputFileName, minGraph, maxGraph);
@@ -136,7 +145,7 @@ int main(int argc, char** argv) {
 			//resetToUnique(candidateSet);
 
 			// debug
-			fprintf(stderr, "candidates size %i:\n", patternSize);
+			fprintf(stderr, "counts\n");
 			printStringsInSearchTree(candidateSet, stderr, sgp); 
 
 			dumpSearchTree(gp, frequentPatterns);
