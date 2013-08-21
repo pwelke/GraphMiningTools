@@ -511,15 +511,10 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* numbe
 	int i;
 	struct ShallowGraph* patterns = NULL;
 
-	// if (fpeekc(stream) == '\0') {
-	// 	return NULL;
-	// }
-
 	char* buffer = malloc(bufferSize * sizeof(char));
 	int head = fscanf(stream, " # %i %i\n", number, &nPatterns);
 
 	if (head != 2) {
-		//fprintf(stderr, "error reading patterns\n");
 		free(buffer);
 		return NULL;
 	}
@@ -532,10 +527,7 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* numbe
 		string->next = patterns;
 		patterns = string;
 	}	
-
-	// //debug
-	// printCanonicalString(patterns, stderr);
-
+	
 	free(buffer);
 	return patterns;
 }
