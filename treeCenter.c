@@ -25,10 +25,6 @@ int markEdges(struct Vertex* root, int value) {
 			int current = markEdges(e->endPoint, value + 1);
 			e->used = current;
 
-			// //debug
-			// printf("(%i %i) %i\n", e->startPoint->number, e->endPoint->number, e->used);
-			// fflush(stdout);
-
 			if (current > max) {
 				max = current;
 			}
@@ -58,10 +54,6 @@ void moveCenter(struct Vertex* root, struct Vertex* parent, int value, int depth
 	struct VertexList* max1 = NULL;
 	struct VertexList* max2 = NULL;
 
-	// //debug
-	// printf("\nmv@%i, p%i v%i d%i\n", root->number, parent->number, value, depth);
-	// fflush(stdout);
-
 	/* update depths to fit to the new root */
 	for (e=root->neighborhood; e!=NULL; e=e->next) {
 		if (e->endPoint != parent) {
@@ -69,9 +61,6 @@ void moveCenter(struct Vertex* root, struct Vertex* parent, int value, int depth
 		} else {
 			e->used = value;
 		}
-		// //debug
-		// printf("(%i %i) %i\n", e->startPoint->number, e->endPoint->number, e->used);
-		// fflush(stdout);
 	}
 
 	/* find maximum depth branch */
@@ -95,9 +84,6 @@ void moveCenter(struct Vertex* root, struct Vertex* parent, int value, int depth
 
 	/* if the current node is no leaf */
 	if (max2 != NULL) {
-
-		// //debug
-		// printf("max1=%i@%i, max2=%i@%i\n", max1->used, max1->endPoint->number, max2->used, max2->endPoint->number);
 
 		/* if the two deepest branches have same depth, we are at the 
 		center */
@@ -126,23 +112,9 @@ void moveCenter(struct Vertex* root, struct Vertex* parent, int value, int depth
 		/* move the center to the root of the deepest branch */
 		moveCenter(max1->endPoint, root, max2->used + 1, depth + 1, centers);
 	} else {
-		// //debug
-		// printf("max1=%i@%i, max2=NULL\n", max1->used, max1->endPoint->number);
-
 		/* if we start at a leaf */
 		moveCenter(max1->endPoint, root, 1, 1, centers);
-	}
-	// /* if we are not in the first step, we have to increase 
-	// the depth of the branch we came from */
-	// if (parentEdge != NULL) {
-	// 	parentEdge->used = max2->used + 1;
-
-	// 	//debug
-	// 	printf("(%i %i) %i\n", e->startPoint->number, e->endPoint->number, e->used);
-	// 	fflush(stdout);
-	// }
-
-	
+	}	
 }
 
 
@@ -180,10 +152,7 @@ int* treeCenter(struct Graph* tree) {
 			tree->vertices[i]->lowPoint = INT_MAX;
 		}
 		markEdges(tree->vertices[0], 0);
-		moveCenter(tree->vertices[0], tree->vertices[0] /*NULL*/, 0, 0, centers);
-		// //debug
-		// printf("done\n");
-		// fflush(stdout);	
+		moveCenter(tree->vertices[0], tree->vertices[0] /*NULL*/, 0, 0, centers);	
 	}
 	return centers;
 }
@@ -200,10 +169,6 @@ Runtime is thus O(n)
 struct ShallowGraph* treeCenterCanonicalString(struct Graph* tree, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* cString;
 	int* center = treeCenter(tree);
-
-	// //debug
-	// printf("center: %i %i %i\n", center[0], center[1], center[2]);
-	// fflush(stdout);
 
 	cString = canonicalStringOfRootedTree(tree->vertices[center[1]], tree->vertices[center[1]], sgp);
 	
