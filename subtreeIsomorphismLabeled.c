@@ -3,89 +3,8 @@
 
 #include "graph.h"
 #include "bipartiteMatching.h"
-
-
-/** Utility data structure creator.
-Cube will store, what is called S in the paper. */
-int*** createCubeL(int x, int y) {
-	int*** cube;
-	int i, j;
-	if ((cube = malloc(x * sizeof(int**)))) {
-		for (i=0; i<x; ++i) {
-			cube[i] = malloc(y * sizeof(int*));
-			if (cube[i] != NULL) {
-				for (j=0; j<y; ++j) {
-					cube[i][j] = NULL;
-				}
-			} else {
-				for (j=0; j<i; ++j) {
-					free(cube[i]);
-				}
-				free(cube);
-				return NULL;
-			}
-		}
-	} else {
-		return NULL;
-	}
-	return cube;
-}
-
-
-/** Utility data structure destructor */
-void freeCubeL(int*** cube, int x, int y) {
-	int i, j;
-	for (i=0; i<x; ++i) {
-		if (cube[i] != NULL) {
-			for (j=0; j<y; ++j) {
-				if (cube[i][j] != NULL) {
-					free(cube[i][j]);
-				}
-			}
-			free(cube[i]);
-		}
-	}
-	free(cube);
-}
-
-
-
-/** Print a single entry in the cube */
-void printSL(int*** S, int v, int u) {
-	int i;
-	printf("S(%i, %i)={", v, u);
-	if (S[v][u]) {
-		for (i=1; i<S[v][u][0]-1; ++i) {
-			printf("%i, ", S[v][u][i]);
-		}
-		printf("%i}\n", S[v][u][S[v][u][0]-1]);
-	} else {
-		printf("}\n");
-	}
-	fflush(stdout);
-}
-
-
-/**
- * Print some information about a ShallowGraph
- */
-void printStrangeMatchingL(struct ShallowGraph* g) {
-	
-	struct ShallowGraph* index = g;
-	struct VertexList* e;
-	do {
-		if (index) {
-			printf("matching ");
-			for (e=index->edges; e; e=e->next) {
-				printf("(%i, %i) ", e->startPoint->lowPoint, e->endPoint->lowPoint);
-			}
-			printf("\n");
-		} else {
-			/* if index is NULL, the input pointed to a list and not to a cycle */
-			break;
-		}
-	} while (index != g);
-}
+#include "subtreeIsomorphism.h"
+#include "subtreeIsomorphismLabeled.h"
 
 
 /**
@@ -212,12 +131,15 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 			if (g->vertices[y]->visited < g->vertices[v]->visited) {
 				/* vertex labels have to match */
 				if (strcmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
-
-					if (S[y][x] != NULL) {
-						for (k=1; k<S[y][x][0]; ++k) {
-							if (S[y][x][k] == u) {
-								addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
-								++B->m;
+					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h 
+					these values were stored in B->vertices[i,j]->label */
+					if (strcmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+						if (S[y][x] != NULL) {
+							for (k=1; k<S[y][x][0]; ++k) {
+								if (S[y][x][k] == u) {
+									addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+									++B->m;
+								}
 							}
 						}
 					}
@@ -292,7 +214,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 	int u, v;
 
 	struct Vertex* r = g->vertices[0];
-	int*** S = createCubeL(g->n, h->n);
+	int*** S = createCube(g->n, h->n);
 	int* postorder = getPostorderL(g, r->number);
 
 
@@ -305,13 +227,13 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 			/* check compatibility of leaf labels */
 			if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
 				/* check for compatibility of edges */
-				//if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
+				if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
 					S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
 					/* 'header' of array stores its length */
 					S[gLeaves[v]][hLeaves[u]][0] = 2;
 					/* the number of the unique neighbor of u in h*/
 					S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
-				//}
+				}
 			}
 		}
 	}
@@ -339,7 +261,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 						if (matchings[0] == degU) {
 							free(postorder);
 							free(matchings);
-							freeCubeL(S, g->n, h->n);
+							freeCube(S, g->n, h->n);
 							dumpGraph(gp, B);
 							return 1;
 						} else {
@@ -377,7 +299,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 
 	/* garbage collection */
 	free(postorder);
-	freeCubeL(S, g->n, h->n);
+	freeCube(S, g->n, h->n);
 
 	return 0;
 }
