@@ -184,7 +184,8 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 	/* store size of first partitioning set */
 	B->number = sizeofX;
 
-	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B */
+	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B 
+	TODO add edge labels to vertex labels to compare edges easily */
 	i = 0;
 	for (e=h->vertices[u]->neighborhood; e!=NULL; e=e->next) {
 		B->vertices[i]->lowPoint = e->endPoint->number;
@@ -197,21 +198,23 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 
 	/* add edge (x,y) if u in S(y,x) */
 	for (i=0; i<sizeofX; ++i) {
-		for (j=sizeofX; j<B->n; ++j) {
+		for (j=sizeofX; j<B->n; ++j) {	
 			int x = B->vertices[i]->lowPoint;
 			int y = B->vertices[j]->lowPoint;
 			int k;
 
 			/* y has to be a child of v */
 			if (g->vertices[y]->visited < g->vertices[v]->visited) {
+				/* vertex labels have to match */
+				if (strcmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
 
-				if (S[y][x] != NULL) {
-					for (k=1; k<S[y][x][0]; ++k) {
-						if (S[y][x][k] == u) {
-							addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
-							++B->m;
+					if (S[y][x] != NULL) {
+						for (k=1; k<S[y][x][0]; ++k) {
+							if (S[y][x][k] == u) {
+								addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+								++B->m;
+							}
 						}
-
 					}
 				}
 			}
@@ -297,13 +300,13 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 			/* check compatibility of leaf labels */
 			if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
 				/* check for compatibility of edges */
-				if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
+				//if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
 					S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
 					/* 'header' of array stores its length */
 					S[gLeaves[v]][hLeaves[u]][0] = 2;
 					/* the number of the unique neighbor of u in h*/
 					S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
-				}
+				//}
 			}
 		}
 	}
@@ -316,43 +319,50 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 	for (v=0; v<g->n; ++v) {
 		struct Vertex* current = g->vertices[postorder[v]];
 		int currentDegree = degree(current);
-		if (!isLeaf(current) || (current->number == r->number)) {
+		if ((currentDegree != 1) || (current->number == r->number)) {
 			for (u=0; u<h->n; ++u) {
 				int i;
 				int degU = degree(h->vertices[u]);
 				if (degU <= currentDegree + 1) {
-					struct Graph* B = makeBipartiteInstanceL(g, postorder[v], h, u, S, gp);
-					int* matchings = malloc((degU + 1) * sizeof(int));
+					/* if vertex labels match */
+					if (strcmp(h->vertices[u]->label, g->vertices[v]->label) == 0) {
+						struct Graph* B = makeBipartiteInstanceL(g, postorder[v], h, u, S, gp);
+						int* matchings = malloc((degU + 1) * sizeof(int));
 
-					matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
+						matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
 
-					if (matchings[0] == degU) {
-						free(postorder);
-						free(matchings);
-						freeCubeL(S, g->n, h->n);
-						dumpGraph(gp, B);
-						return 1;
-					} else {
-						matchings[0] = degU + 1;
-					}
-
-					for (i=0; i<B->number; ++i) {
-						struct ShallowGraph* storage = removeVertexFromBipartiteInstanceL(B, i, sgp);
-						initBipartite(B);
-						matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
-
-						if (matchings[i+1] == degU - 1) {
-							matchings[i+1] = B->vertices[i]->lowPoint;
+						if (matchings[0] == degU) {
+							free(postorder);
+							free(matchings);
+							freeCubeL(S, g->n, h->n);
+							dumpGraph(gp, B);
+							return 1;
 						} else {
-							matchings[i+1] = -1;
+							matchings[0] = degU + 1;
 						}
 
-						addVertexToBipartiteInstanceL(storage);
-						dumpShallowGraph(sgp, storage);
-					}
-					S[current->number][u] = matchings;
+						for (i=0; i<B->number; ++i) {
+							if (strcmp(h->vertices[i]->label, g->vertices[v]->label) == 0) {
+								struct ShallowGraph* storage = removeVertexFromBipartiteInstanceL(B, i, sgp);
+								initBipartite(B);
+								matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
 
-					dumpGraph(gp, B);
+								if (matchings[i+1] == degU - 1) {
+									matchings[i+1] = B->vertices[i]->lowPoint;
+								} else {
+									matchings[i+1] = -1;
+								}
+
+								addVertexToBipartiteInstanceL(storage);
+								dumpShallowGraph(sgp, storage);
+							} else {
+								matchings[i+1] = -1;
+							}
+						}
+						S[current->number][u] = matchings;
+
+						dumpGraph(gp, B);
+					}
 				}
 			}		
 		}
