@@ -325,7 +325,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 				int degU = degree(h->vertices[u]);
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
-					if (strcmp(h->vertices[u]->label, g->vertices[v]->label) == 0) {
+					if (strcmp(h->vertices[u]->label, current->label) == 0) {
 						struct Graph* B = makeBipartiteInstanceL(g, postorder[v], h, u, S, gp);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
@@ -342,7 +342,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 						}
 
 						for (i=0; i<B->number; ++i) {
-							if (strcmp(h->vertices[i]->label, g->vertices[v]->label) == 0) {
+							if (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, current->label) == 0) {
 								struct ShallowGraph* storage = removeVertexFromBipartiteInstanceL(B, i, sgp);
 								initBipartite(B);
 								matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
