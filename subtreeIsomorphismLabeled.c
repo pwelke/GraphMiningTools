@@ -135,6 +135,7 @@ int dfsL(struct Vertex* v, int value) {
 	for (e=v->neighborhood; e!=NULL; e=e->next) {
 		if (e->endPoint->visited == -1) {
 			value = 1 + dfsL(e->endPoint, value);
+			e->endPoint->lowPoint = v->number;
 		}
 	}
 	v->visited = value;
@@ -148,6 +149,7 @@ The ->visited members of vertices are set to the position they have in the order
 (starting with 0). Vertices that cannot be reached from root get ->visited = -1
 The method returns an array of length g->n where position i contains the vertex number 
 of the ith vertex in the order. 
+The ->lowPoint s of vertices in g point to their parents in the postorder.
 */
 int* getPostorderL(struct Graph* g, int root) {
 	int i;
@@ -157,6 +159,7 @@ int* getPostorderL(struct Graph* g, int root) {
 		order[i] = -1;
 	}
 	dfsL(g->vertices[root], 0);
+	g->vertices[root]->lowPoint = -1;
 	for (i=0; i<g->n; ++i) {
 		if (g->vertices[i]->visited != -1) {
 			order[g->vertices[i]->visited] = i;
@@ -189,10 +192,12 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 	i = 0;
 	for (e=h->vertices[u]->neighborhood; e!=NULL; e=e->next) {
 		B->vertices[i]->lowPoint = e->endPoint->number;
+		B->vertices[i]->label = e->label;
 		++i;
 	}
 	for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
 		B->vertices[i]->lowPoint = e->endPoint->number;
+		B->vertices[i]->label = e->label;
 		++i;
 	}
 
@@ -342,7 +347,9 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 						}
 
 						for (i=0; i<B->number; ++i) {
-							if (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, current->label) == 0) {
+							/* if the label of ith child of u is compatible to the label of the parent of v */
+							if ((current->lowPoint != -1) 
+								&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
 								struct ShallowGraph* storage = removeVertexFromBipartiteInstanceL(B, i, sgp);
 								initBipartite(B);
 								matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
