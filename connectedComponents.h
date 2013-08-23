@@ -3,5 +3,6 @@
 
 struct ShallowGraph* getConnectedComponents(struct Graph* g, struct ShallowGraphPool* sgp);
 struct ShallowGraph* getRepresentativeVertices(struct Graph* g, struct ShallowGraphPool* sgp);
+char isConnected(struct Graph* g);
 
 #endif

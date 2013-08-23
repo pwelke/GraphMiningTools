@@ -52,6 +52,7 @@ struct ShallowGraph* getConnectedComponents(struct Graph* g, struct ShallowGraph
 	return result;
 }
 
+
 /**
 Returns a list of vertices who are roots of connected components. 
 Result is a shallow graph. each edge->endPoint is pointing to a vertex
@@ -75,4 +76,22 @@ struct ShallowGraph* getRepresentativeVertices(struct Graph* g, struct ShallowGr
 		}
 	}
 	return result;
+}
+
+
+char isConnected(struct Graph* g) {
+	int v;
+
+	for (v=0; v<g->n; ++v) {
+		g->vertices[v]->lowPoint = -1;
+	}
+
+	markComp(g->vertices[0], 0);
+
+	for (v=0; v<g->n; ++v) {
+		if (g->vertices[v]->lowPoint == -1) {
+			return 0;
+		}
+	}
+	return 1;
 }
