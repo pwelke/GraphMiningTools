@@ -5,7 +5,7 @@ OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 TPKOBJECTS = $(filter-out levelwiseMain.o, $(OBJECTS))
 LWMOBJECTS = $(filter-out main.o, $(OBJECTS))
 
-main: lwm
+main: tpk
 	
 
 all: main
