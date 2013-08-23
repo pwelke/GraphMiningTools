@@ -1164,9 +1164,15 @@ the screen.
 void printCanonicalString(struct ShallowGraph* s, FILE* stream) {
 	struct VertexList *i;
 	for (i=s->edges; i; i = i->next) {
-		fprintf(stream, "%s ", i->label);
+		//fprintf(stream, "%s ", i->label);
+		char* j;
+		for (j=i->label; *j != '\0'; ++j) {
+			fputc(*j, stream);
+		}
+		fputc(' ', stream);
 	}
-	fprintf(stream, "\n");
+	//fprintf(stream, "\n");
+	fputc('\n', stream);
 }
 
 
