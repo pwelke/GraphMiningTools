@@ -4,7 +4,7 @@
 
 #include "graph.h"
 #include "treeCenter.h"
-#include "subtreeIsomorphism.h"
+#include "subtreeIsomorphismLabeled.h"
 #include "canonicalString.h"
 #include "searchTree.h"
 #include "levelwiseMining.h"
@@ -668,7 +668,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 					/* if refinement is not already found to be subtree of current graph */
 					if (pointers[refinement]->d) {
 						/* if refinement is contained in spanning tree */
-						if (subtreeCheck(spanningTree, refinements[refinement], gp, sgp)) {
+						if (subtreeCheckL(spanningTree, refinements[refinement], gp, sgp)) {
 							/* currentLevel refinementstring visited +1 and continue with next refinement */
 							pointers[refinement]->d = 0;
 							++pointers[refinement]->visited;

@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 		char* inputFileName = "results/2013-07-23_spanningTreePatterns.txt";
 		char* patternFileName = "results/patterns.txt";
 		int minGraph = 0;
-		int maxGraph = 1;
+		int maxGraph = 80;
 
 		/* internal init */
 		FILE* featureFile = fopen(featureFileName, "w");
