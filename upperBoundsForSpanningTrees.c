@@ -1,4 +1,6 @@
 #include <malloc.h>
+#include <limits.h>
+
 #include "graph.h"
 #include "outerplanar.h"
 #include "dfs.h"
@@ -25,13 +27,40 @@ long int nCr(long int n, long int r) {
 }
 
 
+/* return n choose r, 
+or -1 if there is an overflow */
+long int nCr2(long int n, long int r) {
+	long int numer = 1;
+	long int denom = 1;
+	int i;
+	if (n - r < r) {
+		r = n - r;
+	}
+	if (r == 0) {
+		return 1;
+	}
+	for (i=n; i>n-r; --i) {
+		numer *= i;
+		/* avoid overflowing */
+		if (numer >= LONG_MAX / i-1) {
+			return -1;
+		}
+	}
+	/* r! is always smaller than (n-r)*...*(r+1) */
+	for (i=1; i<r+1; ++i) {
+		denom *= i;
+	}
+	return numer / denom;
+}
+
+
 /**
 The simplest upper bound for the number of spanning trees
 is just the number of all subsets of the edge set of cardinality
 n - 1
 */
 long int trivialBound(int m, int n) {
-	return nCr(m, n-1);
+	return nCr2(m, n-1);
 }
 
 
@@ -55,12 +84,24 @@ long int outerplanarBound(long int m, long int n) {
 		double mean = n / (double)(i+1);
 		double meanPot = 1;
 		int j;
+		long int bin;
 		for (j=0; j<i+1; ++j) {
 			meanPot *= mean;
 		}
-		estimate += nCr(k, i) * meanPot;
+		
+		bin = nCr2(k, i);
+		if (bin < 0) {
+			/* there was an overflow in nCr2 */
+			return (long int)-1;
+		} else {
+			estimate += bin * meanPot;
+		}
 	}
-	return (long int)estimate;
+	if (estimate > LONG_MAX) {
+		return (long int)-1;
+	} else {
+		return (long int)estimate;
+	}
 }
 
 
@@ -105,9 +146,19 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 		if (idx->m != 1) {
 			int nInd = getVertexNumberOfInducedGraph(idx, g->n, vertices);
 			if (!isOuterplanar(idx, sgp, gp)) {
-				estimate *= trivialBound(idx->m, nInd);
+				int bound = trivialBound(idx->m, nInd);
+				if (bound == -1){
+					return -1;
+				} else {
+					estimate *= bound;
+				}
 			} else {
-				estimate *= outerplanarBound(idx->m, nInd);
+				int bound = outerplanarBound(idx->m, nInd);
+				if (bound == -1) {
+					return -1;
+				} else {
+					estimate *= bound;
+				}
 			}
 		} else {
 			/* Biconnected Component idx is a bridge. Computation would be:
@@ -115,7 +166,6 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 			However, we do not want to waste time doing nothing */
 		}
 	}
-
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	free(vertices);
 	return estimate;
