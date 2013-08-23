@@ -2,3 +2,4 @@
 /results
 lwm
 tpk
+callgrind.out.*
