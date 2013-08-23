@@ -19,7 +19,7 @@
 
 char DEBUG_INFO = 1;
 
-int MINGRAPH = -1;
+int MINGRAPH = 17000;
 
 /**
  * Print --help message
@@ -196,78 +196,83 @@ int main(int argc, char** argv) {
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 						break;
 						case 't':
-						if (getGoodEstimate(g, sgp, gp) < depth) {
+						if (isConnected(g)) {
+							if (getGoodEstimate(g, sgp, gp) < depth) {
 
-							struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-							struct ShallowGraph* idx;
+								struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+								struct ShallowGraph* idx;
 
-							for (idx=trees; idx; idx=idx->next) {			
-								struct Graph* h = shallowGraphToGraph(idx, gp);
-								struct Graph* i = shallowGraphToGraph(idx, gp);
+								for (idx=trees; idx; idx=idx->next) {			
+									struct Graph* h = shallowGraphToGraph(idx, gp);
+									struct Graph* i = shallowGraphToGraph(idx, gp);
 
-								char isSubgraph = subtreeCheck(h, i, gp, sgp);
+									char isSubgraph = subtreeCheck(h, i, gp, sgp);
 
-								if (!isSubgraph) {
-									printf("is no subgraph\n");
+									if (!isSubgraph) {
+										printf("is no subgraph\n");
+									}
+
+									dumpGraph(gp, h);
+									dumpGraph(gp, i);
 								}
+								dumpShallowGraphCycle(sgp, trees);
 
-								dumpGraph(gp, h);
-								dumpGraph(gp, i);
 							}
-							dumpShallowGraphCycle(sgp, trees);
-
 						}
 						break; 
 						case 'p':
-						if (getGoodEstimate(g, sgp, gp) < depth) {
+						if (isConnected(g)) {
+							if (getGoodEstimate(g, sgp, gp) < depth) {
 
-							/* need to split g into connected components */
-							struct ShallowGraph* component;
-							struct ShallowGraph* connectedComponents = getConnectedComponents(g, sgp);
+								/* need to split g into connected components */
+								struct ShallowGraph* component;
+								//struct ShallowGraph* connectedComponents = getConnectedComponents(g, sgp);
 
-							struct Vertex* searchTree = getVertex(gp->vertexPool);
+								struct Vertex* searchTree = getVertex(gp->vertexPool);
 
-							for (component = connectedComponents; component; component=component->next) {
-								/** TODO is it ok to just ignore single vertices ?? */
-								if (component->m > 0) {
-									struct Graph* inducedGraph = shallowGraphToGraph(component, gp);
-									struct ShallowGraph* trees = listSpanningTrees(inducedGraph, sgp, gp);
-									struct ShallowGraph* idx;
-									struct ShallowGraph* cStrings = NULL;
-									int nTrees = 0;
-									
-
-									// //debug
-									// printGraph(inducedGraph);
-
-									for (idx=trees; idx; idx=idx->next) {	
-										struct Graph* tree = shallowGraphToGraph(idx, gp);
+								//for (component = connectedComponents; component; component=component->next) {
+									/** TODO is it ok to just ignore single vertices ?? */
+									//if (component->m > 0) {
+										//struct Graph* inducedGraph = shallowGraphToGraph(component, gp);
+										struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+										struct ShallowGraph* idx;
+										struct ShallowGraph* cStrings = NULL;
+										int nTrees = 0;
 										
-										// // debug
-										// printGraph(tree);
 
-										/* assumes that tree is a tree */
-										struct ShallowGraph* cString = treeCenterCanonicalString(tree, sgp);
-										cString->next = cStrings;
-										cStrings = cString;
-										++nTrees;
+										// //debug
+										// printGraph(inducedGraph);
 
-										/* garbage collection */
-										dumpGraph(gp, tree);
-									}
+										for (idx=trees; idx; idx=idx->next) {	
+											struct Graph* tree = shallowGraphToGraph(idx, gp);
+											
+											// // debug
+											// printGraph(tree);
 
-									dumpShallowGraphCycle(sgp, trees);
+											/* assumes that tree is a tree */
+											struct ShallowGraph* cString = treeCenterCanonicalString(tree, sgp);
+											addToSearchTree(searchTree, cString, gp, sgp);
+											// cString->next = cStrings;
+											// cStrings = cString;
+											++nTrees;
 
-									searchTree = addToSearchTree(searchTree, cStrings, gp, sgp);
-									dumpGraph(gp, inducedGraph);
-								}
-							}	
-							dumpShallowGraphCycle(sgp, connectedComponents);
+											/* garbage collection */
+											dumpGraph(gp, tree);
+										}
 
-							printf("# %i %i\n", g->number, searchTree->d);
-							printStringsInSearchTree(searchTree, stdout, sgp);
-							fflush(stdout);
-							dumpSearchTree(gp, searchTree);
+										dumpShallowGraphCycle(sgp, trees);
+
+										//searchTree = addToSearchTree(searchTree, cStrings, gp, sgp);
+										//dumpGraph(gp, inducedGraph);
+									//}
+								//}	
+								//dumpShallowGraphCycle(sgp, connectedComponents);
+
+								printf("# %i %i\n", g->number, searchTree->d);
+								printStringsInSearchTree(searchTree, stdout, sgp);
+								fflush(stdout);
+								dumpSearchTree(gp, searchTree);
+							}
 						}
 						break;
 					}
