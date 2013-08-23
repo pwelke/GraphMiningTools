@@ -15,11 +15,10 @@
 #include "treeCenter.h"
 #include "connectedComponents.h"
 #include "main.h" 
-/* #include "opk.h" */
 
 char DEBUG_INFO = 1;
 
-int MINGRAPH = 17000;
+int MINGRAPH = 0;
 
 /**
  * Print --help message
@@ -30,8 +29,6 @@ void printHelp() {
 	printf("usage: tpk F [parameterList]\n\n");
 	printf("    without parameters: display this help screen\n\n");
 	printf("    F: (required) use F as graph database\n\n");
-	printf("    -input I: use input format I being\n\n");
-	printf("        no choice yet\n\n");
 	printf("    -filter d: choose maximum number of spanning trees\n"
 		   "        of a graph for which you are willing to compute\n"
 		   "        the kernel (default 1000)\n\n");
@@ -108,18 +105,10 @@ int main(int argc, char** argv) {
 		struct ShallowGraphPool *sgp = createShallowGraphPool(1, lp);
 		struct GraphPool *gp = createGraphPool(1, vp, lp);
 
-		/* global search trees for mapping of strings to numbers */
-		struct Vertex* globalTreeSet = getVertex(vp);
-
 		/* pointer to the current graph which is returned by the input iterator */
 		struct Graph* g = NULL;
 
-		/* pointer to an array managed by CyclicPatternKernel to store output results */
-		struct compInfo* intermediateResults = NULL;
-		int imrSize = 0;
-
 		/* user input handling variables */
-		char inputOption = 0;
 		char outputOption = 0;
 		char labelOption = 0;
 		int param;
@@ -143,9 +132,6 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(argv[param], "-output") == 0) {
 				outputOption = argv[param+1][0];
-			}
-			if (strcmp(argv[param], "-input") == 0) {
-				inputOption = argv[param+1][0];
 			}
 			if (strcmp(argv[param], "-label") == 0) {
 				labelOption = argv[param+1][0];
@@ -222,51 +208,45 @@ int main(int argc, char** argv) {
 						break; 
 						case 'p':
 						if (isConnected(g)) {
-							if (getGoodEstimate(g, sgp, gp) < depth) {
+							// fprintf(stderr, "%i\n", g->number);
+							// // fprintf(stderr, "c");
+							// fflush(stderr);
 
-								/* need to split g into connected components */
-								struct ShallowGraph* component;
-								//struct ShallowGraph* connectedComponents = getConnectedComponents(g, sgp);
+							/* getGoodEstimate returns an upper bound on the number of spanning
+							trees in g, or -1 if there was an overflow of long ints while computing */
+							long int upperBound = getGoodEstimate(g, sgp, gp);
+							if ((upperBound < depth) && (upperBound != -1)) {
+								// // fprintf(stderr, "e");
+								// fflush(stderr);
 
 								struct Vertex* searchTree = getVertex(gp->vertexPool);
+								//long int c = countSpanningTrees(g, 1000, sgp, gp);
+								// fprintf(stderr, "%li", c);
+								// fflush(stderr);
 
-								//for (component = connectedComponents; component; component=component->next) {
-									/** TODO is it ok to just ignore single vertices ?? */
-									//if (component->m > 0) {
-										//struct Graph* inducedGraph = shallowGraphToGraph(component, gp);
-										struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-										struct ShallowGraph* idx;
-										struct ShallowGraph* cStrings = NULL;
-										int nTrees = 0;
-										
+								struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+								// fprintf(stderr, "t");
+								// fflush(stderr);
 
-										// //debug
-										// printGraph(inducedGraph);
+								struct ShallowGraph* idx;
+								int st = 0;
+								for (idx=trees; idx; idx=idx->next) {	
+									struct Graph* tree = shallowGraphToGraph(idx, gp);
 
-										for (idx=trees; idx; idx=idx->next) {	
-											struct Graph* tree = shallowGraphToGraph(idx, gp);
-											
-											// // debug
-											// printGraph(tree);
+									/* assumes that tree is a tree */
+									struct ShallowGraph* cString = treeCenterCanonicalString(tree, sgp);
+									addToSearchTree(searchTree, cString, gp, sgp);
+									++st;
 
-											/* assumes that tree is a tree */
-											struct ShallowGraph* cString = treeCenterCanonicalString(tree, sgp);
-											addToSearchTree(searchTree, cString, gp, sgp);
-											// cString->next = cStrings;
-											// cStrings = cString;
-											++nTrees;
+									/* garbage collection */
+									dumpGraph(gp, tree);
+								}
+								dumpShallowGraphCycle(sgp, trees);
+								// fprintf(stderr, "s");
+								// fflush(stderr);
+								// fprintf(stderr, "%i\t%i\t%i\t%i\n", i, g->number, st, searchTree->d);
+								// fflush(stderr);
 
-											/* garbage collection */
-											dumpGraph(gp, tree);
-										}
-
-										dumpShallowGraphCycle(sgp, trees);
-
-										//searchTree = addToSearchTree(searchTree, cStrings, gp, sgp);
-										//dumpGraph(gp, inducedGraph);
-									//}
-								//}	
-								//dumpShallowGraphCycle(sgp, connectedComponents);
 
 								printf("# %i %i\n", g->number, searchTree->d);
 								printStringsInSearchTree(searchTree, stdout, sgp);
@@ -296,10 +276,6 @@ int main(int argc, char** argv) {
 		}
 
 		/* global garbage collection */
-		free(intermediateResults);
-
-		dumpSearchTree(gp, globalTreeSet);
-
 		destroyFileIterator();
 		freeGraphPool(gp);
 		freeShallowGraphPool(sgp);
