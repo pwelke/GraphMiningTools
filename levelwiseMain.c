@@ -5,20 +5,13 @@
 #include <limits.h>
 
 #include "graph.h"
-#include "canonicalString.h"
 #include "searchTree.h"
-#include "loading.h"
 #include "listSpanningTrees.h"
 #include "upperBoundsForSpanningTrees.h"
-#include "subtreeIsomorphism.h"
 #include "graphPrinting.h"
-#include "treeCenter.h"
-#include "connectedComponents.h"
 #include "levelwiseMain.h" 
 #include "levelwiseMining.h"
-/* #include "opk.h" */
 
-char DEBUG_INFO = 1;
 
 
 /**
@@ -80,14 +73,15 @@ int main(int argc, char** argv) {
 		}
 
 		// init params
-		int threshold = 1;
-		int maxPatternSize = 1;
+		char debugInfo = 1;
+		int minGraph = 0;
+		int maxGraph = 500;
+		int threshold = (maxGraph - minGraph) / 10;
+		int maxPatternSize = 5;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
-		char* inputFileName = "results/2013-07-23_spanningTreePatterns.txt";
+		char* inputFileName = "results/2013-08-26_spanningTreePatterns.txt";
 		char* patternFileName = "results/patterns.txt";
-		int minGraph = 0;
-		int maxGraph = 80;
 
 		/* internal init */
 		FILE* featureFile = fopen(featureFileName, "w");
@@ -95,7 +89,6 @@ int main(int argc, char** argv) {
 		FILE* patternFile = fopen(patternFileName, "w");
 
 		struct Vertex* frequentPatterns;
-
 		struct Vertex* frequentVertices = getVertex(vp);
 		struct Vertex* frequentEdges = getVertex(vp);
 		struct ShallowGraph* extensionEdges;
@@ -103,51 +96,44 @@ int main(int argc, char** argv) {
 
 		/* find frequent single vertices and frequent edges */
 		getVertexAndEdgeHistograms(inputFileName, minGraph, maxGraph, frequentVertices, frequentEdges, gp, sgp);
-		fprintf(stderr, "loading done\n");
 		filterSearchTree(frequentVertices, threshold, frequentVertices, gp);
 		filterSearchTree(frequentEdges, threshold, frequentEdges, gp);
-		fprintf(stderr, "filtering done\n");
 
-		// debug
-		fprintf(stderr, "vertices:\n");
-		printStringsInSearchTree(frequentVertices, stderr, sgp); 
-		//fprintf(stderr, "frequentVertices d %i v %i n %i\n", frequentVertices->d, frequentVertices->visited, frequentVertices->number);
-		fprintf(stderr, "edges:\n");
-		printStringsInSearchTree(frequentEdges, stderr, sgp); 
-		//fprintf(stderr, "frequentEdges d %i v %i n %i\n", frequentEdges->d, frequentEdges->visited, frequentEdges->number);
+
+		/* print first two levels to patternfile */
+		fprintf(patternFile, "patterns size 0\n");
+		printStringsInSearchTree(frequentVertices, patternFile, sgp); 
+		fprintf(patternFile, "patterns size 1\n");
+		printStringsInSearchTree(frequentEdges, patternFile, sgp); 
+		if (debugInfo) { fprintf(stderr, "Computation of level 1 and 2 done\n"); }
 
 		/* convert frequentEdges to ShallowGraph */
 		extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, gp, sgp);	
 
-		for (frequentPatterns = frequentEdges, patternSize = 0; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
+		for (frequentPatterns = frequentEdges, patternSize = 1; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
 			int i;
 			struct ShallowGraph* prefix = getShallowGraph(sgp);
+			struct Vertex* candidateSet;
+			struct Vertex** pointers;
+			struct Graph** refinements;
 
-			struct Vertex* candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
-			struct Vertex** pointers = malloc(candidateSet->d * sizeof(struct Vertex*));
-			struct Graph** refinements = malloc(candidateSet->d * sizeof(struct Graph*));
+			resetToUnique(frequentPatterns);
+			candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
+			pointers = malloc(candidateSet->d * sizeof(struct Vertex*));
+			refinements = malloc(candidateSet->d * sizeof(struct Graph*));
 
-			// debug
-			fprintf(stderr, "candidates size %i:\n", patternSize);
-			printStringsInSearchTree(candidateSet, stderr, sgp); 
-
-			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp);
-
-			// debug
-			fprintf(stderr, "makeGraphsAndPointers:\n");
-			printStringsInSearchTree(candidateSet, stderr, sgp); 
-
+			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
 			scanDB(inputFileName, candidateSet, refinements, pointers, candidateSet->d, minGraph, maxGraph, gp, sgp);
 
-			//	computeFrequencies(candidateSet, inputFileName, minGraph, maxGraph);
-			// /* threshold + 1 as candidateSet contains each candidate once, already */
-			//filterSearchTree(candidateSet, threshold + 1, candidateSet, gp);
-			//resetToUnique(candidateSet);
+			/* threshold + 1 as candidateSet contains each candidate once, already */
+			filterSearchTree(candidateSet, threshold + 1, candidateSet, gp);
 
-			// debug
-			fprintf(stderr, "counts\n");
-			printStringsInSearchTree(candidateSet, stderr, sgp); 
+			fprintf(patternFile, "patterns size %i\n", patternSize + 1);
+			printStringsInSearchTree(candidateSet, patternFile, sgp); 
 
+			if (debugInfo) { fprintf(stderr, "Computation of level %i done\n", patternSize + 1); }
+
+			/* garbage collection */
 			dumpSearchTree(gp, frequentPatterns);
 			dumpShallowGraph(sgp, prefix);
 			free(pointers);
@@ -158,12 +144,10 @@ int main(int argc, char** argv) {
 			frequentPatterns = candidateSet;
 		}
 
-		// debug garbage collection
+		/* garbage collection */
 		freeFrequentEdgeShallowGraph(gp, sgp, extensionEdges);
 		dumpSearchTree(gp, frequentVertices);
 		dumpSearchTree(gp, frequentPatterns);
-
-		/* garbage collection */
 		fclose(featureFile);
 		fclose(countFile);
 		fclose(patternFile);
