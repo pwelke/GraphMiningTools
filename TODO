@@ -1,13 +1,13 @@
 TODO
 
-- subtree iso for labelled trees
 - maybe add a prefix for private methods (that are not exposed in the header files)
 
 - documentation of listSpanningTrees!
-- how to go on?
 
-- how does the canonical string stuff work, again?
-- save patterns / "model" to disk and load it, again...
+
+- buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
+- speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
+
 
 THEORY
 - is it useful to choose particular roots for subgraph iso checks, e.g. canonical roots?
