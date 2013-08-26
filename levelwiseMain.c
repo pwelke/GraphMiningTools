@@ -117,7 +117,9 @@ int main(int argc, char** argv) {
 			struct Vertex** pointers;
 			struct Graph** refinements;
 
+			// not necessary
 			resetToUnique(frequentPatterns);
+			
 			candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
 			pointers = malloc(candidateSet->d * sizeof(struct Vertex*));
 			refinements = malloc(candidateSet->d * sizeof(struct Graph*));
