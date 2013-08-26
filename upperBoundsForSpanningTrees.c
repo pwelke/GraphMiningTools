@@ -31,7 +31,6 @@ long nCr(long n, long r) {
 /* return n choose r, 
 or -1 if there is an overflow */
 long nCr2(long n, long r) {
-	//fprintf(stderr, "n=%li r=%li\n", n, r);
 	long numer = 1;
 	long denom = 1;
 	int i;
@@ -48,12 +47,10 @@ long nCr2(long n, long r) {
 		}
 		numer *= i;
 	}
-	//fprintf(stderr, "numer=%li\n", numer);
 	/* r! is always smaller than (n-r)*...*(r+1) */
 	for (i=1; i<r+1; ++i) {
 		denom *= i;
 	}
-	//fprintf(stderr, "denom=%li\n", denom);
 	return numer / denom;
 }
 
@@ -156,7 +153,6 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 			int nInd = getVertexNumberOfInducedGraph(idx, g->n, vertices);
 			if (!isOuterplanar(idx, sgp, gp)) {
 				long bound = trivialBound(idx->m, nInd);
-				//fprintf(stderr, "not outerplanar: %li\n", bound);
 				if (bound == -1){
 					return -1;
 				} else {
@@ -164,7 +160,6 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 				}
 			} else {
 				long bound = outerplanarBound(idx->m, nInd);
-				//fprintf(stderr, "    outerplanar: %li\n", bound);
 				if (bound == -1) {
 					return -1;
 				} else {
