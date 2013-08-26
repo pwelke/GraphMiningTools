@@ -514,8 +514,7 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* numbe
 	char* buffer = malloc(bufferSize * sizeof(char));
 	int head = fscanf(stream, " # %i %i\n", number, &nPatterns);
 
-	// debug
-	fprintf(stderr, "& %i %i\n", *number, nPatterns);
+	//fprintf(stderr, " # %i %i\n", *number, nPatterns);
 
 	if (head != 2) {
 		free(buffer);
