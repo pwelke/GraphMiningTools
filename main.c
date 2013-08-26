@@ -214,7 +214,8 @@ int main(int argc, char** argv) {
 
 							/* getGoodEstimate returns an upper bound on the number of spanning
 							trees in g, or -1 if there was an overflow of long ints while computing */
-							long int upperBound = getGoodEstimate(g, sgp, gp);
+							long upperBound = getGoodEstimate(g, sgp, gp);
+							//fprintf(stderr, "graph %i estimate: %li\n", i, upperBound);
 							if ((upperBound < depth) && (upperBound != -1)) {
 								// // fprintf(stderr, "e");
 								// fflush(stderr);
