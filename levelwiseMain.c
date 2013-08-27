@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
 		int minGraph = 0;
 		int maxGraph = 500;
 		int threshold = (maxGraph - minGraph) / 10;
-		int maxPatternSize = 5;
+		int maxPatternSize = 3;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
 		char* inputFileName = "results/2013-08-26_spanningTreePatterns.txt";
@@ -116,9 +116,6 @@ int main(int argc, char** argv) {
 			struct Vertex* candidateSet;
 			struct Vertex** pointers;
 			struct Graph** refinements;
-
-			// not necessary
-			resetToUnique(frequentPatterns);
 			
 			candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
 			pointers = malloc(candidateSet->d * sizeof(struct Vertex*));
