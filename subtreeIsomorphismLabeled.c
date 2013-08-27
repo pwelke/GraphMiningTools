@@ -97,8 +97,6 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 	struct Graph* B;
 	int i, j;
 
-	//fprintf(stderr, "make bipartite v=%i u=%i\n", v, u);
-
 	int sizeofX = degree(h->vertices[u]);
 	int sizeofY = degree(g->vertices[v]);
 	struct VertexList* e;
@@ -390,16 +388,11 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 
 char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* iterators */
-	int u, v, w;
+	int u, v;
 
 	struct Vertex* r = g->vertices[0];
 	int*** S = createCube(g->n, h->n);
 	int* postorder = getPostorderL(g, r->number);
-
-	// for (v=0; v<g->n; ++v) {
-	// 	fprintf(stderr, "%i ", postorder[v]);
-	// }
-	// fprintf(stderr, "\n");
 
 
 	/* init the S(v,u) for v and u leaves */
@@ -437,25 +430,25 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
 					if (strcmp(h->vertices[u]->label, current->label) == 0) {
-						//fprintf(stderr, "u:%i, v:%i\n", u, postorder[v]);
-						int* matchings = malloc((degU + 1) * sizeof(int));
 						struct Graph* B = makeBipartiteInstanceL(g, postorder[v], h, u, S, gp);
-						
+						int* matchings = malloc((degU + 1) * sizeof(int));
+
+						int w;
 						struct Vertex* s = getVertex(gp->vertexPool);
 						struct Vertex* t = getVertex(gp->vertexPool);
 						s->number = -1;
 						t->number = -2;
-
+						
 						/* Add s, t and edges from s to A and from B to t.
 						Also, set residual capacities for these edges correctly */
-						for (w=0; w<g->number; ++w) {
-							addResidualEdges(s, g->vertices[w], gp->listPool);
-						}
-						for (w=g->number; w<g->n; ++w) {
-							addResidualEdges(g->vertices[w], t, gp->listPool);
+						for (w=0; w<B->number; ++w) {
+							addResidualEdges(s, B->vertices[w], gp->listPool);
 						}
 
-						/* find size of matching */
+						for (w=B->number; w<B->n; ++w) {
+							addResidualEdges(B->vertices[w], t, gp->listPool);
+						}
+
 						matchings[0] = 0;
 						while (augment(s, t)) {
 							++matchings[0];
@@ -475,9 +468,11 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 							/* if the label of ith child of u is compatible to the label of the parent of v */
 							if ((current->lowPoint != -1) 
 								&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
-								struct ShallowGraph* storage = removeVertexFromBipartiteInstanceLF(B, i, s, sgp);
-								struct VertexList* e;
 								
+								struct VertexList* e;
+
+								/* remove vertex i from B and init B for matching algorithm */
+								struct ShallowGraph* storage = removeVertexFromBipartiteInstanceLF(B, i, s, sgp);
 								initBipartite(B);
 								for (e=s->neighborhood; e!=NULL; e=e->next) {
 									setFlag(e, 0);
@@ -485,12 +480,14 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 								for (e=t->neighborhood; e!=NULL; e=e->next) {
 									setFlag(e, 1);
 								}
-
-								matchings[i+1] = 0;
+								
+								/* run the matching algorithm */
+								matchings[i+1] = 0;	
 								while (augment(s, t)) {
 									++matchings[i+1];
 								}
 
+								/* convert output to S(u,v) format */
 								if (matchings[i+1] == degU - 1) {
 									matchings[i+1] = B->vertices[i]->lowPoint;
 								} else {
@@ -504,8 +501,12 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 							}
 						}
 						S[current->number][u] = matchings;
-
-						removeSandT(g, s, t, gp);
+						
+						/* remove s and t, dump B */
+						dumpVertexListRecursively(gp->listPool, s->neighborhood);
+						dumpVertexListRecursively(gp->listPool, t->neighborhood);
+						dumpVertex(gp->vertexPool, s);
+						dumpVertex(gp->vertexPool, t);
 						dumpGraph(gp, B);
 					}
 				}
