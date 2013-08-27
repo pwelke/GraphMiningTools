@@ -4,6 +4,7 @@
 #include "graph.h"
 #include "bipartiteMatching.h"
 #include "subtreeIsomorphism.h"
+#include "cachedGraph.h"
 #include "subtreeIsomorphismLabeled.h"
 
 int dfsL(struct Vertex* v, int value) {
@@ -99,6 +100,67 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 							for (k=1; k<S[y][x][0]; ++k) {
 								if (S[y][x][k] == u) {
 									addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+									++B->m;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	} 
+
+	return B;
+}
+
+
+/* vertices of g have their ->visited values set to the postorder. Thus, 
+children of v are vertices u that are neighbors of v and have u->visited < v->visited */
+struct Graph* makeBipartiteInstanceLF(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct CachedGraph* cache) {
+	struct Graph* B;
+	int i, j;
+
+	int sizeofX = degree(h->vertices[u]);
+	int sizeofY = degree(g->vertices[v]);
+	struct VertexList* e;
+
+ 	/* construct bipartite graph B(v,u) */ 
+	B = getCachedGraph(sizeofX + sizeofY, cache);
+	/* store size of first partitioning set */
+	B->number = sizeofX;
+
+	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B 
+	TODO add edge labels to vertex labels to compare edges easily */
+	i = 0;
+	for (e=h->vertices[u]->neighborhood; e!=NULL; e=e->next) {
+		B->vertices[i]->lowPoint = e->endPoint->number;
+		B->vertices[i]->label = e->label;
+		++i;
+	}
+	for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+		B->vertices[i]->lowPoint = e->endPoint->number;
+		B->vertices[i]->label = e->label;
+		++i;
+	}
+
+	/* add edge (x,y) if u in S(y,x) */
+	for (i=0; i<sizeofX; ++i) {
+		for (j=sizeofX; j<B->n; ++j) {	
+			int x = B->vertices[i]->lowPoint;
+			int y = B->vertices[j]->lowPoint;
+			int k;
+
+			/* y has to be a child of v */
+			if (g->vertices[y]->visited < g->vertices[v]->visited) {
+				/* vertex labels have to match */
+				if (strcmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
+					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h 
+					these values were stored in B->vertices[i,j]->label */
+					if (strcmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+						if (S[y][x] != NULL) {
+							for (k=1; k<S[y][x][0]; ++k) {
+								if (S[y][x][k] == u) {
+									addResidualEdges(B->vertices[i], B->vertices[j], cache->gp->listPool);
 									++B->m;
 								}
 							}
@@ -307,6 +369,8 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 	int*** S = createCube(g->n, h->n);
 	int* postorder = getPostorderL(g, r->number);
 
+	struct CachedGraph* cacheB = initCachedGraph(gp, g->n);
+
 
 	/* init the S(v,u) for v and u leaves */
 	int* gLeaves = findLeaves(g, 0);
@@ -343,7 +407,7 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
 					if (strcmp(h->vertices[u]->label, current->label) == 0) {
-						struct Graph* B = makeBipartiteInstanceL(g, postorder[v], h, u, S, gp);
+						struct Graph* B = makeBipartiteInstanceLF(g, postorder[v], h, u, S, cacheB);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
 						int w;
@@ -420,7 +484,8 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 						dumpVertexListRecursively(gp->listPool, t->neighborhood);
 						dumpVertex(gp->vertexPool, s);
 						dumpVertex(gp->vertexPool, t);
-						dumpGraph(gp, B);
+						//dumpGraph(gp, B);
+						returnCachedGraph(cacheB);
 					}
 				}
 			}		
@@ -430,6 +495,7 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 	/* garbage collection */
 	free(postorder);
 	freeCube(S, g->n, h->n);
+	dumpCachedGraph(cacheB);
 
 	return 0;
 }
