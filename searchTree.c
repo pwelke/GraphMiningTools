@@ -268,6 +268,29 @@ void resetToUnique(struct Vertex* root) {
 }
 
 
+/**
+Given a search tree, omit any multiplicity of strings contained. 
+that is: if current->visited > 0, set visited = 1 for current != root.
+root visited will be updated to store number of unique strings */ 
+void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
+	struct VertexList* e;
+	if (current != root) {
+		if (current->visited > 0) {
+			++root->lowPoint;
+			current->lowPoint = root->lowPoint;
+		}
+	}
+
+	for (e=current->neighborhood; e!=NULL; e=e->next) {
+		setLowPointsRec(root, e->endPoint);
+	}
+}
+
+void setLowPoints(struct Vertex* root) {
+	setLowPointsRec(root, root);
+}
+
+
 char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp) {
 	struct VertexList* e;
 	struct VertexList* dump = NULL;

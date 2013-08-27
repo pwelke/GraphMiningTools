@@ -26,6 +26,7 @@ struct Vertex* addToSearchTree(struct Vertex* root, struct ShallowGraph* strings
 void mergeSearchTrees(struct Vertex* globalTree, struct Vertex* localTree, int divisor, struct compInfo* results, int* pos, struct Vertex* trueRoot, int depth, struct GraphPool* p);
 void shallowMergeSearchTrees(struct Vertex* globalTree, struct Vertex* localTree, int divisor, struct compInfo* results, int* pos, struct Vertex* trueRoot, int depth, struct GraphPool* p);
 void resetToUnique(struct Vertex* root);
+void setLowPoints(struct Vertex* root);
 char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp);
 
 #endif

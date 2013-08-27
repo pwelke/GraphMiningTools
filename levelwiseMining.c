@@ -56,12 +56,14 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 				containedVertices->d += addStringToSearchTree(containedVertices, cString, gp);
 				containedVertices->number += 1;
 			}
-			/* set multiplicity of patterns to 1 and add to global vertex pattern set */
+			/* set multiplicity of patterns to 1 and add to global vertex pattern set, print to file */
 			resetToUnique(containedVertices);
 			mergeSearchTrees(frequentVertices, containedVertices, 1, NULL, NULL, frequentVertices, 0, gp);
 			dumpSearchTree(gp, containedVertices);
 			
 			/* get frequent Edges */
+			/* set the lowest id given to any edge to the highest id of any frequent vertex */
+			frequentEdges->lowPoint = frequentVertices->lowPoint;
 			for ( ; pattern!=NULL; pattern=pattern->next) {
 				if (patternGraph == NULL) {
 					patternGraph = canonicalString2Graph(pattern, gp);
@@ -541,6 +543,9 @@ void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLe
 struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Vertex* currentLevel = getVertex(gp->vertexPool);
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
+	/* set smallest id of pattern in current level to be largest id of any pattern in lower level plus 1 */
+	currentLevel->lowPoint = lowerLevel->lowPoint;
+
 	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, lowerLevel, prefix, gp, sgp);
 	dumpShallowGraph(sgp, prefix);
 	return currentLevel;
@@ -629,7 +634,7 @@ void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool*
 Walk through the db, checking for each graph g \in db which refinements are subtrees of at least one of its spanning 
 trees. for all these refinements, the visited counter of its cString in currentLevel is increased. 
 */
-void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
 	int i = 0;
 	FILE* stream = fopen(fileName, "r");
@@ -673,6 +678,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 							pointers[refinement]->d = 0;
 							++pointers[refinement]->visited;
 							++currentLevel->number;
+							fprintf(keyValueStream, "%i %i\n", number, pointers[refinement]->lowPoint);
 						}
 					}
 				}
@@ -692,6 +698,7 @@ int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Gr
 	struct VertexList* e;
 
 	if ((current->visited != 0) && (current != root))  {
+		/* TODO could also reset lowpoints here for speedup */
 		patterns[i] = canonicalString2Graph(prefix, gp);
 		pointers[i] = current;
 		return i+1;
