@@ -6,45 +6,6 @@
 #include "subtreeIsomorphism.h"
 #include "subtreeIsomorphismLabeled.h"
 
-
-/**
-Find all leaves of g that are not equal to r.
-
-The method returns an int array leaves. leaves[0] contains the length of
-leaves, i.e. number of leaves plus one.
-Subsequent positions of leaves contain the vertex numbers of leaves in ascending order. 
-The method sets the ->d members of leaf vertices in g to 1 all other to 0.
-*/
-int* findLeavesL(struct Graph* g, int root) {
-	int nLeaves = 0;
-	int* leaves;
-	int v;
-
-	for (v=0; v<g->n; ++v) {
-		if (v != root) {
-			if (isLeaf(g->vertices[v])) {
-				++nLeaves;
-				g->vertices[v]->d = 1;
-			} else {
-				g->vertices[v]->d = 0;
-			}	
-		}
-	}
-	leaves = malloc((nLeaves+1) * sizeof(int));
-	leaves[0] = nLeaves + 1;
-	nLeaves = 0;
-	for (v=0; v<g->n; ++v) {
-		if (v != root) {
-			if (isLeaf(g->vertices[v])) {
-				leaves[nLeaves+1] = v;
-				++nLeaves;	
-			}
-		}
-	}
-	return leaves;
-}
-
-
 int dfsL(struct Vertex* v, int value) {
 	struct VertexList* e;
 
@@ -152,54 +113,6 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 }
 
 
-struct ShallowGraph* removeVertexFromBipartiteInstanceL(struct Graph* B, int v, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* temp = getShallowGraph(sgp);
-	struct VertexList* e;
-	struct VertexList* f;
-	struct VertexList* g;	
-	int w;
-
-
-	/* mark edges that will be removed */
-	for (e=B->vertices[v]->neighborhood; e!=NULL; e=e->next) {
-		e->used = 1;
-		((struct VertexList*)e->label)->used = 1;
-	}
-
-	/* remove edges from v */
-	for (e=B->vertices[v]->neighborhood; e!=NULL; e=f) {
-		f = e->next;
-		appendEdge(temp, e);
-	}
-	B->vertices[v]->neighborhood = NULL;
-
-	/* remove residual edges */
-	for (w=B->number; w<B->n; ++w) {
-		f = NULL;
-		g = NULL;
-		/* partition edges */
-		for (e=B->vertices[w]->neighborhood; e!=NULL; e=B->vertices[w]->neighborhood) {
-			B->vertices[w]->neighborhood = e->next;
-			if (e->used == 1) {
-				e->next = f;
-				f = e;
-			} else {
-				e->next = g;
-				g = e;
-			}
-		}
-		/* set neighborhood to unused, append used to temp */
-		B->vertices[w]->neighborhood = g;
-		while (f!=NULL) {
-			e = f;
-			f = f->next;
-			appendEdge(temp, e);
-		}
-	}
-	return temp;
-}
-
-
 struct ShallowGraph* removeVertexFromBipartiteInstanceLF(struct Graph* B, int v, struct Vertex* s, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* temp = getShallowGraph(sgp);
 	struct VertexList* e;
@@ -270,26 +183,15 @@ struct ShallowGraph* removeVertexFromBipartiteInstanceLF(struct Graph* B, int v,
 }
 
 
-void addVertexToBipartiteInstanceLF(struct ShallowGraph* temp) {
-	struct VertexList* e;
+/**
+Labeled Subtree isomorphism check. 
 
-	for (e=popEdge(temp); e!=NULL; e=popEdge(temp)) {
-		e->used = 0;
-		addEdge(e->startPoint, e);
-	}
-}
+Implements the version of subtree isomorphism algorithm described by
 
+Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2 
 
-void addVertexToBipartiteInstanceL(struct ShallowGraph* temp) {
-	struct VertexList* e;
-
-	for (e=popEdge(temp); e!=NULL; e=popEdge(temp)) {
-		e->used = 0;
-		addEdge(e->startPoint, e);
-	}
-}
-
-
+in the labeled version
+*/
 char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* iterators */
 	int u, v;
@@ -300,9 +202,9 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 
 
 	/* init the S(v,u) for v and u leaves */
-	int* gLeaves = findLeavesL(g, 0);
+	int* gLeaves = findLeaves(g, 0);
 	/* h is not rooted, thus every vertex with one neighbor is a leaf */
-	int* hLeaves = findLeavesL(h, -1);
+	int* hLeaves = findLeaves(h, -1);
 	for (v=1; v<gLeaves[0]; ++v) {
 		for (u=1; u<hLeaves[0]; ++u) {
 			/* check compatibility of leaf labels */
@@ -353,7 +255,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 							/* if the label of ith child of u is compatible to the label of the parent of v */
 							if ((current->lowPoint != -1) 
 								&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
-								struct ShallowGraph* storage = removeVertexFromBipartiteInstanceL(B, i, sgp);
+								struct ShallowGraph* storage = removeVertexFromBipartiteInstance(B, i, sgp);
 								initBipartite(B);
 								matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
 
@@ -363,7 +265,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 									matchings[i+1] = -1;
 								}
 
-								addVertexToBipartiteInstanceL(storage);
+								addVertexToBipartiteInstance(storage);
 								dumpShallowGraph(sgp, storage);
 							} else {
 								matchings[i+1] = -1;
@@ -386,6 +288,17 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 }
 
 
+
+/**
+Labeled Subtree isomorphism check. 
+Speedup to method above by reusing the whole bipartite matching utility graph B (including s and t) 
+
+Implements the version of subtree isomorphism algorithm described by
+
+Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2 
+
+in the labeled version
+*/
 char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* iterators */
 	int u, v;
@@ -396,9 +309,9 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 
 
 	/* init the S(v,u) for v and u leaves */
-	int* gLeaves = findLeavesL(g, 0);
+	int* gLeaves = findLeaves(g, 0);
 	/* h is not rooted, thus every vertex with one neighbor is a leaf */
-	int* hLeaves = findLeavesL(h, -1);
+	int* hLeaves = findLeaves(h, -1);
 	for (v=1; v<gLeaves[0]; ++v) {
 		for (u=1; u<hLeaves[0]; ++u) {
 			/* check compatibility of leaf labels */
@@ -494,7 +407,7 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 									matchings[i+1] = -1;
 								}
 
-								addVertexToBipartiteInstanceL(storage);
+								addVertexToBipartiteInstance(storage);
 								dumpShallowGraph(sgp, storage);
 							} else {
 								matchings[i+1] = -1;

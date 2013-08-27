@@ -277,6 +277,15 @@ void addVertexToBipartiteInstance(struct ShallowGraph* temp) {
 }
 
 
+/**
+Labeled Subtree isomorphism check.  
+
+Implements the version of subtree isomorphism algorithm described by
+
+Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2 
+
+in its original unlabeled version.
+*/
 char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* iterators */
 	int u, v;
