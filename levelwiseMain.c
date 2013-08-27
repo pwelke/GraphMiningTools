@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
 #include <limits.h>
 
@@ -118,11 +117,12 @@ int main(int argc, char** argv) {
 			struct Graph** refinements;
 			
 			candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
+			setLowPoints(candidateSet);
 			pointers = malloc(candidateSet->d * sizeof(struct Vertex*));
 			refinements = malloc(candidateSet->d * sizeof(struct Graph*));
 
 			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-			scanDB(inputFileName, candidateSet, refinements, pointers, candidateSet->d, minGraph, maxGraph, gp, sgp);
+			scanDB(inputFileName, candidateSet, refinements, pointers, candidateSet->d, minGraph, maxGraph, countFile, gp, sgp);
 
 			/* threshold + 1 as candidateSet contains each candidate once, already */
 			filterSearchTree(candidateSet, threshold + 1, candidateSet, gp);
