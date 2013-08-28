@@ -3,3 +3,4 @@
 lwm
 tpk
 callgrind.out.*
+*.pyc
