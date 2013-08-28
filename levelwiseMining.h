@@ -14,6 +14,7 @@ struct TreeDB
 };
 
 void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void getVertexAndEdgeHistogramsP(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 //struct TreeDB* getVertexAndEdgeHistogramsAndTreeSet(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void dumpTreeDB(struct GraphPool* gp, struct TreeDB* db);
 
