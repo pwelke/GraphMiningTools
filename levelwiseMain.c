@@ -74,9 +74,10 @@ int main(int argc, char** argv) {
 		// init params
 		char debugInfo = 1;
 		int minGraph = 0;
-		int maxGraph = 500;
+		int maxGraph = 45000;
 		int threshold = (maxGraph - minGraph) / 10;
-		int maxPatternSize = 3;
+		int maxPatternSize = 4;
+		int minEdgeID = 100;
 		char* featureFileName = "results/features.txt";
 		char* countFileName = "results/counts.txt";
 		char* inputFileName = "results/2013-08-26_spanningTreePatterns.txt";
@@ -94,9 +95,11 @@ int main(int argc, char** argv) {
 		int patternSize;
 
 		/* find frequent single vertices and frequent edges */
-		getVertexAndEdgeHistograms(inputFileName, minGraph, maxGraph, frequentVertices, frequentEdges, gp, sgp);
-		filterSearchTree(frequentVertices, threshold, frequentVertices, gp);
-		filterSearchTree(frequentEdges, threshold, frequentEdges, gp);
+		/* set lowest id of any edge pattern to a number large enough to don't have collisions */
+		frequentEdges->lowPoint = minEdgeID;
+		getVertexAndEdgeHistogramsP(inputFileName, minGraph, maxGraph, frequentVertices, frequentEdges, countFile, gp, sgp);
+		filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureFile, gp);
+		filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureFile, gp);
 
 
 		/* print first two levels to patternfile */
@@ -125,7 +128,7 @@ int main(int argc, char** argv) {
 			scanDB(inputFileName, candidateSet, refinements, pointers, candidateSet->d, minGraph, maxGraph, countFile, gp, sgp);
 
 			/* threshold + 1 as candidateSet contains each candidate once, already */
-			filterSearchTree(candidateSet, threshold + 1, candidateSet, gp);
+			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
 
 			fprintf(patternFile, "patterns size %i\n", patternSize + 1);
 			printStringsInSearchTree(candidateSet, patternFile, sgp); 
