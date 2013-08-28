@@ -49,6 +49,8 @@ def filterByMap(file, map, outfile='results/counts.filtered'):
 	g.close()
 
 def putStuff(filteredfile, outfile):
+	''' Given filteredfile containing a pair of numbers x y per line, create a new file containing 
+	a sorted list of y's in each line given by x'''
 	map = dict()
 	
 	f = open(filteredfile, 'r')
