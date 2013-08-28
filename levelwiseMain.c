@@ -107,12 +107,12 @@ int main(int argc, char** argv) {
 		printStringsInSearchTree(frequentVertices, patternFile, sgp); 
 		fprintf(patternFile, "patterns size 1\n");
 		printStringsInSearchTree(frequentEdges, patternFile, sgp); 
-		if (debugInfo) { fprintf(stderr, "Computation of level 1 and 2 done\n"); }
+		if (debugInfo) { fprintf(stderr, "Computation of level 0 and 1 done\n"); }
 
 		/* convert frequentEdges to ShallowGraph */
 		extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, gp, sgp);	
 
-		for (frequentPatterns = frequentEdges, patternSize = 1; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
+		for (frequentPatterns = frequentEdges, patternSize = 2; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
 			int i;
 			struct ShallowGraph* prefix = getShallowGraph(sgp);
 			struct Vertex* candidateSet;
@@ -144,6 +144,11 @@ int main(int argc, char** argv) {
 			}
 			free(refinements);
 			frequentPatterns = candidateSet;
+
+			/* flush the output */
+			fflush(featureFile);
+			fflush(countFile);
+			fflush(patternFile);
 		}
 
 		/* garbage collection */
