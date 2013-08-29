@@ -74,14 +74,14 @@ int main(int argc, char** argv) {
 		// init params
 		char debugInfo = 1;
 		int minGraph = 0;
-		int maxGraph = 45000;
+		int maxGraph = 500;
 		int threshold = (maxGraph - minGraph) / 10;
 		int maxPatternSize = 4;
 		int minEdgeID = 100;
-		char* featureFileName = "results/features.txt";
-		char* countFileName = "results/counts.txt";
+		char* featureFileName = "results/features1.txt";
+		char* countFileName = "results/counts1.txt";
 		char* inputFileName = "results/2013-08-26_spanningTreePatterns.txt";
-		char* patternFileName = "results/patterns.txt";
+		char* patternFileName = "results/patterns1.txt";
 
 		/* internal init */
 		FILE* featureFile = fopen(featureFileName, "w");
@@ -130,10 +130,10 @@ int main(int argc, char** argv) {
 			/* threshold + 1 as candidateSet contains each candidate once, already */
 			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
 
-			fprintf(patternFile, "patterns size %i\n", patternSize + 1);
+			fprintf(patternFile, "patterns size %i\n", patternSize);
 			printStringsInSearchTree(candidateSet, patternFile, sgp); 
 
-			if (debugInfo) { fprintf(stderr, "Computation of level %i done\n", patternSize + 1); }
+			if (debugInfo) { fprintf(stderr, "Computation of level %i done\n", patternSize); }
 
 			/* garbage collection */
 			dumpSearchTree(gp, frequentPatterns);
