@@ -18,7 +18,7 @@
 
 char DEBUG_INFO = 1;
 
-int MINGRAPH = 0;
+int MINGRAPH = -1;
 
 /**
  * Print --help message
@@ -176,6 +176,10 @@ int main(int argc, char** argv) {
 						case 's':
 						spanningTreeEstimate = countSpanningTrees(g, depth, sgp, gp);
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
+						break;
+						case 'c':
+						spanningTreeEstimate = isConnected(g);
+						fprintf(stdout, "%i %i\n", g->number, spanningTreeEstimate);
 						break;
 						case 'e':
 						spanningTreeEstimate = getGoodEstimate(g, sgp, gp);
