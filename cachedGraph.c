@@ -31,32 +31,34 @@ void __free(struct Vertex** vertices, int maxCap, struct GraphPool* gp) {
 
 	for (i=0; i<maxCap; ++i) {
 		dumpVertex(gp->vertexPool, vertices[i]);
+		vertices[i] = NULL;
 	}
+	free(vertices);
 }
 
 struct CachedGraph* initCachedGraph(struct GraphPool* gp, int size) {
 	struct CachedGraph* cache;
 	if ((cache = malloc(sizeof(struct CachedGraph)))) {
+		cache->gp = gp;
 		cache->inUse = 0;
 		cache->g = getGraph(gp);
 		__setVertexNumber(cache->g, size, gp);
 		cache->maxCap = size;
 		cache->next = NULL;
-		cache->gp = gp;
 	}
 	return cache;
 }
 
 
 struct Graph* getCachedGraph(int size, struct CachedGraph* cache) {
-	if (!cache->inUse) {
-		cache->inUse = 1;
+	 if (!cache->inUse) {
+	 	cache->inUse = 1;
 		if (cache->maxCap < size) {
 			__free(cache->g->vertices, cache->maxCap, cache->gp);
 			__setVertexNumber(cache->g, size, cache->gp);
 			cache->maxCap = size;
 		} else {
-			cache->g->n = size;
+			cache->g->n = size;	
 		}
 		return cache->g;
 	} else {
@@ -71,6 +73,9 @@ void returnCachedGraph(struct CachedGraph* cache) {
 	for (w=0; w<cache->g->n; ++w) {
 		dumpVertexListRecursively(cache->gp->listPool, cache->g->vertices[w]->neighborhood);
 		cache->g->vertices[w]->neighborhood = NULL;
+		cache->g->vertices[w]->d = 0;
+		cache->g->vertices[w]->lowPoint = 0;
+		cache->g->vertices[w]->visited = 0;
 	}
 	cache->inUse = 0;
 }
