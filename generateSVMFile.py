@@ -148,9 +148,3 @@ def changeLabels(labels, switch):
 
 	for key in labels.keys():
 		labels[key] = map[labels[key]]
-
-	return labels
-
-
-	
-
