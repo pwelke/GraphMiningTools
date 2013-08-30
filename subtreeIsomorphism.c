@@ -2,36 +2,13 @@
 #include "graph.h"
 #include "bipartiteMatching.h"
 
-
-/** Utility data structure creator.
-Cube will store, what is called S in the paper. */
-int*** createCube(int x, int y) {
-	int*** cube;
-	int i, j;
-	if ((cube = malloc(x * sizeof(int**)))) {
-		for (i=0; i<x; ++i) {
-			cube[i] = malloc(y * sizeof(int*));
-			if (cube[i] != NULL) {
-				for (j=0; j<y; ++j) {
-					cube[i][j] = NULL;
-				}
-			} else {
-				for (j=0; j<i; ++j) {
-					free(cube[i]);
-				}
-				free(cube);
-				return NULL;
-			}
-		}
-	} else {
-		return NULL;
-	}
-	return cube;
-}
-
+int*** _cube = NULL;
+int _cubeX = 0;
+int _cubeY = 0;
+char _cubeInUse = 0;
 
 /** Utility data structure destructor */
-void freeCube(int*** cube, int x, int y) {
+void _freeCube(int*** cube, int x, int y) {
 	int i, j;
 	for (i=0; i<x; ++i) {
 		if (cube[i] != NULL) {
@@ -44,6 +21,94 @@ void freeCube(int*** cube, int x, int y) {
 		}
 	}
 	free(cube);
+}
+
+void dumpCube() {
+	_freeCube(_cube, _cubeX, _cubeY);
+}
+
+// /** Utility data structure creator.
+// Cube will store, what is called S in the paper. */
+// int*** createCube(int x, int y) {
+// 	int*** cube;
+// 	int i, j;
+// 	if ((cube = malloc(x * sizeof(int**)))) {
+// 		for (i=0; i<x; ++i) {
+// 			cube[i] = malloc(y * sizeof(int*));
+// 			if (cube[i] != NULL) {
+// 				for (j=0; j<y; ++j) {
+// 					cube[i][j] = NULL;
+// 				}
+// 			} else {
+// 				for (j=0; j<i; ++j) {
+// 					free(cube[i]);
+// 				}
+// 				free(cube);
+// 				return NULL;
+// 			}
+// 		}
+// 	} else {
+// 		return NULL;
+// 	}
+// 	return cube;
+// }
+
+/** Utility data structure creator.
+Cube will store, what is called S in the paper. */
+int*** createCube(int x, int y) {
+	if (!_cubeInUse) {
+		int i, j;
+		if ((x > _cubeX) || (y > _cubeY)) {
+			if (_cube != NULL) {
+				_freeCube(_cube, _cubeX, _cubeY);
+			}
+			_cubeX = x;
+			_cubeY = y;
+			if ((_cube = malloc(x * sizeof(int**)))) {
+				for (i=0; i<x; ++i) {
+					_cube[i] = malloc(y * sizeof(int*));
+					if (_cube[i] != NULL) {
+						for (j=0; j<y; ++j) {
+							_cube[i][j] = NULL;
+						}
+					} else {
+						for (j=0; j<i; ++j) {
+							free(_cube[i]);
+						}
+						free(_cube);
+						return NULL;
+					}
+				}
+			} else {
+				return NULL;
+			}
+			_cubeInUse = 1;
+			return _cube;
+		} else {
+			_cubeInUse = 1;
+			return _cube;
+		}
+	} else {
+		return NULL;
+	}
+}
+
+
+
+/** Utility data structure destructor */
+void freeCube(int*** cube, int x, int y) {
+	int i, j;
+	for (i=0; i<x; ++i) {
+		if (cube[i] != NULL) {
+			for (j=0; j<y; ++j) {
+				if (cube[i][j] != NULL) {
+					free(cube[i][j]);
+					cube[i][j] = NULL;
+				}
+			}
+		}
+	}
+	_cubeInUse = 0;
 }
 
 
