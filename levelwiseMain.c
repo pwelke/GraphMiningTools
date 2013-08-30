@@ -7,7 +7,7 @@
 #include "searchTree.h"
 #include "listSpanningTrees.h"
 #include "upperBoundsForSpanningTrees.h"
-#include "graphPrinting.h"
+#include "subtreeIsomorphism.h"
 #include "levelwiseMain.h" 
 #include "levelwiseMining.h"
 
@@ -71,10 +71,10 @@ int main(int argc, char** argv) {
 			outputOption = 'a';
 		}
 
-		// init params
+		/* init params */
 		char debugInfo = 1;
 		int minGraph = 0;
-		int maxGraph = 500;
+		int maxGraph = 10;
 		int threshold = (maxGraph - minGraph) / 10;
 		int maxPatternSize = 4;
 		int minEdgeID = 100;
@@ -118,14 +118,16 @@ int main(int argc, char** argv) {
 			struct Vertex* candidateSet;
 			struct Vertex** pointers;
 			struct Graph** refinements;
+			int refinementSize;
 			
 			candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
 			setLowPoints(candidateSet);
-			pointers = malloc(candidateSet->d * sizeof(struct Vertex*));
-			refinements = malloc(candidateSet->d * sizeof(struct Graph*));
+			refinementSize = candidateSet->d;
+			pointers = malloc(refinementSize * sizeof(struct Vertex*));
+			refinements = malloc(refinementSize * sizeof(struct Graph*));
 
 			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-			scanDB(inputFileName, candidateSet, refinements, pointers, candidateSet->d, minGraph, maxGraph, countFile, gp, sgp);
+			scanDB(inputFileName, candidateSet, refinements, pointers, refinementSize, minGraph, maxGraph, countFile, gp, sgp);
 
 			/* threshold + 1 as candidateSet contains each candidate once, already */
 			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
@@ -139,7 +141,7 @@ int main(int argc, char** argv) {
 			dumpSearchTree(gp, frequentPatterns);
 			dumpShallowGraph(sgp, prefix);
 			free(pointers);
-			for (i=0; i<candidateSet->d; ++i) {
+			for (i=0; i<refinementSize; ++i) {
 				dumpGraph(gp, refinements[i]);
 			}
 			free(refinements);
@@ -152,6 +154,7 @@ int main(int argc, char** argv) {
 		}
 
 		/* garbage collection */
+		dumpCube();
 		freeFrequentEdgeShallowGraph(gp, sgp, extensionEdges);
 		dumpSearchTree(gp, frequentVertices);
 		dumpSearchTree(gp, frequentPatterns);
