@@ -538,16 +538,13 @@ Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2
 
 in the labeled version
 */
-char subtreeCheckLFF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct CachedGraph* cacheB) {
 	/* iterators */
 	int u, v;
 
 	struct Vertex* r = g->vertices[0];
 	int*** S = createCube(g->n, h->n);
 	int* postorder = getPostorderL(g, r->number);
-
-	struct CachedGraph* cacheB = initCachedGraph(gp, g->n);
-
 
 	/* init the S(v,u) for v and u leaves */
 	int* gLeaves = findLeaves(g, 0);
@@ -612,7 +609,12 @@ char subtreeCheckLFF(struct Graph* g, struct Graph* h, struct GraphPool* gp, str
 							free(postorder);
 							free(matchings);
 							freeCube(S, g->n, h->n);
-							dumpGraph(gp, B);
+							/* remove s and t, dump B */
+							dumpVertexListRecursively(gp->listPool, s->neighborhood);
+							dumpVertexListRecursively(gp->listPool, t->neighborhood);
+							dumpVertex(gp->vertexPool, s);
+							dumpVertex(gp->vertexPool, t);
+							returnCachedGraph(cacheB);
 							return 1;
 						} else {
 							matchings[0] = degU + 1;
@@ -626,7 +628,6 @@ char subtreeCheckLFF(struct Graph* g, struct Graph* h, struct GraphPool* gp, str
 								struct VertexList* e;
 
 								/* remove vertex i from B and init B for matching algorithm */
-								// struct ShallowGraph* storage = removeVertexFromBipartiteInstanceLFF(B, i, s, sgp);
 								B->vertices[i]->d = 1;
 								initBipartite(B);
 								for (e=s->neighborhood; e!=NULL; e=e->next) {
@@ -648,9 +649,7 @@ char subtreeCheckLFF(struct Graph* g, struct Graph* h, struct GraphPool* gp, str
 								} else {
 									matchings[i+1] = -1;
 								}
-
-								// addVertexToBipartiteInstance(storage);
-								// dumpShallowGraph(sgp, storage);
+								/* add vertex i to bipartite instance */
 								B->vertices[i]->d = 0;
 							} else {
 								matchings[i+1] = -1;
@@ -663,7 +662,6 @@ char subtreeCheckLFF(struct Graph* g, struct Graph* h, struct GraphPool* gp, str
 						dumpVertexListRecursively(gp->listPool, t->neighborhood);
 						dumpVertex(gp->vertexPool, s);
 						dumpVertex(gp->vertexPool, t);
-						//dumpGraph(gp, B);
 						returnCachedGraph(cacheB);
 					}
 				}
@@ -674,7 +672,14 @@ char subtreeCheckLFF(struct Graph* g, struct Graph* h, struct GraphPool* gp, str
 	/* garbage collection */
 	free(postorder);
 	freeCube(S, g->n, h->n);
-	dumpCachedGraph(cacheB);
 
 	return 0;
+}
+
+
+char subtreeCheckLFF(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+	struct CachedGraph* cacheB = initCachedGraph(gp, g->n);
+	char isSubtree = subtreeCheckCached(g, h, gp, cacheB);
+	dumpCachedGraph(cacheB);
+	return isSubtree;
 }
