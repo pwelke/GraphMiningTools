@@ -4,6 +4,7 @@
 
 #include "graph.h"
 #include "treeCenter.h"
+#include "cachedGraph.h"
 #include "subtreeIsomorphismLabeled.h"
 #include "canonicalString.h"
 #include "searchTree.h"
@@ -283,6 +284,9 @@ void getVertexAndEdgeHistogramsP(char* fileName, int minGraph, int maxGraph, str
 		/* counting of read graphs and garbage collection */
 		++i;
 		dumpShallowGraphCycle(sgp, patterns);
+	}
+	if (results != NULL) {
+		free(results);
 	}
 	fclose(stream);
 }
@@ -791,6 +795,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	FILE* stream = fopen(fileName, "r");
 	struct ShallowGraph* spanningTreeStrings = NULL;
 	int number;
+	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
 	
 	/* iterate over all graphs in the database */
 	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
@@ -824,7 +829,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 					/* if refinement is not already found to be subtree of current graph */
 					if (pointers[refinement]->d) {
 						/* if refinement is contained in spanning tree */
-						if (subtreeCheckLFF(spanningTree, refinements[refinement], gp, sgp)) {
+						if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
 							/* currentLevel refinementstring visited +1 and continue with next refinement */
 							pointers[refinement]->d = 0;
 							++pointers[refinement]->visited;
@@ -841,6 +846,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 		++i;
 		dumpShallowGraphCycle(sgp, spanningTreeStrings);
 	}
+	dumpCachedGraph(subtreeCache);
 	fclose(stream);
 }
 
