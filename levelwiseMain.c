@@ -74,13 +74,13 @@ int main(int argc, char** argv) {
 		/* init params */
 		char debugInfo = 1;
 		int minGraph = 0;
-		int maxGraph = 10;
+		int maxGraph = 500;
 		int threshold = (maxGraph - minGraph) / 10;
 		int maxPatternSize = 4;
 		int minEdgeID = 100;
 		char* featureFileName = "results/features1.txt";
 		char* countFileName = "results/counts1.txt";
-		char* inputFileName = "results/2013-08-26_spanningTreePatterns.txt";
+		char* inputFileName = "results/2013-08-31_treePatterns.txt";
 		char* patternFileName = "results/patterns1.txt";
 
 		/* internal init */
@@ -93,6 +93,8 @@ int main(int argc, char** argv) {
 		struct Vertex* frequentEdges = getVertex(vp);
 		struct ShallowGraph* extensionEdges;
 		int patternSize;
+
+		initPruning(maxGraph - minGraph);
 
 		/* find frequent single vertices and frequent edges */
 		/* set lowest id of any edge pattern to a number large enough to don't have collisions */

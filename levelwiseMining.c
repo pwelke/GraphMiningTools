@@ -10,6 +10,21 @@
 #include "searchTree.h"
 #include "levelwiseMining.h"
 
+int* pruning;
+
+void initPruning(int nGraphs) {
+	if ((pruning = malloc(nGraphs * sizeof(int)))) {
+		int i;
+		for (i=0; i<nGraphs; ++i) {
+			pruning[i] = 0;
+		}
+	}
+}
+
+void freePruning() {
+	free(pruning);
+}
+
 
 /**
 return the histogram of vertices and edges in a db in a search tree.
