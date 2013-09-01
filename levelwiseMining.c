@@ -26,7 +26,7 @@ void freePruning() {
 }
 
 inline int hashID(const int elementID) {
-	return 1<<(elementID % sizeof(int));
+	return 1<<(elementID % (sizeof(int) * 8));
 }
 
 inline void addToPruningSet(const int elementID, const int index) {
@@ -35,6 +35,10 @@ inline void addToPruningSet(const int elementID, const int index) {
 
 inline char containedInPruningSet(const int elementID, const int index) {
 	return (pruning[index] & hashID(elementID)) != 0;
+}
+
+inline char isSubset(const int fingerPrint, const int index) {
+	return ((pruning[index] & fingerPrint) == fingerPrint);
 }
 
 
@@ -673,10 +677,21 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	int number;
 	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
 	char* found = malloc(n * sizeof(char));
+
+	// for (i=0; i<n; ++i) {
+	// 	fprintf(stderr, "%i ", pointers[i]->d);
+	// }
+	// fprintf(stderr, "\n");
+	// i=0;
 	
 	/* iterate over all graphs in the database */
 	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
 		if (i >= minGraph) {
+			int dbg_firstPrune = 0;
+			int dbg_subset = 0;
+			int dbg_found = 0;
+			int dbg_oldPrune = pruning[i];
+
 			struct ShallowGraph* spanningTreeString;
 			struct Graph* spanningTree = NULL;
 			int refinement;
@@ -705,7 +720,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 				
 					/* for each refinement */
 					for (refinement=0; refinement<n; ++refinement) {
-						//if (containedInPruningSet(pointers[refinement]->d, i)) {
+						if (isSubset(pointers[refinement]->d, i)) {
 							/* if refinement is not already found to be subtree of current graph */
 							if (!found[refinement]) {
 								/* if refinement is contained in spanning tree */
@@ -717,13 +732,20 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 									fprintf(keyValueStream, "%i %i\n", number, pointers[refinement]->lowPoint);
 									newBloomFilter |= hashID(pointers[refinement]->lowPoint);
 								}
+							} else {
+								++dbg_found;
 							}
-						//}
+						} else {
+							++dbg_subset;
+						}
 					}
 				}
 				pruning[i] = newBloomFilter;
 				dumpGraph(gp, spanningTree);
+			} else {
+				++dbg_firstPrune;
 			}
+			// fprintf(stderr, "prune=%i (%i) subset_pr=%i found_pr=%i newPrune=%i\n", dbg_oldPrune, dbg_firstPrune, dbg_subset, dbg_found, pruning[i]);
 		}
 
 		/* counting of read graphs and garbage collection */

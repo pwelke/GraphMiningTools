@@ -69,7 +69,7 @@ char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int
 		for (idx=root->neighborhood; idx; idx=idx->next) {
 			/* if the next label is already in the tree, continue recursively */
 			if (strcmp(idx->label, edge->label) == 0) {
-				char isNew = addStringToSearchTree(idx->endPoint, edge->next, p);
+				char isNew = addStringToSearchTreeSetD(idx->endPoint, edge->next, d, p);
 				/* edges dangling at edge are consumed or dumped by the following recursion steps */
 				edge->next = NULL;
 				dumpVertexList(p->listPool, edge);
@@ -82,7 +82,7 @@ char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int
 		edge->startPoint = root;
 		edge->endPoint = getVertex(p->vertexPool);
 		addEdge(root, edge);
-		addStringToSearchTree(edge->endPoint, idx, p);
+		addStringToSearchTreeSetD(edge->endPoint, idx, d, p);
 		return 1;
 	}
 }
