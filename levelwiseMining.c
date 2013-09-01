@@ -501,7 +501,8 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
  			dumpGraph(gp, current);
 		} else {
 			/* filter out patterns where a subtree is not frequent */
-			if (!getPatternFingerPrint(current, lowerLevel, gp, sgp)) {
+			int fingerPrint = getPatternFingerPrint(current, lowerLevel, gp, sgp);
+			if (fingerPrint == 0) {
 				dumpShallowGraph(sgp, string);
 				dumpGraph(gp, current);
 			} else {
@@ -514,7 +515,13 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 				}
 				current->next = filteredExtension;
 				filteredExtension = current;
-				addToSearchTree(currentLevel, string, gp, sgp);
+
+				/* add string to current level, update relevant bookkeeping info of search tree
+				and then dump the empty shell of string */
+				currentLevel->d += addStringToSearchTreeSetD(currentLevel, string->edges, fingerPrint, gp);
+				++currentLevel->number;
+				string->edges = NULL;
+				dumpShallowGraph(sgp, string);
 			}
 		}
 	}
