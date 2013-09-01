@@ -25,6 +25,18 @@ void freePruning() {
 	free(pruning);
 }
 
+inline int hashID(const int elementID) {
+	return 1<<(elementID % sizeof(int));
+}
+
+inline void addToPruningSet(const int elementID, const int index) {
+	pruning[index] |= hashID(elementID);
+}
+
+inline char containedInPruningSet(const int elementID, const int index) {
+	return (pruning[index] & hashID(elementID)) != 0;
+}
+
 
 /**
 return the histogram of vertices and edges in a db in a search tree.
@@ -290,9 +302,11 @@ void getVertexAndEdgeHistogramsP(char* fileName, int minGraph, int maxGraph, str
 			mergeSearchTrees(frequentEdges, containedEdges, 1, results, &resultPos, frequentEdges, 0, gp);
 			dumpSearchTree(gp, containedEdges);
 			
-			/* write (graph->number, pattern id) pairs to stream */
+			/* write (graph->number, pattern id) pairs to stream, add the patterns to the bloom
+			filter of the graph (i) for pruning */
 			for (v=0; v<resultPos; ++v) {
 				fprintf(keyValueStream, "%i %i\n", number, results[v].id);
+				addToPruningSet(results[v].id, i);
 			}
 		}
 
@@ -647,6 +661,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	struct ShallowGraph* spanningTreeStrings = NULL;
 	int number;
 	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
+	char* found = malloc(n * sizeof(char));
 	
 	/* iterate over all graphs in the database */
 	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
@@ -654,43 +669,50 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 			struct ShallowGraph* spanningTreeString;
 			struct Graph* spanningTree = NULL;
 			int refinement;
+			int newBloomFilter = 0;
 
-			/* set d to one, meaning that all refinements have not yet been recognized to be subtree
-			of current graph */
-			for (refinement=0; refinement<n; ++refinement) {
-				pointers[refinement]->d = 1;
-			}
-
-			/* for each spanning tree */
-			for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
-				/* convert streamed spanning tree string to graph */
-				if (spanningTree != NULL) {
-					int v;
-					for (v=0; v<spanningTree->n; ++v) {
-						dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
-						spanningTree->vertices[v]->neighborhood = NULL;
-					}
-					canonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
-				} else {
-					spanningTree = canonicalString2Graph(spanningTreeString, gp);
-				}
-			
-				/* for each refinement */
+			/* if there is no frequent pattern from lower level contained in i, dont even start searching */
+			if (pruning[i] != 0) {
+				/* set d to one, meaning that all refinements have not yet been recognized to be subtree
+				of current graph */
 				for (refinement=0; refinement<n; ++refinement) {
-					/* if refinement is not already found to be subtree of current graph */
-					if (pointers[refinement]->d) {
-						/* if refinement is contained in spanning tree */
-						if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
-							/* currentLevel refinementstring visited +1 and continue with next refinement */
-							pointers[refinement]->d = 0;
-							++pointers[refinement]->visited;
-							++currentLevel->number;
-							fprintf(keyValueStream, "%i %i\n", number, pointers[refinement]->lowPoint);
+					found[refinement] = 0;
+				}
+				/* for each spanning tree */
+				for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
+					/* convert streamed spanning tree string to graph */
+					if (spanningTree != NULL) {
+						int v;
+						for (v=0; v<spanningTree->n; ++v) {
+							dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
+							spanningTree->vertices[v]->neighborhood = NULL;
 						}
+						canonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
+					} else {
+						spanningTree = canonicalString2Graph(spanningTreeString, gp);
+					}
+				
+					/* for each refinement */
+					for (refinement=0; refinement<n; ++refinement) {
+						//if (containedInPruningSet(pointers[refinement]->d, i)) {
+							/* if refinement is not already found to be subtree of current graph */
+							if (!found[refinement]) {
+								/* if refinement is contained in spanning tree */
+								if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
+									/* currentLevel refinementstring visited +1 and continue with next refinement */
+									found[refinement] = 1;
+									++pointers[refinement]->visited;
+									++currentLevel->number;
+									fprintf(keyValueStream, "%i %i\n", number, pointers[refinement]->lowPoint);
+									newBloomFilter |= hashID(pointers[refinement]->lowPoint);
+								}
+							}
+						//}
 					}
 				}
+				pruning[i] = newBloomFilter;
+				dumpGraph(gp, spanningTree);
 			}
-			dumpGraph(gp, spanningTree);
 		}
 
 		/* counting of read graphs and garbage collection */
@@ -698,6 +720,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 		dumpShallowGraphCycle(sgp, spanningTreeStrings);
 	}
 	dumpCachedGraph(subtreeCache);
+	free(found);
 	fclose(stream);
 }
 

@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 		struct ShallowGraph* extensionEdges;
 		int patternSize;
 
-		initPruning(maxGraph - minGraph);
+		initPruning(maxGraph);
 
 		/* find frequent single vertices and frequent edges */
 		/* set lowest id of any edge pattern to a number large enough to don't have collisions */
