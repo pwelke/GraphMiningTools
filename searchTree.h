@@ -14,11 +14,14 @@ int compInfoComparison(const void* e1, const void* e2);
 
 struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p);
+char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int d, struct GraphPool* p);
 void dumpSearchTree(struct GraphPool* p, struct Vertex* root);
 void printSearchTree(struct Vertex* root, int level);
 void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp);
 int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-char containsString(struct Vertex* root, struct ShallowGraph* string);
+int containsString(struct Vertex* root, struct ShallowGraph* string);
+int getID(struct Vertex* root, struct ShallowGraph* string);
+
 struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* number, struct ShallowGraphPool* sgp);
 
 

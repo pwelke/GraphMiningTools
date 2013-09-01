@@ -50,7 +50,45 @@ char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
 }
 
 
-char containsStringRec(struct Vertex* root, struct VertexList* edge) {
+/**
+ * Recursively add a string represented by a list of edges to a search tree given by its root.
+ * The string is consumed
+ * This method DOES NOT INCREASE the current number of strings contained in the search tree.
+ * You have to maintain the correct number of strings in the search tree yourself.
+ * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
+ */
+char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int d, struct GraphPool* p) {
+
+	/* if edge == NULL, stop recursion, remember, that some string ends here */
+	if (edge == NULL) {
+		root->visited += 1;
+		root->d = d;
+		return 0;
+	} else {
+		struct VertexList* idx;
+		for (idx=root->neighborhood; idx; idx=idx->next) {
+			/* if the next label is already in the tree, continue recursively */
+			if (strcmp(idx->label, edge->label) == 0) {
+				char isNew = addStringToSearchTree(idx->endPoint, edge->next, p);
+				/* edges dangling at edge are consumed or dumped by the following recursion steps */
+				edge->next = NULL;
+				dumpVertexList(p->listPool, edge);
+				return isNew;
+			}
+		}
+
+		/* otherwise add the current edge to the tree and continue recursively */
+		idx = edge->next;
+		edge->startPoint = root;
+		edge->endPoint = getVertex(p->vertexPool);
+		addEdge(root, edge);
+		addStringToSearchTree(edge->endPoint, idx, p);
+		return 1;
+	}
+}
+
+
+int containsStringRec(struct Vertex* root, struct VertexList* edge) {
 
 	/* if edge == NULL, we are done. check if visited > 0.  */
 	if (edge == NULL) {
@@ -60,12 +98,11 @@ char containsStringRec(struct Vertex* root, struct VertexList* edge) {
 		for (idx=root->neighborhood; idx; idx=idx->next) {
 			/* if the next label is already in the tree, continue recursively */
 			if (strcmp(idx->label, edge->label) == 0) {
-				char found = containsStringRec(idx->endPoint, edge->next);
-				return found;
+				return containsStringRec(idx->endPoint, edge->next);
 			}
 		}
 
-		/* otherwise add the current edge to the tree and continue recursively */
+		/* otherwise string is not contained */
 		return 0;
 	}
 }
@@ -76,7 +113,7 @@ If string is contained in searchTree given by root, return its multiplicity (->v
 which is bound to be larger than zero.
 Otherwise, return zero.
 */
-char containsString(struct Vertex* root, struct ShallowGraph* string) {
+int containsString(struct Vertex* root, struct ShallowGraph* string) {
 	return containsStringRec(root, string->edges);
 }
 
@@ -91,12 +128,11 @@ int getIDRec(struct Vertex* root, struct VertexList* edge) {
 		for (idx=root->neighborhood; idx; idx=idx->next) {
 			/* if the next label is already in the tree, continue recursively */
 			if (strcmp(idx->label, edge->label) == 0) {
-				return = getIDRec(idx->endPoint, edge->next);
-				
+				return getIDRec(idx->endPoint, edge->next);		
 			}
 		}
 
-		/* otherwise add the current edge to the tree and continue recursively */
+		/* otherwise string is not contained */
 		return -1;
 	}
 }
