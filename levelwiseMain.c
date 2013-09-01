@@ -157,6 +157,7 @@ int main(int argc, char** argv) {
 
 		/* garbage collection */
 		dumpCube();
+		freePruning();
 		freeFrequentEdgeShallowGraph(gp, sgp, extensionEdges);
 		dumpSearchTree(gp, frequentVertices);
 		dumpSearchTree(gp, frequentPatterns);
