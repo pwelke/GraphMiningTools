@@ -432,11 +432,12 @@ struct VertexList* snatchEdge(struct Vertex* v, struct Vertex* w) {
 
 
 /**
-if the treeCenterCanonicalString of any subtree of pattern (that is obtained by removing a leaf of pattern) 
-is not contained in searchTree, this method returns false
+return the fingerprint of pattern (being the bitwise or of the hashes of the subgraphs)
+OR 0 if there exists a subgraph of pattern that is not frequent.
 */
-char subtreeIsInfrequent(struct Graph* pattern, struct Vertex* searchTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int getPatternFingerPrint(struct Graph* pattern, struct Vertex* searchTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int v;
+	int fingerPrint = 0;
 
 	/* mark leaves */
 	/* TODO small speedup, if we go to n-1, as last vertex is the newest leaf */
@@ -446,6 +447,7 @@ char subtreeIsInfrequent(struct Graph* pattern, struct Vertex* searchTree, struc
 			struct VertexList* e;
 			struct Graph* subPattern;
 			struct ShallowGraph* string;
+			int stringID;
 
 			/* remove vertex and edge from graph */
 			leaf = pattern->vertices[v];
@@ -460,17 +462,19 @@ char subtreeIsInfrequent(struct Graph* pattern, struct Vertex* searchTree, struc
 			addEdge(e->startPoint, e);
 
 			/* check if infrequent, if so return 1 otherwise continue */
-			if (!containsString(searchTree, string)) {
+			stringID = getID(searchTree, string);
+			if (stringID == -1) {
 				dumpShallowGraph(sgp, string);
 				dumpGraph(gp, subPattern);
-				return 1;
+				return 0;
 			} else {
 				dumpShallowGraph(sgp, string);
 				dumpGraph(gp, subPattern);
+				fingerPrint |= hashID(stringID);
 			}
 		}
 	}
-	return 0;
+	return fingerPrint;
 }
 
 /**
@@ -497,7 +501,7 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
  			dumpGraph(gp, current);
 		} else {
 			/* filter out patterns where a subtree is not frequent */
-			if (subtreeIsInfrequent(current, lowerLevel, gp, sgp)) {
+			if (!getPatternFingerPrint(current, lowerLevel, gp, sgp)) {
 				dumpShallowGraph(sgp, string);
 				dumpGraph(gp, current);
 			} else {
