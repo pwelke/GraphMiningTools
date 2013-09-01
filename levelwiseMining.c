@@ -677,21 +677,15 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	int number;
 	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
 	char* found = malloc(n * sizeof(char));
-
-	// for (i=0; i<n; ++i) {
-	// 	fprintf(stderr, "%i ", pointers[i]->d);
-	// }
-	// fprintf(stderr, "\n");
-	// i=0;
+	
+	int dbg_firstPrune = 0;
+	int dbg_subset = 0;
+	int dbg_found = 0;
 	
 	/* iterate over all graphs in the database */
 	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
 		if (i >= minGraph) {
-			int dbg_firstPrune = 0;
-			int dbg_subset = 0;
-			int dbg_found = 0;
-			int dbg_oldPrune = pruning[i];
-
+			
 			struct ShallowGraph* spanningTreeString;
 			struct Graph* spanningTree = NULL;
 			int refinement;
@@ -745,18 +739,87 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 			} else {
 				++dbg_firstPrune;
 			}
-			// fprintf(stderr, "prune=%i (%i) subset_pr=%i found_pr=%i newPrune=%i\n", dbg_oldPrune, dbg_firstPrune, dbg_subset, dbg_found, pruning[i]);
 		}
 
 		/* counting of read graphs and garbage collection */
 		++i;
 		dumpShallowGraphCycle(sgp, spanningTreeStrings);
 	}
+	fprintf(stderr, "initPrune=%i, skips=%i, subsetPrune=%i\n", dbg_firstPrune, dbg_found, dbg_subset);
 	dumpCachedGraph(subtreeCache);
 	free(found);
 	fclose(stream);
 }
 
+
+/**
+Walk through the db, checking for each graph g \in db which refinements are subtrees of at least one of its spanning 
+trees. for all these refinements, the visited counter of its cString in currentLevel is increased. 
+*/
+void scanDB2(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int bufferSize = 100;
+	int i = 0;
+	FILE* stream = fopen(fileName, "r");
+	struct ShallowGraph* spanningTreeStrings = NULL;
+	int number;
+	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
+	char* found = malloc(n * sizeof(char));
+	
+	int dbg_firstPrune = 0;
+	int dbg_subset = 0;
+	int dbg_found = 0;
+	
+	/* iterate over all graphs in the database */
+	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
+		if (i >= minGraph) {
+
+			/* if there is no frequent pattern from lower level contained in i, dont even start searching */
+			if (pruning[i] != 0) {
+				struct ShallowGraph* spanningTreeString;
+				int refinement;
+				int newBloomFilter = 0;
+				struct Graph* spanningTrees = NULL;
+				
+				/* materialize spanning trees */
+				for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
+					/* convert streamed spanning tree string to graph */
+					struct Graph* newGraph = canonicalString2Graph(spanningTreeString, gp);
+					newGraph->next = spanningTrees;
+					spanningTrees = newGraph;
+				}
+
+				/* for each refinement */
+				for (refinement=0; refinement<n; ++refinement) {
+					if (isSubset(pointers[refinement]->d, i)) {
+						struct Graph* spanningTree;
+						for (spanningTree=spanningTrees; spanningTree!=NULL; spanningTree=spanningTree->next) {
+							/* if refinement is contained in spanning tree */
+							if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
+								/* currentLevel refinementstring visited +1 and continue with next refinement */
+								found[refinement] = 1;
+								++pointers[refinement]->visited;
+								++currentLevel->number;
+								fprintf(keyValueStream, "%i %i\n", number, pointers[refinement]->lowPoint);
+								newBloomFilter |= hashID(pointers[refinement]->lowPoint);
+								break; /* do not need to check other spanning trees */
+							}
+						}
+					}
+				}
+				dumpGraph(gp, spanningTrees);
+				pruning[i] = newBloomFilter;
+			}
+		}
+
+		/* counting of read graphs and garbage collection */
+		++i;
+		dumpShallowGraphCycle(sgp, spanningTreeStrings);
+	}
+	fprintf(stderr, "initPrune=%i, skips=%i, subsetPrune=%i\n", dbg_firstPrune, dbg_found, dbg_subset);
+	dumpCachedGraph(subtreeCache);
+	free(found);
+	fclose(stream);
+}
 
 int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
