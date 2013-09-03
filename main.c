@@ -18,8 +18,6 @@
 
 char DEBUG_INFO = 1;
 
-int MINGRAPH = -1;
-
 /**
  * Print --help message
  */
@@ -49,7 +47,8 @@ void printHelp() {
 		   "        b returns the number of vertices in the BBTree\n"
 		   "        d returns the numbers of diagonals in each block\n\n"*/);
 
-	printf("    -limit N: process the first N graphs in F\n\n");
+	printf("    -limit N: process the first N graphs in F (default: process all)\n"
+		   "    -min M process graphs starting from Mth instance (default 0)\n\n");
 	printf("    -h | --help: display this help\n\n");
 }
 
@@ -119,6 +118,7 @@ int main(int argc, char** argv) {
 
 		/* graph delimiter */
 		int maxGraphs = -1;
+		int minGraph = 0;
 
 
 		/* user input handling */
@@ -142,6 +142,9 @@ int main(int argc, char** argv) {
 					depth = LONG_MAX / 2;
 				}
 			}
+			if (strcmp(argv[param], "-min") == 0) {
+				sscanf(argv[param+1], "%i", &minGraph);
+			}
 		}
 
 		if (outputOption == 0) {
@@ -156,8 +159,8 @@ int main(int argc, char** argv) {
 		
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
-				// TODO make a parameter
-				if (i > MINGRAPH) {
+				/* TODO make a parameter */
+				if (i >= minGraph) {
 					long int spanningTreeEstimate;
 
 					/* filter out moderately active molecules, if 'i' otherwise set labels */
@@ -179,7 +182,7 @@ int main(int argc, char** argv) {
 						break;
 						case 'c':
 						spanningTreeEstimate = isConnected(g);
-						fprintf(stdout, "%i %i\n", g->number, spanningTreeEstimate);
+						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 						break;
 						case 'e':
 						spanningTreeEstimate = getGoodEstimate(g, sgp, gp);
@@ -212,26 +215,14 @@ int main(int argc, char** argv) {
 						break; 
 						case 'p':
 						if (isConnected(g)) {
-							// fprintf(stderr, "%i\n", g->number);
-							// // fprintf(stderr, "c");
-							// fflush(stderr);
-
 							/* getGoodEstimate returns an upper bound on the number of spanning
 							trees in g, or -1 if there was an overflow of long ints while computing */
 							long upperBound = getGoodEstimate(g, sgp, gp);
-							//fprintf(stderr, "graph %i estimate: %li\n", i, upperBound);
 							if ((upperBound < depth) && (upperBound != -1)) {
-								// // fprintf(stderr, "e");
-								// fflush(stderr);
 
 								struct Vertex* searchTree = getVertex(gp->vertexPool);
-								//long int c = countSpanningTrees(g, 1000, sgp, gp);
-								// fprintf(stderr, "%li", c);
-								// fflush(stderr);
 
 								struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-								// fprintf(stderr, "t");
-								// fflush(stderr);
 
 								struct ShallowGraph* idx;
 								int st = 0;
@@ -247,11 +238,6 @@ int main(int argc, char** argv) {
 									dumpGraph(gp, tree);
 								}
 								dumpShallowGraphCycle(sgp, trees);
-								// fprintf(stderr, "s");
-								// fflush(stderr);
-								// fprintf(stderr, "%i\t%i\t%i\t%i\n", i, g->number, st, searchTree->d);
-								// fflush(stderr);
-
 
 								printf("# %i %i\n", g->number, searchTree->d);
 								printStringsInSearchTree(searchTree, stdout, sgp);
