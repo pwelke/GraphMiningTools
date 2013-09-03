@@ -484,7 +484,6 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 						dumpVertexListRecursively(gp->listPool, t->neighborhood);
 						dumpVertex(gp->vertexPool, s);
 						dumpVertex(gp->vertexPool, t);
-						//dumpGraph(gp, B);
 						returnCachedGraph(cacheB);
 					}
 				}
