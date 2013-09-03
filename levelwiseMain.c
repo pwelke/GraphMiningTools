@@ -74,14 +74,14 @@ int main(int argc, char** argv) {
 		/* init params */
 		char debugInfo = 1;
 		int minGraph = 0;
-		int maxGraph = 500;
-		int threshold = (maxGraph - minGraph) / 10;
-		int maxPatternSize = 4;
+		int maxGraph = 45000;
+		int threshold = (maxGraph - minGraph) / 50;
+		int maxPatternSize = 20;
 		int minEdgeID = 100;
-		char* featureFileName = "results/features1.txt";
-		char* countFileName = "results/counts1.txt";
+		char* featureFileName = "results/2013-09-02_features20.txt";
+		char* countFileName = "results/2013-09-02_counts20.txt";
 		char* inputFileName = "results/2013-08-31_treePatterns.txt";
-		char* patternFileName = "results/patterns1.txt";
+		char* patternFileName = "results/2013-09-02_patterns20.txt";
 
 		/* internal init */
 		FILE* featureFile = fopen(featureFileName, "w");
