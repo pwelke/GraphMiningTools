@@ -655,6 +655,8 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, str
 	int i;
 	char* buffer = malloc(bufferSize * sizeof(char));
 	int head = fscanf(stream, "# %i %i\n", &number, &nPatterns);
+	int readCount = 0;
+
 	if (head != 2) {
 		return 0;
 	}
@@ -662,10 +664,15 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, str
 	for (i=0; i<nPatterns; ++i) {
 		int multiplicity;
 		struct ShallowGraph* string;
-		fscanf(stream, "%i\t", &multiplicity);
+		readCount += fscanf(stream, "%i\t", &multiplicity);
 		string = parseCString(stream, buffer, sgp);
 		addToSearchTree(root, string, gp, sgp);
-	}	
+	}
+
+	if (readCount != nPatterns) {
+		fprintf(stderr, "Error: Read %i patterns, should have been %i\n", readCount, nPatterns);
+	}
+
 	free(buffer);
 	return 1;
 }
@@ -677,8 +684,7 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* numbe
 
 	char* buffer = malloc(bufferSize * sizeof(char));
 	int head = fscanf(stream, " # %i %i\n", number, &nPatterns);
-
-	//fprintf(stderr, " # %i %i\n", *number, nPatterns);
+	int writeCount = 0;
 
 	if (head != 2) {
 		free(buffer);
@@ -688,12 +694,16 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* numbe
 	for (i=0; i<nPatterns; ++i) {
 		int multiplicity;
 		struct ShallowGraph* string;
-		fscanf(stream, "%i\t", &multiplicity);
+		writeCount += fscanf(stream, "%i\t", &multiplicity);
 		string = parseCString(stream, buffer, sgp);
 		string->next = patterns;
 		patterns = string;
 	}	
 	
+	if (writeCount != nPatterns) {
+		fprintf(stderr, "Error: Wrote %i patterns, should have been %i\n", writeCount, nPatterns);
+	}
+
 	free(buffer);
 	return patterns;
 }
