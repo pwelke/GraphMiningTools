@@ -27,31 +27,6 @@ void dumpCube() {
 	_freeCube(_cube, _cubeX, _cubeY);
 }
 
-// /** Utility data structure creator.
-// Cube will store, what is called S in the paper. */
-// int*** createCube(int x, int y) {
-// 	int*** cube;
-// 	int i, j;
-// 	if ((cube = malloc(x * sizeof(int**)))) {
-// 		for (i=0; i<x; ++i) {
-// 			cube[i] = malloc(y * sizeof(int*));
-// 			if (cube[i] != NULL) {
-// 				for (j=0; j<y; ++j) {
-// 					cube[i][j] = NULL;
-// 				}
-// 			} else {
-// 				for (j=0; j<i; ++j) {
-// 					free(cube[i]);
-// 				}
-// 				free(cube);
-// 				return NULL;
-// 			}
-// 		}
-// 	} else {
-// 		return NULL;
-// 	}
-// 	return cube;
-// }
 
 /** Utility data structure creator.
 Cube will store, what is called S in the paper. */
