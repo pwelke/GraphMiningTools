@@ -433,3 +433,81 @@ char* aids99VertexLabel(int label) {
 	return res;
 }
 
+/**
+ * return an array of label strings corresponding to the numbers used in AIDS99.txt.
+ * that is: label[i] contains the string that is encoded in the file using the integer i
+ */
+char** aids99VertexLabelArray() {
+	char** label = malloc(64*sizeof(char*));
+	int i;
+	for (i=0; i<64; ++i) {
+		label[i] = malloc(5*sizeof(char));
+	}
+
+	label[0] = "ERR";
+	label[1] = "H";
+	label[2] = "C";
+	label[3] = "O";
+	label[4] = "CU";
+	label[5] = "N";
+	label[6] = "S";
+	label[7] = "P";
+	label[8] = "CL";
+	label[9] = "ZN";
+	label[10] = "B";
+	label[11] = "BR";
+	label[12] = "CO";
+	label[13] = "MN";
+	label[14] = "AS";
+	label[15] = "AL";
+	label[16] = "NI";
+	label[17] = "SE";
+	label[18] = "SI";
+	label[19] = "V";
+	label[20] = "SN";
+	label[21] = "I";
+	label[22] = "F";
+	label[23] = "LI";
+	label[24] = "SB";
+	label[25] = "FE";
+	label[26] = "PD";
+	label[27] = "HG";
+	label[28] = "BI";
+	label[29] = "NA";
+	label[30] = "CA";
+	label[31] = "TI";
+	label[32] = "ZR";
+	label[33] = "HO";
+	label[34] = "GE";
+	label[35] = "PT";
+	label[36] = "RU";
+	label[37] = "RH";
+	label[38] = "CR";
+	label[39] = "GA";
+	label[40] = "K";
+	label[41] = "AG";
+	label[42] = "AU";
+	label[43] = "TB";
+	label[44] = "IR";
+	label[45] = "TE";
+	label[46] = "MG";
+	label[47] = "PB";
+	label[48] = "W";
+	label[49] = "CS";
+	label[50] = "MO";
+	label[51] = "RE";
+	label[52] = "CD";
+	label[53] = "OS";
+	label[54] = "PR";
+	label[55] = "ND";
+	label[56] = "SM";
+	label[57] = "GD";
+	label[58] = "YB";
+	label[59] = "ER";
+	label[60] = "U";
+	label[61] = "TL";
+	label[62] = "NB";
+	label[63] = "AC";
+
+	return label;
+}
