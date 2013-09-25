@@ -53,6 +53,29 @@ int main(int argc, char** argv) {
 		/* graph delimiter */
 		int maxGraphs = -1;
 
+		/* init params */
+		char debugInfo = 1;
+		int minGraph = 0;
+		int maxGraph = 45000;
+		int threshold = (maxGraph - minGraph) / 50;
+		int maxPatternSize = 20;
+		int minEdgeID = 100;
+		char* featureFileName = "results/2013-09-03_features2000.txt";
+		char* countFileName = "results/2013-09-03_counts2000.txt";
+		char* inputFileName = "results/2013-09-03_spT2000.txt";
+		char* patternFileName = "results/2013-09-03_patterns2000.txt";
+
+		/* internal init */
+		FILE* featureFile = fopen(featureFileName, "w");
+		FILE* countFile = fopen(countFileName, "w");
+		FILE* patternFile = fopen(patternFileName, "w");
+
+		struct Vertex* frequentPatterns;
+		struct Vertex* frequentVertices = getVertex(vp);
+		struct Vertex* frequentEdges = getVertex(vp);
+		struct ShallowGraph* extensionEdges;
+		int patternSize;
+		
 		/* user input handling */
 		for (param=2; param<argc; param+=2) {
 			if ((strcmp(argv[param], "--help") == 0) || (strcmp(argv[param], "-h") == 0)) {
@@ -71,28 +94,6 @@ int main(int argc, char** argv) {
 			outputOption = 'a';
 		}
 
-		/* init params */
-		char debugInfo = 1;
-		int minGraph = 0;
-		int maxGraph = 45000;
-		int threshold = (maxGraph - minGraph) / 50;
-		int maxPatternSize = 20;
-		int minEdgeID = 100;
-		char* featureFileName = "results/2013-09-02_features20.txt";
-		char* countFileName = "results/2013-09-02_counts20.txt";
-		char* inputFileName = "results/2013-08-31_treePatterns.txt";
-		char* patternFileName = "results/2013-09-02_patterns20.txt";
-
-		/* internal init */
-		FILE* featureFile = fopen(featureFileName, "w");
-		FILE* countFile = fopen(countFileName, "w");
-		FILE* patternFile = fopen(patternFileName, "w");
-
-		struct Vertex* frequentPatterns;
-		struct Vertex* frequentVertices = getVertex(vp);
-		struct Vertex* frequentEdges = getVertex(vp);
-		struct ShallowGraph* extensionEdges;
-		int patternSize;
 
 		initPruning(maxGraph);
 
