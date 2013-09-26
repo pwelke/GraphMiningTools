@@ -35,7 +35,7 @@ void printHelp() {
 		   "        a \"active\" active - 1 | moderately active, inactive - -1\n"
 		   "        i \"CA vs. CI\" active - 1 | inactive - -1 moderately active removed\n"
 		   "        m \"moderately active\" active, moderately active  - 1 | inactive - -1\n\n");
-	printf("    -output O: write output to stdout\n"
+	printf("    -output O: write output to stdout (default p)\n"
 		   "        e returns the estimated number of spanning trees\n"
 		   "        s returns true number of spanning trees or -1 if\n"
 		   "            there are more than depth\n"
@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 		}
 
 		if (outputOption == 0) {
-			outputOption = 'a';
+			outputOption = 'p';
 		}
 
 		/* try to load a file */
