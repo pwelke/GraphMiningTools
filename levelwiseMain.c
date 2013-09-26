@@ -47,7 +47,6 @@ int main(int argc, char** argv) {
 		struct GraphPool *gp = createGraphPool(1, vp, lp);
 
 		/* user input handling variables */
-		char outputOption = 0;
 		int param;
 
 		/* graph delimiter */
@@ -60,22 +59,30 @@ int main(int argc, char** argv) {
 		int threshold = (maxGraph - minGraph) / 50;
 		int maxPatternSize = 20;
 		int minEdgeID = 100;
-		char* featureFileName = "results/2013-09-03_features2000.txt";
-		char* countFileName = "results/2013-09-03_counts2000.txt";
-		char* inputFileName = "results/2013-09-03_spT2000.txt";
-		char* patternFileName = "results/2013-09-03_patterns2000.txt";
-
-		/* internal init */
-		FILE* featureFile = fopen(featureFileName, "w");
-		FILE* countFile = fopen(countFileName, "w");
-		FILE* patternFile = fopen(patternFileName, "w");
-
+		char* inputFileName = argv[1];
+		char countFileName[500];
+		char featureFileName[500];
+		char patternFileName[500];	
+		FILE* featureFile;
+		FILE* countFile;
+		FILE* patternFile;
 		struct Vertex* frequentPatterns;
 		struct Vertex* frequentVertices = getVertex(vp);
 		struct Vertex* frequentEdges = getVertex(vp);
 		struct ShallowGraph* extensionEdges;
 		int patternSize;
-		
+
+		/* open output files */
+		strcpy(countFileName, inputFileName);
+		strcat(countFileName, ".counts");
+ 		countFile = fopen(countFileName, "w");
+		strcpy(featureFileName, inputFileName);
+		strcat(featureFileName, ".features");
+		featureFile = fopen(featureFileName, "w");
+		strcpy(patternFileName, inputFileName);
+		strcat(patternFileName, ".patterns");
+ 		patternFile = fopen(patternFileName, "w");
+
 		/* user input handling */
 		for (param=2; param<argc; param+=2) {
 			if ((strcmp(argv[param], "--help") == 0) || (strcmp(argv[param], "-h") == 0)) {
@@ -85,15 +92,7 @@ int main(int argc, char** argv) {
 			if (strcmp(argv[param], "-limit") == 0) {
 				sscanf(argv[param+1], "%i", &maxGraphs);
 			}
-			if (strcmp(argv[param], "-output") == 0) {
-				outputOption = argv[param+1][0];
-			}
 		}
-
-		if (outputOption == 0) {
-			outputOption = 'a';
-		}
-
 
 		initPruning(maxGraph);
 
