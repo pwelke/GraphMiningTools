@@ -56,7 +56,7 @@ void map2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) 
 			/* and increment the offset */
 			offset += spanningTree->n;
 		}
-
+		offset = 0;
 		for (pattern=patterns; pattern!=NULL; pattern=pattern->next) {
 			int v;
 			/* convert streamed spanning tree string to graph */
