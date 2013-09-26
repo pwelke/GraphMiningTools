@@ -35,20 +35,15 @@ void printHelp() {
 		   "        a \"active\" active - 1 | moderately active, inactive - -1\n"
 		   "        i \"CA vs. CI\" active - 1 | inactive - -1 moderately active removed\n"
 		   "        m \"moderately active\" active, moderately active  - 1 | inactive - -1\n\n");
-	printf("    -output O: write output to stdout\n");
-	/*printf("        a \"all\" (default) output the feature vector for each graph in the\n"
-		   "            format specified by SVMlight the label of each graph has to be\n"
-		   "            either 0, 1 or -1 to be compliant with the specs of SVMlight.\n");*/
-	printf(/*"        o returns if a graph is outerplanar\n"*/
+	printf("    -output O: write output to stdout\n"
 		   "        e returns the estimated number of spanning trees\n"
 		   "        s returns true number of spanning trees or -1 if\n"
 		   "            there are more than depth\n"
-		   /*"        t returns the time spent to compute the patterns\n"
-		   "        b returns the number of vertices in the BBTree\n"
-		   "        d returns the numbers of diagonals in each block\n\n"*/);
-
-	printf("    -limit N: process the first N graphs in F (default: process all)\n"
-		   "    -min M process graphs starting from Mth instance (default 0)\n\n");
+		   "        c return if graph is connected\n"
+		   "        p print the spanning tree patterns of all graphs with\n"
+		   "            less than filter spanning trees\n");
+	printf("    -limit N: process the first N graphs in F (default: process all)\n");
+	printf("    -min M process graphs starting from Mth instance (default 0)\n\n");
 	printf("    -h | --help: display this help\n\n");
 }
 
@@ -159,7 +154,6 @@ int main(int argc, char** argv) {
 		
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
-				/* TODO make a parameter */
 				if (i >= minGraph) {
 					long int spanningTreeEstimate;
 
@@ -180,39 +174,17 @@ int main(int argc, char** argv) {
 						spanningTreeEstimate = countSpanningTrees(g, depth, sgp, gp);
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 						break;
+
 						case 'c':
 						spanningTreeEstimate = isConnected(g);
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 						break;
+
 						case 'e':
 						spanningTreeEstimate = getGoodEstimate(g, sgp, gp);
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 						break;
-						case 't':
-						if (isConnected(g)) {
-							if (getGoodEstimate(g, sgp, gp) < depth) {
 
-								struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-								struct ShallowGraph* idx;
-
-								for (idx=trees; idx; idx=idx->next) {			
-									struct Graph* h = shallowGraphToGraph(idx, gp);
-									struct Graph* i = shallowGraphToGraph(idx, gp);
-
-									char isSubgraph = subtreeCheck(h, i, gp, sgp);
-
-									if (!isSubgraph) {
-										printf("is no subgraph\n");
-									}
-
-									dumpGraph(gp, h);
-									dumpGraph(gp, i);
-								}
-								dumpShallowGraphCycle(sgp, trees);
-
-							}
-						}
-						break; 
 						case 'p':
 						if (isConnected(g)) {
 							/* getGoodEstimate returns an upper bound on the number of spanning
