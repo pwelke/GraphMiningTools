@@ -1,11 +1,13 @@
 TPKNAME = tpk
 LWMNAME = lwm
 MAPNAME = map
+CSCNAME = csc
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
-TPKOBJECTS = $(filter-out levelwiseMain.o map2gaston.o, $(OBJECTS))
-LWMOBJECTS = $(filter-out main.o map2gaston.o, $(OBJECTS))
-MAPOBJECTS = $(filter-out main.o levelwiseMain.o, $(OBJECTS))
+TPKOBJECTS = $(filter-out levelwiseMain.o map2gaston.o countSpanningTreeClasses.o, $(OBJECTS))
+LWMOBJECTS = $(filter-out main.o map2gaston.o countSpanningTreeClasses.o, $(OBJECTS))
+MAPOBJECTS = $(filter-out main.o levelwiseMain.o countSpanningTreeClasses.o, $(OBJECTS))
+CSCOBJECTS = $(filter-out main.o map2gaston.o levelwiseMain.o, $(OBJECTS))
 
 main: map
 	
@@ -21,6 +23,9 @@ lwm: $(LWMOBJECTS)
 
 map: $(MAPOBJECTS)
 	gcc -o $(MAPNAME) $(MAPOBJECTS) $(CPPFLAGS)
+
+csc: $(CSCOBJECTS)
+	gcc -o $(CSCNAME) $(CSCOBJECTS) $(CPPFLAGS)
 
 %.o : %.c %.h
 	gcc $(CPPFLAGS) -c $< -o $@
