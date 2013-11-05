@@ -148,3 +148,15 @@ def changeLabels(labels, switch):
 
 	for key in labels.keys():
 		labels[key] = map[labels[key]]
+
+
+def run(prefixOfOutputFiles, inputFile, labelFlag):
+	
+	labels = getLabels(inputFile)
+	changeLabels(labels, labelFlag)
+
+	interestingFeatures = getMap(prefixOfOutputFiles + '.features')
+	filterByMap(prefixOfOutputFiles + '.counts', interestingFeatures, prefixOfOutputFiles + '.countsFrequent')
+
+	createLabeledSVMFile(prefixOfOutputFiles + '.countsFrequent', prefixOfOutputFiles + '.svmFile', labels)
+
