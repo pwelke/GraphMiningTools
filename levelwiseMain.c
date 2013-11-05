@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 		int minGraph = 0;
 		int maxGraph = 45000;
 		int threshold = (maxGraph - minGraph) / 50;
-		int maxPatternSize = 20;
+		int maxPatternSize = 2;
 		int minEdgeID = 100;
 		char* inputFileName = argv[1];
 		char countFileName[500];
