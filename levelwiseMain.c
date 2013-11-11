@@ -55,9 +55,9 @@ int main(int argc, char** argv) {
 		/* init params */
 		char debugInfo = 1;
 		int minGraph = 0;
-		int maxGraph = 45000;
+		int maxGraph = 1000;
 		int threshold = (maxGraph - minGraph) / 50;
-		int maxPatternSize = 2;
+		int maxPatternSize = 10;
 		int minEdgeID = 100;
 		char* inputFileName = argv[1];
 		char countFileName[500];
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 			refinements = malloc(refinementSize * sizeof(struct Graph*));
 
 			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-			scanDB(inputFileName, candidateSet, refinements, pointers, refinementSize, minGraph, maxGraph, countFile, gp, sgp);
+			scanDB(inputFileName, candidateSet, refinements, pointers, refinementSize, minGraph, maxGraph, threshold, countFile, gp, sgp);
 
 			/* threshold + 1 as candidateSet contains each candidate once, already */
 			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
