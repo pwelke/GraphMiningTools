@@ -684,9 +684,9 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	int dbg_subset = 0;
 	int dbg_found = 0;
 
-	char** features = malloc(maxGraph * sizeof(char*));
+	int** features = malloc(maxGraph * sizeof(int*));
 	for (i=0; i<maxGraph; ++i) {
-		features[i] = malloc((n + 1) * sizeof(char));
+		features[i] = malloc((n + 1) * sizeof(int));
 	}
 	i = 0;
 	
@@ -697,16 +697,18 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 			struct ShallowGraph* spanningTreeString;
 			struct Graph* spanningTree = NULL;
 			int refinement;
+			//int newBloomFilter = 0;
 
+			features[i][n] = number;
+			for (refinement=0; refinement<n; ++refinement) {
+				//found[refinement] = 0;
+				features[i][refinement] = 0;
+			}
+			
 			/* if there is no frequent pattern from lower level contained in i, dont even start searching */
 			if (pruning[i] != 0) {
 				/* set d to one, meaning that all refinements have not yet been recognized to be subtree
 				of current graph */
-				features[i][n] = number;
-				for (refinement=0; refinement<n; ++refinement) {
-					//found[refinement] = 0;
-					features[i][refinement] = 0;
-				}
 				/* for each spanning tree */
 				for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
 					/* convert streamed spanning tree string to graph */
