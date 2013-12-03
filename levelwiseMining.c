@@ -25,8 +25,10 @@ void freePruning() {
 	free(pruning);
 }
 
+const int hashMod = sizeof(int) * 8;
+
 inline int hashID(const int elementID) {
-	return 1<<(elementID % (sizeof(int) * 8));
+	return 1<<(elementID % (hashMod));
 }
 
 inline void addToPruningSet(const int elementID, const int index) {
@@ -676,7 +678,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	struct ShallowGraph* spanningTreeStrings = NULL;
 	int number;
 	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
-	char* found = malloc(n * sizeof(char));
+	//char* found = malloc(n * sizeof(char));
 	
 	int dbg_firstPrune = 0;
 	int dbg_subset = 0;
@@ -695,7 +697,6 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 			struct ShallowGraph* spanningTreeString;
 			struct Graph* spanningTree = NULL;
 			int refinement;
-			//int newBloomFilter = 0;
 
 			/* if there is no frequent pattern from lower level contained in i, dont even start searching */
 			if (pruning[i] != 0) {
@@ -703,8 +704,114 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 				of current graph */
 				features[i][n] = number;
 				for (refinement=0; refinement<n; ++refinement) {
-					found[refinement] = 0;
+					//found[refinement] = 0;
 					features[i][refinement] = 0;
+				}
+				/* for each spanning tree */
+				for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
+					/* convert streamed spanning tree string to graph */
+					if (spanningTree != NULL) {
+						int v;
+						for (v=0; v<spanningTree->n; ++v) {
+							dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
+							spanningTree->vertices[v]->neighborhood = NULL;
+						}
+						canonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
+					} else {
+						spanningTree = canonicalString2Graph(spanningTreeString, gp);
+					}
+				
+					/* for each refinement */
+					for (refinement=0; refinement<n; ++refinement) {
+						if (isSubset(pointers[refinement]->d, i)) {
+							--dbg_subset;
+							/* if refinement is not already found to be subtree of current graph */
+							if (!features[i][refinement]) {
+								--dbg_found;
+								/* if refinement is contained in spanning tree */
+								if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
+									/* currentLevel refinementstring visited +1 and continue with next refinement */
+									//found[refinement] = 1;
+									features[i][refinement] = 1;
+									++pointers[refinement]->visited;
+									++currentLevel->number;
+								} else {
+									features[i][refinement] = 0;
+								}
+							} else {
+								++dbg_found;
+							}
+						} else {
+							++dbg_subset;
+						}
+					}
+				}
+				dumpGraph(gp, spanningTree);
+			} else {
+				++dbg_firstPrune;
+			}
+		}
+
+		/* counting of read graphs and garbage collection */
+		++i;
+		dumpShallowGraphCycle(sgp, spanningTreeStrings);
+	}
+	fprintf(stderr, "initPrune=%i, skips=%i, subsetPrune=%i\n", dbg_firstPrune, dbg_found, dbg_subset);
+	dumpCachedGraph(subtreeCache);
+	//free(found);
+	fclose(stream);
+
+	/* pruning and output of frequent patterns */ 
+	for (i=0; i<maxGraph; ++i) {
+		int refinement;
+		pruning[i] = 0;
+		for (refinement=0; refinement<n; ++refinement) {
+			if ((features[i][refinement] == 1) && (pointers[refinement]->visited >= threshold)) {
+				fprintf(keyValueStream, "%i %i\n", features[i][n], pointers[refinement]->lowPoint);
+				addToPruningSet(pointers[refinement]->lowPoint, i);
+			}
+		}
+	}
+
+	for (i=0; i<maxGraph; ++i) {
+		free(features[i]);
+	}
+	free(features);
+}
+
+
+/**
+Walk through the db, checking for each graph g \in db which refinements are subtrees of at least one of its spanning 
+trees. for all these refinements, the visited counter of its cString in currentLevel is increased. 
+*/
+void scanDBold(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int bufferSize = 100;
+	int i = 0;
+	FILE* stream = fopen(fileName, "r");
+	struct ShallowGraph* spanningTreeStrings = NULL;
+	int number;
+	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
+	char* found = malloc(n * sizeof(char));
+	
+	int dbg_firstPrune = 0;
+	int dbg_subset = 0;
+	int dbg_found = 0;
+	
+	/* iterate over all graphs in the database */
+	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
+		if (i >= minGraph) {
+			
+			struct ShallowGraph* spanningTreeString;
+			struct Graph* spanningTree = NULL;
+			int refinement;
+			int newBloomFilter = 0;
+
+			/* if there is no frequent pattern from lower level contained in i, dont even start searching */
+			if (pruning[i] != 0) {
+				/* set d to one, meaning that all refinements have not yet been recognized to be subtree
+				of current graph */
+				for (refinement=0; refinement<n; ++refinement) {
+					found[refinement] = 0;
 				}
 				/* for each spanning tree */
 				for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
@@ -729,11 +836,10 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 								if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
 									/* currentLevel refinementstring visited +1 and continue with next refinement */
 									found[refinement] = 1;
-									features[i][refinement] = 1;
 									++pointers[refinement]->visited;
 									++currentLevel->number;
-									//fprintf(keyValueStream, "%i %i\n", number, pointers[refinement]->lowPoint);
-									// newBloomFilter |= hashID(pointers[refinement]->lowPoint);
+									fprintf(keyValueStream, "%i %i\n", number, pointers[refinement]->lowPoint);
+									newBloomFilter |= hashID(pointers[refinement]->lowPoint);
 								}
 							} else {
 								++dbg_found;
@@ -743,7 +849,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 						}
 					}
 				}
-				//pruning[i] = newBloomFilter;
+				pruning[i] = newBloomFilter;
 				dumpGraph(gp, spanningTree);
 			} else {
 				++dbg_firstPrune;
@@ -758,24 +864,9 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	dumpCachedGraph(subtreeCache);
 	free(found);
 	fclose(stream);
-
-	int refinement;
-	for (i=0; i<maxGraph; ++i) {
-		int newBloomFilter = 0;
-		for (refinement=0; refinement<n; ++refinement) {
-			if ((features[i][refinement] == 1) && (pointers[refinement]->visited >= threshold)) {
-				fprintf(keyValueStream, "%i %i\n", features[i][n], pointers[refinement]->lowPoint);
-				newBloomFilter |= hashID(pointers[refinement]->lowPoint);
-			}
-		}
-		pruning[i] = newBloomFilter;
-	}
-
-	for (i=0; i<maxGraph; ++i) {
-		free(features[i]);
-	}
-	free(features);
 }
+
+
 
 
 int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
