@@ -158,5 +158,5 @@ def run(prefixOfOutputFiles, inputFile, labelFlag):
 	interestingFeatures = getMap(prefixOfOutputFiles + '.features')
 	filterByMap(prefixOfOutputFiles + '.counts', interestingFeatures, prefixOfOutputFiles + '.countsFrequent')
 
-	createLabeledSVMFile(prefixOfOutputFiles + '.countsFrequent', prefixOfOutputFiles + '.svmFile', labels)
+	createLabeledSVMFile(prefixOfOutputFiles + '.countsFrequent', prefixOfOutputFiles + '.svmFile' + labelFlag, labels)
 
