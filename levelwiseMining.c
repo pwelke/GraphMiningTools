@@ -678,7 +678,6 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	struct ShallowGraph* spanningTreeStrings = NULL;
 	int number;
 	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
-	//char* found = malloc(n * sizeof(char));
 	
 	int dbg_firstPrune = 0;
 	int dbg_subset = 0;
@@ -697,11 +696,12 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 			struct ShallowGraph* spanningTreeString;
 			struct Graph* spanningTree = NULL;
 			int refinement;
-			//int newBloomFilter = 0;
 
 			features[i][n] = number;
+			if (features[i][n] == 0) {
+				fprintf(stderr, "Reading error. 0 was read\n");
+			}
 			for (refinement=0; refinement<n; ++refinement) {
-				//found[refinement] = 0;
 				features[i][refinement] = 0;
 			}
 			
@@ -733,7 +733,6 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 								/* if refinement is contained in spanning tree */
 								if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
 									/* currentLevel refinementstring visited +1 and continue with next refinement */
-									//found[refinement] = 1;
 									features[i][refinement] = 1;
 									++pointers[refinement]->visited;
 									++currentLevel->number;
@@ -760,16 +759,20 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	}
 	fprintf(stderr, "initPrune=%i, skips=%i, subsetPrune=%i\n", dbg_firstPrune, dbg_found, dbg_subset);
 	dumpCachedGraph(subtreeCache);
-	//free(found);
 	fclose(stream);
 
 	/* pruning and output of frequent patterns */ 
-	for (i=0; i<maxGraph; ++i) {
+	maxGraph = i; /* only loop through graphs that were processed */
+	for (i=minGraph; i<maxGraph; ++i) {
 		int refinement;
 		pruning[i] = 0;
 		for (refinement=0; refinement<n; ++refinement) {
 			if ((features[i][refinement] == 1) && (pointers[refinement]->visited >= threshold)) {
 				fprintf(keyValueStream, "%i %i\n", features[i][n], pointers[refinement]->lowPoint);
+				//debug
+				if (features[i][n] == 0) {
+					fprintf(stderr, "Damn.\n");
+				}
 				addToPruningSet(pointers[refinement]->lowPoint, i);
 			}
 		}
