@@ -1,6 +1,8 @@
+#include <malloc.h>
 #include <string.h>
 #include "graph.h"
 #include "shortPaths.h"
+#include "loading.h"
 
 char recursivePath(struct Vertex* v, struct VertexList* e) {
 	if (e == NULL) {
@@ -46,4 +48,38 @@ char containsPath(struct Graph* g, struct ShallowGraph* path) {
 		}
 	}
 	return 0;
+}
+
+struct PathGenerator* initPathGenerator(struct ShallowGraphPool* sgp, int maxLength, int startVertexLabel) {
+	/* this may be altered as there may be more or less atom bond types */
+	const int maxValency = 4;
+	
+	int i;
+	struct PathGenerator* pg = malloc(sizeof(struct PathGenerator));
+	pg->sgp = sgp;
+	pg->vertexLabels = aids99VertexLabelArray();
+	pg->edgeLabels = malloc(maxValency * sizeof(char*));
+	for (i=0; i<maxValency; ++i) {
+		pg->edgeLabels[i] = aids99EdgeLabel(i+1);
+	}
+	pg->currentPath = getShallowGraph(sgp);
+	appendEdge(currentPath, getVertexList(sgp->listPool));
+	pg->maxLength = maxLength;
+	pg->stack = malloc(2 * maxLength * sizeof(int));
+	for (i=0; i<maxLength; ++i) {
+		pg->stack[i] = -1;
+	}
+	pg->level = 0;
+	return pg;
+}
+
+void killPathGenerator(struct PathGenerator* pg) {
+	dumpShallowGraph(sgp, pg->currentPath);
+	free(pg->vertexLabels);
+	free(pg->edgeLabels);
+	free(pg);
+}
+
+struct ShallowGraph* generateNextPath(struct PathGenerator* pg) {
+
 }
