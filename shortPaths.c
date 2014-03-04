@@ -1,3 +1,4 @@
+/*
 #include <malloc.h>
 #include <string.h>
 #include "graph.h"
@@ -23,11 +24,11 @@ char recursivePath(struct Vertex* v, struct VertexList* e) {
 		v->visited = 0;
 	}
 	
-	/* if v->label != e->startPoint->label OR the remaining path can not be mapped to something below v */
+	/ * if v->label != e->startPoint->label OR the remaining path can not be mapped to something below v * /
 	return 0;	
 }
 
-/**
+/ **
 Check if a graph g contains a certain  path of length at least 1.
 If so, this function returns 1, otherwise 0.
 
@@ -38,7 +39,7 @@ the endpoint pointers of each edge must point to some existing vertex.
 NULL values in the label pointers will probably result in strange errors.
 
 Cheers!
-**/
+** /
 char containsPath(struct Graph* g, struct ShallowGraph* path) {
 	int v;
 	for (v=0; v<g->n; ++v) {
@@ -51,7 +52,7 @@ char containsPath(struct Graph* g, struct ShallowGraph* path) {
 }
 
 struct PathGenerator* initPathGenerator(struct ShallowGraphPool* sgp, int maxLength, int startVertexLabel) {
-	/* this may be altered as there may be more or less atom bond types */
+	/ * this may be altered as there may be more or less atom bond types * /
 	const int maxValency = 4;
 	
 	int i;
@@ -80,6 +81,7 @@ void killPathGenerator(struct PathGenerator* pg) {
 	free(pg);
 }
 
-struct ShallowGraph* generateNextPath(struct PathGenerator* pg) {
+// struct ShallowGraph* generateNextPath(struct PathGenerator* pg) {
 	
-}
+// }
+*/

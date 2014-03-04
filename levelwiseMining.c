@@ -6,7 +6,8 @@
 #include "treeCenter.h"
 #include "cachedGraph.h"
 #include "subtreeIsomorphismLabeled.h"
-#include "canonicalString.h"
+#include "cs_Parsing.h"
+#include "cs_Tree.h"
 #include "searchTree.h"
 #include "levelwiseMining.h"
 
@@ -75,7 +76,7 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 			struct Vertex* containedVertices = getVertex(gp->vertexPool);
 
 			/* get frequent vertices */
-			struct Graph* patternGraph = canonicalString2Graph(pattern, gp);
+			struct Graph* patternGraph = treeCanonicalString2Graph(pattern, gp);
 			int v;
 			for (v=0; v<patternGraph->n; ++v) {
 				/* See commented out how it would look if done by the book.
@@ -100,7 +101,7 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 			frequentEdges->lowPoint = frequentVertices->lowPoint;
 			for ( ; pattern!=NULL; pattern=pattern->next) {
 				if (patternGraph == NULL) {
-					patternGraph = canonicalString2Graph(pattern, gp);
+					patternGraph = treeCanonicalString2Graph(pattern, gp);
 				}
 				for (v=0; v<patternGraph->n; ++v) {
 					struct VertexList* e;
@@ -218,7 +219,7 @@ void getVertexAndEdgeHistogramsP(char* fileName, int minGraph, int maxGraph, str
 			}
 
 			/* get frequent vertices */
-			patternGraph = canonicalString2Graph(pattern, gp);
+			patternGraph = treeCanonicalString2Graph(pattern, gp);
 			for (v=0; v<patternGraph->n; ++v) {
 				/* See commented out how it would look if done by the book.
 				However, this has to be fast and treeCenterCanonicalString has
@@ -246,7 +247,7 @@ void getVertexAndEdgeHistogramsP(char* fileName, int minGraph, int maxGraph, str
 			resultPos = 0;
 			for ( ; pattern!=NULL; pattern=pattern->next) {
 				if (patternGraph == NULL) {
-					patternGraph = canonicalString2Graph(pattern, gp);
+					patternGraph = treeCanonicalString2Graph(pattern, gp);
 				}
 				for (v=0; v<patternGraph->n; ++v) {
 					struct VertexList* e;
@@ -541,7 +542,7 @@ void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLe
 	if ((root->visited != 0) && (root != lowerLevel)) {
 		/* at this point, we have found a pattern, we want to make a tree from it, get the refinements,
 		filter interesting candidates and then scan the db of patterns  */
-		struct Graph* pattern = canonicalString2Graph(prefix, gp);
+		struct Graph* pattern = treeCanonicalString2Graph(prefix, gp);
 		struct Graph* refinements = extendPattern(pattern, frequentEdges, gp);
 		refinements = filterExtension(refinements, lowerLevel, currentLevel, gp, sgp);
 
@@ -720,7 +721,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 						}
 						canonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
 					} else {
-						spanningTree = canonicalString2Graph(spanningTreeString, gp);
+						spanningTree = treeCanonicalString2Graph(spanningTreeString, gp);
 					}
 				
 					/* for each refinement */
@@ -829,7 +830,7 @@ void scanDBold(char* fileName, struct Vertex* currentLevel, struct Graph** refin
 						}
 						canonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
 					} else {
-						spanningTree = canonicalString2Graph(spanningTreeString, gp);
+						spanningTree = treeCanonicalString2Graph(spanningTreeString, gp);
 					}
 				
 					/* for each refinement */
@@ -879,7 +880,7 @@ int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Gr
 
 	if ((current->visited != 0) && (current != root))  {
 		/* TODO could also reset lowpoints here for speedup */
-		patterns[i] = canonicalString2Graph(prefix, gp);
+		patterns[i] = treeCanonicalString2Graph(prefix, gp);
 		pointers[i] = current;
 		return i+1;
 	}

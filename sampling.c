@@ -1,3 +1,4 @@
+/*
 #include <stdlib.h>
 #include "graph.h"
 #include "sampling.h"
@@ -19,7 +20,7 @@ struct ShallowGraph* sampleSpanningTree(struct Graph* g, struct ShallowGraphPool
 	}
 	spanningTree = getShallowGraph(sgp);
 
-	/* use some random start vertex */
+	// * use some random start vertex * /
 	root = rand() % g->n;
 	g->vertices[root]->visited = 1;
 
@@ -28,7 +29,7 @@ struct ShallowGraph* sampleSpanningTree(struct Graph* g, struct ShallowGraphPool
 
 		struct VertexList* e;
 		int next = rand() % degree(g->vertices[root]) + 1;
-		/* go to the edge that was selected */
+		// * go to the edge that was selected * /
 		for (v=0, e=g->vertices[root]->neighborhood; v<next; e=e->next, ++v);
 		if (e->endPoint->visited != 0) {
 			appendEdge(spanningTree, shallowCopyEdge(e, sgp->listPool));
@@ -45,15 +46,15 @@ struct VertexList* randomSuccessor(struct Vertex* root) {
 	struct VertexList* e;
 	int v;
 	int next = rand() % degree(root);
-	/* go to the edge that was selected */
+	// * go to the edge that was selected * /
 	for (v=0, e=root->neighborhood; v<next; e=e->next, ++v);
 	return e;
 }
 
-/** David Bruce Wilson:
+/ ** David Bruce Wilson:
 Generating Random Spanning Trees More Quickly than the Cover Time.
 Proceedings of the Twenty-eighth Annual ACM Symposium on the Theory of Computing 
-(Philadelphia, PA, 1996), 296-303, ACM, New York, 1996 */
+(Philadelphia, PA, 1996), 296-303, ACM, New York, 1996 * /
 struct VertexList** sampleSpanningEdges(struct Graph* g, int root) {
 	int dbg_countIterations = 0;
 	int i, u;
@@ -82,15 +83,16 @@ struct VertexList** sampleSpanningEdges(struct Graph* g, int root) {
 	return spEdges;
 }
 
-struct ShallowGraph* sampleSpanningTree(struct Graph* g, int root, struct ShallowGraphPool* sgp) {
-	struct VertexList** spanningEdges = sampleSpanningEdges(g, root);
-	struct ShallowGraph* spanningTree = getShallowGraph(sgp);
-	int v;
-	for (v=0; v<g->n; ++v) {
-		if (spanningEdges[i] != NULL) {
-			appendEdge(spanningTree, shallowCopyEdge(spanningEdges[i], spg->listPool));
-		}
-	}
-	free(spanningEdges);
-	return spanningTree;
-} 
+// struct ShallowGraph* sampleSpanningTree(struct Graph* g, int root, struct ShallowGraphPool* sgp) {
+// 	struct VertexList** spanningEdges = sampleSpanningEdges(g, root);
+// 	struct ShallowGraph* spanningTree = getShallowGraph(sgp);
+// 	int v;
+// 	for (v=0; v<g->n; ++v) {
+// 		if (spanningEdges[v] != NULL) {
+// 			appendEdge(spanningTree, shallowCopyEdge(spanningEdges[v], sgp->listPool));
+// 		}
+// 	}
+// 	free(spanningEdges);
+// 	return spanningTree;
+// } 
+*/

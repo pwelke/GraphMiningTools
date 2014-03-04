@@ -3,7 +3,7 @@
 #include <malloc.h>
 
 #include "graph.h"
-#include "canonicalString.h"
+#include "cs_Parsing.h"
 #include "searchTree.h"
 
 

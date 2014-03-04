@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "graph.h"
+#include "cs_Tree.h"
 #include "treeKernels.h"
-#include "canonicalString.h"
 
 
 /**

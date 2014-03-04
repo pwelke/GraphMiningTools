@@ -32,3 +32,4 @@ csc: $(CSCOBJECTS)
 
 clean:
 	rm *.o
+	rm ./executables/*.o

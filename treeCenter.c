@@ -2,7 +2,8 @@
 #include <limits.h>
 
 #include "graph.h"
-#include "canonicalString.h"
+#include "cs_Compare.h"
+#include "cs_Tree.h"
 #include "treeCenter.h"
 
 /**

@@ -5,7 +5,7 @@
 
 #include "../graph.h"
 #include "../loading.h"
-#include "../canonicalString.h"
+#include "../cs_Tree.h"
 #include "../searchTree.h"
 
 
@@ -40,7 +40,7 @@ void map2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) 
 				}
 				canonicalString2ExistingGraph(pattern, spanningTree, gp);
 			} else {
-				spanningTree = canonicalString2Graph(pattern, gp);
+				spanningTree = treeCanonicalString2Graph(pattern, gp);
 			}
 
 			/* print vertices */
@@ -67,7 +67,7 @@ void map2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) 
 				}
 				canonicalString2ExistingGraph(pattern, spanningTree, gp);
 			} else {
-				spanningTree = canonicalString2Graph(pattern, gp);
+				spanningTree = treeCanonicalString2Graph(pattern, gp);
 			}
 
 			/* print edges */
