@@ -1,6 +1,8 @@
 #ifndef CS_CYCLE_H_
 #define CS_CYCLE_H_
 
+#include "graph.h"
+
 /* canonical strings for cycles */ 
 struct ShallowGraph* permutateCycle(struct ShallowGraph* g);
 struct ShallowGraph* getCanonicalStringOfCycle(struct ShallowGraph* cycle, struct ShallowGraphPool* sgp);

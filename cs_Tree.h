@@ -1,6 +1,8 @@
 #ifndef CANONICALSTRING_H
 #define CANONICALSTRING_H
 
+#include "graph.h"
+
 /* canonical strings for trees */
 struct ShallowGraph* getTreePatterns(struct Graph* forest, struct ShallowGraphPool *sgp);
 struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct Vertex* parent, struct ShallowGraphPool *p);

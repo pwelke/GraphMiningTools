@@ -2,6 +2,7 @@
 #define CS_PARSING_H_
 
 #include <stdio.h>
+#include "graph.h"
 
 /* caching */
 struct VertexList* getTerminatorEdge(struct ListPool *p);

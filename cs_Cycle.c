@@ -1,6 +1,5 @@
 #include <string.h>
 
-#include "graph.h"
 #include "cs_Parsing.h"
 #include "cs_Compare.h"
 #include "cs_Cycle.h"
