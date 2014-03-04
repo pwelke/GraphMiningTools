@@ -719,7 +719,7 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 							dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
 							spanningTree->vertices[v]->neighborhood = NULL;
 						}
-						canonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
+						treeCanonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
 					} else {
 						spanningTree = treeCanonicalString2Graph(spanningTreeString, gp);
 					}
@@ -828,7 +828,7 @@ void scanDBold(char* fileName, struct Vertex* currentLevel, struct Graph** refin
 							dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
 							spanningTree->vertices[v]->neighborhood = NULL;
 						}
-						canonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
+						treeCanonicalString2ExistingGraph(spanningTreeString, spanningTree, gp);
 					} else {
 						spanningTree = treeCanonicalString2Graph(spanningTreeString, gp);
 					}

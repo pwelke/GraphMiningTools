@@ -90,7 +90,7 @@ struct Graph* treeCanonicalString2Graph(struct ShallowGraph* pattern, struct Gra
 Return a graph that belongs to the isomorphism class that is represented by pattern.
 pattern is expected to have at most g->n vertices. g must not contain edges.
 */
-void canonicalString2ExistingGraph(struct ShallowGraph* pattern, struct Graph* g, struct GraphPool* gp) {
+void treeCanonicalString2ExistingGraph(struct ShallowGraph* pattern, struct Graph* g, struct GraphPool* gp) {
 	struct VertexList* initEdge = getInitialisatorEdge(gp->listPool);
 	struct VertexList* termEdge = getTerminatorEdge(gp->listPool);
 	struct VertexList* head = pattern->edges;
@@ -176,7 +176,7 @@ struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct V
 			}
 
 			/*stdlib qsort using my lexicographic comparison of ShallowGraphs */
-			qsort(tempArray, numChildren, sizeof(struct ShallowGraph*), &lexComp);
+			qsort(tempArray, numChildren, sizeof(struct ShallowGraph*), &lexCompCS);
 
 			/* append the edges of the substrings to the result */
 			idx = result->edges;
@@ -292,7 +292,7 @@ struct ShallowGraph* canonicalStringOfRootedLevelTree(struct Vertex* vertex, str
 			}
 
 			/*stdlib qsort using my lexicographic comparison of ShallowGraphs */
-			qsort(tempArray, numChildren, sizeof(struct ShallowGraph*), &lexComp);
+			qsort(tempArray, numChildren, sizeof(struct ShallowGraph*), &lexCompCS);
 
 			/* append the edges of the substrings to the result */
 			idx = result->edges;
@@ -352,7 +352,7 @@ struct ShallowGraph* canonicalStringOfLevelTree(struct ShallowGraph* vertexList,
 		/* keep the string if its the first one, computed for this component or lexicograhically smaller
 			than the saved string */
 		if (canonicalString) {
-			if (lexicographicComparison(canonicalString, cs) > 0) {
+			if (compareCanonicalStrings(canonicalString, cs) > 0) {
 				dumpShallowGraph(sgp, canonicalString);
 				canonicalString = cs;
 			} else {
@@ -429,7 +429,7 @@ struct ShallowGraph* getTreePatterns(struct Graph* forest, struct ShallowGraphPo
 			/* keep the string if its the first one, computed for this component or lexicograhically smaller 
 			than the saved string */
 			if (canonicalStrings[currentComponent]) {
-				if (lexicographicComparison(canonicalStrings[currentComponent], cs) > 0) {
+				if (compareCanonicalStrings(canonicalStrings[currentComponent], cs) > 0) {
 					dumpShallowGraph(sgp, canonicalStrings[currentComponent]);
 					canonicalStrings[currentComponent] = cs;
 				} else {

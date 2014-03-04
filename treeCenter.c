@@ -175,7 +175,7 @@ struct ShallowGraph* treeCenterCanonicalString(struct Graph* tree, struct Shallo
 	
 	if (center[0] == 3) {
 		struct ShallowGraph* cString2 = canonicalStringOfRootedTree(tree->vertices[center[2]], tree->vertices[center[2]], sgp);
-		if (lexicographicComparison(cString, cString2) < 0) {
+		if (compareCanonicalStrings(cString, cString2) < 0) {
 			dumpShallowGraph(sgp, cString2);
 		} else {
 			dumpShallowGraph(sgp, cString);

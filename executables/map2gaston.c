@@ -38,7 +38,7 @@ void map2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) 
 					dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
 					spanningTree->vertices[v]->neighborhood = NULL;
 				}
-				canonicalString2ExistingGraph(pattern, spanningTree, gp);
+				treeCanonicalString2ExistingGraph(pattern, spanningTree, gp);
 			} else {
 				spanningTree = treeCanonicalString2Graph(pattern, gp);
 			}
@@ -65,7 +65,7 @@ void map2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) 
 					dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
 					spanningTree->vertices[v]->neighborhood = NULL;
 				}
-				canonicalString2ExistingGraph(pattern, spanningTree, gp);
+				treeCanonicalString2ExistingGraph(pattern, spanningTree, gp);
 			} else {
 				spanningTree = treeCanonicalString2Graph(pattern, gp);
 			}

@@ -233,18 +233,18 @@ char mopTest(struct Graph* g, struct ShallowGraphPool* sgp) {
 		pairArray[i] = idx;
 	}
 
-	qsort(pairArray, pairs->m, sizeof(struct VertexList*), &directedEdgeComparator);
-	qsort(edgeArray, edges->m, sizeof(struct VertexList*), &directedEdgeComparator);
+	qsort(pairArray, pairs->m, sizeof(struct VertexList*), &compareDirectedEdges);
+	qsort(edgeArray, edges->m, sizeof(struct VertexList*), &compareDirectedEdges);
 
 
 	/* sweep */
 	for (j=0, k=0, found=1; j<pairs->m; ++j) {
 
 		/* increment currentEdge as long as it is lex. smaller than sweeper. */
-		for (; directedEdgeComparator(&(pairArray[j]), &(edgeArray[k])) > 0; ++k);
+		for (; compareDirectedEdges(&(pairArray[j]), &(edgeArray[k])) > 0; ++k);
 
 		/* check if the two are equal */
-		if (directedEdgeComparator(&(pairArray[j]), &(edgeArray[k])) == 0) {
+		if (compareDirectedEdges(&(pairArray[j]), &(edgeArray[k])) == 0) {
 			++k;
 			continue;
 
@@ -411,7 +411,7 @@ struct BBTree* createBlockAndBridgeTree(struct ShallowGraph* list, struct Graph 
 
 	/* check for outerplanarity of all blocks */
 	for (idx=list, i=0; idx; idx=idx->next, ++i) {
-		struct ShallowGraph* cString = getOuterplanarCanonicalString(idx, sgp, gp);
+		struct ShallowGraph* cString = canonicalStringOfOuterplanarGraph(idx, sgp, gp);
 		/* if the current component is not outerplanar,
 		 * dump stuff and return NULL
 		 * TODO */
@@ -528,5 +528,3 @@ struct BBTree* createBlockAndBridgeTree(struct ShallowGraph* list, struct Graph 
 
 	return createBBTree(bbTree, blocks, list, gp);
 }
-
-

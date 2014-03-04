@@ -149,7 +149,7 @@ void cycleToString(struct ShallowGraph* cycle, struct ShallowGraphPool* sgp) {
 /**
  *  returns the canonical string of the input cycle without consuming the cycle
  */
-struct ShallowGraph* getCanonicalStringOfCycle(struct ShallowGraph* cycle, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* canonicalStringOfCycle(struct ShallowGraph* cycle, struct ShallowGraphPool* sgp) {
 	struct VertexList* idx;
 	struct ShallowGraph* tmpString = getShallowGraph(sgp);
 

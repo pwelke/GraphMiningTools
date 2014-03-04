@@ -10,6 +10,6 @@ struct ShallowGraph* canonicalStringOfRootedLevelTree(struct Vertex* vertex, str
 struct ShallowGraph* canonicalStringOfLevelTree(struct ShallowGraph* vertexList, int maxDepth, struct ShallowGraphPool* sgp);
 
 struct Graph* treeCanonicalString2Graph(struct ShallowGraph* pattern, struct GraphPool* gp);
-void canonicalString2ExistingGraph(struct ShallowGraph* pattern, struct Graph* g, struct GraphPool* gp);
+void treeCanonicalString2ExistingGraph(struct ShallowGraph* pattern, struct Graph* g, struct GraphPool* gp);
 
 #endif /* CANONICALSTRING_H */

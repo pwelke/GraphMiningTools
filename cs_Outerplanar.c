@@ -320,7 +320,7 @@ struct ShallowGraph* __permutateBlock(struct ShallowGraph* cycle, struct Shallow
 		free(narray1);
 	}
 
-	cString = getCanonicalStringOfCycle(cycle, sgp);
+	cString = canonicalStringOfCycle(cycle, sgp);
 	cString->lastEdge->next = secondPart->edges;
 	cString->lastEdge = secondPart->lastEdge;
 	cString->m = cString->m + secondPart->m;
@@ -343,7 +343,7 @@ struct ShallowGraph* __permutateBlock(struct ShallowGraph* cycle, struct Shallow
  * have to delete all edges from it or you have to grate an empty new graph and change the start-
  * and endpoints of edges in hamiltonianCycle and diagonals accordingly.
  */
-struct ShallowGraph* getCanonicalStringOfOuterplanarBlock(struct ShallowGraph* hamiltonianCycle, struct ShallowGraph* diagonals, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* canonicalStringOfOuterplanarBlock(struct ShallowGraph* hamiltonianCycle, struct ShallowGraph* diagonals, struct ShallowGraphPool* sgp) {
 	struct VertexList* idx;
 	struct ShallowGraph* result1;
 	struct ShallowGraph* result2;
@@ -675,18 +675,18 @@ struct ShallowGraph* getCycleAndDiagonals(struct Graph* g, struct ShallowGraphPo
 		pairArray[i] = idx;
 	}
 
-	qsort(pairArray, pairs->m, sizeof(struct VertexList*), &directedEdgeComparator);
-	qsort(edgeArray, edges->m, sizeof(struct VertexList*), &directedEdgeComparator);
+	qsort(pairArray, pairs->m, sizeof(struct VertexList*), &compareDirectedEdges);
+	qsort(edgeArray, edges->m, sizeof(struct VertexList*), &compareDirectedEdges);
 
 
 	/* sweep */
 	for (j=0, k=0, found=1; j<pairs->m; ++j) {
 
 		/* increment currentEdge as long as it is lex. smaller than sweeper. */
-		for (; directedEdgeComparator(&(pairArray[j]), &(edgeArray[k])) > 0; ++k);
+		for (; compareDirectedEdges(&(pairArray[j]), &(edgeArray[k])) > 0; ++k);
 
 		/* check if the two are equal */
-		if (directedEdgeComparator(&(pairArray[j]), &(edgeArray[k])) == 0) {
+		if (compareDirectedEdges(&(pairArray[j]), &(edgeArray[k])) == 0) {
 			++k;
 			continue;
 
@@ -803,14 +803,14 @@ struct ShallowGraph* getCycleAndDiagonals(struct Graph* g, struct ShallowGraphPo
 
 
 
-struct ShallowGraph* getOuterplanarCanonicalString(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+struct ShallowGraph* canonicalStringOfOuterplanarGraph(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct Graph* g = shallowGraphToGraph(original, gp);
 	struct ShallowGraph* hamiltonianCycle = getCycleAndDiagonals(g, sgp);
 	if (hamiltonianCycle != NULL) {
 		struct ShallowGraph* diagonals = hamiltonianCycle->next;	
 		struct ShallowGraph* cString;
 		hamiltonianCycle->next = NULL;
-		cString = getCanonicalStringOfOuterplanarBlock(hamiltonianCycle, diagonals, sgp);
+		cString = canonicalStringOfOuterplanarBlock(hamiltonianCycle, diagonals, sgp);
 		dumpGraph(gp, g);
 		return cString;
 	} else {

@@ -6,7 +6,7 @@
 /**
  * Compare two !directed! edges lexicographically (compatible to stdlibs qsort)
  */
-int directedEdgeComparator(const void* p1, const void* p2) {
+int compareDirectedEdges(const void* p1, const void* p2) {
 	struct VertexList* e1 = *(struct VertexList**)p1;
 	struct VertexList* e2 = *(struct VertexList**)p2;
 
@@ -30,12 +30,12 @@ int directedEdgeComparator(const void* p1, const void* p2) {
 /**
  * Wrapper method for use in qsort
  */
-int lexComp(const void* e1, const void* e2) {
+int lexCompCS(const void* e1, const void* e2) {
 
 	struct ShallowGraph* g = *((struct ShallowGraph**)e1);
 	struct ShallowGraph* h = *((struct ShallowGraph**)e2);
 
-	return lexicographicComparison(g, h);
+	return compareCanonicalStrings(g, h);
 }
 
 
@@ -84,6 +84,6 @@ int compareVertexLists(const struct VertexList* e1, const struct VertexList* e2)
 /**
 Compare two strings represented by ShallowGraphs to each other. 
 Return behaviour should match that of string.h's strcmp() function */
-int lexicographicComparison(const struct ShallowGraph *g1, const struct ShallowGraph *g2) {
+int compareCanonicalStrings(const struct ShallowGraph *g1, const struct ShallowGraph *g2) {
 	return compareVertexLists(g1->edges, g2->edges);
 }
