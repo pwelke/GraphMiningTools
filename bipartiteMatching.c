@@ -13,43 +13,6 @@ void setFlag(struct VertexList* e, int flag) {
 
 
 /**
- * Print some information about a graph to the screen
- */
-void printStrangeGraph(struct Graph* g) {
-	
-	struct Graph* index = g;
-	int i= 0,j;
-
-	do {
-		if (index) {
-			printf("Graph %i has %i edges:\n", i, index->m);
-			for (j=0; j<index->n; ++j) {
-				if (index->vertices[j]) {
-					struct VertexList* e;
-					printf("Neighbors of vertex %i:\n", index->vertices[j]->lowPoint);
-					for (e=index->vertices[j]->neighborhood; e; e=e->next) {
-						printf("(%i, %i) ", e->startPoint->lowPoint, e->endPoint->lowPoint);
-					}
-					printf("\n");
-				} else {
-					printf("Vertex %i is not used by the current (induced) graph\n", j);
-				}
-				
-			}
-			printf("\n");
-			index = index->next;
-			++i;
-		} else {
-			/* if index is NULL, the input pointed to a list and not to a cycle */
-			break;
-		}
-	} while (index != g);
-	fflush(stdout);
-	
-}
-
-
-/**
 dfs that searches for a path from s to t and augments it, 
 if found.
 returns 1 if there is a path or 0 otherwise.
