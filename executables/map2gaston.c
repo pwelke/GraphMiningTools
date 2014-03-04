@@ -3,10 +3,10 @@
 #include <string.h>
 #include <limits.h>
 
-#include "graph.h"
-#include "loading.h"
-#include "canonicalString.h"
-#include "searchTree.h"
+#include "../graph.h"
+#include "../loading.h"
+#include "../canonicalString.h"
+#include "../searchTree.h"
 
 
 /**

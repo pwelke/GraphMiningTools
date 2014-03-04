@@ -4,16 +4,16 @@
 #include <string.h>
 #include <limits.h>
 
-#include "graph.h"
-#include "canonicalString.h"
-#include "searchTree.h"
-#include "loading.h"
-#include "listSpanningTrees.h"
-#include "upperBoundsForSpanningTrees.h"
-#include "subtreeIsomorphism.h"
-#include "graphPrinting.h"
-#include "treeCenter.h"
-#include "connectedComponents.h"
+#include "../graph.h"
+#include "../canonicalString.h"
+#include "../searchTree.h"
+#include "../loading.h"
+#include "../listSpanningTrees.h"
+#include "../upperBoundsForSpanningTrees.h"
+#include "../subtreeIsomorphism.h"
+#include "../graphPrinting.h"
+#include "../treeCenter.h"
+#include "../connectedComponents.h"
 #include "main.h" 
 
 char DEBUG_INFO = 1;

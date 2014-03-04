@@ -3,13 +3,13 @@
 #include <string.h>
 #include <limits.h>
 
-#include "graph.h"
-#include "searchTree.h"
-#include "listSpanningTrees.h"
-#include "upperBoundsForSpanningTrees.h"
-#include "subtreeIsomorphism.h"
+#include "../graph.h"
+#include "../searchTree.h"
+#include "../listSpanningTrees.h"
+#include "../upperBoundsForSpanningTrees.h"
+#include "../subtreeIsomorphism.h"
+#include "../levelwiseMining.h"
 #include "levelwiseMain.h" 
-#include "levelwiseMining.h"
 
 
 

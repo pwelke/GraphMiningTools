@@ -3,11 +3,11 @@ LWMNAME = lwm
 MAPNAME = map
 CSCNAME = csc
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3
-OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
-TPKOBJECTS = $(filter-out levelwiseMain.o map2gaston.o countSpanningTreeClasses.o, $(OBJECTS))
-LWMOBJECTS = $(filter-out main.o map2gaston.o countSpanningTreeClasses.o, $(OBJECTS))
-MAPOBJECTS = $(filter-out main.o levelwiseMain.o countSpanningTreeClasses.o, $(OBJECTS))
-CSCOBJECTS = $(filter-out main.o map2gaston.o levelwiseMain.o, $(OBJECTS))
+OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c)) $(patsubst %.c,%.o,$(wildcard ./executables/*.c))
+TPKOBJECTS = $(filter-out ./executables/levelwiseMain.o ./executables/map2gaston.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
+LWMOBJECTS = $(filter-out ./executables/main.o ./executables/map2gaston.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
+MAPOBJECTS = $(filter-out ./executables/main.o ./executables/levelwiseMain.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
+CSCOBJECTS = $(filter-out ./executables/main.o ./executables/map2gaston.o ./executables/levelwiseMain.o, $(OBJECTS))
 
 main: map
 	
