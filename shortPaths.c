@@ -65,7 +65,7 @@ struct PathGenerator* initPathGenerator(struct ShallowGraphPool* sgp, int maxLen
 	pg->currentPath = getShallowGraph(sgp);
 	appendEdge(currentPath, getVertexList(sgp->listPool));
 	pg->maxLength = maxLength;
-	pg->stack = malloc(2 * maxLength * sizeof(int));
+	pg->stack = malloc((2 * maxLength + 1) * sizeof(int));
 	for (i=0; i<maxLength; ++i) {
 		pg->stack[i] = -1;
 	}
@@ -81,5 +81,5 @@ void killPathGenerator(struct PathGenerator* pg) {
 }
 
 struct ShallowGraph* generateNextPath(struct PathGenerator* pg) {
-
+	
 }
