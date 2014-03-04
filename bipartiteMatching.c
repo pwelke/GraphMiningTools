@@ -71,7 +71,7 @@ matching algorithm needs some strange modifications to
 work. If the bipartite graph should be used somewhere else
 lateron, it is better to create a local copy. 
 */
-struct Graph* cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
+struct Graph* __cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 	int v; 
 	struct VertexList* e;
 	struct Graph* h = createGraph(g->n, gp);
@@ -238,7 +238,7 @@ b \in B which are undirected.
 */
 struct ShallowGraph* bipartiteMatching(struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* matching;
-	struct Graph* g = cloneStrangeBipartite(h, gp);
+	struct Graph* g = __cloneStrangeBipartite(h, gp);
 
 	bipartiteMatchingFastAndDirty(g, gp);
 	matching = getMatching(g, sgp);
