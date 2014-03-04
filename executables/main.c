@@ -5,7 +5,6 @@
 #include <limits.h>
 
 #include "../graph.h"
-#include "../canonicalString.h"
 #include "../searchTree.h"
 #include "../loading.h"
 #include "../listSpanningTrees.h"

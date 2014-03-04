@@ -12,7 +12,7 @@ CSCOBJECTS = $(filter-out ./executables/main.o ./executables/map2gaston.o ./exec
 main: map
 	
 
-all: main
+all: tpk lwm map csc
 	
 
 tpk: $(TPKOBJECTS)
