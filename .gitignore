@@ -5,3 +5,5 @@ tpk
 callgrind.out.*
 *.pyc
 csc
+map
+*.py~
