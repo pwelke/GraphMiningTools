@@ -10,13 +10,13 @@
  * Furthermore it avoids vertices that have visited set to nonzero except
  * for the vertex s.
  */
-char findPathIntern(struct Vertex *v, struct Vertex* parent, struct Vertex *target, int allowance, struct ShallowGraph* path, struct ShallowGraphPool *sgp) {
+char __findPathIntern(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int allowance, struct ShallowGraph* path, struct ShallowGraphPool* sgp) {
 	struct VertexList *idx;
 	char found = 0;
 
 
 	/* this is an exception for the case where the target is the neighbor of parent
-	 * and backtrack calls findPath(target, parent, target, ...) */
+	 * and __backtrack calls findPath(target, parent, target, ...) */
 	if (v == target) {
 		return 1;
 	}
@@ -42,7 +42,7 @@ char findPathIntern(struct Vertex *v, struct Vertex* parent, struct Vertex *targ
 						/* otherwise check if the endpoint was already visited. if not try recursively */
 						if ((idx->endPoint->lowPoint == 0) && (idx->endPoint->visited == 0)) {
 
-							found = findPathIntern(idx->endPoint, v, target, allowance, path, sgp);
+							found = __findPathIntern(idx->endPoint, v, target, allowance, path, sgp);
 
 							/* if we have found a path, return this path via path */
 							if (found) {
@@ -59,30 +59,30 @@ char findPathIntern(struct Vertex *v, struct Vertex* parent, struct Vertex *targ
 }
 
 
-void cleanUpLowPoint(struct Vertex*v) {
+void __cleanUpLowPoint(struct Vertex*v) {
 	struct VertexList* idx;
 	v->lowPoint = 0;
 	for (idx=v->neighborhood; idx; idx=idx->next) {
 		if (idx->endPoint->lowPoint != 0) {
-			cleanUpLowPoint(idx->endPoint);
+			__cleanUpLowPoint(idx->endPoint);
 		}
 	}
 }
 
 
-char findPath(struct Vertex *v, struct Vertex* parent, struct Vertex *target, int allowance, struct ShallowGraph* path, struct ShallowGraphPool *sgp) {
-	char found = findPathIntern(v, parent, target, allowance, path, sgp);
-	cleanUpLowPoint(v);
+char findPath(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int allowance, struct ShallowGraph* path, struct ShallowGraphPool* sgp) {
+	char found = __findPathIntern(v, parent, target, allowance, path, sgp);
+	__cleanUpLowPoint(v);
 	return found;
 }
 
 
 /**
- * Assumptions: DFS is called if the "algol-global" variable flag is false
+ * Assumptions: __DFS is called if the "algol-global" variable flag is false
  *
  * TODO get rid of one of the return 1 s
  */
-char DFS(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int allowance) {
+char __DFS(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int allowance) {
 	struct VertexList* idx;
 	char flag = 0;
 
@@ -99,7 +99,7 @@ char DFS(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int all
 				if (idx->endPoint->number == target->number)
 					flag = 1;
 				else if (idx->endPoint->d == 0)
-					flag = DFS(idx->endPoint, v, target, allowance);
+					flag = __DFS(idx->endPoint, v, target, allowance);
 			}
 		}
 	}
@@ -112,7 +112,7 @@ char DFS(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int all
  * assumptions: vertex->visited = 1 iff vertex is in currentPath.
  * "vertex->visited plays the role of p(vertex) in [Read, Tarjan 1975]"
  */
-struct ShallowGraph* backtrack(struct Graph* g, struct Vertex* v, struct Vertex* parent, struct Vertex* s, int allowance,
+struct ShallowGraph* __backtrack(struct Graph* g, struct Vertex* v, struct Vertex* parent, struct Vertex* s, int allowance,
 		struct ShallowGraph* currentPath, struct ShallowGraphPool* sgp) {
 	int i,j;
 	struct ShallowGraph *path = getShallowGraph(sgp);
@@ -175,7 +175,7 @@ struct ShallowGraph* backtrack(struct Graph* g, struct Vertex* v, struct Vertex*
 									if ((innerVertexNeighbs->endPoint->d == 0) || (innerVertexNeighbs->endPoint == s)) {
 
 										/* search for a different way to s than the one given by path */
-										flag = DFS(innerVertexNeighbs->endPoint, idx->endPoint, s, allowance);
+										flag = __DFS(innerVertexNeighbs->endPoint, idx->endPoint, s, allowance);
 
 										if (flag) break;
 									}
@@ -183,7 +183,7 @@ struct ShallowGraph* backtrack(struct Graph* g, struct Vertex* v, struct Vertex*
 							}
 						} /* fi allowance */
 
-						/* remember the predecessor on the current path so that recursive call to backtrack
+						/* remember the predecessor on the current path so that recursive call to __backtrack
 						 * knows, which edge not to use. */
 						predecessorInPath = idx->startPoint;
 					}
@@ -214,7 +214,7 @@ struct ShallowGraph* backtrack(struct Graph* g, struct Vertex* v, struct Vertex*
 
 				} else {
 
-					struct ShallowGraph* x = backtrack(g, idx->startPoint, predecessorInPath, s, allowance, currentPath, sgp);
+					struct ShallowGraph* x = __backtrack(g, idx->startPoint, predecessorInPath, s, allowance, currentPath, sgp);
 					result = addComponent(result, x);
 				}
 
@@ -275,7 +275,7 @@ struct ShallowGraph* backtrack(struct Graph* g, struct Vertex* v, struct Vertex*
  * Output: A ShallowGraph cycle of all contained cycles.
  *
  */
-struct ShallowGraph* readTarjanListAllCycles(struct Graph *g, struct ShallowGraphPool *sgp) {
+struct ShallowGraph* listCycles(struct Graph *g, struct ShallowGraphPool *sgp) {
 	int i;
 	struct ShallowGraph* result = NULL;
 
@@ -293,7 +293,7 @@ struct ShallowGraph* readTarjanListAllCycles(struct Graph *g, struct ShallowGrap
 
 			g->vertices[i]->visited = 1;
 
-			newCycle = backtrack(g, g->vertices[i], g->vertices[i], g->vertices[i], i, currentPath, sgp);
+			newCycle = __backtrack(g, g->vertices[i], g->vertices[i], g->vertices[i], i, currentPath, sgp);
 
 			result = addComponent(result, newCycle);
 

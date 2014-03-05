@@ -17,7 +17,7 @@
 void outerplanarKernel(struct Graph *g, int depth, struct ShallowGraphPool *sgp, struct GraphPool *gp,
 		char outputOptions, struct Vertex* globalTreeSet, struct compInfo** results, int* resSize) {
 
-	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(g, sgp);
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	struct BBTree* bbTree = createBlockAndBridgeTree(biconnectedComponents, g, gp, sgp);
 
 	/* if the depth of dfs is not set to a constant, it will be n */
@@ -159,7 +159,7 @@ void outerplanarKernel(struct Graph *g, int depth, struct ShallowGraphPool *sgp,
 void freeOuterplanarKernel(struct Graph *g, int depth, struct ShallowGraphPool *sgp, struct GraphPool *gp,
 		char outputOptions, struct Vertex* globalTreeSet, struct compInfo** results, int* resSize) {
 
-	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(g, sgp);
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	struct BBTree* bbTree = createBlockAndBridgeTree(biconnectedComponents, g, gp, sgp);
 
 	/* if the depth of dfs is not set to a constant, it will be n */

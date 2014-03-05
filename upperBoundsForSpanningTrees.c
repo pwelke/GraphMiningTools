@@ -144,7 +144,7 @@ an upper bound is m choose (n-1). For outerplanar blocks there
 is a better estimate than that, which will be applied.  
 */
 long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
-	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(g, sgp);
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	struct ShallowGraph* idx;
 	long estimate = 1;
 	int* vertices = malloc(g->n * sizeof(int));
@@ -180,7 +180,7 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 
 
 long int getEstimate(struct Graph* g, long int estimateFunction(long int, long int), char checkOuterplanarity, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
-	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(g, sgp);
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	struct ShallowGraph* idx;
 	long int estimate = 1;
 	int* vertices = malloc(g->n * sizeof(int));

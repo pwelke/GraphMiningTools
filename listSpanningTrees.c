@@ -99,7 +99,7 @@ struct ShallowGraph* getGraphAndNonGraphEdges(struct Graph* graph, struct Shallo
 
 struct ShallowGraph* getNonTreeBridges(struct Graph* graph, struct Graph* partialTree, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* tmp = getShallowGraph(sgp);
-	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(graph, sgp);
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(graph, sgp);
 	struct ShallowGraph* idx;
 	struct ShallowGraph* nonTreeBridges;
 
@@ -193,7 +193,7 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 	struct ShallowGraph* idx;
 
 	/* add all bridges to partialTree */
-	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(original, sgp);
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(original, sgp);
 	for (idx=biconnectedComponents; idx; idx=idx->next) {
 		struct VertexList* e = idx->edges;
 		if (idx->m == 1) {
@@ -312,7 +312,7 @@ long int countSpanningTrees(struct Graph* original, long int maxBound, struct Sh
 	struct ShallowGraph* idx;
 
 	/* add all bridges to partialTree */
-	struct ShallowGraph* biconnectedComponents = findBiconnectedComponents(original, sgp);
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(original, sgp);
 	for (idx=biconnectedComponents; idx; idx=idx->next) {
 		struct VertexList* e = idx->edges;
 		if (idx->m == 1) {
