@@ -97,23 +97,11 @@ void printCanonicalStrings(struct ShallowGraph *s, FILE* stream) {
  *****************************************************************************************/
 
 
-/** 
-Return the next char in stream and reset the position in the stream.
-"As if the char was not read..."
-*/
-char fpeekc(FILE* stream) {
-	int c;
-    c = fgetc(stream);
-    ungetc(c, stream);
-    return c;
-}
-
-
 /**
 We are not done reading a canonical string from stream, if there is a non-space
 character before the next line break or the end of file (whichever comes first)
 */
-char notDone(FILE* stream) {
+char __notDone(FILE* stream) {
 	int c;
     for (c = fgetc(stream); c == ' '; c = fgetc(stream));
     ungetc(c, stream);
@@ -124,12 +112,12 @@ char notDone(FILE* stream) {
 /**
 Write chars in stream to buffer until a space is encountered.
 buffer needs to be large enough to hold the number of chars
-written. readLabel consumes the space, but replaces its occurrence in
+written. __readLabel consumes the space, but replaces its occurrence in
 buffer with '\0'. this is actually quite good for the use case in parseCString,
 as there, all labels are terminated by a space due to the printCanonicalString() 
 implementation.
 */
-void readLabel(FILE* stream, char* buffer) {
+void __readLabel(FILE* stream, char* buffer) {
 	int i = 0;
 	for (buffer[i] = fgetc(stream); buffer[i] != ' '; buffer[++i] = fgetc(stream));
 	buffer[i] = '\0';
@@ -143,8 +131,8 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 	struct ShallowGraph* string = getShallowGraph(sgp);
 	struct VertexList* e;
 	
-	while (notDone(stream)) {
-		readLabel(stream, buffer);
+	while (__notDone(stream)) {
+		__readLabel(stream, buffer);
 		e = getVertexList(sgp->listPool);
 		if (strcmp(buffer, termString) == 0) {
 			e->label = termString;
