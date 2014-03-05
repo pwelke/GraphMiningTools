@@ -13,6 +13,7 @@
 #include "../graphPrinting.h"
 #include "../treeCenter.h"
 #include "../connectedComponents.h"
+#include "../cs_Tree.h"
 #include "main.h" 
 
 char DEBUG_INFO = 1;

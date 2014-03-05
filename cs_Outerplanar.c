@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <malloc.h>
 
+#include "intMath.h"
 #include "cs_Parsing.h"
 #include "cs_Compare.h"
 #include "cs_Cycle.h"
@@ -12,19 +13,6 @@
 /*****************************************************************************************
  ************************************ Outerplanar Blocks *********************************
  *****************************************************************************************/
-
-
-/*
- * returns the "correct" modulo of two numbers. b is assumed to be positive,
- * a is an arbitrary integer.
- */
-int __mod(int a, int b) {
-	if (a % b >= 0) {
-		return a % b;
-	} else {
-		return b + (a % b);
-	}
-}
 
 
 /**
@@ -110,12 +98,12 @@ struct VertexList* __compareBlockRepresentations(struct VertexList* c1, struct V
 		/* count number of diagonals that go from the current vertex to a vertex with a higher
 		 * index wrt the current permutation */
 		for (e=idx1->endPoint->neighborhood; e; e=e->next) {
-			if (__mod(e->startPoint->d - o1, m + 1) < __mod(e->endPoint->d - o1, m + 1)) {
+			if (mod(e->startPoint->d - o1, m + 1) < mod(e->endPoint->d - o1, m + 1)) {
 				++neighbors1;
 			}
 		}
 		for (e=idx2->endPoint->neighborhood; e; e=e->next) {
-			if (__mod(e->startPoint->d - o2, m + 1) < __mod(e->endPoint->d - o2, m + 1)) {
+			if (mod(e->startPoint->d - o2, m + 1) < mod(e->endPoint->d - o2, m + 1)) {
 				++neighbors2;
 			}
 		}
@@ -135,7 +123,7 @@ struct VertexList* __compareBlockRepresentations(struct VertexList* c1, struct V
 			continue;
 		}
 		if (neighbors1 == 1) {
-			if (__mod(idx1->endPoint->neighborhood->endPoint->d - o1, m + 1) > __mod(idx2->endPoint->neighborhood->endPoint->d - o2, m + 1)) {
+			if (mod(idx1->endPoint->neighborhood->endPoint->d - o1, m + 1) > mod(idx2->endPoint->neighborhood->endPoint->d - o2, m + 1)) {
 				return c2;
 			} else {
 				return c1;
@@ -148,16 +136,16 @@ struct VertexList* __compareBlockRepresentations(struct VertexList* c1, struct V
 		narray1 = malloc(neighbors1 * sizeof(struct VertexList*));
 		narray2 = malloc(neighbors2 * sizeof(struct VertexList*));
 		for (i=0, e=idx1->endPoint->neighborhood; i<neighbors1; e=e->next) {
-			e->flag = __mod(e->startPoint->d - o1, m + 1);
-			e->used = __mod(e->endPoint->d - o1, m + 1);
+			e->flag = mod(e->startPoint->d - o1, m + 1);
+			e->used = mod(e->endPoint->d - o1, m + 1);
 			if (e->flag < e->used) {
 				narray1[i] = e;
 				++i;
 			}
 		}
 		for (i=0, e=idx2->endPoint->neighborhood; i<neighbors2; e=e->next) {
-			e->flag = __mod(e->startPoint->d - o2, m + 1);
-			e->used = __mod(e->endPoint->d - o2, m + 1);
+			e->flag = mod(e->startPoint->d - o2, m + 1);
+			e->used = mod(e->endPoint->d - o2, m + 1);
 			if (e->flag < e->used) {
 				narray2[i] = e;
 				++i;
@@ -270,7 +258,7 @@ struct ShallowGraph* __permutateBlock(struct ShallowGraph* cycle, struct Shallow
 		/* count number of diagonals that go from the current vertex to a vertex with a higher
 		 * index wrt the current permutation */
 		for (e=idx->endPoint->neighborhood; e; e=e->next) {
-			if (__mod(e->startPoint->d - bestOffset, cycle->m + 1) < __mod(e->endPoint->d - bestOffset, cycle->m + 1)) {
+			if (mod(e->startPoint->d - bestOffset, cycle->m + 1) < mod(e->endPoint->d - bestOffset, cycle->m + 1)) {
 				++neighbors;
 			}
 		}
@@ -284,10 +272,10 @@ struct ShallowGraph* __permutateBlock(struct ShallowGraph* cycle, struct Shallow
 			/* add edge representation to secondPart. There may be more than one incident diagonals, but just one that
 			 * satisfies startpoint < endpoint. This is the edge we are searching. */
 			for (e=idx->endPoint->neighborhood; e; e=e->next) {
-				if (__mod(e->startPoint->d - bestOffset, cycle->m + 1) < __mod(e->endPoint->d - bestOffset, cycle->m + 1)) {
+				if (mod(e->startPoint->d - bestOffset, cycle->m + 1) < mod(e->endPoint->d - bestOffset, cycle->m + 1)) {
 					__appendDiagonal(secondPart,
-							__mod(e->startPoint->d - bestOffset, cycle->m + 1),
-							__mod(e->endPoint->d - bestOffset, cycle->m + 1),
+							mod(e->startPoint->d - bestOffset, cycle->m + 1),
+							mod(e->endPoint->d - bestOffset, cycle->m + 1),
 							e->label,
 							sgp->listPool);
 
@@ -301,8 +289,8 @@ struct ShallowGraph* __permutateBlock(struct ShallowGraph* cycle, struct Shallow
 		narray1 = malloc(neighbors * sizeof(struct VertexList*));
 
 		for (i=0, e=idx->endPoint->neighborhood; i<neighbors; e=e->next) {
-			e->flag = __mod(e->startPoint->d - bestOffset, cycle->m + 1);
-			e->used = __mod(e->endPoint->d - bestOffset, cycle->m + 1);
+			e->flag = mod(e->startPoint->d - bestOffset, cycle->m + 1);
+			e->used = mod(e->endPoint->d - bestOffset, cycle->m + 1);
 			if (e->flag < e->used) {
 				narray1[i] = e;
 				++i;

@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "graph.h"
+#include "intMath.h"
+#include "dfs.h"
 
 
 /**
@@ -27,12 +28,7 @@ void markConnectedComponents(struct Vertex *v, int component) {
 /********************************************************************************/
 
 
-/** 
-Returns the smaller of the two input values
- */
-int min(int a, int b) {
-	return (a < b) ? a : b;
-}
+
 
 
 
@@ -160,113 +156,6 @@ struct ShallowGraph* findBiconnectedComponents(struct Graph* g, struct ShallowGr
 
 	/*return results */
 	return allComponents;
-}
-
-
-/**
-Assumes that vertices are numbered from 0 to n-1 and ordered accordingly in original->vertices
-returns a struct Graph which represents the forest obtained from original by removing the union of all cycles in original.
-the next field of that struct points to a second graph struct which is exactly this union.
-
-runtime: O(2n + 2m + k) where k is the number of ShallowGraph structs. We have k<m
-
-This function consumes h completely. Do not attempt to dump or free list after calling this method.
- */
-struct Graph* OLDpartitionIntoForestAndCycles(struct ShallowGraph* list, struct Graph *original, struct GraphPool* gp, struct ShallowGraphPool *sgp) {
-
-	struct Graph *forest = getGraph(gp);
-	struct Graph *cycles = getGraph(gp);
-	int i;
-	int componentNumber = 0;
-
-	/* create two graphs,with same vertex set as original */
-	if (!((setVertexNumber(forest, original->n)) && (setVertexNumber(cycles, original->n)))) {
-		printf("Error allocating vertex arrays for forest or cycles in graph %i\n", original->number);
-		dumpGraph(gp, forest);
-		dumpGraph(gp, cycles);
-		return NULL;
-	}
-
-	/* zero init */
-	forest->m = cycles->m = 0;
-	forest->n = cycles->n = original->n;
-
-	for (i=0; i<original->n; ++i) {
-		forest->vertices[i] = shallowCopyVertex(original->vertices[i], gp->vertexPool);
-		cycles->vertices[i] = shallowCopyVertex(original->vertices[i], gp->vertexPool);
-	}
-
-
-	while (1) {
-		if (list->m == 1) {
-			/* add the edge contained in this graph to the forest */
-			struct VertexList* rev;
-
-			/* update start and endPoint to the new copies of these vertices */
-			list->edges->startPoint = forest->vertices[list->edges->startPoint->number];
-			list->edges->endPoint = forest->vertices[list->edges->endPoint->number];
-
-			/* add edge to incidence list of its new startpoint */
-			addEdge(list->edges->startPoint, list->edges);
-
-			/* clone edge and reverse it */
-			rev = shallowCopyEdge(list->edges, gp->listPool);
-			rev->startPoint = list->edges->endPoint;
-			rev->endPoint = list->edges->startPoint;
-			addEdge(rev->startPoint, rev);
-
-			/* pop edge */
-			list->edges = NULL;
-
-			/* update edge count of forest */
-			forest->m += 1;
-
-		} else {
-			/* append the graph to the list of cycle unions, encode the biconnected component
-			 * some edge belongs to in ->used */
-			while (list->edges) {
-				struct VertexList *rev;
-				struct VertexList *curr = list->edges;
-
-				/* update start and endPoint to the new copies of these vertices */
-				curr->startPoint = cycles->vertices[list->edges->startPoint->number];
-				curr->endPoint = cycles->vertices[list->edges->endPoint->number];
-
-				/* pop curr (has to be done before appending it to its new list) */
-				list->edges = curr->next;
-
-				/* set indicator of biconnected component */
-				curr->used = componentNumber;
-
-				/* add edge to incidence list of its new startpoint */
-				addEdge(curr->startPoint, curr);
-
-				/* clone edge and reverse it */
-				rev = shallowCopyEdge(curr, gp->listPool);
-				rev->startPoint = curr->endPoint;
-				rev->endPoint = curr->startPoint;
-				addEdge(rev->startPoint, rev);
-
-				/* update edge count of cycles */
-				cycles->m += 1;
-			}
-			++componentNumber;
-		}
-
-		/* breaking condition and iteration of list pointer, dumping of sucked out ShallowGraphs */
-		if (list->next) {
-			list = list->next;
-			dumpShallowGraph(sgp, list->prev);
-		} else {
-			/* if there is no next element, the current element has to be dumped and the loop has to end */
-			dumpShallowGraph(sgp, list);
-			break;
-		}
-	}
-	cycles->number = componentNumber;
-	cycles->next = NULL;
-	forest->next = cycles;
-	return forest;
 }
 
 

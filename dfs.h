@@ -7,7 +7,6 @@ void markConnectedComponents(struct Vertex *v, int component);
 
 struct ShallowGraph* findBiconnectedComponents(struct Graph* g, struct ShallowGraphPool* gp);
 struct ShallowGraph* tarjanFBC(struct Vertex* v, struct Vertex* w, int i, struct VertexList* stack, struct ListPool* lp, struct ShallowGraphPool* gp);
-int min(int a, int b);
 
 struct Graph* partitionIntoForestAndCycles(struct ShallowGraph* list, struct Graph* original, struct GraphPool* p, struct ShallowGraphPool* gp);
 
