@@ -4,7 +4,8 @@
 
 #include "graph.h"
 #include "outerplanar.h"
-#include "dfs.h"
+#include "listComponents.h"
+#include "upperBoundsForSpanningTrees.h"
 
 
 /* return n choose r */

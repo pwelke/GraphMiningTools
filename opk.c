@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "graph.h"
-#include "dfs.h"
+#include "listComponents.h"
 #include "searchTree.h"
 #include "outerplanar.h"
 #include "treeKernels.h"

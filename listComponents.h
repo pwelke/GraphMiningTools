@@ -1,18 +1,12 @@
-#ifndef DFS_H_
-#define DFS_H_
+#ifndef LIST_COMPONENTS_H_
+#define LIST_COMPONENTS_H_
 
 #include "graph.h"
 
 void markConnectedComponents(struct Vertex *v, int component);
 
 struct ShallowGraph* findBiconnectedComponents(struct Graph* g, struct ShallowGraphPool* gp);
-struct ShallowGraph* tarjanFBC(struct Vertex* v, struct Vertex* w, int i, struct VertexList* stack, struct ListPool* lp, struct ShallowGraphPool* gp);
-
 struct Graph* partitionIntoForestAndCycles(struct ShallowGraph* list, struct Graph* original, struct GraphPool* p, struct ShallowGraphPool* gp);
 
-struct ShallowGraph* readTarjanListAllCycles(struct Graph *g, struct ShallowGraphPool *sgp);
-struct ShallowGraph* backtrack(struct Graph* g, struct Vertex* v, struct Vertex* parent, struct Vertex* s, int allowance, struct ShallowGraph* currentPath, struct ShallowGraphPool* sgp);
-char DFS(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int allowance);
-char findPath(struct Vertex* v, struct Vertex* parent, struct Vertex* target, int allowance, struct ShallowGraph* path, struct ShallowGraphPool *sgp);
 
-#endif /* DFS_H_ */
+#endif /* LIST_COMPONENTS_H_ */

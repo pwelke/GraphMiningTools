@@ -2,8 +2,7 @@
 #include <limits.h>
 #include <malloc.h>
 
-#include "graph.h"
-#include "dfs.h"
+#include "listComponents.h"
 #include "listSpanningTrees.h"
 
 

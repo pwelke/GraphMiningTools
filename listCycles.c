@@ -1,3 +1,6 @@
+#include "stdlib.h"
+#include "listCycles.h"
+
 /******************************* List all cycles *********************************************/
 
 

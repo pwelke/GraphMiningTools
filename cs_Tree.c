@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <malloc.h>
 
-#include "dfs.h"
+#include "listComponents.h"
 #include "cs_Parsing.h"
 #include "cs_Compare.h"
 #include "treeCenter.h"
