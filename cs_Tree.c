@@ -5,6 +5,7 @@
 
 #include "cs_Parsing.h"
 #include "cs_Compare.h"
+#include "treeCenter.h"
 #include "cs_Tree.h"
 
 
@@ -450,4 +451,31 @@ struct ShallowGraph* getTreePatterns(struct Graph* forest, struct ShallowGraphPo
 		free(canonicalStrings);
 	}
 	return result;
+}
+
+/**
+Compute a canonical string of a (free/unrooted) tree by
+choosing its center nodes to be the roots for the canonical
+string representation. If there are two center nodes, the 
+lexicographically smaller of the two canonical strings is 
+returned.
+Runtime is thus O(n)
+*/
+struct ShallowGraph* canonicalStringOfTree(struct Graph* tree, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* cString;
+	int* center = treeCenter(tree);
+
+	cString = canonicalStringOfRootedTree(tree->vertices[center[1]], tree->vertices[center[1]], sgp);
+	
+	if (center[0] == 3) {
+		struct ShallowGraph* cString2 = canonicalStringOfRootedTree(tree->vertices[center[2]], tree->vertices[center[2]], sgp);
+		if (compareCanonicalStrings(cString, cString2) < 0) {
+			dumpShallowGraph(sgp, cString2);
+		} else {
+			dumpShallowGraph(sgp, cString);
+			cString = cString2;
+		}
+	}
+	free(center);
+	return cString;
 }

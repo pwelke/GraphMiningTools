@@ -80,11 +80,11 @@ void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, stru
 			int v;
 			for (v=0; v<patternGraph->n; ++v) {
 				/* See commented out how it would look if done by the book.
-				However, this has to be fast and treeCenterCanonicalString has
+				However, this has to be fast and canonicalStringOfTree has
 				too much overhead!
 				    struct ShallowGraph* cString;
 				    auxiliary->vertices[0]->label = patternGraph->vertices[v]->label;
-				    cString = treeCenterCanonicalString(auxiliary, sgp);
+				    cString = canonicalStringOfTree(auxiliary, sgp);
 				    addToSearchTree(containedVertices, cString, gp, sgp); */
 				struct VertexList* cString = getVertexList(sgp->listPool);
 				cString->label = patternGraph->vertices[v]->label;
@@ -222,11 +222,11 @@ void getVertexAndEdgeHistogramsP(char* fileName, int minGraph, int maxGraph, str
 			patternGraph = treeCanonicalString2Graph(pattern, gp);
 			for (v=0; v<patternGraph->n; ++v) {
 				/* See commented out how it would look if done by the book.
-				However, this has to be fast and treeCenterCanonicalString has
+				However, this has to be fast and canonicalStringOfTree has
 				too much overhead!
 				    struct ShallowGraph* cString;
 				    auxiliary->vertices[0]->label = patternGraph->vertices[v]->label;
-				    cString = treeCenterCanonicalString(auxiliary, sgp);
+				    cString = canonicalStringOfTree(auxiliary, sgp);
 				    addToSearchTree(containedVertices, cString, gp, sgp); */
 				struct VertexList* cString = getVertexList(sgp->listPool);
 				cString->label = patternGraph->vertices[v]->label;
@@ -403,10 +403,10 @@ struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges
 
 
 /**
-check if the treeCenterCanonicalString of pattern is already contained in search tree
+check if the canonicalStringOfTree of pattern is already contained in search tree
 */
 char alreadyEnumerated(struct Graph* pattern, struct Vertex* searchTree, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* string = treeCenterCanonicalString(pattern, sgp);
+	struct ShallowGraph* string = canonicalStringOfTree(pattern, sgp);
 	char alreadyFound = containsString(searchTree, string);
 	dumpShallowGraph(sgp, string);
 	return alreadyFound;
@@ -464,7 +464,7 @@ int getPatternFingerPrint(struct Graph* pattern, struct Vertex* searchTree, stru
 			/* get induced subgraph, add vertex and leaf to graph again */
 			/* TODO speedup by reusing inducedSubgraph */
 			subPattern = cloneInducedGraph(pattern, gp);
-			string = treeCenterCanonicalString(subPattern, sgp);
+			string = canonicalStringOfTree(subPattern, sgp);
 			pattern->vertices[v] = leaf;
 			addEdge(e->startPoint, e);
 
@@ -502,7 +502,7 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 
 		/* filter out patterns that were already enumerated as the extension of some other pattern
 		and are in the search tree */
-		string = treeCenterCanonicalString(current, sgp);
+		string = canonicalStringOfTree(current, sgp);
 		if (containsString(currentLevel, string)) {
 			dumpShallowGraph(sgp, string);
  			dumpGraph(gp, current);

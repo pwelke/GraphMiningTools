@@ -13,7 +13,7 @@ of that vertex to the root and the ->used's of edges hold the
 depth of the branch dangling at that edge (always relative to the 
 initial root).
 */
-int markEdges(struct Vertex* root, int value) {
+int __markEdges(struct Vertex* root, int value) {
 	struct VertexList* e;
 	int max = value;
 
@@ -21,9 +21,9 @@ int markEdges(struct Vertex* root, int value) {
 
 	for (e=root->neighborhood; e!=NULL; e=e->next) {
 		if (e->endPoint->lowPoint > value) {
-			/* markEdges returns the depth of the subtree rooted at 
+			/* __markEdges returns the depth of the subtree rooted at 
 			e->endPoint */
-			int current = markEdges(e->endPoint, value + 1);
+			int current = __markEdges(e->endPoint, value + 1);
 			e->used = current;
 
 			if (current > max) {
@@ -49,7 +49,7 @@ the root of the largest branch.
 THe algorithm writes the number(s) of the found center(s) to 
 centers.
 */
-void moveCenter(struct Vertex* root, struct Vertex* parent, int value, int depth, int* centers) {
+void __moveCenter(struct Vertex* root, struct Vertex* parent, int value, int depth, int* centers) {
 	struct VertexList* e;
 	int max = INT_MIN;
 	struct VertexList* max1 = NULL;
@@ -111,10 +111,10 @@ void moveCenter(struct Vertex* root, struct Vertex* parent, int value, int depth
 		}
 
 		/* move the center to the root of the deepest branch */
-		moveCenter(max1->endPoint, root, max2->used + 1, depth + 1, centers);
+		__moveCenter(max1->endPoint, root, max2->used + 1, depth + 1, centers);
 	} else {
 		/* if we start at a leaf */
-		moveCenter(max1->endPoint, root, 1, 1, centers);
+		__moveCenter(max1->endPoint, root, 1, 1, centers);
 	}	
 }
 
@@ -152,36 +152,8 @@ int* treeCenter(struct Graph* tree) {
 		for (i=0; i<tree->n; ++i) {
 			tree->vertices[i]->lowPoint = INT_MAX;
 		}
-		markEdges(tree->vertices[0], 0);
-		moveCenter(tree->vertices[0], tree->vertices[0] /*NULL*/, 0, 0, centers);	
+		__markEdges(tree->vertices[0], 0);
+		__moveCenter(tree->vertices[0], tree->vertices[0] /*NULL*/, 0, 0, centers);	
 	}
 	return centers;
-}
-
-
-/**
-Compute a canonical string of a (free/unrooted) tree by
-choosing its center nodes to be the roots for the canonical
-string representation. If there are two center nodes, the 
-lexicographically smaller of the two canonical strings is 
-returned.
-Runtime is thus O(n)
-*/
-struct ShallowGraph* treeCenterCanonicalString(struct Graph* tree, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* cString;
-	int* center = treeCenter(tree);
-
-	cString = canonicalStringOfRootedTree(tree->vertices[center[1]], tree->vertices[center[1]], sgp);
-	
-	if (center[0] == 3) {
-		struct ShallowGraph* cString2 = canonicalStringOfRootedTree(tree->vertices[center[2]], tree->vertices[center[2]], sgp);
-		if (compareCanonicalStrings(cString, cString2) < 0) {
-			dumpShallowGraph(sgp, cString2);
-		} else {
-			dumpShallowGraph(sgp, cString);
-			cString = cString2;
-		}
-	}
-	free(center);
-	return cString;
 }

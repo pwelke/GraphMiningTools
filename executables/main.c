@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
 									struct Graph* tree = shallowGraphToGraph(idx, gp);
 
 									/* assumes that tree is a tree */
-									struct ShallowGraph* cString = treeCenterCanonicalString(tree, sgp);
+									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
 									addToSearchTree(searchTree, cString, gp, sgp);
 									++st;
 
