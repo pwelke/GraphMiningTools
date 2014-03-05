@@ -2,6 +2,26 @@
 #include "graph.h"
 
 
+/**
+Traverses a graph and marks all vertices reachable from v with the number given
+by the argument component.
+@refactor: to dfs.c
+ */
+void markConnectedComponents(struct Vertex *v, int component) {
+	struct VertexList *index;
+
+	/* mark vertex as visited */
+	v->visited = component;
+
+	/*recursive call for all neighbors that are not visited so far */
+	for (index = v->neighborhood; index; index = index->next) {
+		if (!(index->endPoint->visited)) {
+			markConnectedComponents(index->endPoint, component);
+		}
+	}
+}
+
+
 /********************************************************************************/
 /**************************** THE GOOD STUFF ************************************/
 /********************************************************************************/

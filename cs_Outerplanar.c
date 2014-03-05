@@ -405,7 +405,7 @@ struct ShallowGraph* canonicalStringOfOuterplanarBlock(struct ShallowGraph* hami
  * Maximal Outerplanar Graphs, Information Processing Letters Volume 9,
  * number 5, 16.12.1979
  */
-struct ShallowGraph* getCycleAndDiagonals(struct Graph* g, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* __getCycleAndDiagonals(struct Graph* g, struct ShallowGraphPool* sgp) {
 	/* data structures described by Mitchell[1979] */
 	struct ShallowGraph* list = getShallowGraph(sgp);
 	struct ShallowGraph* pairs = getShallowGraph(sgp);
@@ -805,7 +805,7 @@ struct ShallowGraph* getCycleAndDiagonals(struct Graph* g, struct ShallowGraphPo
 
 struct ShallowGraph* canonicalStringOfOuterplanarGraph(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct Graph* g = shallowGraphToGraph(original, gp);
-	struct ShallowGraph* hamiltonianCycle = getCycleAndDiagonals(g, sgp);
+	struct ShallowGraph* hamiltonianCycle = __getCycleAndDiagonals(g, sgp);
 	if (hamiltonianCycle != NULL) {
 		struct ShallowGraph* diagonals = hamiltonianCycle->next;	
 		struct ShallowGraph* cString;

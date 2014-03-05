@@ -11,3 +11,10 @@ TODO
 
 THEORY
 - is it useful to choose particular roots for subgraph iso checks, e.g. canonical roots?
+
+DONE 
+
+treeCenter
+cs_Tree
+cs_Compare
+cs_Outerplanar

@@ -1,6 +1,9 @@
 #ifndef DFS_H_
 #define DFS_H_
 
+#include "graph.h"
+
+void markConnectedComponents(struct Vertex *v, int component);
 
 struct ShallowGraph* findBiconnectedComponents(struct Graph* g, struct ShallowGraphPool* gp);
 struct ShallowGraph* tarjanFBC(struct Vertex* v, struct Vertex* w, int i, struct VertexList* stack, struct ListPool* lp, struct ShallowGraphPool* gp);

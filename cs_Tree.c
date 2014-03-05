@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <malloc.h>
 
+#include "dfs.h"
 #include "cs_Parsing.h"
 #include "cs_Compare.h"
 #include "treeCenter.h"
@@ -15,97 +16,6 @@ terminated list of VertexLists. ->startPoint and ->endPoint of vertex lists are 
 considered. Instead, only the ->label is important.
 */ 
 
-
-
-
-/**********************************************************************************
- *************************** canonical strings for trees **************************
- **********************************************************************************/
-
-
-int canonicalString2GraphRec(struct Graph* g, int current, int parent, struct ShallowGraph* suffix, struct VertexList* initEdge, struct VertexList* termEdge, struct GraphPool* gp) {
-
-	/* for all children of parent */
-	while (suffix->edges != NULL) {
-		char* edgeLabel;
-
-		if (strcmp(suffix->edges->label, termEdge->label) == 0) {
-			suffix->edges = suffix->edges->next;
-			return current;
-		}
-		
-		/* first comes edge label */
-		suffix->edges = suffix->edges->next;
-		edgeLabel = suffix->edges->label;
-
-		/* now comes the vertex label */
-		suffix->edges = suffix->edges->next;
-		g->vertices[current]->label = suffix->edges->label;
-
-		addEdgeBetweenVertices(parent, current, edgeLabel, g, gp);
-
-		/* recursive call */
-		suffix->edges = suffix->edges->next;
-		current = canonicalString2GraphRec(g, current + 1, current, suffix, initEdge, termEdge, gp);
-	}
-
-	/* return position of next free vertex in g */
-	return current;
-}
-
-
-/**
-Return a graph that belongs to the isomorphism class that is represented by pattern.
-*/
-struct Graph* treeCanonicalString2Graph(struct ShallowGraph* pattern, struct GraphPool* gp) {
-	struct VertexList* initEdge = getInitialisatorEdge(gp->listPool);
-	struct VertexList* termEdge = getTerminatorEdge(gp->listPool);
-	struct VertexList* e;
-	int n = 0;
-	struct Graph* g;
-	struct VertexList* head = pattern->edges;
-
-	/* find number of vertices, create graph */
-	for (e=pattern->edges; e!=NULL; e=e->next) {
-		if (strcmp(e->label, initEdge->label) == 0) {
-			++n;
-		}
-	}
-	g = createGraph(n + 1, gp);
-
-	/* create tree from canonical string recursively */
-	g->vertices[0]->label = pattern->edges->label;
-	pattern->edges = pattern->edges->next;
-	canonicalString2GraphRec(g, 1, 0, pattern, initEdge, termEdge, gp);
-	pattern->edges = head;
-
-	/* cleanup */
-	dumpVertexList(gp->listPool, initEdge);
-	dumpVertexList(gp->listPool, termEdge);
-
-	return g;
-}
-
-
-/**
-Return a graph that belongs to the isomorphism class that is represented by pattern.
-pattern is expected to have at most g->n vertices. g must not contain edges.
-*/
-void treeCanonicalString2ExistingGraph(struct ShallowGraph* pattern, struct Graph* g, struct GraphPool* gp) {
-	struct VertexList* initEdge = getInitialisatorEdge(gp->listPool);
-	struct VertexList* termEdge = getTerminatorEdge(gp->listPool);
-	struct VertexList* head = pattern->edges;
-
-	/* create tree from canonical string recursively */
-	g->vertices[0]->label = pattern->edges->label;
-	pattern->edges = pattern->edges->next;
-	canonicalString2GraphRec(g, 1, 0, pattern, initEdge, termEdge, gp);
-	pattern->edges = head;
-
-	/* cleanup */
-	dumpVertexList(gp->listPool, initEdge);
-	dumpVertexList(gp->listPool, termEdge);
-}
 
 
 /**
@@ -215,7 +125,6 @@ struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct V
 			return NULL;
 		}
 	}
-
 }
 
 
@@ -331,7 +240,6 @@ struct ShallowGraph* canonicalStringOfRootedLevelTree(struct Vertex* vertex, str
 			return NULL;
 		}
 	}
-
 }
 
 
@@ -366,27 +274,6 @@ struct ShallowGraph* canonicalStringOfLevelTree(struct ShallowGraph* vertexList,
 	}
 
 	return canonicalString;
-}
-
-
-
-/**
-Traverses a graph and marks all vertices reachable from v with the number given
-by the argument component.
-@refactor: to dfs.c
- */
-void markConnectedComponents(struct Vertex *v, int component) {
-	struct VertexList *index;
-
-	/* mark vertex as visited */
-	v->visited = component;
-
-	/*recursive call for all neighbors that are not visited so far */
-	for (index = v->neighborhood; index; index = index->next) {
-		if (!(index->endPoint->visited)) {
-			markConnectedComponents(index->endPoint, component);
-		}
-	}
 }
 
 
@@ -453,6 +340,7 @@ struct ShallowGraph* getTreePatterns(struct Graph* forest, struct ShallowGraphPo
 	return result;
 }
 
+
 /**
 Compute a canonical string of a (free/unrooted) tree by
 choosing its center nodes to be the roots for the canonical
@@ -478,4 +366,95 @@ struct ShallowGraph* canonicalStringOfTree(struct Graph* tree, struct ShallowGra
 	}
 	free(center);
 	return cString;
+}
+
+
+
+/**********************************************************************************
+ *************************** data transformation******** **************************
+ **********************************************************************************/
+
+
+int __canonicalString2GraphRec(struct Graph* g, int current, int parent, struct ShallowGraph* suffix, struct VertexList* initEdge, struct VertexList* termEdge, struct GraphPool* gp) {
+
+	/* for all children of parent */
+	while (suffix->edges != NULL) {
+		char* edgeLabel;
+
+		if (strcmp(suffix->edges->label, termEdge->label) == 0) {
+			suffix->edges = suffix->edges->next;
+			return current;
+		}
+		
+		/* first comes edge label */
+		suffix->edges = suffix->edges->next;
+		edgeLabel = suffix->edges->label;
+
+		/* now comes the vertex label */
+		suffix->edges = suffix->edges->next;
+		g->vertices[current]->label = suffix->edges->label;
+
+		addEdgeBetweenVertices(parent, current, edgeLabel, g, gp);
+
+		/* recursive call */
+		suffix->edges = suffix->edges->next;
+		current = __canonicalString2GraphRec(g, current + 1, current, suffix, initEdge, termEdge, gp);
+	}
+
+	/* return position of next free vertex in g */
+	return current;
+}
+
+
+/**
+Return a graph that belongs to the isomorphism class that is represented by pattern.
+*/
+struct Graph* treeCanonicalString2Graph(struct ShallowGraph* pattern, struct GraphPool* gp) {
+	struct VertexList* initEdge = getInitialisatorEdge(gp->listPool);
+	struct VertexList* termEdge = getTerminatorEdge(gp->listPool);
+	struct VertexList* e;
+	int n = 0;
+	struct Graph* g;
+	struct VertexList* head = pattern->edges;
+
+	/* find number of vertices, create graph */
+	for (e=pattern->edges; e!=NULL; e=e->next) {
+		if (strcmp(e->label, initEdge->label) == 0) {
+			++n;
+		}
+	}
+	g = createGraph(n + 1, gp);
+
+	/* create tree from canonical string recursively */
+	g->vertices[0]->label = pattern->edges->label;
+	pattern->edges = pattern->edges->next;
+	__canonicalString2GraphRec(g, 1, 0, pattern, initEdge, termEdge, gp);
+	pattern->edges = head;
+
+	/* cleanup */
+	dumpVertexList(gp->listPool, initEdge);
+	dumpVertexList(gp->listPool, termEdge);
+
+	return g;
+}
+
+
+/**
+Return a graph that belongs to the isomorphism class that is represented by pattern.
+pattern is expected to have at most g->n vertices. g must not contain edges.
+*/
+void treeCanonicalString2ExistingGraph(struct ShallowGraph* pattern, struct Graph* g, struct GraphPool* gp) {
+	struct VertexList* initEdge = getInitialisatorEdge(gp->listPool);
+	struct VertexList* termEdge = getTerminatorEdge(gp->listPool);
+	struct VertexList* head = pattern->edges;
+
+	/* create tree from canonical string recursively */
+	g->vertices[0]->label = pattern->edges->label;
+	pattern->edges = pattern->edges->next;
+	__canonicalString2GraphRec(g, 1, 0, pattern, initEdge, termEdge, gp);
+	pattern->edges = head;
+
+	/* cleanup */
+	dumpVertexList(gp->listPool, initEdge);
+	dumpVertexList(gp->listPool, termEdge);
 }
