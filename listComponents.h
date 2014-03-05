@@ -4,6 +4,7 @@
 #include "graph.h"
 
 void markConnectedComponents(struct Vertex *v, int component);
+int listConnectedComponents(struct Graph* g);
 
 struct Graph* partitionIntoForestAndCycles(struct ShallowGraph* list, struct Graph* original, struct GraphPool* p, struct ShallowGraphPool* gp);
 struct ShallowGraph* listBiconnectedComponents(struct Graph* g, struct ShallowGraphPool* gp);

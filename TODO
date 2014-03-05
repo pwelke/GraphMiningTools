@@ -20,3 +20,6 @@ cs_Compare
 cs_Outerplanar
 cs_Parsing
 cs_Cycle
+listComponents
+listCycles
+listSpanningTrees

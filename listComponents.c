@@ -6,7 +6,6 @@
 /**
 Traverses a graph and marks all vertices reachable from v with the number given
 by the argument component.
-@refactor: to dfs.c
  */
 void markConnectedComponents(struct Vertex *v, int component) {
 	struct VertexList *index;
@@ -20,6 +19,28 @@ void markConnectedComponents(struct Vertex *v, int component) {
 			markConnectedComponents(index->endPoint, component);
 		}
 	}
+}
+
+
+/**
+Mark all connected components with a unique number.
+Indexing starts with 0 and is stored in ->visited.
+Vertex 0 will always be in connected component 0.
+Returns the number of connected components in the graph.
+*/
+int listConnectedComponents(struct Graph* g) {
+	int component = 0;
+	int v;
+	for (v=0; v<g->n; ++v) {
+		g->vertices[v]->visited = -1;
+	}
+	for (v=0; v<g->n; ++v) {
+		if (g->vertices[v]->visited == -1) {
+			markConnectedComponents(g->vertices[v], component);
+			++component;
+		}
+	}
+	return component;
 }
 
 

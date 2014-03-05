@@ -18,7 +18,7 @@ There is a parameter for stopping the computation, if the number
 of trees already found superceeds a threshold. */
 
 
-void visit(struct Vertex* v, int component, int* components) {
+void __visit(struct Vertex* v, int component, int* components) {
 	struct VertexList* e;
 
 	if (components[v->number] != -1) {
@@ -28,12 +28,12 @@ void visit(struct Vertex* v, int component, int* components) {
 	components[v->number] = component;
 
 	for (e=v->neighborhood; e!=NULL; e=e->next) {
-		visit(e->endPoint, component, components);
+		__visit(e->endPoint, component, components);
 	}
 }
 
 
-struct ShallowGraph* selectB(struct Graph* partialTree, struct ShallowGraph* rest, int* components, int n, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* __selectB(struct Graph* partialTree, struct ShallowGraph* rest, int* components, int n, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* B = getShallowGraph(sgp);
 	struct VertexList* e;
 	int v;
@@ -44,7 +44,7 @@ struct ShallowGraph* selectB(struct Graph* partialTree, struct ShallowGraph* res
 
 	/* mark connected components */
 	for (v=0; v<n; ++v) {
-		visit(partialTree->vertices[v], v, components);
+		__visit(partialTree->vertices[v], v, components);
 	}
 
 	for (e=rest->edges; e!=NULL; e=e->next) {
@@ -71,7 +71,7 @@ struct ShallowGraph* selectB(struct Graph* partialTree, struct ShallowGraph* res
 Split list into two new lists. the returned list r contains all edges in list that have a corresponding edge in graph. r->next contains all
 edges that are not contained in graph. list is consumed and dumped. Any access to the list lateron will result in strange things happening.
 */
-struct ShallowGraph* getGraphAndNonGraphEdges(struct Graph* graph, struct ShallowGraph* list, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* __getGraphAndNonGraphEdges(struct Graph* graph, struct ShallowGraph* list, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 	struct ShallowGraph* graphEdges = getShallowGraph(sgp);
 	struct ShallowGraph* nonGraphEdges = getShallowGraph(sgp);
@@ -97,7 +97,7 @@ struct ShallowGraph* getGraphAndNonGraphEdges(struct Graph* graph, struct Shallo
 }
 
 
-struct ShallowGraph* getNonTreeBridges(struct Graph* graph, struct Graph* partialTree, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* __getNonTreeBridges(struct Graph* graph, struct Graph* partialTree, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* tmp = getShallowGraph(sgp);
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(graph, sgp);
 	struct ShallowGraph* idx;
@@ -111,7 +111,7 @@ struct ShallowGraph* getNonTreeBridges(struct Graph* graph, struct Graph* partia
 	}
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 
-	tmp = getGraphAndNonGraphEdges(partialTree, tmp, sgp);
+	tmp = __getGraphAndNonGraphEdges(partialTree, tmp, sgp);
 	nonTreeBridges = tmp->next;
 	tmp->next = NULL;
 	dumpShallowGraph(sgp, tmp);
@@ -120,14 +120,14 @@ struct ShallowGraph* getNonTreeBridges(struct Graph* graph, struct Graph* partia
 }
 
 
-struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+struct ShallowGraph* __rec(int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 
 	struct VertexList* e;
 	struct ShallowGraph* result1;
 	struct ShallowGraph* result2;
 	struct ShallowGraph* B;
 	struct ShallowGraph* bridges;
-	struct ShallowGraph* graphEdges = getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
+	struct ShallowGraph* graphEdges = __getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
 	struct ShallowGraph* rest = graphEdges->next;
 
 	if (rest->m == 0) {
@@ -139,7 +139,7 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 
 		return tree;
 	}
-	/* get edge that will be included and excluded in this recursive step */
+	/* get edge that will be included and excluded in this __recursive step */
 	e = popEdge(rest);
 
 	/* add e to partialTree (already contained in graph) to find spanning trees containing e */
@@ -147,12 +147,12 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 
 	/* S1 */
 	/* let B be the set of all edges (in graph) joining edges already connected in partialTree */
-	B = selectB(partialTree, rest, components, n, sgp);
+	B = __selectB(partialTree, rest, components, n, sgp);
 
-	/* ensures, that adding an edge of graph to partialTree results in a tree in the recursive call */
+	/* ensures, that adding an edge of graph to partialTree results in a tree in the __recursive call */
 	deleteEdges(graph, B, gp);
 
-	result1 = rec(d+1, graph, partialTree, components, n, sgp, gp);
+	result1 = __rec(d+1, graph, partialTree, components, n, sgp, gp);
 
 	/* add edges to graph again */
 	addEdges(graph, B, gp);
@@ -165,10 +165,10 @@ struct ShallowGraph* rec(int d, struct Graph* graph, struct Graph* partialTree, 
 	deleteEdgeBetweenVertices(partialTree, e, gp);
 
 	/* S2 */
-	bridges = getNonTreeBridges(graph, partialTree, sgp);
+	bridges = __getNonTreeBridges(graph, partialTree, sgp);
 
 	addEdges(partialTree, bridges, gp);
-	result2 = rec(d+1, graph, partialTree, components, n, sgp, gp);
+	result2 = __rec(d+1, graph, partialTree, components, n, sgp, gp);
 
 	deleteEdges(partialTree, bridges, gp);
 
@@ -203,7 +203,7 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	
 	/* do the backtrack, baby */
-	result = rec(0, graph, partialTree, components, graph->n, sgp, gp);
+	result = __rec(0, graph, partialTree, components, graph->n, sgp, gp);
 	result->prev->next = NULL;
 	result->prev = NULL;
 
@@ -219,11 +219,11 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 }
 
 
-long int recCount(long int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct VertexList* e;
 	struct ShallowGraph* B;
 	struct ShallowGraph* bridges;
-	struct ShallowGraph* graphEdges = getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
+	struct ShallowGraph* graphEdges = __getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
 	struct ShallowGraph* rest = graphEdges->next;
 	long int result1;
 	long int result2;
@@ -234,7 +234,7 @@ long int recCount(long int d, struct Graph* graph, struct Graph* partialTree, in
 		return 1;
 	}
 
-	/* get edge that will be included and excluded in this recursive step */
+	/* get edge that will be included and excluded in this __recursive step */
 	e = popEdge(rest);
 
 	/* add e to partialTree (already contained in graph) to find spanning trees containing e */
@@ -242,12 +242,12 @@ long int recCount(long int d, struct Graph* graph, struct Graph* partialTree, in
 
 	/* S1 */
 	/* let B be the set of all edges (in graph) joining edges already connected in partialTree */
-	B = selectB(partialTree, rest, components, n, sgp);
+	B = __selectB(partialTree, rest, components, n, sgp);
 
-	/* ensures, that adding an edge of graph to partialTree results in a tree in the recursive call */
+	/* ensures, that adding an edge of graph to partialTree results in a tree in the __recursive call */
 	deleteEdges(graph, B, gp);
 
-	result1 = recCount(d, graph, partialTree, components, n, sgp, gp);
+	result1 = __recCount(d, graph, partialTree, components, n, sgp, gp);
 
 	/* add edges to graph again */
 	addEdges(graph, B, gp);
@@ -257,7 +257,7 @@ long int recCount(long int d, struct Graph* graph, struct Graph* partialTree, in
 
 	/* at this point, graph and partialTree are as at the start of this call.
 	If there are already too many spanning Trees found (indicated by return value -1)
-	return at this point and prune the second recursive call */
+	return at this point and prune the second __recursive call */
 	if (result1 == -1) {
 		/* garbage collection */
 		dumpVertexList(sgp->listPool, e);
@@ -270,10 +270,10 @@ long int recCount(long int d, struct Graph* graph, struct Graph* partialTree, in
 	deleteEdgeBetweenVertices(partialTree, e, gp);
 
 	/* S2 */
-	bridges = getNonTreeBridges(graph, partialTree, sgp);
+	bridges = __getNonTreeBridges(graph, partialTree, sgp);
 
 	addEdges(partialTree, bridges, gp);
-	result2 = recCount(d, graph, partialTree, components, n, sgp, gp);
+	result2 = __recCount(d, graph, partialTree, components, n, sgp, gp);
 	deleteEdges(partialTree, bridges, gp);
 
 	/* At the end, spanningTree and graph need to be same as in the beginning. */
@@ -285,7 +285,7 @@ long int recCount(long int d, struct Graph* graph, struct Graph* partialTree, in
 	dumpShallowGraphCycle(sgp, graphEdges);
 
 	if (result2 == -1) {
-		/* if there were too many spanning trees in the second recursion... */ 
+		/* if there were too many spanning trees in the second __recursion... */ 
 		return -1;
 	} else {
 		/* user set threshold on number of spanning trees */
@@ -322,7 +322,7 @@ long int countSpanningTrees(struct Graph* original, long int maxBound, struct Sh
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	
 	/* do the backtrack, baby */
-	result = recCount(maxBound, graph, partialTree, components, graph->n, sgp, gp);
+	result = __recCount(maxBound, graph, partialTree, components, graph->n, sgp, gp);
 
 	/* garbage collection */
 	free(components);
