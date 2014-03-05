@@ -17,7 +17,7 @@
  * BEFORE the edges starting the cycle.
  * This is due to the usage of this method in permutateCycle().
  */
-struct VertexList* compareCycles(struct VertexList* c1, struct VertexList* c2) {
+struct VertexList* __compareCycles(struct VertexList* c1, struct VertexList* c2) {
 	struct VertexList* idx1 = c1;
 	struct VertexList* idx2 = c2;
 
@@ -74,8 +74,8 @@ struct ShallowGraph* compareShallowGraphCycles(struct ShallowGraph* c1, struct S
 	c1->lastEdge->next = c1->edges;
 	c2->lastEdge->next = c2->edges;
 
-	/* see doc of compareCycles for explanation of this call */
-	smallest = compareCycles(c1->lastEdge, c2->lastEdge);
+	/* see doc of __compareCycles for explanation of this call */
+	smallest = __compareCycles(c1->lastEdge, c2->lastEdge);
 
 	c1->lastEdge->next = NULL;
 	c2->lastEdge->next = NULL;
@@ -102,7 +102,7 @@ struct ShallowGraph* permutateCycle(struct ShallowGraph* cycle) {
 	end->next = start;
 
 	for (idx = start->next; idx != start; idx=idx->next) {
-		best = compareCycles(best, idx);
+		best = __compareCycles(best, idx);
 	}
 
 	/* turn cycle s.t. the shallow graph is lex. smallest */
@@ -116,7 +116,7 @@ struct ShallowGraph* permutateCycle(struct ShallowGraph* cycle) {
 /**
  * Returns the canonical string of a cycle. This method consumes the cycle.
  */
-void cycleToString(struct ShallowGraph* cycle, struct ShallowGraphPool* sgp) {
+void __cycleToString(struct ShallowGraph* cycle, struct ShallowGraphPool* sgp) {
 	struct VertexList* idx, *tmp;
 	struct ShallowGraph* tmpString = getShallowGraph(sgp);
 
@@ -195,7 +195,7 @@ struct ShallowGraph* getCyclePatterns(struct ShallowGraph* cycles, struct Shallo
 		(result == idx) ? dumpShallowGraph(sgp, rev) : dumpShallowGraph(sgp, idx);
 
 		/* convert the cycle to its canonical string */
-		cycleToString(result, sgp);
+		__cycleToString(result, sgp);
 
 	}
 

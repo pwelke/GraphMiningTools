@@ -44,7 +44,7 @@ int __compareDiagonals(const void* e1, const void* e2) {
 
 
 /**
- * !Be careful with this method! See compareCycles for more details
+ * !Be careful with this method! See compareCycles in cs_Cycle.c for more details
  *
  * Compare two cycles of equal length. Caution, the input parameters point to the edges
  * BEFORE the edges starting the cycle.
