@@ -425,7 +425,7 @@ struct ShallowGraph* __getCycleAndDiagonals(struct Graph* g, struct ShallowGraph
 			++n;
 
 			/* if vertex has degree 2, add it to list and mark it as such */
-			if (isDeg2Vertex(g->vertices[i])) {
+			if (isDegreeTwoVertex(g->vertices[i])) {
 				struct VertexList* e = getVertexList(sgp->listPool);
 				e->endPoint = g->vertices[i];
 				pushEdge(list, e);
@@ -579,7 +579,7 @@ struct ShallowGraph* __getCycleAndDiagonals(struct Graph* g, struct ShallowGraph
 		 * BUG: not degree two vertex, but 2-vertex. this is a difference
 		 * But 2-vertices make no sense in the context of ops */
 		removeEdge(near, v, sgp->listPool);
-		if (isDeg2Vertex(near)) {
+		if (isDegreeTwoVertex(near)) {
 			if (!near->d) {
 				struct VertexList* e = getVertexList(sgp->listPool);
 				e->endPoint = near;
@@ -590,7 +590,7 @@ struct ShallowGraph* __getCycleAndDiagonals(struct Graph* g, struct ShallowGraph
 		}
 
 		removeEdge(next, v, sgp->listPool);
-		if (isDeg2Vertex(next)) {
+		if (isDegreeTwoVertex(next)) {
 			if (!next->d) {
 				struct VertexList* e = getVertexList(sgp->listPool);
 				/* printf("add %i to list of deg 2 vertices\n", next->number); */

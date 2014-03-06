@@ -8,7 +8,6 @@
 ********************************************************************************************************/
 
 
-
 /**
 Clones an edge. start- and endPoint of the new edge are pointers to the !same! vertex structs
 as those of the original edge. The label field also refers to the !same! string as the original.
@@ -143,7 +142,7 @@ char isIncident(struct Vertex* v, struct Vertex* w) {
 /**
  * Check if the vertex has degree 2 in O(1).
  */
-char isDeg2Vertex(struct Vertex* v) {
+char isDegreeTwoVertex(struct Vertex* v) {
 	struct VertexList* idx;
 	int delta = 0;
 
@@ -248,7 +247,7 @@ void deleteEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* g
  * labels but are different objects in memory. Thus altering (deleting, adding etc.)
  * anything in the copy does not have any impact on g.
  *
- * Deleting a vertex or an edge in g, however, results in a memory leak, as vertices
+ * Deleting a vertex or an edge in g, however, may result in a memory leak, as vertices
  * and edges of the copy reference the label strings of the original structures.
  *
  * TODO a similar method that can handle induced subgraphs properly.
@@ -422,7 +421,7 @@ struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPoo
 } 
 
 
-char existsEdge(struct Graph* g, int v, int w) {
+char isIncident(struct Graph* g, int v, int w) {
 	struct VertexList* e;
 	if ((g->vertices[v]) && (g->vertices[v]->neighborhood)) {
 		for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {

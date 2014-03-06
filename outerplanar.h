@@ -26,7 +26,7 @@ struct BBTree{
 	struct ShallowGraph** blockComponents;
 };
 
-char mopTest(struct Graph* g, struct ShallowGraphPool* sgp);
+char isMaximalOuterplanar(struct Graph* g, struct ShallowGraphPool* sgp);
 char isOuterplanar(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 
 struct BBTree* createBlockAndBridgeTree(struct ShallowGraph* list, struct Graph *original, struct GraphPool* gp, struct ShallowGraphPool *sgp);

@@ -8,7 +8,7 @@
 
 
 /**
- * Check if g is maximal outerplanar (mop) using the algorithm
+ * Check if a biconnected graph g is maximal outerplanar (mop) using the algorithm
  * of Sarah Mitchell, except that instead of the linear
  * bucket sort, stdlibs qsort is used.
  *
@@ -19,7 +19,7 @@
  * number 5, 16.12.1979
  *
  */
-char mopTest(struct Graph* g, struct ShallowGraphPool* sgp) {
+char isMaximalOuterplanar(struct Graph* g, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* list = getShallowGraph(sgp);
 	struct ShallowGraph* pairs = getShallowGraph(sgp);
 	struct ShallowGraph* edges = getGraphEdges(g, sgp);
@@ -45,7 +45,7 @@ char mopTest(struct Graph* g, struct ShallowGraphPool* sgp) {
 			++n;
 
 			/* if vertex has degree 2, add it to list and mark it as such */
-			if (isDeg2Vertex(g->vertices[i])) {
+			if (isDegreeTwoVertex(g->vertices[i])) {
 				struct VertexList* e = getVertexList(sgp->listPool);
 				e->endPoint = g->vertices[i];
 				pushEdge(list, e);
@@ -153,7 +153,7 @@ char mopTest(struct Graph* g, struct ShallowGraphPool* sgp) {
 		 * BUG: not degree two vertex, but 2-vertex. this is a difference
 		 * But 2-vertices make no sense in the context of ops */
 		removeEdge(near, v, sgp->listPool);
-		if (isDeg2Vertex(near)) {
+		if (isDegreeTwoVertex(near)) {
 			if (!near->d) {
 				struct VertexList* e = getVertexList(sgp->listPool);
 				e->endPoint = near;
@@ -164,7 +164,7 @@ char mopTest(struct Graph* g, struct ShallowGraphPool* sgp) {
 		}
 
 		removeEdge(next, v, sgp->listPool);
-		if (isDeg2Vertex(next)) {
+		if (isDegreeTwoVertex(next)) {
 			if (!next->d) {
 				struct VertexList* e = getVertexList(sgp->listPool);
 				/* printf("add %i to list of deg 2 vertices\n", next->number); */
@@ -176,7 +176,7 @@ char mopTest(struct Graph* g, struct ShallowGraphPool* sgp) {
 
 
 		/* Here, the vertex should be removed from the graph,
-		 * but moptest has no pointer to a VertexPool. Thus we
+		 * but isMaximalOuterplanar has no pointer to a VertexPool. Thus we
 		 * only dump the neighborhood of v. */
 		dumpVertexListRecursively(sgp->listPool, v->neighborhood);
 		v->neighborhood = NULL;
@@ -274,7 +274,7 @@ char mopTest(struct Graph* g, struct ShallowGraphPool* sgp) {
  */
 char isOuterplanar(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct Graph* g = shallowGraphToGraph(original, gp);
-	char isOP = mopTest(g, sgp);
+	char isOP = isMaximalOuterplanar(g, sgp);
 	dumpGraph(gp, g);
 	return isOP;
 }

@@ -97,7 +97,7 @@ int degree(struct Vertex* v);
 char isLeaf(struct Vertex* v);
 int commonNeighborCount(struct Vertex* v, struct Vertex* w);
 char isIncident(struct Vertex* v, struct Vertex* w);
-char isDeg2Vertex(struct Vertex* v);
+char isDegreeTwoVertex(struct Vertex* v);
 
 
 /******* ShallowGraph ******************************************/
@@ -125,7 +125,7 @@ void addEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp);
 struct VertexList* deleteEdge(struct Graph* g, int v, int w);
 void deleteEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp);
 void deleteEdgeBetweenVertices(struct Graph* g, struct VertexList* idx, struct GraphPool* gp);
-char existsEdge(struct Graph* g, int v, int w);
+char isIncident(struct Graph* g, int v, int w);
 
 struct ShallowGraph* getGraphEdges(struct Graph *g, struct ShallowGraphPool* sgp);
 struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPool* gp);

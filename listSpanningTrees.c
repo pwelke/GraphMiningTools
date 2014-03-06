@@ -78,7 +78,7 @@ struct ShallowGraph* __getGraphAndNonGraphEdges(struct Graph* graph, struct Shal
 
 	/* mark edges that are in graph */
 	for (e=list->edges; e!=NULL; e=e->next) {
-		e->flag = existsEdge(graph, e->startPoint->number, e->endPoint->number);
+		e->flag = isIncident(graph, e->startPoint->number, e->endPoint->number);
 	}
 
 	/* consume list putting differently flagged edges in different lists */
