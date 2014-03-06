@@ -1,6 +1,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+
 /******** Graph data structures ******************************/
 
 /**
@@ -79,30 +80,14 @@ struct VertexPool{
 	struct Vertex* tmp;
 };
 
-/******* stuff ***********************************************/
-char* copyString(char* string);
-
 
 /******* VertexList ******************************************/
-struct ListPool* createListPool(unsigned int initNumberOfElements);
-void freeListPool(struct ListPool *p);
-
-struct VertexList* getVertexList(struct ListPool* pool);
-void dumpVertexList(struct ListPool* p, struct VertexList* l);
-void dumpVertexListRecursively(struct ListPool* p, struct VertexList* e);
-
 struct VertexList* push(struct VertexList* list, struct VertexList* e);
 struct VertexList* shallowCopyEdge(struct VertexList* e, struct ListPool* p);
 struct VertexList* inverseEdge(struct VertexList* e, struct ListPool* p);
 
 
 /******* Vertex ***********************************************/
-struct VertexPool* createVertexPool(unsigned int initNumberOfElements);
-void freeVertexPool(struct VertexPool* p);
-
-struct Vertex* getVertex(struct VertexPool* p);
-void dumpVertex(struct VertexPool* p, struct Vertex* v);
-
 struct Vertex* shallowCopyVertex(struct Vertex *v, struct VertexPool *p);
 
 void removeEdge(struct Vertex* v, struct Vertex* w, struct ListPool* p);
@@ -116,13 +101,6 @@ char isDeg2Vertex(struct Vertex* v);
 
 
 /******* ShallowGraph ******************************************/
-struct ShallowGraphPool* createShallowGraphPool(unsigned int initNumberOfElements, struct ListPool* lp);
-void freeShallowGraphPool(struct ShallowGraphPool *p);
-
-struct ShallowGraph* getShallowGraph(struct ShallowGraphPool *p);
-void dumpShallowGraph(struct ShallowGraphPool *p, struct ShallowGraph* g);
-void dumpShallowGraphCycle(struct ShallowGraphPool *p, struct ShallowGraph* g);
-
 struct ShallowGraph* cloneShallowGraph(struct ShallowGraph* g, struct ShallowGraphPool* sgp);
 void rebaseShallowGraph(struct ShallowGraph* list, struct Graph* newBase);
 
@@ -136,13 +114,8 @@ struct ShallowGraph* addComponent(struct ShallowGraph* g, struct ShallowGraph* h
 
 
 /******* Graph *************************************************/
-struct GraphPool* createGraphPool(unsigned int initNumberOfElements, struct VertexPool* vp, struct ListPool* lp);
-void freeGraphPool(struct GraphPool* p);
-
-struct Graph* getGraph(struct GraphPool* p);
 struct Graph* cloneGraph(struct Graph* g, struct GraphPool* gp);
 struct Graph* cloneInducedGraph(struct Graph* g, struct GraphPool* gp);
-void dumpGraph(struct GraphPool* p, struct Graph *g);
 
 struct Vertex** setVertexNumber(struct Graph* g, int n);
 struct Graph* emptyGraph(struct Graph* g, struct GraphPool* gp);
@@ -156,5 +129,7 @@ char existsEdge(struct Graph* g, int v, int w);
 
 struct ShallowGraph* getGraphEdges(struct Graph *g, struct ShallowGraphPool* sgp);
 struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPool* gp);
+
+#include "memoryManagement.h"
 
 #endif /* GRAPH_H */
