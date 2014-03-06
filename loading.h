@@ -1,6 +1,8 @@
 #ifndef LOADING_H
 #define LOADING_H
 
+#include "graph.h"
+
 struct Graph* readSimpleFormat(char* filename, int undirected, struct GraphPool *p, int strspace);
 
 char* aids99VertexLabel(int label);

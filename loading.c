@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <malloc.h>
-#include "graph.h"
-#include "loading.h"
 #include <string.h>
+
+#include "loading.h"
 
 /** This function loads a graph from a file. 
 The file has to have two numbers in the first line specifying number of vertices
