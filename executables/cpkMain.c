@@ -18,8 +18,6 @@ void printHelp() {
 	printf("usage: cpk F [parameterList]\n\n");
 	printf("    without parameters: display this help screen\n\n");
 	printf("    F: use F as graph database\n\n");
-	printf("    -input I: use input format I being\n\n");
-	printf("        no choice yet\n\n");
 	printf("	-label L: change labels\n\n");
 	printf("		n \"nothing\" (default) do not change anything\n"
 		   "		a \"active\" active - 1 | moderately active, inactive - 0\n"
@@ -107,7 +105,6 @@ int main(int argc, char** argv) {
 		int imrSize = 0;
 
 		/* user input handling variables */
-		char inputOption = 0;
 		char outputOption = 0;
 		char labelOption = 0;
 		int param;
@@ -133,9 +130,6 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(argv[param], "-output") == 0) {
 				outputOption = argv[param+1][0];
-			}
-			if (strcmp(argv[param], "-input") == 0) {
-				inputOption = argv[param+1][0];
 			}
 			if (strcmp(argv[param], "-label") == 0) {
 				labelOption = argv[param+1][0];

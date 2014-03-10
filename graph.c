@@ -421,7 +421,7 @@ struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPoo
 } 
 
 
-char isIncident(struct Graph* g, int v, int w) {
+char isNeighbor(struct Graph* g, int v, int w) {
 	struct VertexList* e;
 	if ((g->vertices[v]) && (g->vertices[v]->neighborhood)) {
 		for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {

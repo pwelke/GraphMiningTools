@@ -125,7 +125,7 @@ void addEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp);
 struct VertexList* deleteEdge(struct Graph* g, int v, int w);
 void deleteEdges(struct Graph* g, struct ShallowGraph* list, struct GraphPool* gp);
 void deleteEdgeBetweenVertices(struct Graph* g, struct VertexList* idx, struct GraphPool* gp);
-char isIncident(struct Graph* g, int v, int w);
+char isNeighbor(struct Graph* g, int v, int w);
 
 struct ShallowGraph* getGraphEdges(struct Graph *g, struct ShallowGraphPool* sgp);
 struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPool* gp);
