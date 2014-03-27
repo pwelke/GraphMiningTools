@@ -74,7 +74,9 @@ int main(int argc, char** argv) {
 			if (g->n > 0) {
 
 				struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+				/* store for each vertex if the current bic.comp was already counted */
 				int* occurrences = malloc(g->n * sizeof(int));
+				/* store the cycle degrees of each vertex in g */
 				int* cycleDegrees = malloc(g->n * sizeof(int));
 			
 				int v;
@@ -103,6 +105,7 @@ int main(int argc, char** argv) {
 					++compNumber;
 				}
 
+				/* output the results */
 				if (outputOption == 'a') {
 					for (v=0; v<g->n; ++v) {
 						fprintf(stdout, "%i ", cycleDegrees[v]);
@@ -119,6 +122,7 @@ int main(int argc, char** argv) {
 					fprintf(stdout, "%i\n", maxDegree);
 				}
 
+				/* cleanup */
 				free(occurrences);
 				free(cycleDegrees);
 				dumpShallowGraphCycle(sgp, biconnectedComponents);
