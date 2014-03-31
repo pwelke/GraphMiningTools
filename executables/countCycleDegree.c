@@ -13,16 +13,17 @@
  */
 void printHelp() {
 	printf("This program counts the cycle degrees of vertices in a set of graphs.\n");
-	printf("The cycle degree of a vertex is the number of biconnected components,\n");
-	printf("it is contained in. The cyc.deg of a graph G is the maximum over the\n");
-	printf("cycle degrees of all vertices in G. \n");
+	printf("The cycle degree of a vertex is the number of nontrivial biconnected \n");
+	printf("components, it is contained in. The cyc.deg of a graph G is the \n");
+	printf("maximum over the cycle degrees of all vertices in G. \n");
 	printf("implemented by Pascal Welke 2014\n\n\n");
 	printf("usage: [programName] F [parameterList]\n\n");
 	printf("    without parameters: display this help screen\n\n");
 	printf("    F: (required) use F as graph database\n\n");
 	printf("    -output O: write output to stdout\n");
 	printf("        a : cycle degrees of all vertices of each graph\n");
-	printf("        m : cycle degree of each graph\n\n");
+	printf("        m : cycle degree of each graph\n");
+	printf("        b : number of nontrivial bic. components\n\n");
 	printf("    -limit N: process the first N graphs in F\n\n");
 	printf("    -h | --help: display this help\n\n");
 }
@@ -101,8 +102,8 @@ int main(int argc, char** argv) {
 								++cycleDegrees[e->endPoint->number];
 							}
 						}
-					}
-					++compNumber;
+						++compNumber;
+					}			
 				}
 
 				/* output the results */
@@ -112,6 +113,7 @@ int main(int argc, char** argv) {
 					}
 					fprintf(stdout, "\n");
 				}
+
 				if (outputOption == 'm') {
 					int maxDegree = 0;
 					for (v=0; v<g->n; ++v) {
@@ -120,6 +122,10 @@ int main(int argc, char** argv) {
 						}
 					}
 					fprintf(stdout, "%i\n", maxDegree);
+				}
+				
+				if (outputOption == 'b') {
+					fprintf(stdout, "%i\n", compNumber);
 				}
 
 				/* cleanup */
