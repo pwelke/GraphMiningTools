@@ -22,9 +22,14 @@ void printHelp() {
 	printf("usage: lwm F [parameterList]\n\n");
 	printf("    without parameters: display this help screen\n\n");
 	printf("    F: (required) use F as graph database\n\n");
-	printf("    -output O: write output to stdout\n");
-
-	printf("    -limit N: process the first N graphs in F\n\n");
+	printf("    -nGraphs N: maximum number of transaction graphs you\n");
+	printf("        want to process (default 10000)\n\n");
+	printf("    -frequency T: absolute frequency threshold for frequent\n");
+	printf("        subtree patterns (e.g. 32 if a pattern has to occur\n");
+	printf("        in at least 32 transactions to be frequent) (default 1000)\n\n");
+	printf("    -min M: process graphs starting from Mth instance (default 0)\n\n");
+	printf("    -patternSize P: maximum number of edges in frequent patterns\n");
+	printf("        (default 20)\n\n");
 	printf("    -h | --help: display this help\n\n");
 }
 
@@ -49,15 +54,12 @@ int main(int argc, char** argv) {
 		/* user input handling variables */
 		int param;
 
-		/* graph delimiter */
-		int maxGraphs = -1;
-
-		/* init params */
+		/* init params to default values*/
 		char debugInfo = 1;
 		int minGraph = 0;
-		int maxGraph = 45000;
-		int threshold = (maxGraph - minGraph) / 20;
-		int maxPatternSize = 100;
+		int maxGraph = 10000;
+		int threshold = 1000;
+		int maxPatternSize = 20;
 		int minEdgeID = 100;
 		char* inputFileName = argv[1];
 		char countFileName[500];
@@ -89,8 +91,17 @@ int main(int argc, char** argv) {
 				printHelp();
 				return EXIT_SUCCESS;
 			}
-			if (strcmp(argv[param], "-limit") == 0) {
-				sscanf(argv[param+1], "%i", &maxGraphs);
+			if (strcmp(argv[param], "-nGraphs") == 0) {
+				sscanf(argv[param+1], "%i", &maxGraph);
+			}
+			if (strcmp(argv[param], "-frequency") == 0) {
+				sscanf(argv[param+1], "%i", &threshold);
+			}
+			if (strcmp(argv[param], "-min") == 0) {
+				sscanf(argv[param+1], "%i", &minGraph);
+			}
+			if (strcmp(argv[param], "-patternSize") == 0) {
+				sscanf(argv[param+1], "%i", &patternSize);
 			}
 		}
 
