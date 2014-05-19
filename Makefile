@@ -3,7 +3,7 @@ LWMNAME = lwm
 MAPNAME = map
 CSCNAME = csc
 CPKNAME = cpk
-STSNAME = cpke
+STSNAME = sts
 CCDNAME = ccd
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3
 # OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c)) $(patsubst %.c,%.o,$(wildcard ./executables/*.c))
@@ -23,7 +23,7 @@ CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
 STSOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingMain.o
 CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
 
-main: cpk
+main: sts
 	
 
 all: tpk lwm map csc cpk sts

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include "wilsonsAlgorithm.h"
+#include "graphPrinting.h" 
 
 
 struct IntegerArrayStack* initIntegerArrayStack(int capacity) {
@@ -75,16 +76,19 @@ void al_free(struct ArrayList* al) {
 
 struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct ShallowGraphPool* sgp) {
 	int i, start;
-	int* previous = malloc(g->n * sizeof(int)); // current random walk
+	int* previous = malloc(g->n * sizeof(struct VertexList*)); // current random walk
 	char* used = malloc(g->n * sizeof(char));
 	struct ShallowGraph* tree = getShallowGraph(sgp);
 	struct IntegerArrayStack* remaining = initIntegerArrayStack(g->n); // cell indexes to visit
 	for (i=0; i<g->n; ++i) {
 		ias_push(i, remaining);
-		previous[i] = -1;
+		previous[i] = NULL;
 		used[i] = 0;
 	}
 	ias_shuffleArray(remaining);
+
+	//debug
+	fprintf(stderr, "entering wilson\n");
 
 	// Add a random cell.
 	start = ias_pop(remaining);
@@ -104,9 +108,9 @@ struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct Sh
 	return tree;
 }
 
-void eraseWalk(int index0, int index1, int* previous) {
+void eraseWalk(int index0, int index1, struct VertexList* previous) {
 	int index;
-	for (index = previous[index0]; index != index1; index = previous[index0]) {
+	for (index = previous[index0]->endPoint; index != index1; index = previous[index0]->endPoint) {
 		previous[index0] = -1;
 		index0 = index;
 	}
@@ -118,8 +122,18 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 	int index0 = -1;
 	int index1 = -1;
 
+	//debug
+	fprintf(stderr, "entering loopE... ");
+
+
 	// Pick a location that’s not yet in the maze (if any).
-	for (index0 = ias_pop(remaining); (index0 != -1) && (!used[index0]); index0 = ias_pop(remaining));
+	for (index0 = ias_pop(remaining); (index0 != -1) && (used[index0]); index0 = ias_pop(remaining)) {
+		// //debug
+		// fprintf(stderr, "index0 %i is used\n", index0);
+	}
+
+	//debug
+	fprintf(stderr, "use vertex %i \n", index0);
 
 	if (index0 == -1) {
 		return 1;
@@ -144,8 +158,11 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 		// If this new cell was visited previously during this walk,
 		// erase the loop, rewinding the path to its earlier state.
 		// Otherwise, just add it to the walk.
-		if (previous[index1] >= 0) eraseWalk(index0, index1, previous);
-		else previous[index1] = index0;
+		if (previous[index1] >= 0) {
+			eraseWalk(index0, index1, previous);
+		} else {
+			previous[index1] = index0;
+		}
 		index0 = index1;
 
 		// If this cell is part of the maze, we’re done walking.
@@ -153,7 +170,10 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 
 			// Add the random walk to the maze by backtracking to the starting cell.
 			// Also erase this walk’s history to not interfere with subsequent walks.
-			while ((index0 = previous[index1]) != index1) {
+			for (index0=previous[index1]; index0!=index1; index0=previous[index1]) {
+				//debug
+				fprintf(stderr, "adding (%i, %i) to tree\n", index0, index1);
+
 				used[index0] = 1;
 				appendEdge(tree, shallowCopyEdge(e, lp));
 				previous[index1] = -1;
