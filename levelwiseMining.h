@@ -1,6 +1,9 @@
 #ifndef LEVELWISE_MINING_H_
 #define LEVELWISE_MINING_H_
 
+#include "stdio.h"
+#include "graph.h"
+
 struct TreeDB
 {
 	/* a list of graphs being the spanning trees of the graph with number n */
@@ -24,6 +27,9 @@ struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, s
 void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges);
 int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void scanInMemoryDB(struct Graph** tp, int* tnp, struct Vertex* currentLevel, struct Graph** refinements, 
+		struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, 
+		struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 void initPruning(int nGraphs);
 void freePruning();
