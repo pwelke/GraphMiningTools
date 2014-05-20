@@ -29,5 +29,5 @@ struct ArrayList {
 };
 
 struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct ShallowGraphPool* sgp);
-char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, int* previous, char* used, struct ShallowGraph* tree, struct ListPool* lp);
+char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, struct VertexList** previous, char* used, struct ShallowGraph* tree, struct ListPool* lp);
 #endif

@@ -220,6 +220,7 @@ int main(int argc, char** argv) {
 									//++st;
 
 									/* garbage collection */
+									dumpShallowGraphCycle(sgp, treeEdges);
 									dumpGraph(gp, tree);
 								}
 							}

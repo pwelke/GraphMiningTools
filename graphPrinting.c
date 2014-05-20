@@ -146,6 +146,15 @@ void printVertexList(struct VertexList *f) {
 	fflush(stdout);
 }
 
+/**
+ * Print some information about a single edge to the screen
+ */
+void printEdge(struct VertexList *e) {
+	printf("(%i, %i)", e->startPoint->number, e->endPoint->number);
+	printf(" %s\n", e->label);
+	fflush(stdout);
+}
+
 
 /**
  * Print information about the edges contained in a graph to the screen

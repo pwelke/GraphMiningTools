@@ -76,7 +76,7 @@ void al_free(struct ArrayList* al) {
 
 struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct ShallowGraphPool* sgp) {
 	int i, start;
-	int* previous = malloc(g->n * sizeof(struct VertexList*)); // current random walk
+	struct VertexList** previous = malloc(g->n * sizeof(struct VertexList*)); // current random walk
 	char* used = malloc(g->n * sizeof(char));
 	struct ShallowGraph* tree = getShallowGraph(sgp);
 	struct IntegerArrayStack* remaining = initIntegerArrayStack(g->n); // cell indexes to visit
@@ -87,8 +87,8 @@ struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct Sh
 	}
 	ias_shuffleArray(remaining);
 
-	//debug
-	fprintf(stderr, "entering wilson\n");
+	// //debug
+	// fprintf(stderr, "\n\n\nentering wilson\n");
 
 	// Add a random cell.
 	start = ias_pop(remaining);
@@ -102,28 +102,37 @@ struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct Sh
 	
 	// tree->stackData = NULL;
 	// al_free(tree);
+	ias_free(remaining);
 	free(previous);
 	free(used);
 
 	return tree;
 }
 
-void eraseWalk(int index0, int index1, struct VertexList* previous) {
+void eraseWalk(int index0, int index1, struct VertexList** previous) {
 	int index;
-	for (index = previous[index0]->endPoint; index != index1; index = previous[index0]->endPoint) {
-		previous[index0] = -1;
+	for (index=previous[index0]->startPoint->number; 
+		index!=index1; 
+		index=previous[index0]->startPoint->number) {
+		//debug
+		// printf("erase ");
+		// printEdge(previous[index0]);
+
+		previous[index0] = NULL;
 		index0 = index;
 	}
-	previous[index0] = -1;
+	previous[index0] = NULL;
 }
 
-char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, int* previous, char* used, struct ShallowGraph* tree, struct ListPool* lp) {
+struct VertexList* ROOT = (struct VertexList*)0x1;
+
+char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, struct VertexList** previous, char* used, struct ShallowGraph* tree, struct ListPool* lp) {
 
 	int index0 = -1;
 	int index1 = -1;
 
-	//debug
-	fprintf(stderr, "entering loopE... ");
+	// //debug
+	// fprintf(stderr, "entering loopE...\n");
 
 
 	// Pick a location that’s not yet in the maze (if any).
@@ -132,15 +141,15 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 		// fprintf(stderr, "index0 %i is used\n", index0);
 	}
 
-	//debug
-	fprintf(stderr, "use vertex %i \n", index0);
+	// //debug
+	// fprintf(stderr, "use vertex %i \n", index0);
 
 	if (index0 == -1) {
 		return 1;
 	}
 
 	// Perform a random walk starting at this location,
-	previous[index0] = index0;
+	previous[index0] = ROOT; // must be different from NULL, however, must not be a valid pointer.
 	while (1) {
 		struct VertexList* e;
 		int neighborIndex = rand() % degree(g->vertices[index0]);
@@ -155,31 +164,46 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 		}
 		// e is set to the edge selected
 
+		// //debug 
+		// printf("index0 is %i, ", index0);
+		// printf("index1 is %i and we add ", index1);
+		// printEdge(e);
+		// //debug
+		// printf("previous[index1] = ", index1);
+		// printEdge(e);
+
 		// If this new cell was visited previously during this walk,
 		// erase the loop, rewinding the path to its earlier state.
 		// Otherwise, just add it to the walk.
-		if (previous[index1] >= 0) {
+		if ((previous[index1] != NULL)) {
+			// printf("eraseWalk(%i, %i)\n", index0, index1);
 			eraseWalk(index0, index1, previous);
 		} else {
-			previous[index1] = index0;
+			previous[index1] = e;
 		}
 		index0 = index1;
 
 		// If this cell is part of the maze, we’re done walking.
 		if (used[index1]) {
+			// printf("found used vertex: %i\n", index1);
 
 			// Add the random walk to the maze by backtracking to the starting cell.
 			// Also erase this walk’s history to not interfere with subsequent walks.
-			for (index0=previous[index1]; index0!=index1; index0=previous[index1]) {
-				//debug
-				fprintf(stderr, "adding (%i, %i) to tree\n", index0, index1);
+			for (index0=previous[index1]->startPoint->number; 
+				index0!=index1; 
+				index0=previous[index1]->startPoint->number) {
+				// //debug
+				// fprintf(stderr, "adding (%i, %i) to tree\n", index0, index1);
 
 				used[index0] = 1;
-				appendEdge(tree, shallowCopyEdge(e, lp));
-				previous[index1] = -1;
+				appendEdge(tree, shallowCopyEdge(previous[index1], lp));
+				previous[index1] = NULL;
 				index1 = index0;
+				if (previous[index1] == ROOT) {
+					break;
+				}
 			}
-			previous[index1] = -1;
+			previous[index1] = NULL;
 			return 0;
 		}
 	}

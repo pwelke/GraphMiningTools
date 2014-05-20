@@ -155,6 +155,8 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 			if (!isOuterplanar(idx, sgp, gp)) {
 				long bound = trivialBound(idx->m, nInd);
 				if (bound == -1){
+					dumpShallowGraphCycle(sgp, biconnectedComponents);
+					free(vertices);
 					return -1;
 				} else {
 					estimate *= bound;
@@ -162,6 +164,8 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 			} else {
 				long bound = outerplanarBound(idx->m, nInd);
 				if (bound == -1) {
+					dumpShallowGraphCycle(sgp, biconnectedComponents);
+					free(vertices);
 					return -1;
 				} else {
 					estimate *= bound;
