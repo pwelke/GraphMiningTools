@@ -23,7 +23,7 @@ char DEBUG_INFO = 1;
  */
 void printHelp() {
 	printf("This is The TreePatternKernel\n");
-	printf("implemented by Pascal Welke 2013\n\n\n");
+	printf("implemented by Pascal Welke 2014\n\n\n");
 	printf("usage: tpk F [parameterList]\n\n");
 	printf("    without parameters: display this help screen\n\n");
 	printf("    F: (required) use F as graph database\n\n");
@@ -88,10 +88,6 @@ int main(int argc, char** argv) {
 		printHelp();
 		return EXIT_FAILURE;
 	} else {
-
-		/* time measurements */
-		clock_t tic = clock();
-		clock_t toc;
 
 		/* create object pools */
 		struct ListPool *lp = createListPool(1);
@@ -233,8 +229,7 @@ int main(int argc, char** argv) {
 						}
 						break;
 					}
-				}
-				
+				}		
 				
 				if (DEBUG_INFO) {
 					if (i % 500 == 0) { fprintf(stderr, "."); }
@@ -258,11 +253,6 @@ int main(int argc, char** argv) {
 		freeShallowGraphPool(sgp);
 		freeListPool(lp);
 		freeVertexPool(vp);
-
-		toc = clock();
-		if (outputOption == 't') {
-			printf("It took %li milliseconds to process the %i graphs\n", (toc - tic) / 1000, i);
-		}
 
 		return EXIT_SUCCESS;
 	}
