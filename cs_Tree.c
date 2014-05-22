@@ -23,15 +23,15 @@ Given a tree $T$ and a vertex $ v \in V(T) $ this function returns
 a string $ \pi (T) $ s.t. $ \pi (T) = \pi(T') $ iff $ T $ and $ T' $ are isomorphic.
  */
 struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct Vertex* parent, struct ShallowGraphPool *p) {
-	struct ShallowGraph *stringList = NULL;
-	struct VertexList *idx;
+	struct ShallowGraph* stringList = NULL;
+	struct VertexList* idx;
 	int numChildren = 0;
 
 	/* for any neighbor...*/
 	for (idx = vertex->neighborhood; idx; idx = idx->next) {
 		/* ... that is not the parent (pointer comparison!) */
 		if (idx->endPoint != parent) {
-			struct ShallowGraph *tmp;
+			struct ShallowGraph* tmp;
 
 			/* copy edge that connects vertex and its child */
 			struct VertexList* e = getVertexList(p->listPool);
@@ -41,8 +41,7 @@ struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct V
 			tmp = canonicalStringOfRootedTree(idx->endPoint, vertex, p);
 
 			/* add the edge connecting the child with vertex */
-			tmp->edges = push(tmp->edges, e);
-
+			pushEdge(tmp, e);
 
 			/* add it to the list of strings for the children */
 			tmp->next = stringList;
@@ -53,15 +52,15 @@ struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct V
 
 	/* if the list is empty, vertex is a leaf. this stops recursion */
 	if (numChildren == 0) {
-		struct ShallowGraph *result = getShallowGraph(p);
-		struct VertexList *e = getVertexList(p->listPool);
+		struct ShallowGraph* result = getShallowGraph(p);
+		struct VertexList* e = getVertexList(p->listPool);
 
 		/* the canonical string of a single vertex consists of the label of
 		that vertex */
 		e->label = vertex->label;
-		result->edges = push(result->edges, e);
+		appendEdge(result, e);
 
-		/* stop recursion */
+		/* base case of recursion */
 		return result;
 	} else {
 		/* otherwise we have to sort the canonical strings in ascending order 
@@ -69,14 +68,14 @@ struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct V
 		struct ShallowGraph** tempArray;
 		if ((tempArray = malloc(numChildren * sizeof(struct ShallowGraph*)))) {
 			int i;
-			struct ShallowGraph *tmp;
+			struct ShallowGraph* tmp;
 
 			/* this will be the resulting canonical string */
 			struct ShallowGraph* result = getShallowGraph(p);
 			/* add an edge representing the label of the current vertex */
 			struct VertexList* v = getVertexList(p->listPool);
 			v->label = vertex->label;
-			result->edges = push(result->edges, v);
+			appendEdge(result, v);
 
 			/* stdlib qsort requires an array of elements as input, so we will give it to it */
 			tmp = stringList;
@@ -90,36 +89,28 @@ struct ShallowGraph* canonicalStringOfRootedTree(struct Vertex* vertex, struct V
 			qsort(tempArray, numChildren, sizeof(struct ShallowGraph*), &lexCompCS);
 
 			/* append the edges of the substrings to the result */
-			idx = result->edges;
 			for (i=0; i<numChildren; ++i) {
 
 				/* add open bracket as a substring begins */
-				idx->next = getInitialisatorEdge(p->listPool);
-				idx = idx->next;
+				appendEdge(result, getInitialisatorEdge(p->listPool));
 
-				/* append canonical string of the current child */ 
-				idx->next = tempArray[i]->edges;
+				/* append canonical string of the current child, this is a list of struct VertexList's 
+				  that starts at tempArray[i]->edges and ends at tempArray[i]->lastEdge */ 
+				result->lastEdge->next = tempArray[i]->edges;
 
-				/* the edges do not belong to this element any longer.
+				/* Use skip pointers to avoid going through all of tempArray[i] */
+				result->lastEdge = tempArray[i]->lastEdge;
+
+				/* Remove the edges from their old shallowgraph.
 				This is important as dumping otherwise would dump the edges, too */
 				tempArray[i]->edges = NULL;
 				dumpShallowGraph(p, tempArray[i]);
 
-				/* go as long as we are not at the end of the list */
-
-				/*********************************************************
-				 ** TODO  Use skip pointers to avoid quadratic efford  **
-				 *********************************************************/
-				for (; idx->next; idx = idx->next);
-
 				/* add close bracket as substring ends */
-				idx->next = getTerminatorEdge(p->listPool);
-				idx = idx->next;
+				appendEdge(result, getTerminatorEdge(p->listPool));
 			}
-
 			free(tempArray);
 			return result;
-
 		} else {
 			printf("canonicalStringOfRootedTree: Error allocating memory for array of neighbors");
 			return NULL;
