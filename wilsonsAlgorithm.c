@@ -29,12 +29,14 @@ void ias_free(struct IntegerArrayStack* ias) {
 	free (ias);
 }
 
-	// Implementing Fisher–Yates shuffle
-	// from http://stackoverflow.com/questions/1519736/random-shuffling-of-an-array
-	/**
-	 * Shuffle stack data array. 
-	 * DONT USE IF STACK IS NOT COMPLETELY FULL!
-	 */
+	
+/**
+ * Shuffle stack data array. 
+ * DONT USE IF STACK IS NOT COMPLETELY FULL!
+ *
+ * Implementing Fisher–Yates shuffle
+ * from http://stackoverflow.com/questions/1519736/random-shuffling-of-an-array
+ */
 void ias_shuffleArray(struct IntegerArrayStack* ias) {
 	int i;
 	for (i = ias->capacity - 1; i > 0; i--)
@@ -131,18 +133,8 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 	int index0 = -1;
 	int index1 = -1;
 
-	// //debug
-	// fprintf(stderr, "entering loopE...\n");
-
-
 	// Pick a location that’s not yet in the maze (if any).
-	for (index0 = ias_pop(remaining); (index0 != -1) && (used[index0]); index0 = ias_pop(remaining)) {
-		// //debug
-		// fprintf(stderr, "index0 %i is used\n", index0);
-	}
-
-	// //debug
-	// fprintf(stderr, "use vertex %i \n", index0);
+	for (index0 = ias_pop(remaining); (index0 != -1) && (used[index0]); index0 = ias_pop(remaining));
 
 	if (index0 == -1) {
 		return 1;
@@ -164,19 +156,10 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 		}
 		// e is set to the edge selected
 
-		// //debug 
-		// printf("index0 is %i, ", index0);
-		// printf("index1 is %i and we add ", index1);
-		// printEdge(e);
-		// //debug
-		// printf("previous[index1] = ", index1);
-		// printEdge(e);
-
 		// If this new cell was visited previously during this walk,
 		// erase the loop, rewinding the path to its earlier state.
 		// Otherwise, just add it to the walk.
 		if ((previous[index1] != NULL)) {
-			// printf("eraseWalk(%i, %i)\n", index0, index1);
 			eraseWalk(index0, index1, previous);
 		} else {
 			previous[index1] = e;
@@ -185,16 +168,9 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 
 		// If this cell is part of the maze, we’re done walking.
 		if (used[index1]) {
-			// printf("found used vertex: %i\n", index1);
-
 			// Add the random walk to the maze by backtracking to the starting cell.
 			// Also erase this walk’s history to not interfere with subsequent walks.
-			for (index0=previous[index1]->startPoint->number; 
-				index0!=index1; 
-				index0=previous[index1]->startPoint->number) {
-				// //debug
-				// fprintf(stderr, "adding (%i, %i) to tree\n", index0, index1);
-
+			for (index0=previous[index1]->startPoint->number; index0!=index1; index0=previous[index1]->startPoint->number) {
 				used[index0] = 1;
 				appendEdge(tree, shallowCopyEdge(previous[index1], lp));
 				previous[index1] = NULL;
