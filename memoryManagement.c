@@ -18,6 +18,8 @@ struct ListPool* createListPool(unsigned int initNumberOfElements){
 				(newPool->unused[i]).next = &(newPool->unused[i+1]);
 			}
 			(newPool->unused[initNumberOfElements-1]).next = NULL;
+			newPool->poolPointer = newPool->unused;
+			newPool->initNumberOfElements = initNumberOfElements;
 		} else {
 			printf("Error while initializing object pool for list elements\n");
 			return NULL;
@@ -36,9 +38,12 @@ Frees the object pool and all elements in its unused list
 void freeListPool(struct ListPool *p) {
 	while (p->unused) {
 		p->tmp = p->unused->next;
-		free(p->unused);
+		if ((p->unused < p->poolPointer) || (p->unused > &(p->poolPointer[p->initNumberOfElements-1]))) {
+			free(p->unused);
+		}
 		p->unused = p->tmp;
 	}
+	free(p->poolPointer);
 	free(p);
 }
 	
@@ -127,6 +132,8 @@ struct VertexPool* createVertexPool(unsigned int initNumberOfElements){
 				(newPool->unused[i]).next = &(newPool->unused[i+1]);
 			}
 			(newPool->unused[initNumberOfElements-1]).next = NULL;
+			newPool->poolPointer = newPool->unused;
+			newPool->initNumberOfElements = initNumberOfElements;
 		} else {
 			printf("Error while initializing object pool for list elements\n");
 			return NULL;
@@ -146,9 +153,12 @@ Frees the object pool and all elements in its unused list
 void freeVertexPool(struct VertexPool *p) {
 	while (p->unused) {
 		p->tmp = p->unused->next;
-		free(p->unused);
+		if ((p->unused < p->poolPointer) || (p->unused > &(p->poolPointer[p->initNumberOfElements-1]))) {
+			free(p->unused);
+		}
 		p->unused = p->tmp;
 	}
+	free(p->poolPointer);
 	free(p);
 }
 
@@ -230,6 +240,8 @@ struct GraphPool* createGraphPool(unsigned int initNumberOfElements, struct Vert
 				(newPool->unused[i]).next = &(newPool->unused[i+1]);
 			}
 			(newPool->unused[initNumberOfElements-1]).next = NULL;
+			newPool->poolPointer = newPool->unused;
+			newPool->initNumberOfElements = initNumberOfElements;
 		} else {
 			printf("Error while initializing object pool for list elements\n");
 			return NULL;
@@ -247,9 +259,12 @@ struct GraphPool* createGraphPool(unsigned int initNumberOfElements, struct Vert
 void freeGraphPool(struct GraphPool *p) {
 	while (p->unused) {
 		p->tmp = p->unused->next;
-		free(p->unused);
+		if ((p->unused < p->poolPointer) || (p->unused > &(p->poolPointer[p->initNumberOfElements-1]))) {
+			free(p->unused);
+		}
 		p->unused = p->tmp;
 	}
+	free(p->poolPointer);
 	free(p);
 }
 
@@ -334,6 +349,8 @@ struct ShallowGraphPool* createShallowGraphPool(unsigned int initNumberOfElement
 				(newPool->unused[i]).next = &(newPool->unused[i+1]);
 			}
 			(newPool->unused[initNumberOfElements-1]).next = NULL;
+			newPool->poolPointer = newPool->unused;
+			newPool->initNumberOfElements = initNumberOfElements;
 		} else {
 			printf("Error while initializing object pool for list elements\n");
 			return NULL;
@@ -352,11 +369,13 @@ struct ShallowGraphPool* createShallowGraphPool(unsigned int initNumberOfElement
  */
 void freeShallowGraphPool(struct ShallowGraphPool *p) {
 	while (p->unused) {
-		/* nothing has to be taken care of, as the dumping method dumps edges of shallowgraphs */
 		p->tmp = p->unused->next;
-		free(p->unused);
+		if ((p->unused < p->poolPointer) || (p->unused > &(p->poolPointer[p->initNumberOfElements-1]))) {
+			free(p->unused);
+		}
 		p->unused = p->tmp;
 	}
+	free(p->poolPointer);
 	free(p);
 }
 

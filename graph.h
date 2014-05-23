@@ -61,6 +61,8 @@ struct ShallowGraphPool{
 	struct ShallowGraph* unused;
 	struct ShallowGraph* tmp;
 	struct ListPool* listPool;
+	unsigned int initNumberOfElements;
+	struct ShallowGraph* poolPointer; /* store pointer to the alloc'd pool space */
 };
 
 struct GraphPool{
@@ -68,16 +70,22 @@ struct GraphPool{
 	struct Graph* tmp;
 	struct VertexPool* vertexPool;
 	struct ListPool* listPool;
+	unsigned int initNumberOfElements;
+	struct Graph* poolPointer; /* store pointer to the alloc'd pool space */
 };
 
 struct ListPool{
 	struct VertexList* unused;
 	struct VertexList* tmp;
+	unsigned int initNumberOfElements;
+	struct VertexList* poolPointer; /* store pointer to the alloc'd pool space */
 };
 
 struct VertexPool{
 	struct Vertex* unused;
 	struct Vertex* tmp;
+	unsigned int initNumberOfElements;
+	struct Vertex* poolPointer; /* store pointer to the alloc'd pool space */
 };
 
 
