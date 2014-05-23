@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 
 def getMap(mapFile):
 	''' Given a filename of a file containing exactly one number per line, 
@@ -155,8 +156,35 @@ def run(prefixOfOutputFiles, inputFile, labelFlag):
 	labels = getLabels(inputFile)
 	changeLabels(labels, labelFlag)
 
-	# interestingFeatures = getMap(prefixOfOutputFiles + '.features')
-	# filterByMap(prefixOfOutputFiles + '.counts', interestingFeatures, prefixOfOutputFiles + '.countsFrequent')
+	interestingFeatures = getMap(prefixOfOutputFiles + '.features')
+	filterByMap(prefixOfOutputFiles + '.counts', interestingFeatures, prefixOfOutputFiles + '.countsFrequent')
 
-	createLabeledSVMFile(prefixOfOutputFiles + '.counts', prefixOfOutputFiles + '.svmFile' + labelFlag, labels)
+	createLabeledSVMFile(prefixOfOutputFiles + '.countsFrequent', prefixOfOutputFiles + '.svmFile' + labelFlag, labels)
 
+if __name__ == "__main__":
+	if len(sys.argv) < 4:
+		print '''
+Convert output of lwm to input of libSVM.
+Usage: generateSVMFile ORIGINALFILE LWMFILEPREFIX LABELOP
+
+where ORIGINALFILE is a file in AIDS99.txt format that contains
+the original data set. This file is used to obtain label information 
+for the graphs that were processed by lwm.
+
+LWMFILEPREFIX is the common prefix of the output files of lwm.
+lwm produces three outputfiles: LWMFILEPREFIX.patterns, 
+LWMFILEPREFIX.counts, and LWMFILEPREFIX.features . These files contain
+the frequent pattern information for each processed graph.
+
+LABELOP specifies the modification of the labels of the graphs.
+In an AIDS99 formatted file, there are three labels: 0 = inactive,
+1 = moderately active and 2 = active. We want to change these to:
+1 = positive class, -1 = negative class, and 0 = filter out, when 
+selecting. As a switch you can therefore select between one of the 
+following three actions:
+
+AvsI = 0->-1 2->1 1->0
+AvsMI = 0->-1 1->-1 2->1
+AMvsI = 0->-1 1->1 2->1'''
+
+	run(sys.argv[2], sys.argv[1], sys.argv[3])
