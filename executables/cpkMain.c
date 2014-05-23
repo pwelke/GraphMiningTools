@@ -88,10 +88,10 @@ int main(int argc, char** argv) {
 		clock_t toc;
 
 		/* create object pools */
-		struct ListPool *lp = createListPool(1);
-		struct VertexPool *vp = createVertexPool(1);
-		struct ShallowGraphPool *sgp = createShallowGraphPool(1, lp);
-		struct GraphPool *gp = createGraphPool(1, vp, lp);
+		struct ListPool *lp = createListPool(10000);
+		struct VertexPool *vp = createVertexPool(10000);
+		struct ShallowGraphPool *sgp = createShallowGraphPool(1000, lp);
+		struct GraphPool *gp = createGraphPool(100, vp, lp);
 
 		/* global search trees for mapping of strings to numbers */
 		struct Vertex* globalTreeSet = getVertex(vp);

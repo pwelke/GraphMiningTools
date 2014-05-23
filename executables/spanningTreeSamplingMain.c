@@ -90,10 +90,10 @@ int main(int argc, char** argv) {
 	} else {
 
 		/* create object pools */
-		struct ListPool *lp = createListPool(1);
-		struct VertexPool *vp = createVertexPool(1);
-		struct ShallowGraphPool *sgp = createShallowGraphPool(1, lp);
-		struct GraphPool *gp = createGraphPool(1, vp, lp);
+		struct ListPool *lp = createListPool(10000);
+		struct VertexPool *vp = createVertexPool(10000);
+		struct ShallowGraphPool *sgp = createShallowGraphPool(1000, lp);
+		struct GraphPool *gp = createGraphPool(100, vp, lp);
 
 		/* pointer to the current graph which is returned by the input iterator */
 		struct Graph* g = NULL;
