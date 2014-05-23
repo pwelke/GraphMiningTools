@@ -65,6 +65,7 @@ int main(int argc, char** argv) {
 		char countFileName[500];
 		char featureFileName[500];
 		char patternFileName[500];	
+		char suffix[200];
 		FILE* featureFile;
 		FILE* countFile;
 		FILE* patternFile;
@@ -73,17 +74,6 @@ int main(int argc, char** argv) {
 		struct Vertex* frequentEdges = getVertex(vp);
 		struct ShallowGraph* extensionEdges;
 		int patternSize;
-
-		/* open output files */
-		strcpy(countFileName, inputFileName);
-		strcat(countFileName, ".counts");
- 		countFile = fopen(countFileName, "w");
-		strcpy(featureFileName, inputFileName);
-		strcat(featureFileName, ".features");
-		featureFile = fopen(featureFileName, "w");
-		strcpy(patternFileName, inputFileName);
-		strcat(patternFileName, ".patterns");
- 		patternFile = fopen(patternFileName, "w");
 
 		/* user input handling */
 		for (param=2; param<argc; param+=2) {
@@ -101,9 +91,25 @@ int main(int argc, char** argv) {
 				sscanf(argv[param+1], "%i", &minGraph);
 			}
 			if (strcmp(argv[param], "-patternSize") == 0) {
-				sscanf(argv[param+1], "%i", &patternSize);
+				sscanf(argv[param+1], "%i", &maxPatternSize);
 			}
 		}
+
+		/* open output files */
+		sprintf(suffix, "_ps%i_f%i.counts", maxPatternSize, threshold);
+		strcpy(countFileName, inputFileName);
+		strcat(countFileName, suffix);
+ 		countFile = fopen(countFileName, "w");
+ 		
+ 		sprintf(suffix, "_ps%i_f%i.features", maxPatternSize, threshold);
+		strcpy(featureFileName, inputFileName);
+		strcat(featureFileName, suffix);
+		featureFile = fopen(featureFileName, "w");
+		
+		sprintf(suffix, "_ps%i_f%i.patterns", maxPatternSize, threshold);
+		strcpy(patternFileName, inputFileName);
+		strcat(patternFileName, suffix);
+ 		patternFile = fopen(patternFileName, "w");
 
 		initPruning(maxGraph);
 
