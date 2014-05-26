@@ -129,7 +129,7 @@ def proc_argv(argv = argv):
 	return ' '.join(options), fold, train_file, test_file
 
 def plot_roc(deci, label, output, title, params):
-	#count of postive and negative labels
+	#count of positive and negative labels
 	db = []
 	pos, neg = 0, 0 		
 	for i in range(len(label)):
@@ -167,7 +167,7 @@ def plot_roc(deci, label, output, title, params):
 	g = gnuplot(output)
 	g.xlabel = "False Positive Rate"
 	g.ylabel = "True Positive Rate"
-	g.title = "ROC curve of %s (AUC = %.4f) parameters: %s" % (title, aoc, params)
+	g.title = "ROC curve of %s \\n (AUC = %.4f) parameters: %s" % (title, aoc, params)
 	g.plotline(xy_arr)
 	# #display on screen
 	# s = gnuplot('onscreen')
@@ -175,6 +175,7 @@ def plot_roc(deci, label, output, title, params):
 	# s.ylabel = "True Positive Rate"
 	# s.title = "ROC curve of %s (AUC = %.4f) parameters: %s" % (title, aoc, params)
 	# s.plotline(xy_arr)
+	return aoc
 
 def check_gnuplot_exe():
 	global gnuplot_exe
@@ -187,12 +188,9 @@ def check_gnuplot_exe():
 		print("You must add correct path of 'gnuplot' into gnuplot_exe_list")
 		raise SystemExit
 
-def main():
+def main(param, fold, train_file, test_file):
 	check_gnuplot_exe()
-	if len(argv) <= 1:
-		print("Usage: %s [-v cv_fold | -T testing_file] [libsvm-options] training_file" % argv[0])
-		raise SystemExit
-	param,fold,train_file,test_file = proc_argv()
+
 	# for grid stuff: 
 	print("params " + param)
 
@@ -205,6 +203,7 @@ def main():
 
 	#get decision value, with positive = label+
 	seed(0)	#reset random seed
+	aoc = 0.0
 	if test_file:		#go with test_file
 		output_title = "%s on %s" % (path.split(test_file)[1], path.split(train_file)[1])
 		test_y, test_x = svm_read_problem(test_file)
@@ -212,11 +211,17 @@ def main():
 			print("ROC is only applicable to binary classes with labels 1, -1")
 			raise SystemExit
 		deci,model = get_pos_deci(train_y, train_x, test_y, test_x, param)
-		plot_roc(deci, test_y, output_file, output_title, param)
+		aoc = plot_roc(deci, test_y, output_file, output_title, param)
 	else:				#single file -> CV
 		output_title = path.split(train_file)[1]
 		deci = get_cv_deci(train_y, train_x, param, fold)
-		plot_roc(deci, train_y, output_file, output_title, param)
+		aoc = plot_roc(deci, train_y, output_file, output_title, param)
+	return aoc
 
 if __name__ == '__main__':
-	main()	
+	if len(argv) <= 1:
+		print("Usage: %s [-v cv_fold | -T testing_file] [libsvm-options] training_file" % argv[0])
+		raise SystemExit
+	
+	param,fold,train_file,test_file = proc_argv()
+	main(param,fold,train_file,test_file)	
