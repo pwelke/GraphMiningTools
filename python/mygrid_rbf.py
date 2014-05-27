@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, traceback, pickle
+import os, sys, traceback, pickle, time
 import getpass
 from threading import Thread
 from subprocess import *
@@ -35,7 +35,7 @@ auc_result_file = 'auc_results.dict'
 # parallel stuff
 telnet_workers = []
 ssh_workers = []
-nr_local_worker = 3
+nr_local_worker = 7
 
 # range stuff
 c_begin, c_end, c_step = -5, 15, 2
@@ -152,10 +152,15 @@ def main():
 	for i in range(nr_local_worker):
 		LocalWorker('local', job_queue, result_queue, auc_dict).start()
 
-	print auc_dict
 
-	f = open(auc_result_file, 'wb')
-	f.close()
+	while (True):
+		time.sleep(10)
+		if (job_queue.qsize() == 0):
+			print auc_dict
+
+			f = open(auc_result_file, 'wb')
+			f.close()
+			return
 
 
 if __name__ == "__main__":	
