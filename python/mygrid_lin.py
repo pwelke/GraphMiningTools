@@ -27,7 +27,7 @@ dataset_pathname = sys.argv[-1]
 #     1 -- polynomial: (gamma*u'*v + coef0)^degree
 #     2 -- radial basis function: exp(-gamma*|u-v|^2)
 #     3 -- sigmoid: tanh(gamma*u'*v + coef0)
-kernel_type = 2
+kernel_type = 0
 
 # results dumped to
 auc_result_file = dataset_pathname + "-t {0}_aucResults".format(kernel_type) # will be set to something resembling input file name later
@@ -39,8 +39,8 @@ nr_local_worker = 7
 
 # range stuff
 c_begin, c_end, c_step = -5, 15, 2
-# w_begin, w_end, w_step = 1, 10, 2
-g_begin, g_end, g_step = -15, 5, 2
+w_begin, w_end, w_step = -5, 10, 2
+# g_begin, g_end, g_step = -15, 5, 2
 fold = 3
 
 
@@ -57,10 +57,10 @@ def range_f(begin,end,step):
 def calculate_jobs_exp():
 	'''Exponentially increasing values of c and w'''
 	c_seq = range_f(c_begin, c_end, c_step)
-	g_seq = range_f(g_begin, g_end, g_step)
+	w_seq = range_f(w_begin, w_end, w_step)
 	jobs = []
 	for c in c_seq:
-	    jobs += [(2**c, 2**g) for g in g_seq]
+	    jobs += [(2**c, 2**w) for w in w_seq]
 	return jobs
 
 def calculate_jobs_lin():
