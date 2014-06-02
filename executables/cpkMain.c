@@ -28,6 +28,8 @@ void printHelp() {
 	printf("        a \"all\" (default) output the feature vector for each graph in the\n"
 		   "            format specified by SVMlight the label of each graph has to be\n"
 		   "            either 0, 1 or -1 to be compliant with the specs of SVMlight.\n");
+	printf("        x output a feature vector that only contains cyclic patterns\n");
+	printf("        y output a feature vector that only contains tree patterns\n");
 	printf("        c returns the number of cycles found in the graph\n");
 	printf("        t returns the number of trees found in each graph\n");
 	printf("        v returns the number of vertices in each graph\n");
@@ -162,10 +164,19 @@ int main(int argc, char** argv) {
 					labelProcessing(g, labelOption);
 				}
 
-				CyclicPatternKernel(g, sgp, gp, outputOption, globalTreeSet, globalCycleSet, &intermediateResults, &imrSize);
+				switch (outputOption) {
+					case 'x':
+						CyclicPatternKernel_onlyCycles(g, sgp, gp, globalTreeSet, globalCycleSet, &intermediateResults, &imrSize);
+						break;
+					case 'y':
+						CyclicPatternKernel_onlyTrees(g, sgp, gp, globalTreeSet, globalCycleSet, &intermediateResults, &imrSize);
+						break;
+					default:
+						CyclicPatternKernel(g, sgp, gp, outputOption, globalTreeSet, globalCycleSet, &intermediateResults, &imrSize);
+						break;
+				}
 
 				++i;
-
 
 				/* garbage collection */
 				dumpGraph(gp, g);
