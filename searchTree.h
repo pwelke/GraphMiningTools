@@ -22,6 +22,8 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, str
 int containsString(struct Vertex* root, struct ShallowGraph* string);
 int getID(struct Vertex* root, struct ShallowGraph* string);
 
+struct ShallowGraph* listStringsInSearchTree(struct Vertex* root, struct ShallowGraphPool* sgp);
+
 struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* number, struct ShallowGraphPool* sgp);
 
 

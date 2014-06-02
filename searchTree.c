@@ -641,6 +641,51 @@ void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph*
 	}
 }
 
+void recListString(struct ShallowGraph* stringList, struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph* prefix, struct ShallowGraphPool* sgp) {
+	struct VertexList* e;
+
+	if (root != trueRoot) {
+		if (root->visited != 0) {
+			struct ShallowGraph* tmp = stringList->next;
+			stringList->next = cloneShallowGraph(prefix, sgp);
+			stringList->next->next = tmp;
+		}
+	}																																																																								
+
+	for (e=root->neighborhood; e!=NULL; e=e->next) {
+		
+		/* after finishing this block, we want prefix to be as before, thus we have
+		   to do some list magic */																																																								
+		struct VertexList* lastEdge = prefix->lastEdge;
+		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
+
+		recListString(stringList, e->endPoint, root, prefix, sgp);
+
+		dumpVertexList(sgp->listPool, prefix->lastEdge);
+		prefix->lastEdge = lastEdge;
+		--prefix->m;
+
+		if (prefix->m == 0) {
+			prefix->edges = NULL;
+		} else {
+			lastEdge->next = NULL;
+		}
+		
+	}
+}
+
+
+struct ShallowGraph* listStringsInSearchTree(struct Vertex* root, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* listHead = getShallowGraph(sgp);
+	struct ShallowGraph* prefix = getShallowGraph(sgp);
+	recListString(listHead, root, root, prefix, sgp);
+	dumpShallowGraph(sgp, prefix);
+	prefix = listHead->next;
+	listHead = listHead->next;
+	dumpShallowGraph(sgp, prefix);
+	return listHead;
+}
+
 
 void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
