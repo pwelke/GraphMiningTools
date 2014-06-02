@@ -14,7 +14,7 @@
  * This is the actual main function that computes a feature vector from the graph g
  *  does not dump g */
 int CyclicPatternKernel(struct Graph *g, struct ShallowGraphPool *sgp, struct GraphPool *gp,
-		char outputOptions, struct Vertex* globalTreeSet, struct Vertex* globalCycleSet, struct compInfo** results, int* resSize) {
+		char outputOptions, struct Vertex* globalPatternSet, struct compInfo** results, int* resSize) {
 	struct Graph* tmp;
 	struct Graph* idx;
 	int numCycles;
@@ -71,9 +71,9 @@ int CyclicPatternKernel(struct Graph *g, struct ShallowGraphPool *sgp, struct Gr
 	
 
 	/* add elements to global search trees to obtain mapping from strings to integers */
-	mergeSearchTrees(globalTreeSet, treePatternSearchTree, 1, *results, &pos, globalTreeSet, 0, gp);
+	mergeSearchTrees(globalPatternSet, treePatternSearchTree, 1, *results, &pos, globalPatternSet, 0, gp);
 	if (cyclePatternSearchTree) {
-		mergeSearchTrees(globalTreeSet, cyclePatternSearchTree, 2, *results, &pos, globalTreeSet, 0, gp);
+		mergeSearchTrees(globalPatternSet, cyclePatternSearchTree, 2, *results, &pos, globalPatternSet, 0, gp);
 	}
 
 	/* sort the output elements by increasing id */
@@ -138,13 +138,12 @@ int CyclicPatternKernel(struct Graph *g, struct ShallowGraphPool *sgp, struct Gr
 	dumpGraph(gp, forest);
 
 	return 0;
-
 }
 
 /**
  * This is the actual main function that computes a feature vector from the graph g
  *  does not dump g */
-int CyclicPatternKernel_onlyCycles(struct Graph *g, struct ShallowGraphPool *sgp, struct GraphPool *gp, struct Vertex* globalTreeSet, struct Vertex* globalCycleSet, struct compInfo** results, int* resSize) {
+int CyclicPatternKernel_onlyCycles(struct Graph *g, struct ShallowGraphPool *sgp, struct GraphPool *gp, struct Vertex* globalPatternSet, struct compInfo** results, int* resSize) {
 	struct Graph* tmp;
 	struct Graph* idx;
 	int numCycles;
@@ -156,13 +155,6 @@ int CyclicPatternKernel_onlyCycles(struct Graph *g, struct ShallowGraphPool *sgp
 	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
 	/* TODO refactor */
 	struct Graph* biconnectedComponents = forest->next;
-
-	/* list tree patterns */
-	// struct ShallowGraph* treePatterns = getTreePatterns(forest, sgp);
-
-	/* create search tree structure */
-	// struct Vertex* treePatternSearchTree = buildSearchTree(treePatterns, gp, sgp);
-	// int numTrees = treePatternSearchTree->number;
 
 	/* list all cycles */
 	struct ShallowGraph* simpleCycles = NULL;
@@ -187,8 +179,6 @@ int CyclicPatternKernel_onlyCycles(struct Graph *g, struct ShallowGraphPool *sgp
 		numCycles = 0;
 	}
 
-
-
 	if (numCycles > *resSize) {
 		if (*results) {
 			free(*results);
@@ -202,9 +192,8 @@ int CyclicPatternKernel_onlyCycles(struct Graph *g, struct ShallowGraphPool *sgp
 	
 
 	/* add elements to global search trees to obtain mapping from strings to integers */
-	// mergeSearchTrees(globalTreeSet, treePatternSearchTree, 1, *results, &pos, globalTreeSet, 0, gp);
 	if (cyclePatternSearchTree) {
-		mergeSearchTrees(globalTreeSet, cyclePatternSearchTree, 2, *results, &pos, globalTreeSet, 0, gp);
+		mergeSearchTrees(globalPatternSet, cyclePatternSearchTree, 2, *results, &pos, globalPatternSet, 0, gp);
 		
 		/* sort the output elements by increasing id */
 		qsort(*results, pos, sizeof(struct compInfo), &compInfoComparison);
@@ -242,7 +231,6 @@ int CyclicPatternKernel_onlyCycles(struct Graph *g, struct ShallowGraphPool *sgp
 		dumpGraph(gp, idx);
 	}
 
-	// dumpSearchTree(gp, treePatternSearchTree);
 	dumpGraph(gp, forest);
 
 	return 0;
@@ -253,7 +241,7 @@ int CyclicPatternKernel_onlyCycles(struct Graph *g, struct ShallowGraphPool *sgp
  * This is the actual main function that computes a feature vector from the graph g
  *  does not dump g */
 int CyclicPatternKernel_onlyTrees(struct Graph *g, struct ShallowGraphPool *sgp, struct GraphPool *gp,
-		struct Vertex* globalTreeSet, struct Vertex* globalCycleSet, struct compInfo** results, int* resSize) {
+		struct Vertex* globalPatternSet, struct compInfo** results, int* resSize) {
 	struct Graph* tmp;
 	struct Graph* idx;
 	int pos = 0;
@@ -282,7 +270,7 @@ int CyclicPatternKernel_onlyTrees(struct Graph *g, struct ShallowGraphPool *sgp,
 	}
 
 	/* add elements to global search trees to obtain mapping from strings to integers */
-	mergeSearchTrees(globalTreeSet, treePatternSearchTree, 1, *results, &pos, globalTreeSet, 0, gp);
+	mergeSearchTrees(globalPatternSet, treePatternSearchTree, 1, *results, &pos, globalPatternSet, 0, gp);
 
 	/* sort the output elements by increasing id */
 	qsort(*results, pos, sizeof(struct compInfo), &compInfoComparison);

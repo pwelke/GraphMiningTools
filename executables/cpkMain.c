@@ -96,8 +96,7 @@ int main(int argc, char** argv) {
 		struct GraphPool *gp = createGraphPool(100, vp, lp);
 
 		/* global search trees for mapping of strings to numbers */
-		struct Vertex* globalTreeSet = getVertex(vp);
-		struct Vertex* globalCycleSet = getVertex(vp);
+		struct Vertex* globalPatternSet = getVertex(vp);
 
 		/* pointer to the current graph which is returned by the input iterator */
 		struct Graph* g = NULL;
@@ -166,13 +165,13 @@ int main(int argc, char** argv) {
 
 				switch (outputOption) {
 					case 'x':
-						CyclicPatternKernel_onlyCycles(g, sgp, gp, globalTreeSet, globalCycleSet, &intermediateResults, &imrSize);
+						CyclicPatternKernel_onlyCycles(g, sgp, gp, globalPatternSet, &intermediateResults, &imrSize);
 						break;
 					case 'y':
-						CyclicPatternKernel_onlyTrees(g, sgp, gp, globalTreeSet, globalCycleSet, &intermediateResults, &imrSize);
+						CyclicPatternKernel_onlyTrees(g, sgp, gp, globalPatternSet, &intermediateResults, &imrSize);
 						break;
 					default:
-						CyclicPatternKernel(g, sgp, gp, outputOption, globalTreeSet, globalCycleSet, &intermediateResults, &imrSize);
+						CyclicPatternKernel(g, sgp, gp, outputOption, globalPatternSet, &intermediateResults, &imrSize);
 						break;
 				}
 
@@ -190,8 +189,7 @@ int main(int argc, char** argv) {
 		/* global garbage collection */
 		free(intermediateResults);
 
-		dumpSearchTree(gp, globalCycleSet);
-		dumpSearchTree(gp, globalTreeSet);
+		dumpSearchTree(gp, globalPatternSet);
 
 		destroyFileIterator();
 		freeGraphPool(gp);
