@@ -6,6 +6,7 @@
 #include "../graph.h"
 #include "../loading.h"
 #include "../cpk.h"
+#include "../connectedComponents.h"
 #include "cpkMain.h"
 
 
@@ -34,6 +35,9 @@ void printHelp() {
 	printf("        t returns the number of trees found in each graph\n");
 	printf("        v returns the number of vertices in each graph\n");
 	printf("        e returns the number of edges in each graph\n\n");
+	printf("    -connected B:\n"
+		   "        t process only connected graphs\n"
+		   "        f (default) process all graphs in the database\n");
 	printf("    -limit N: process the first N graphs in F\n\n");
 	printf("    -h | --help: display this help\n\n");
 	printf("    ");
@@ -116,6 +120,8 @@ int main(int argc, char** argv) {
 		/* graph delimiter */
 		int maxGraphs = -1;
 
+		char processOnlyConnected = 0;
+
 
 		/* user input handling */
 		for (param=2; param<argc; param+=2) {
@@ -134,6 +140,14 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(argv[param], "-label") == 0) {
 				labelOption = argv[param+1][0];
+			}
+			if (strcmp(argv[param], "-connected") == 0) {
+				processOnlyConnected = argv[param+1][0];
+				if (processOnlyConnected == 't') {
+					processOnlyConnected = 1;
+				} else {
+					processOnlyConnected = 0;
+				}
 			}
 		}
 
@@ -161,6 +175,15 @@ int main(int argc, char** argv) {
 					}
 				}else {
 					labelProcessing(g, labelOption);
+				}
+
+				/* if the connected option is set, check oif graph is connected */
+				if (processOnlyConnected) {
+					if (!isConnected(g)) {
+						++i;
+						dumpGraph(gp, g);
+						continue;
+					}
 				}
 
 				switch (outputOption) {
