@@ -66,10 +66,10 @@ def calculate_jobs_exp():
 def calculate_jobs_lin():
 	'''Linearly increasing values of c and w'''
 	c_seq = range_f(c_begin, c_end, c_step)
-	g_seq = range_f(g_begin, g_end, g_step)
+	w_seq = range_f(w_begin, w_end, w_step)
 	jobs = []
 	for c in c_seq:
-		jobs += [(c, g) for g in g_seq]
+		jobs += [(c, w) for w in w_seq]
 	return jobs
 
 class WorkerStopToken:  
@@ -87,35 +87,35 @@ class Worker(Thread):
 
 	def run(self):
 		while True:
-			(c,g) = self.job_queue.get()
+			(c,w) = self.job_queue.get()
 			if c is WorkerStopToken:
-				self.job_queue.put((c,g))
+				self.job_queue.put((c,w))
 				# print('worker {0} stop.'.format(self.name))
 				break
 			try:
-				rate = self.run_one(c, g)
+				rate = self.run_one(c, w)
 				if rate is None: 
 					raise RuntimeError("get no rate")
 				else:
-					self.auc_dict[(c,g)] = rate
+					self.auc_dict[(c,w)] = rate
 			except:
 				# we failed, let others do that and we just quit
 				traceback.print_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2])
 				
-				self.job_queue.put((c,g))
+				self.job_queue.put((c,w))
 				print('worker {0} quit.'.format(self.name))
 				break
 			else:
-				self.result_queue.put((self.name, c, g, rate))
+				self.result_queue.put((self.name, c, w, rate))
 
 class LocalWorker(Worker):
-	def run_one(self, c, g):
+	def run_one(self, c, w):
 		# cmdline = '{0} -c {1} -g {2} -v {3} -t {4} {5} {6}'.format \
 			# ('plotroc.py', c, g, fold, kernel_type, dataset_pathname, pass_through_string)
 		# print 'cmdLine: ' + cmdline
 		# result = Popen(cmdline, shell=True, stdout=PIPE).stdout
 		param = '-c {0} -g {1} -t {2} {3}'.format \
-			(c, g, kernel_type, pass_through_string)
+			(c, w, kernel_type, pass_through_string)
 		train_file = dataset_pathname
 		test_file = None
 		result = plotroc.main(param,fold,train_file,test_file)
@@ -163,12 +163,12 @@ def main():
 			f.close()
 
 			# c_begin, c_end, c_step = -5, 15, 2
-			# g_begin, g_end, g_step = -15, 5, 2
-			auc_array = [range_f(g_begin, g_end, g_step) for c in range_f(c_begin, c_end, c_step)]
+			# w_begin, w_end, w_step = -15, 5, 2
+			auc_array = [range_f(w_begin, w_end, w_step) for c in range_f(c_begin, c_end, c_step)]
 			for c in range_f(c_begin, c_end, c_step):
-				for g in range_f(g_begin, g_end, g_step):
-					# print str((c - c_begin) / c_step) + " " + str((g - g_begin) / g_step)
-					auc_array[(c - c_begin) / c_step][(g - g_begin) / g_step] = auc_dict[(2**c,2**g)]
+				for w in range_f(w_begin, w_end, w_step):
+					# print str((c - c_begin) / c_step) + " " + str((g - w_begin) / w_step)
+					auc_array[(c - c_begin) / c_step][(w - w_begin) / w_step] = auc_dict[(2**c,2**w)]
 
 			f = open(auc_result_file + '.array', 'wb')
 			pickle.dump(auc_array, f)
