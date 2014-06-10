@@ -5,8 +5,6 @@
 
 #include "../graph.h"
 #include "../loading.h"
-#include "../cs_Tree.h"
-#include "../searchTree.h"
 
 
 /**
@@ -18,73 +16,56 @@ void printHelp() {
 }
 
 
-void map2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void mapGraph2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
 	int graphNumber;
 	struct ShallowGraph* patterns;
 	char** labels = aids99VertexLabelArray();
 
-	while ((patterns = streamReadPatterns(data, bufferSize, &graphNumber, sgp))) {
-		struct ShallowGraph* pattern;
-		struct Graph* spanningTree = NULL;
-		int offset = 0;
+	/* try to load a file */
+	createFileIterator(argv[1], gp);
 
-		fprintf(stdout, "t # %i\n", graphNumber);
-		for (pattern=patterns; pattern!=NULL; pattern=pattern->next) {
+
+	/* iterate over all graphs in the database */
+	while (((i < maxGraphs) || (maxGraphs == -1)) && (g = iterateFile(&aids99VertexLabel, &aids99EdgeLabel))) {
+
+		/* if there was an error reading some graph the returned n will be -1 */
+		if (g->n > 0) {
 			int v;
-			/* convert streamed spanning tree string to graph */
-			if (spanningTree != NULL) {
-				for (v=0; v<spanningTree->n; ++v) {
-					dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
-					spanningTree->vertices[v]->neighborhood = NULL;
-				}
-				treeCanonicalString2ExistingGraph(pattern, spanningTree, gp);
-			} else {
-				spanningTree = treeCanonicalString2Graph(pattern, gp);
-			}
+
+			fprintf(stdout, "t # %i\n", g->number);
+
 
 			/* print vertices */
-			for (v=0; v<spanningTree->n; ++v) {
+			for (v=0; v<g->n; ++v) {
 				int i;
 				for (i=0; i<64; ++i) {
-					if (strcmp(spanningTree->vertices[v]->label, labels[i]) == 0) {
+					if (strcmp(g->vertices[v]->label, labels[i]) == 0) {
 						fprintf(stdout, "v %i %i\n", v + offset, i);
 						break; /* continue with next vertex */
 					}
 				}
 			}
-			/* and increment the offset */
-			offset += spanningTree->n;
-		}
-		offset = 0;
-		for (pattern=patterns; pattern!=NULL; pattern=pattern->next) {
-			int v;
-			/* convert streamed spanning tree string to graph */
-			if (spanningTree != NULL) {
-				for (v=0; v<spanningTree->n; ++v) {
-					dumpVertexListRecursively(gp->listPool, spanningTree->vertices[v]->neighborhood);
-					spanningTree->vertices[v]->neighborhood = NULL;
-				}
-				treeCanonicalString2ExistingGraph(pattern, spanningTree, gp);
-			} else {
-				spanningTree = treeCanonicalString2Graph(pattern, gp);
-			}
-
+			
 			/* print edges */
-			for (v=0; v<spanningTree->n; ++v) {
+			for (v=0; v<g->n; ++v) {
 				struct VertexList* e;
-				for (e=spanningTree->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+				for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
 					if (e->endPoint->number > v) {
 						fprintf(stdout, "e %i %i %s\n", v + offset, e->endPoint->number + offset, e->label);
 					}
 				}
 			}
-			/* and increment the offset */
-			offset += spanningTree->n;
-		}
 
-		dumpGraph(gp, spanningTree);
-		dumpShallowGraphCycle(sgp, patterns);
+			++i;
+
+			/* garbage collection */
+			dumpGraph(gp, g);
+
+		} else {
+			/* TODO should be handled by dumpgraph */
+			free(g);
+		}
 	}
 	free(labels);
 }
@@ -110,14 +91,14 @@ int main(int argc, char** argv) {
 		FILE* data;
 
 		if (argc == 1) {
-			map2Gaston(stdin, gp, sgp);
+			mapGraph2Gaston(stdin, gp, sgp);
 		} else {
 			data = fopen(argv[1], "r");
 			if (data == NULL) {
 				fprintf(stderr, "Could not open file provided by argument.\n");
 				return EXIT_FAILURE;
 			}
-			map2Gaston(data, gp, sgp);
+			mapGraph2Gaston(data, gp, sgp);
 			fclose(data);
 		}
 		

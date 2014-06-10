@@ -18,7 +18,7 @@ void printHelp() {
 }
 
 
-void map2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void mapTrees2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
 	int graphNumber;
 	struct ShallowGraph* patterns;
@@ -110,14 +110,14 @@ int main(int argc, char** argv) {
 		FILE* data;
 
 		if (argc == 1) {
-			map2Gaston(stdin, gp, sgp);
+			mapTrees2Gaston(stdin, gp, sgp);
 		} else {
 			data = fopen(argv[1], "r");
 			if (data == NULL) {
 				fprintf(stderr, "Could not open file provided by argument.\n");
 				return EXIT_FAILURE;
 			}
-			map2Gaston(data, gp, sgp);
+			mapTrees2Gaston(data, gp, sgp);
 			fclose(data);
 		}
 		

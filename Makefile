@@ -1,6 +1,7 @@
 TPKNAME = tpk
 LWMNAME = lwm
-MAPNAME = map
+MTGNAME = mtg
+MGGNAME = mgg
 CSCNAME = csc
 CPKNAME = cpk
 STSNAME = sts
@@ -17,7 +18,8 @@ CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 TPKOBJECTS = $(OBJECTS) ./executables/main.o
 LWMOBJECTS = $(OBJECTS) ./executables/levelwiseMain.o
-MAPOBJECTS = $(OBJECTS) ./executables/map2gaston.o
+MTGOBJECTS = $(OBJECTS) ./executables/mapTrees2gaston.o
+MGGOBJECTS = $(OBJECTS) ./executables/mapAIDS2gaston.o
 CSCOBJECTS = $(OBJECTS) ./executables/countSpanningTreeClasses.o
 CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
 STSOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingMain.o
@@ -26,7 +28,7 @@ CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
 main: sts
 	
 
-all: tpk lwm map csc cpk sts
+all: tpk lwm csc cpk sts mtg mgg
 	
 cpk: $(CPKOBJECTS)
 	@echo "\nLink Cyclic Pattern Kernel executable:"
@@ -44,9 +46,13 @@ lwm: $(LWMOBJECTS)
 	@echo "\nLink Levelwise Mining executable:"
 	gcc -o $(LWMNAME) $(LWMOBJECTS) $(CPPFLAGS)
 
-map: $(MAPOBJECTS)
+mtg: $(MTGOBJECTS)
 	@echo "\nLink Data Transformer executable:"
-	gcc -o $(MAPNAME) $(MAPOBJECTS) $(CPPFLAGS)
+	gcc -o $(MAPNAME) $(MTGOBJECTS) $(CPPFLAGS)
+
+mgg: $(MGGOBJECTS)
+	@echo "\nLink Data Transformer executable:"
+	gcc -o $(MAPNAME) $(MGGOBJECTS) $(CPPFLAGS)
 
 csc: $(CSCOBJECTS)
 	@echo "\nLink Count Graph Properties executable:"
