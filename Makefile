@@ -35,7 +35,7 @@ cpk: $(CPKOBJECTS)
 	gcc -o $(CPKNAME) $(CPKOBJECTS) $(CPPFLAGS)
 
 sts: $(STSOBJECTS)
-	echo "Link Spanning Tree Sampling executable:"
+	@echo "Link Spanning Tree Sampling executable:"
 	gcc -o $(STSNAME) $(STSOBJECTS) $(CPPFLAGS)
 
 tpk: $(TPKOBJECTS)
@@ -48,11 +48,11 @@ lwm: $(LWMOBJECTS)
 
 mtg: $(MTGOBJECTS)
 	@echo "\nLink Data Transformer executable:"
-	gcc -o $(MAPNAME) $(MTGOBJECTS) $(CPPFLAGS)
+	gcc -o $(MTGNAME) $(MTGOBJECTS) $(CPPFLAGS)
 
 mgg: $(MGGOBJECTS)
 	@echo "\nLink Data Transformer executable:"
-	gcc -o $(MAPNAME) $(MGGOBJECTS) $(CPPFLAGS)
+	gcc -o $(MGGNAME) $(MGGOBJECTS) $(CPPFLAGS)
 
 csc: $(CSCOBJECTS)
 	@echo "\nLink Count Graph Properties executable:"

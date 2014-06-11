@@ -16,14 +16,11 @@ void printHelp() {
 }
 
 
-void mapGraph2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void mapGraph2Gaston(int maxGraphs, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
-	int graphNumber;
-	struct ShallowGraph* patterns;
+	struct Graph* g;	
 	char** labels = aids99VertexLabelArray();
-
-	/* try to load a file */
-	createFileIterator(argv[1], gp);
+	int i = 0;
 
 
 	/* iterate over all graphs in the database */
@@ -32,16 +29,14 @@ void mapGraph2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* 
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n > 0) {
 			int v;
-
 			fprintf(stdout, "t # %i\n", g->number);
-
 
 			/* print vertices */
 			for (v=0; v<g->n; ++v) {
 				int i;
 				for (i=0; i<64; ++i) {
 					if (strcmp(g->vertices[v]->label, labels[i]) == 0) {
-						fprintf(stdout, "v %i %i\n", v + offset, i);
+						fprintf(stdout, "v %i %i\n", v, i);
 						break; /* continue with next vertex */
 					}
 				}
@@ -52,7 +47,7 @@ void mapGraph2Gaston(FILE* data, struct GraphPool* gp, struct ShallowGraphPool* 
 				struct VertexList* e;
 				for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
 					if (e->endPoint->number > v) {
-						fprintf(stdout, "e %i %i %s\n", v + offset, e->endPoint->number + offset, e->label);
+						fprintf(stdout, "e %i %i %s\n", v, e->endPoint->number, e->label);
 					}
 				}
 			}
@@ -83,24 +78,19 @@ int main(int argc, char** argv) {
 	} else {
 
 		/* create object pools */
-		struct ListPool *lp = createListPool(1);
-		struct VertexPool *vp = createVertexPool(1);
-		struct ShallowGraphPool *sgp = createShallowGraphPool(1, lp);
-		struct GraphPool *gp = createGraphPool(1, vp, lp);
+		struct ListPool *lp = createListPool(10000);
+		struct VertexPool *vp = createVertexPool(10000);
+		struct ShallowGraphPool *sgp = createShallowGraphPool(10000, lp);
+		struct GraphPool *gp = createGraphPool(1000, vp, lp);
 
-		FILE* data;
-
-		if (argc == 1) {
-			mapGraph2Gaston(stdin, gp, sgp);
-		} else {
-			data = fopen(argv[1], "r");
-			if (data == NULL) {
-				fprintf(stderr, "Could not open file provided by argument.\n");
-				return EXIT_FAILURE;
-			}
-			mapGraph2Gaston(data, gp, sgp);
-			fclose(data);
+		FILE* data = fopen(argv[1], "r");
+		if (data == NULL) {
+			fprintf(stderr, "Could not open file provided by argument.\n");
+			return EXIT_FAILURE;
 		}
+		createFileIterator(argv[1], gp);
+		mapGraph2Gaston(-1, gp, sgp);
+		destroyFileIterator();
 		
 		/* garbage collection */
 		freeGraphPool(gp);
