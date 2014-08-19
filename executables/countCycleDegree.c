@@ -7,6 +7,7 @@
 #include "../listComponents.h"
 #include "../loading.h"
 #include "../graphPrinting.h"
+#include "../connectedComponents.h"
 
 /**
  * Print --help message
@@ -23,6 +24,9 @@ void printHelp() {
 	printf("    -output O: write output to stdout\n");
 	printf("        a : cycle degrees of all vertices of each graph\n");
 	printf("        m : cycle degree of each graph\n");
+	printf("        c : 1 if g is a connected cactus graph\n");
+	printf("            0 if g is connected, but not a cactus\n");
+	printf("           -1 if g is not connected\n");
 	printf("        b : number of nontrivial bic. components\n\n");
 	printf("    -limit N: process the first N graphs in F\n\n");
 	printf("    -h | --help: display this help\n\n");
@@ -126,6 +130,18 @@ int main(int argc, char** argv) {
 				
 				if (outputOption == 'b') {
 					fprintf(stdout, "%i\n", compNumber);
+				}
+
+				if (outputOption == 'c') {
+					if (isConnected(g)) {
+						if (g->n - 1 + compNumber == g->m) {
+							fprintf(stdout, "1\n");
+						} else {
+							fprintf(stdout, "0\n");
+						}
+					} else {
+						fprintf(stdout, "-1\n");
+					}
 				}
 
 				/* cleanup */
