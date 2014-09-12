@@ -8,6 +8,7 @@
 #include "../loading.h"
 #include "../graphPrinting.h"
 #include "../connectedComponents.h"
+#include "../outerplanar.h"
 
 /**
  * Print --help message
@@ -27,6 +28,8 @@ void printHelp() {
 	printf("        c : 1 if g is a connected cactus graph\n");
 	printf("            0 if g is connected, but not a cactus\n");
 	printf("           -1 if g is not connected\n");
+	printf("        o : 1 if g is outerplanar\n");
+	printf("            0 if g is not outerplanar\n");
 	printf("        b : number of nontrivial bic. components\n\n");
 	printf("    -limit N: process the first N graphs in F\n\n");
 	printf("    -h | --help: display this help\n\n");
@@ -142,6 +145,28 @@ int main(int argc, char** argv) {
 					} else {
 						fprintf(stdout, "-1\n");
 					}
+				}
+
+				if (outputOption == 'o') {
+					char op = 1;
+					for (comp=biconnectedComponents; comp!=NULL; comp=comp->next) {
+						if (comp->m != 1) {
+							op = isOuterplanar(comp, sgp, gp);
+							if (op == 0) break;	
+						}
+					}
+					fprintf(stdout, "%i\n", op);
+				}
+
+				if (outputOption == 's') {
+					char op = 1;
+					for (comp=biconnectedComponents; comp!=NULL; comp=comp->next) {
+						if (comp->m != 1) {
+							op = isMaximalOuterplanarConv(comp, sgp, gp);
+							if (op == 0) break;	
+						}
+					}
+					fprintf(stdout, "%i\n", op);
 				}
 
 				/* cleanup */
