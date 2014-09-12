@@ -30,7 +30,7 @@ dataset_pathname = sys.argv[-1]
 kernel_type = 0
 
 # results dumped to
-auc_result_file = dataset_pathname + "-t {0}_aucResults".format(kernel_type) # will be set to something resembling input file name later
+auc_result_file = dataset_pathname + "-t{0}_aucResults".format(kernel_type) # will be set to something resembling input file name later
 
 # parallel stuff
 telnet_workers = []
