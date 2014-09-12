@@ -8,8 +8,8 @@
 
 
 /**
- * Check if a biconnected graph g is maximal outerplanar (mop) using the algorithm
- * of Sarah Mitchell, except that instead of the linear
+ * Check if a biconnected graph g with more than one edge is outerplanar 
+ * using the algorithm of Sarah Mitchell, except that instead of the linear
  * bucket sort, stdlibs qsort is used.
  *
  * The algorithm alters g but does not dump the remainder.
@@ -265,9 +265,8 @@ char isMaximalOuterplanar(struct Graph* g, struct ShallowGraphPool* sgp) {
 	return found;
 }
 
-
 /**
- * convenience method to apply Mitchells outerplanarity test to a graph given as
+ * convenience method to apply Mitchells test if g is a outerplanar biconnected component to a graph given as
  * ShallowGraph struct (i.e. a list of edges)
  *
  * Does not change original.
