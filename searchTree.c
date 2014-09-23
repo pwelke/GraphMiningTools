@@ -25,7 +25,11 @@ char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
 	/* if edge == NULL, stop recursion, remember, that some string ends here */
 	if (edge == NULL) {
 		root->visited += 1;
-		return 0;
+		if (root->visited == 1) {
+			return 1;
+		} else {
+			return 0;
+		}
 	} else {
 		struct VertexList* idx;
 		for (idx=root->neighborhood; idx; idx=idx->next) {
@@ -733,6 +737,7 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* numbe
 
 	if (head != 2) {
 		free(buffer);
+		fprintf(stderr, "Could not read pattern. Wrong number: %i (must be 2)\n", head);
 		return NULL;
 	}
 
