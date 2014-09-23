@@ -785,6 +785,114 @@ void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refineme
 	free(features);
 }
 
+/**
+Walk through the db, checking for each graph g \in db which refinements are subtrees of at least one of its spanning 
+trees. for all these refinements, the visited counter of its cString in currentLevel is increased. 
+*/
+void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int bufferSize = 100;
+	int i = 0;
+	FILE* stream = fopen(fileName, "r");
+	struct ShallowGraph* spanningTreeStrings = NULL;
+	int number;
+	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
+	
+	int dbg_firstPrune = 0;
+	int dbg_subset = 0;
+	int dbg_found = 0;
+
+	int** features = malloc(maxGraph * sizeof(int*));
+	for (i=0; i<maxGraph; ++i) {
+		features[i] = malloc((n + 1) * sizeof(int));
+	}
+	i = 0;
+	
+	/* iterate over all graphs in the database */
+	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
+		if (i >= minGraph) {
+			
+			struct ShallowGraph* spanningTreeString;
+			
+			int refinement;
+
+			features[i][n] = number;
+			if (features[i][n] == 0) {
+				fprintf(stderr, "Reading error. 0 was read\n");
+			}
+			for (refinement=0; refinement<n; ++refinement) {
+				features[i][refinement] = 0;
+			}
+			
+			/* if there is no frequent pattern from lower level contained in i, dont even start searching */
+			if (pruning[i] != 0) {
+				/* set d to one, meaning that all refinements have not yet been recognized to be subtree
+				of current graph */
+				/* for each spanning tree */
+				for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
+					/* convert streamed spanning tree string to graph */
+					struct Graph* spanningTree = treeCanonicalString2Graph(spanningTreeString, gp);
+					
+					/* for each refinement */
+					for (refinement=0; refinement<n; ++refinement) {
+						if (isSubset(pointers[refinement]->d, i)) {
+							--dbg_subset;
+							/* if refinement is not already found to be subtree of current graph */
+							if (!features[i][refinement]) {
+								--dbg_found;
+								/* if refinement is contained in spanning tree */
+								if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
+									/* currentLevel refinementstring visited +1 and continue with next refinement */
+									features[i][refinement] = 1;
+									++pointers[refinement]->visited;
+									++currentLevel->number;
+								} else {
+									features[i][refinement] = 0;
+								}
+							} else {
+								++dbg_found;
+							}
+						} else {
+							++dbg_subset;
+						}
+					}
+					dumpGraph(gp, spanningTree);
+				}
+			} else {
+				++dbg_firstPrune;
+			}
+		}
+
+		/* counting of read graphs and garbage collection */
+		++i;
+		dumpShallowGraphCycle(sgp, spanningTreeStrings);
+	}
+	fprintf(stderr, "initPrune=%i, skips=%i, subsetPrune=%i\n", dbg_firstPrune, dbg_found, dbg_subset);
+	dumpCachedGraph(subtreeCache);
+	fclose(stream);
+
+	/* pruning and output of frequent patterns */ 
+	maxGraph = i; /* only loop through graphs that were processed */
+	for (i=minGraph; i<maxGraph; ++i) {
+		int refinement;
+		pruning[i] = 0;
+		for (refinement=0; refinement<n; ++refinement) {
+			if ((features[i][refinement] == 1) && (pointers[refinement]->visited >= threshold)) {
+				fprintf(keyValueStream, "%i %i\n", features[i][n], pointers[refinement]->lowPoint);
+				//debug
+				if (features[i][n] == 0) {
+					fprintf(stderr, "Damn.\n");
+				}
+				addToPruningSet(pointers[refinement]->lowPoint, i);
+			}
+		}
+	}
+
+	for (i=0; i<maxGraph; ++i) {
+		free(features[i]);
+	}
+	free(features);
+}
+
 
 /**
 Walk through the db, checking for each graph g \in db which refinements are subtrees of at least one of its spanning 
