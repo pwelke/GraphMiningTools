@@ -77,21 +77,30 @@ int main(int argc, char** argv) {
 
 		/* user input handling */
 		for (param=2; param<argc; param+=2) {
+			char known = 0;
 			if ((strcmp(argv[param], "--help") == 0) || (strcmp(argv[param], "-h") == 0)) {
 				printHelp();
 				return EXIT_SUCCESS;
 			}
 			if (strcmp(argv[param], "-nGraphs") == 0) {
 				sscanf(argv[param+1], "%i", &maxGraph);
+				known = 1;
 			}
 			if (strcmp(argv[param], "-frequency") == 0) {
 				sscanf(argv[param+1], "%i", &threshold);
+				known = 1;
+
 			}
 			if (strcmp(argv[param], "-min") == 0) {
 				sscanf(argv[param+1], "%i", &minGraph);
+				known = 1;
 			}
 			if (strcmp(argv[param], "-patternSize") == 0) {
 				sscanf(argv[param+1], "%i", &maxPatternSize);
+				known = 1;
+			}
+			if (known == 0) {
+				fprintf(stderr, "Unknown parameter: %s\n", argv[param]);
 			}
 		}
 
@@ -146,7 +155,7 @@ int main(int argc, char** argv) {
 			refinements = malloc(refinementSize * sizeof(struct Graph*));
 
 			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-			scanDB(inputFileName, candidateSet, refinements, pointers, refinementSize, minGraph, maxGraph, threshold, countFile, gp, sgp);
+			scanDBNoCache(inputFileName, candidateSet, refinements, pointers, refinementSize, minGraph, maxGraph, threshold, countFile, gp, sgp);
 
 			/* threshold + 1 as candidateSet contains each candidate once, already */
 			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
