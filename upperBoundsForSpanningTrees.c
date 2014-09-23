@@ -145,6 +145,21 @@ is a better estimate than that, which will be applied.
 */
 long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+	long int estimate = getGoodEstimatePrecomputedBlocks(g, biconnectedComponents, sgp, gp);
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	return estimate;
+}
+
+/**
+Return an upper bound on the number of spanning trees in g, if the biconnected components of g have already
+been computed.
+Multiplies upper bounds for each biconnected component.
+For a bridge, there is exactly one spanning tree, 
+for a general biconnected block with n vertices and m edges 
+an upper bound is m choose (n-1). For outerplanar blocks there
+is a better estimate than that, which will be applied.  
+*/
+long int getGoodEstimatePrecomputedBlocks(struct Graph* g, struct ShallowGraph* biconnectedComponents, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct ShallowGraph* idx;
 	long estimate = 1;
 	int* vertices = malloc(g->n * sizeof(int));
@@ -177,7 +192,6 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 			However, we do not want to waste time doing nothing */
 		}
 	}
-	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	free(vertices);
 	return estimate;
 }
