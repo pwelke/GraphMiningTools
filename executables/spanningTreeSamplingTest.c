@@ -19,6 +19,7 @@
 
 char DEBUG_INFO = 1;
 
+/** Dump a list of struct Graphs. (e.g. the result of partitionIntoForestAndCycles()) **/
 void dumpGraphList(struct GraphPool* gp, struct Graph* g) {
 	if (g->next != NULL) {
 		dumpGraphList(gp, g->next);
@@ -44,11 +45,62 @@ void printHelp() {
 		   "            sample k spts using Wilsons algorithm\n"
 		   "        l: for all graphs with less than bound spts\n"
 		   "            sample k spts using explicit enumeration\n"
-		   "        p print the spanning tree patterns of all graphs with\n"
-		   "            less than filter spanning trees\n");
+		   "        p print k spanning tree patterns of all graphs. Use\n"
+		   "            listing for graphs with less than bound spanning trees\n"
+		   "        b print tree patterns for all connected components of the\n"
+		   "            bridge forest of the graphs\n");
 	printf("    -limit N: process the first N graphs in F (default: process all)\n");
 	printf("    -min M process graphs starting from Mth instance (default 0)\n\n");
 	printf("    -h | --help: display this help\n\n");
+}
+
+
+/**
+Sample a spanning tree from a cactus graph, given as a list of its biconnected components, uniformly at random.
+To this end, we just need to remove a random edge from each cycle = block of the graph. **/
+struct ShallowGraph* sampleSpanningTreeEdgesFromCactus(struct ShallowGraph* biconnectedComponents, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* spanningTree = getShallowGraph(sgp);
+	struct ShallowGraph* idx;
+	for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
+		if (idx->m == 1) {
+			appendEdge(spanningTree, shallowCopyEdge(idx->edges, sgp->listPool));
+		} else {
+			int removalEdgeId = rand() % idx->m;
+			struct VertexList* e;
+			int i = 0;
+			for (e=idx->edges; e!=NULL; e=e->next) {
+				if (i != removalEdgeId) {
+					appendEdge(spanningTree, shallowCopyEdge(e, sgp->listPool));
+				}
+				++i;
+			}
+		}
+	}
+	return spanningTree;
+}
+
+/**
+Sample a spanning tree from a cactus graph, given as a list of its biconnected components, uniformly at random.
+To this end, we just need to remove a random edge from each cycle = block of the graph. **/
+struct Graph* sampleSpanningTreeFromCactus(struct Graph* original, struct ShallowGraph* biconnectedComponents, struct GraphPool* gp) {
+	struct Graph* spanningTree = emptyGraph(original, gp);
+	struct ShallowGraph* idx;
+	for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
+		if (idx->m == 1) {
+			addEdgeBetweenVertices(idx->edges->startPoint->number, idx->edges->endPoint->number, idx->edges->label, spanningTree, gp);
+		} else {
+			int removalEdgeId = rand() % idx->m;
+			struct VertexList* e;
+			int i = 0;
+			for (e=idx->edges; e!=NULL; e=e->next) {
+				if (i != removalEdgeId) {
+					addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, spanningTree, gp);
+				}
+				++i;
+			}
+		}
+	}
+	return spanningTree;
 }
 
 
@@ -84,6 +136,7 @@ int main(int argc, char** argv) {
 		int minGraph = 0;
 
 		long int avgTrees = 0;
+		int cactusGraphs = 0;
 
 		/* user input handling */
 		for (param=2; param<argc; param+=2) {
@@ -257,6 +310,7 @@ int main(int argc, char** argv) {
 									dumpGraph(gp, tree);
 								}
 								dumpShallowGraphCycle(sgp, trees);
+								free(array);
 							} else {
 								/* if there are more than depth spanning trees, we sample depth of them uniformly at random */
 								int j;
@@ -300,22 +354,15 @@ int main(int argc, char** argv) {
 							if (g->n - 1 + compNumber == g->m) {
 								int j;
 								for (j=0; j<k; ++j) {
-									// struct Graph* tree;
-									// struct ShallowGraph* cString;
 									
-									// TODO here I need to sample a spannign tree for each cycle 
-									// also i need to transaform it to a shallowgraph called spanningTreeEdges
-									// for ()
+									struct Graph* tree = sampleSpanningTreeFromCactus(g, biconnectedComponents, gp);
+									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
+									addToSearchTree(searchTree, cString, gp, sgp);
 
-									// tree = shallowGraphToGraph(spanningTreeEdges, gp);
-
-									// /* assumes that tree is a tree */
-									// cString = canonicalStringOfTree(tree, sgp);
-									// addToSearchTree(searchTree, cString, gp, sgp);
-
-									// /* garbage collection */
-									// dumpGraph(gp, tree);
+									/* garbage collection */
+									dumpGraph(gp, tree);
 								}
+								++cactusGraphs;
 							} else {
 								long upperBound = getGoodEstimatePrecomputedBlocks(g, biconnectedComponents, sgp, gp);
 								if ((upperBound < depth) && (upperBound != -1)) {
@@ -389,7 +436,7 @@ int main(int argc, char** argv) {
 							struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
 							struct ShallowGraph* trees = getConnectedComponents(forest, sgp);
 							struct ShallowGraph* idx;
-							int d = 0;
+							
 							for (idx=trees; idx!=NULL; idx=idx->next) {
 								if (idx->m > 0) {
 									struct Graph* tree = shallowGraphToGraph(idx, gp);
@@ -430,6 +477,7 @@ int main(int argc, char** argv) {
 		}
 
 		fprintf(stderr, "avgTrees = %f\n", avgTrees / (double)i);
+		fprintf(stderr, "#cactusGraphs = %i\n", cactusGraphs);
 
 		/* global garbage collection */
 		destroyFileIterator();
