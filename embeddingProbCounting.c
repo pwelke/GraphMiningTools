@@ -543,51 +543,90 @@ void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool*
 	dumpShallowGraph(sgp, edges);
 }
 
-int checkIfSubIso(int i, int n, struct ShallowGraph* spanningTreeStrings, struct Graph** refinements, int** features, struct Vertex** pointers, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, 
+					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp) {
 	struct ShallowGraph* spanningTreeString;
 	int currentLevelNumber = 0;
-	// struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
+	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
 	
 	/* if there is no frequent pattern from lower level contained in i, dont even start searching */
 	if (pruning[i] != 0) {
-		/* set d to one, meaning that all refinements have not yet been recognized to be subtree
+		/* set d to one, meaning that all patternTrees have not yet been recognized to be subtree
 		of current graph */
 		/* for each spanning tree */
-		for (spanningTreeString=spanningTreeStrings; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
+		for (spanningTreeString=transactionTrees; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
 			/* convert streamed spanning tree string to graph */
 			struct Graph* spanningTree = treeCanonicalString2Graph(spanningTreeString, gp);
 			
-			/* for each refinement */
-			int refinement;
-			for (refinement=0; refinement<n; ++refinement) {
-				if (isSubset(pointers[refinement]->d, i)) {
-					// --dbg_subset;
-					/* if refinement is not already found to be subtree of current graph */
-					if (!features[i][refinement]) {
-						// --dbg_found;
-						/* if refinement is contained in spanning tree */
-						if (subtreeCheckLF(spanningTree, refinements[refinement], gp, sgp)) {
-						// if (subtreeCheckCached(spanningTree, refinements[refinement], gp, subtreeCache)) {
-							/* currentLevel refinementstring visited +1 and continue with next refinement */
-							features[i][refinement] = 1;
-							++pointers[refinement]->visited;
+			/* for each pattern */
+			int pattern;
+			for (pattern=0; pattern<n; ++pattern) {
+				if (isSubset(pointers[pattern]->d, i)) {
+					/* if pattern is not already found to be subtree of current graph */
+					if (!features[i][pattern]) {
+						/* if pattern is contained in spanning tree */
+						if (subtreeCheckCached(spanningTree, patternTrees[pattern], gp, subtreeCache)) {
+							/* currentLevel patternstring visited +1 and continue with next pattern */
+							features[i][pattern] = 1;
+							++pointers[pattern]->visited;
 							++currentLevelNumber;
 						} else {
-							features[i][refinement] = 0;
+							features[i][pattern] = 0;
 						}
-					} else {
-						// ++dbg_found;
 					}
-				} else {
-					// ++dbg_subset;
 				}
 			}
 			dumpGraph(gp, spanningTree);
 		}
-	} else {
-		// ++dbg_firstPrune;
 	}
-	// dumpCachedGraph(subtreeCache);
+	dumpCachedGraph(subtreeCache);
+	return currentLevelNumber;
+}
+
+
+/**
+ * Given some transaction trees (spanningTreeStrings), and some pattern trees (refinements), check for each 
+ * refinement if it is a subtree of at least threshold of the transaction trees. 
+ */
+int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, int threshold, 
+							int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp) {
+	struct ShallowGraph* spanningTreeString;
+	int currentLevelNumber = 0;
+	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
+	
+	/* if there is no frequent pattern from lower level contained in i, dont even start searching */
+	if (pruning[i] != 0) {
+		/* set d to one, meaning that all patternTrees have not yet been recognized to be subtree
+		of current graph */
+		/* for each spanning tree */
+		for (spanningTreeString=transactionTrees; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
+			/* convert streamed spanning tree string to graph */
+			struct Graph* spanningTree = treeCanonicalString2Graph(spanningTreeString, gp);
+			
+			/* for each refinement */
+			int pattern;
+			for (pattern=0; pattern<n; ++pattern) {
+				int count = 0;
+				if (isSubset(pointers[pattern]->d, i)) {
+					/* if pattern is contained in spanning tree */
+					// if (subtreeCheckLF(spanningTree, patternTrees[pattern], gp, sgp)) {
+					if (subtreeCheckCached(spanningTree, patternTrees[pattern], gp, subtreeCache)) {
+						/* currentLevel patternstring visited +1 and continue with next pattern */
+						++count;
+					}
+				}
+				if (count >= threshold) {
+					features[i][pattern] = 1;
+					++pointers[pattern]->visited;
+					++currentLevelNumber;
+				} else {
+					features[i][pattern] = 0;
+				}
+			}
+			dumpGraph(gp, spanningTree);
+		}
+	} 
+	dumpCachedGraph(subtreeCache);
 	return currentLevelNumber;
 }
 
@@ -602,11 +641,6 @@ void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** r
 	FILE* stream = fopen(fileName, "r");
 	struct ShallowGraph* spanningTreeStrings = NULL;
 	int number;
-	// struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
-	
-	// int dbg_firstPrune = 0;
-	// int dbg_subset = 0;
-	// int dbg_found = 0;
 
 	int** features = malloc(maxGraph * sizeof(int*));
 	for (i=0; i<maxGraph; ++i) {
@@ -617,7 +651,7 @@ void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** r
 	/* iterate over all graphs in the database */
 	while (((i < maxGraph) || (maxGraph == -1)) && (spanningTreeStrings = streamReadPatterns(stream, bufferSize, &number, sgp))) {
 		if (i >= minGraph) {
-
+			int threshold = (int)0.3 * number;
 			/* reinit the feature array */
 			int refinement;
 			features[i][n] = number;
@@ -627,16 +661,14 @@ void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** r
 			for (refinement=0; refinement<n; ++refinement) {
 				features[i][refinement] = 0;
 			}
-
-			currentLevel->number += checkIfSubIso(i, n, spanningTreeStrings, refinements, features, pointers, gp, sgp);
+			/* the pattern matching operator */
+			currentLevel->number += checkIfImportantSubIso(spanningTreeStrings, refinements, threshold, i, n, features, pointers, gp);
 		}
 
 		/* counting of read graphs and garbage collection */
 		++i;
 		dumpShallowGraphCycle(sgp, spanningTreeStrings);
 	}
-	// fprintf(stderr, "initPrune=%i, skips=%i, subsetPrune=%i\n", dbg_firstPrune, dbg_found, dbg_subset);
-	// dumpCachedGraph(subtreeCache);
 	fclose(stream);
 
 	/* pruning and output of frequent patterns */ 
@@ -647,10 +679,6 @@ void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** r
 		for (refinement=0; refinement<n; ++refinement) {
 			if ((features[i][refinement] == 1) && (pointers[refinement]->visited >= threshold)) {
 				fprintf(keyValueStream, "%i %i\n", features[i][n], pointers[refinement]->lowPoint);
-				// //debug
-				// if (features[i][n] == 0) {
-				// 	fprintf(stderr, "Damn.\n");
-				// }
 				addToPruningSet(pointers[refinement]->lowPoint, i);
 			}
 		}

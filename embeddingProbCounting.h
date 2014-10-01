@@ -16,7 +16,7 @@ struct TreeDB
 	char boring;
 };
 
-void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+// void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void getVertexAndEdgeHistogramsP(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void dumpTreeDB(struct GraphPool* gp, struct TreeDB* db);
 
@@ -26,12 +26,16 @@ struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGra
 struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges);
 int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+// void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void scanInMemoryDB(struct Graph** tp, int* tnp, struct Vertex* currentLevel, struct Graph** refinements, 
+// void scanInMemoryDB(struct Graph** tp, int* tnp, struct Vertex* currentLevel, struct Graph** refinements, 
+// 		struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, 
+// 		struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
-		struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, 
-		struct GraphPool* gp, struct ShallowGraphPool* sgp);
+int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, 
+					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp);
+int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, int threshold, 
+					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp);
 
 void initPruning(int nGraphs);
 void freePruning();
