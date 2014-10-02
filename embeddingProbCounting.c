@@ -598,15 +598,21 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 	if (pruning[i] != 0) {
 		/* set d to one, meaning that all patternTrees have not yet been recognized to be subtree
 		of current graph */
-		/* for each spanning tree */
+
+		int pattern;
+
+		/* convert streamed spanning tree strings to graph */
+		struct Graph* spanningTrees = NULL;
 		for (spanningTreeString=transactionTrees; spanningTreeString!=NULL; spanningTreeString=spanningTreeString->next) {
-			/* convert streamed spanning tree string to graph */
-			struct Graph* spanningTree = treeCanonicalString2Graph(spanningTreeString, gp);
-			
-			/* for each refinement */
-			int pattern;
-			for (pattern=0; pattern<n; ++pattern) {
-				int count = 0;
+			struct Graph* tmp = treeCanonicalString2Graph(spanningTreeString, gp);
+			tmp->next = spanningTrees;
+			spanningTrees = tmp;
+		}
+
+		for (pattern=0; pattern<n; ++pattern) {
+			int count = 0;
+			struct Graph* spanningTree;
+			for (spanningTree=spanningTrees; spanningTree!=NULL; spanningTree=spanningTree->next) {
 				if (isSubset(pointers[pattern]->d, i)) {
 					/* if pattern is contained in spanning tree */
 					// if (subtreeCheckLF(spanningTree, patternTrees[pattern], gp, sgp)) {
@@ -615,15 +621,15 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 						++count;
 					}
 				}
-				if (count >= threshold) {
+				/* if we cross the frequency threshold, we mark the pattern as matched and update 
+				 * bookkeeping information accordingly. This must be done exactly once */ 
+				if ((count >= threshold) && (features[i][pattern] == 0)){
 					features[i][pattern] = 1;
 					++pointers[pattern]->visited;
 					++currentLevelNumber;
-				} else {
-					features[i][pattern] = 0;
-				}
+				} 
 			}
-			dumpGraph(gp, spanningTree);
+			dumpGraphList(gp, spanningTree);
 		}
 	} 
 	dumpCachedGraph(subtreeCache);

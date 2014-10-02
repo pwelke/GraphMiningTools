@@ -102,6 +102,7 @@ int main(int argc, char** argv) {
 			}
 			if (known == 0) {
 				fprintf(stderr, "Unknown parameter: %s\n", argv[param]);
+				return EXIT_FAILURE;
 			}
 		}
 
