@@ -24,6 +24,7 @@ struct GraphPool* createGraphPool(unsigned int initNumberOfElements, struct Vert
 void freeGraphPool(struct GraphPool* p);
 struct Graph* getGraph(struct GraphPool* p);
 void dumpGraph(struct GraphPool* p, struct Graph *g);
+void dumpGraphList(struct GraphPool* gp, struct Graph* g);
 
 /******* stuff ***********************************************/
 char* copyString(char* string);

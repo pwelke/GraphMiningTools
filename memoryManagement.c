@@ -327,6 +327,14 @@ void dumpGraph(struct GraphPool* p, struct Graph *g) {
 	}
 }
 
+/** Dump a list of struct Graphs. (e.g. the result of partitionIntoForestAndCycles()) **/
+void dumpGraphList(struct GraphPool* gp, struct Graph* g) {
+	if (g->next != NULL) {
+		dumpGraphList(gp, g->next);
+	}
+	dumpGraph(gp, g);
+}
+
 
 /**********************************************/
 			
