@@ -19,14 +19,6 @@
 
 char DEBUG_INFO = 1;
 
-/** Dump a list of struct Graphs. (e.g. the result of partitionIntoForestAndCycles()) **/
-void dumpGraphList(struct GraphPool* gp, struct Graph* g) {
-	if (g->next != NULL) {
-		dumpGraphList(gp, g->next);
-	}
-	dumpGraph(gp, g);
-}
-
 /**
  * Print --help message
  */
