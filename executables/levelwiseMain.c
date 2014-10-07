@@ -148,7 +148,6 @@ int main(int argc, char** argv) {
 		filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureFile, gp);
 		filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureFile, gp);
 
-
 		/* print first two levels to patternfile */
 		fprintf(patternFile, "patterns size 0\n");
 		printStringsInSearchTree(frequentVertices, patternFile, sgp); 
