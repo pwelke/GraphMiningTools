@@ -688,9 +688,9 @@ void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** r
 			for (refinement=0; refinement<n; ++refinement) {
 				features[i][refinement] = 0;
 			}
+
 			/* the pattern matching operator */
 			currentLevel->number += embeddingOperator(spanningTreeStrings, refinements, fraction, i, n, features, pointers, gp);
-			// currentLevel->number += checkIfSubIso(spanningTreeStrings, refinements, i, n, features, pointers, gp);
 		}
 
 		/* counting of read graphs and garbage collection */
@@ -721,6 +721,16 @@ void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** r
 }
 
 
+/**
+ * Init patterns and pointers data structures for constant time access to the strings in a searchtree.
+ * Input: root = current = root of search tree containing canonical strings of trees.
+ * Output:
+ *   patterns is an array of Graph structs corresponding to the canonical strings stored in the search tree
+ *       ordered by dfs in the search tree.
+ *   pointers is an array of the same size of vertex structs holding pointers to the vertices in the search
+ *       tree where the canonical strings terminate. This yields constant time access to the information that
+ *       is/needs to be stored there. Please refer to the documentation in searchTree.c for further information.
+ */
 int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
