@@ -12,6 +12,27 @@
  **************************************************************************************/
 
 
+/**
+ * Search trees are prefix trees. They store a set of strings as well as a multiset of strings at
+ * the same time. They are implemented using struct Vertex and struct VertexList.
+ * A search tree is given by its root Vertex which plays a different role than all other vertices
+ * in the search tree. It contains global information about the strings contained in the tree.
+ * root->number : the number of strings that were added to the search tree. (multiset size)
+ * root->d      : the number of unique strings that were added to the search tree. (set size)
+ * all other members of the root node are undefined.
+ * All other vertices v contain information about strings that end there or continue. That is, the 
+ * path from root to v consists of labeled edges. The concatenation of these edge labels is the 
+ * current string up to v.
+ * v->neighborhood : the possible labels to extend the current string.
+ * v->visited      : the number of strings that end at v. (multiplicity)
+ * v->lowPoint     : the search-tree-widely unique id of the current string, or 0 if no string ends at v
+ * all other members are undefined.
+ *
+ * Usually, the labels of edges in search trees are hardcopied to be able to keep information if
+ * the original structure the information came from (usually a graph from the database) is dumped.
+ * E.g. when we want to store a global feature mapping over all graphs in the database.
+ */
+
 
 /**
  * Recursively add a string represented by a list of edges to a search tree given by its root.
@@ -393,7 +414,7 @@ char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root
 	}
 	dumpVertexListRecursively(gp->listPool, dump);
 
-		/* if all children of current were deleted and current is not end of frequent
+	/* if all children of current were deleted and current is not end of frequent
 	string, delete current and notify caller that we can delete the edge */
 	if (current->visited < threshold) {
 		if (current->visited > 0) {
