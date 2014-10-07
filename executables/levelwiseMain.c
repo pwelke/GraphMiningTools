@@ -28,6 +28,11 @@ void printHelp() {
 	printf("    -frequency T: absolute frequency threshold for frequent\n");
 	printf("        subtree patterns (e.g. 32 if a pattern has to occur\n");
 	printf("        in at least 32 transactions to be frequent) (default 1000)\n\n");
+	printf("    -fraction F: relative fraction of spanning trees of a graph\n");
+	printf("        s.t. a subtree S is considered a match. I.e. S is subgraph of\n");
+	printf("        at least F*X trees given X trees for a graph.\n");
+	printf("        If you set F<=0 or F>1, matching will fall back to the standard\n");
+	printf("        case where S needs to be subgraph of at lease one spanning tree.\n\n");
 	printf("    -min M: process graphs starting from Mth instance (default 0)\n\n");
 	printf("    -patternSize P: maximum number of edges in frequent patterns\n");
 	printf("        (default 20)\n\n");
@@ -57,6 +62,7 @@ int main(int argc, char** argv) {
 
 		/* init params to default values*/
 		char debugInfo = 1;
+		double fraction = 0.3;
 		int minGraph = 0;
 		int maxGraph = 10000;
 		int threshold = 1000;
@@ -75,6 +81,7 @@ int main(int argc, char** argv) {
 		struct Vertex* frequentEdges = getVertex(vp);
 		struct ShallowGraph* extensionEdges;
 		int patternSize;
+		int (*embeddingOperator)(struct ShallowGraph*, struct Graph**, double, int, int, int**, struct Vertex**, struct GraphPool*);
 
 		/* user input handling */
 		for (param=2; param<argc; param+=2) {
@@ -90,7 +97,10 @@ int main(int argc, char** argv) {
 			if (strcmp(argv[param], "-frequency") == 0) {
 				sscanf(argv[param+1], "%i", &threshold);
 				known = 1;
-
+			}
+			if (strcmp(argv[param], "-fraction") == 0) {
+				sscanf(argv[param+1], "%lf", &fraction);
+				known = 1;
 			}
 			if (strcmp(argv[param], "-min") == 0) {
 				sscanf(argv[param+1], "%i", &minGraph);
@@ -123,6 +133,13 @@ int main(int argc, char** argv) {
  		patternFile = fopen(patternFileName, "w");
 
 		initPruning(maxGraph);
+
+		/* choose the embedding operator for frequent pattern mining */
+		if ((fraction <= 0) || (fraction > 1)) {
+			embeddingOperator = &checkIfSubIsoCompatible;
+		} else {
+			embeddingOperator = &checkIfImportantSubIso;
+		}
 
 		/* find frequent single vertices and frequent edges */
 		/* set lowest id of any edge pattern to a number large enough to don't have collisions */
@@ -157,7 +174,7 @@ int main(int argc, char** argv) {
 			refinements = malloc(refinementSize * sizeof(struct Graph*));
 
 			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-			scanDBNoCache(inputFileName, candidateSet, refinements, pointers, refinementSize, minGraph, maxGraph, threshold, countFile, gp, sgp);
+			scanDBNoCache(inputFileName, candidateSet, refinements, pointers, refinementSize, minGraph, maxGraph, threshold, fraction, countFile, gp, sgp, embeddingOperator);
 
 			/* threshold + 1 as candidateSet contains each candidate once, already */
 			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
