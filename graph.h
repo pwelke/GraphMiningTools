@@ -53,6 +53,7 @@ struct ShallowGraph{
 	int m;
 	struct ShallowGraph* next;
 	struct ShallowGraph* prev;
+	int data;
 };
 
 

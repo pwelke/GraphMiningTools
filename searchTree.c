@@ -726,13 +726,31 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, str
 	return 1;
 }
 
+/**
+ * Backwards compatibility function for reading scenarios that do not need the number of strings that
+ * were read. Please refer to the documentation of streamReadPatternsAndTheirNumber()
+ */
 struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* number, struct ShallowGraphPool* sgp) {
-	int nPatterns;
+	int nPatterns = 0;
+	return streamReadPatternsAndTheirNumber(stream, bufferSize, number, &nPatterns, sgp);
+}
+
+/**
+ * Read string patterns from a FILE stream that were stored using (possibly multiple calls to) 
+ * printStringsInSearchTree().
+ * It returns a list of canonical string ShallowGraphs which do not contain pointers to vertices.
+ * Furthermore, it writes the id of the read transaction to number and the number of strings in 
+ * the returned ShallowGraph list to nPatterns.
+ * Each ShallowGraph in the list contains its multiplicity in the stored search 
+ * tree in ->data.
+ */
+struct ShallowGraph* streamReadPatternsAndTheirNumber(FILE* stream, int bufferSize, int* number, int* nPatterns, struct ShallowGraphPool* sgp) {
+	
 	int i;
 	struct ShallowGraph* patterns = NULL;
 
 	char* buffer = malloc(bufferSize * sizeof(char));
-	int head = fscanf(stream, " # %i %i\n", number, &nPatterns);
+	int head = fscanf(stream, " # %i %i\n", number, nPatterns);
 	int writeCount = 0;
 
 	if (head != 2) {
@@ -741,17 +759,18 @@ struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* numbe
 		return NULL;
 	}
 
-	for (i=0; i<nPatterns; ++i) {
+	for (i=0; i<*nPatterns; ++i) {
 		int multiplicity;
 		struct ShallowGraph* string;
 		writeCount += fscanf(stream, "%i\t", &multiplicity);
 		string = parseCString(stream, buffer, sgp);
+		string->data = multiplicity;
 		string->next = patterns;
 		patterns = string;
 	}	
 	
-	if (writeCount != nPatterns) {
-		fprintf(stderr, "Error: Wrote %i patterns, should have been %i\n", writeCount, nPatterns);
+	if (writeCount != *nPatterns) {
+		fprintf(stderr, "Error: Wrote %i patterns, should have been %i\n", writeCount, *nPatterns);
 	}
 
 	free(buffer);
