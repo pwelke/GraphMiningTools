@@ -1,3 +1,4 @@
+void suppressErrorOfEmptyTranslationUnit() {}
 // /**
 // return the histogram of vertices and edges in a db in a search tree.
 // traverses the db once.

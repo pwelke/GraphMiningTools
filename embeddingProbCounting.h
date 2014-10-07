@@ -27,15 +27,22 @@ struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, s
 void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges);
 int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 // void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, 
+					struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, 
+					double fraction, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp,
+					int (*embeddingOperator)(struct ShallowGraph*, struct Graph**, double, int, int, int**, struct Vertex**, struct GraphPool*));
+
 // void scanInMemoryDB(struct Graph** tp, int* tnp, struct Vertex* currentLevel, struct Graph** refinements, 
 // 		struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, 
 // 		struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, 
 					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp);
-int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, int threshold, 
+int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, double fraction, 
 					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp);
+int checkIfSubIsoCompatible(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, double fraction, 
+					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp);
+
 
 void initPruning(int nGraphs);
 void freePruning();
