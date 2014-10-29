@@ -161,7 +161,7 @@ struct ShallowGraph* listBiconnectedComponents(struct Graph* g, struct ShallowGr
 		allComponents->prev = NULL;
 	} else {
 		/* this case should not occur */
-		printf("Error: No cycle of shallow graphs after __tarjanFBC\n");
+		fprintf(stderr, "Error: No cycle of shallow graphs after __tarjanFBC\n");
 	}
 
 	/* garbage collection */
