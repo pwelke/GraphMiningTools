@@ -136,8 +136,12 @@ int getVertexNumberOfInducedGraph(struct ShallowGraph* g, int n, int* vertices) 
 
 
 /**
-Return an upper bound on the number of spanning trees in g.
-Multiplies upper bounds for each biconnected component.
+Return an upper bound on the number of spanning trees in g if g is connected.
+If g is not connected, this method estimates the number of spanning forests, where
+each tree component of the forest is a spanning tree of a connected component of g.
+
+The method multiplies upper bounds for each biconnected component (and connected 
+components, if g is not connected).
 For a bridge, there is exactly one spanning tree, 
 for a general biconnected block with n vertices and m edges 
 an upper bound is m choose (n-1). For outerplanar blocks there
@@ -149,6 +153,7 @@ long int getGoodEstimate(struct Graph* g, struct ShallowGraphPool* sgp, struct G
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	return estimate;
 }
+
 
 /**
 Return an upper bound on the number of spanning trees in g, if the biconnected components of g have already
