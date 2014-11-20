@@ -131,6 +131,7 @@ int main(int argc, char** argv) {
 					fprintf(stdout, "%i\n", maxDegree);
 				}
 				
+				// in filter: numberOfBlocks
 				if (outputOption == 'b') {
 					fprintf(stdout, "%i\n", compNumber);
 				}
