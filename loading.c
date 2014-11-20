@@ -96,7 +96,7 @@ struct Graph* readSimpleFormat(char* filename, int undirected, struct GraphPool 
 /* global variables used by the file iterator */
 FILE *FI_DATABASE = NULL;
 struct GraphPool* FI_GP = NULL;
-fpos_t STARTPOSITION;
+long int STARTPOSITION;
 
 /* open a database file to stream graphs from */
 void createFileIterator(char* filename, struct GraphPool* p) {
@@ -127,16 +127,16 @@ void destroyFileIterator() {
 A method to directly print a graph from the input stream to the specified output stream.
 */
 void writeCurrentGraph(FILE* out) {
-	fpos_t endPosition;
-	fpos_t currentPosition;
+	long int endPosition;
+	long int currentPosition;
 	
-	fgetpos(FI_DATABASE, &endPosition);
-	fsetpos(FI_DATABASE, &STARTPOSITION);
-	for (fgetpos(FI_DATABASE, &currentPosition); currentPosition!=endPosition; fgetpos(FI_DATABASE, &currentPosition)) {
-		char c = fgetc(FI_DATABASE);
-		fputc(out, c);
+	endPosition = ftell(FI_DATABASE);
+	fseek(FI_DATABASE, STARTPOSITION, SEEK_SET);
+	for (currentPosition = ftell(FI_DATABASE); currentPosition!=endPosition; currentPosition = ftell(FI_DATABASE)) {
+		int c = fgetc(FI_DATABASE);
+		fputc(c, out);
 		if (c == EOF) {
-			fsetpos(FI_DATABASE, &endPosition);
+			fseek(FI_DATABASE, endPosition, SEEK_SET);
 			break;
 		}
 	}
@@ -150,7 +150,7 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 		struct Graph* g = getGraph(FI_GP);
 
 		// store position for possible writethrough
-		fgetpos(FI_DATABASE, &STARTPOSITION);
+		STARTPOSITION = ftell(FI_DATABASE);
 
 		if (fscanf(FI_DATABASE, " # %i %i %i %i", &(g->number), &(g->activity), &(g->n), &(g->m)) == 4) {
 
