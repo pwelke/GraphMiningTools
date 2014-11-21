@@ -171,11 +171,13 @@ int main(int argc, char** argv) {
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 						break;
 
+						// in filter
 						case 'c':
 						spanningTreeEstimate = isConnected(g);
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 						break;
 
+						// in filter
 						case 'e':
 						spanningTreeEstimate = getGoodEstimate(g, sgp, gp);
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);

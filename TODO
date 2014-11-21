@@ -1,21 +1,20 @@
 TODO
 
-- check if isMaximalOuterplanar checks MAXIMAL outerplanar or just outerplanar
-
-- maybe add a prefix for private methods (that are not exposed in the header files)
-
+- levelwise: pruning and embedding should be separated.
 - documentation of listSpanningTrees!
-
-
 - buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
 - speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
 
 
 THEORY
+
 - is it useful to choose particular roots for subgraph iso checks, e.g. canonical roots?
+
 
 DONE 
 
+- maybe add a prefix for private methods (that are not exposed in the header files)
+- check if isMaximalOuterplanar checks MAXIMAL outerplanar or just outerplanar: checks outerplanar
 treeCenter
 cs_Tree
 cs_Compare

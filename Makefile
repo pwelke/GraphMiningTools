@@ -7,7 +7,8 @@ CPKNAME = cpk
 STSNAME = sts
 STTNAME = stt
 CCDNAME = ccd
-CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3
+GFNAME = gf
+CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=c99
 # OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c)) $(patsubst %.c,%.o,$(wildcard ./executables/*.c))
 # TPKOBJECTS = $(filter-out ./executables/cpkExtendedMain.o ./executables/countCycleDegree.o ./executables/cpkMain.o ./executables/levelwiseMain.o ./executables/map2gaston.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
 # LWMOBJECTS = $(filter-out ./executables/countCycleDegree.o ./executables/cpkMain.o ./executables/main.o ./executables/map2gaston.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
@@ -26,11 +27,16 @@ CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
 STSOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingMain.o
 STTOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingTest.o
 CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
+GFOBJECTS = $(OBJECTS) ./executables/filter.o
 
 main: sts
 	
 
-all: tpk lwm csc cpk sts mtg mgg stt
+all: tpk lwm csc cpk sts mtg mgg stt gf
+
+gf: $(GFOBJECTS)
+	@echo "\nLink Graph Filter executable:"
+	gcc -o $(GFNAME) $(GFOBJECTS) $(CPPFLAGS)
 	
 cpk: $(CPKOBJECTS)
 	@echo "\nLink Cyclic Pattern Kernel executable:"
