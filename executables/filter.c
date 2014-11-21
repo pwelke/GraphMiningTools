@@ -28,71 +28,6 @@ void printHelp() {
 	printf("This is the Help().\n");
 }
 
-
-/**
- * Change label of graph according to -label input parameter.
- */
-void labelProcessing(struct Graph* g, char p) {
-
-	switch (p) {
-	/* change nothing */
-	case 'n':
-		break;
-	case 0:
-		break;
-	/* active */
-	case 'a':
-		if (g->activity == 2) {
-			g->activity = 1;
-		} else {
-			g->activity = -1;
-		}
-		break;
-	/* moderately active */
-	case 'm':
-		if (g->activity == 0) {
-			g->activity = -1;
-		}
-		if (g->activity == 2) {
-			g->activity = 1;
-		}
-		break;
-	}
-}
-
-typedef enum {
-	leq,
-	eq,
-	geq,
-	neq,
-	less,
-	greater
-} Comparator;
-
-typedef enum {
-	graph,
-	idAndValue,
-	id,
-	value
-} OutputOption;
-
-typedef enum {
-	/* counting */
-	graphName,
-	count,
-	/* boolean properties */
-	connected,
-	outerplanar,
-	tree,
-	cactus,
-	/* numerical properties */
-	spanningTreeEstimate,
-	numberOfBlocks,
-	numberOfBridges,
-	/* TODO additional Parameter needed*/
-	spanningTreeListing
-} Filter;
-
 char conditionHolds(int measure, int threshold, Comparator comparator) {
 	switch (comparator) {
 	case leq:
@@ -282,62 +217,8 @@ int main(int argc, char** argv) {
 	while ((g = iterateFile(&aids99VertexLabel, &aids99EdgeLabel))) {
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n > 0) {
-			int measure = -1;
-			switch (filter) {
-
-			/* counts */ 
-			case count:
-				// TODO break condition for <= ==
-				if (conditionHolds(i, value, comparator)) {
-					output(g, i, oOption, out);
-				}
-				break;
-			case graphName:
-				if (conditionHolds(g->number, value, comparator)) {
-					output(g, g->number, oOption, out);
-				}
-				break;
-
-			/* boolean properties */
-			case connected:
-				measure = isConnected(g);
-				if (conditionHolds(measure, value, comparator)) {
-					output(g, measure, oOption, out);
-				}
-				break;
-			case outerplanar:
-				// isMaximalOuterplanar alters g. do not attempt to do something with g after this.
-				measure = isMaximalOuterplanar(g, sgp);
-				if (conditionHolds(measure, value, comparator)) {
-					output(g, measure, oOption, out);
-				}
-				break;
-			case tree:
-				measure = isTree(g);
-				if (conditionHolds(measure, value, comparator)) {
-					output(g, measure, oOption, out);
-				}
-				break;
-			/* numeric properties */
-			case spanningTreeEstimate:
-				measure = getGoodEstimate(g, sgp, gp);
-				if (conditionHolds(measure, value, comparator)) {
-					output(g, measure, oOption, out);
-				}
-				break;
-			case numberOfBlocks:
-				measure = getNumberOfBlocks(g, sgp);			
-				if (conditionHolds(measure, value, comparator)) {
-					output(g, measure, oOption, out);
-				}
-				break;
-			case numberOfBridges:
-				measure = getNumberOfBridges(g, sgp);			
-				if (conditionHolds(measure, value, comparator)) {
-					output(g, measure, oOption, out);
-				}
-				break;
-			}
+			
+			processGraph(i, g, filter, comparator, value, out, oOption, sgp, gp);
 
 			/***** do not alter ****/
 
@@ -351,11 +232,9 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	/*terminate output stream*/
+	/* terminate output stream, if we write graphs */
 	if (oOption == graph) {
 		fprintf(out, "\n$\n");
-	} else {
-		fprintf(out, "\n");
 	}
 
 	/* global garbage collection */
@@ -367,6 +246,114 @@ int main(int argc, char** argv) {
 
 	return EXIT_SUCCESS;
 }	
+
+void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, int value, FILE* out, OutputOption oOption, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	int measure = -1;
+	switch (filter) {
+
+	/* counts */ 
+	case count:
+		// TODO break condition for <= ==
+		if (conditionHolds(i, value, comparator)) {
+			output(g, i, oOption, out);
+		}
+		break;
+	case graphName:
+		if (conditionHolds(g->number, value, comparator)) {
+			output(g, g->number, oOption, out);
+		}
+		break;
+
+	/* labels */
+	case label:
+		if (conditionHolds(g->activity, value, comparator)) {
+			output(g, g->activity, oOption, out);
+		}
+		break;
+	case AvsI:
+		if (g->activity == 1) {
+			break;
+		}
+		if (g->activity == 0) {
+			g->activity = -1;
+		}
+		if (g->activity == 2) {
+			g->activity = 1;
+		}
+		if (conditionHolds(g->activity, value, comparator)) {
+			output(g, g->activity, oOption, out);
+		}
+		break;
+	case AvsMI:
+		if (g->activity == 2) {
+			g->activity = 1;
+		} else {
+			g->activity = -1;
+		}
+		if (conditionHolds(g->activity, value, comparator)) {
+			output(g, g->activity, oOption, out);
+		}
+		break;
+	case AMvsI:
+		if (g->activity == 0) {
+			g->activity = -1;
+		}
+		if (g->activity == 2) {
+			g->activity = 1;
+		}
+		if (conditionHolds(g->activity, value, comparator)) {
+			output(g, g->activity, oOption, out);
+		}
+		break;
+
+	/* boolean properties */
+	case connected:
+		measure = isConnected(g);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case outerplanar:
+		// isMaximalOuterplanar alters g. do not attempt to do something with g after this.
+		measure = isMaximalOuterplanar(g, sgp);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case tree:
+		measure = isTree(g);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case cactus:
+		measure = isCactus(g, sgp);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+
+	/* numeric properties */
+	case spanningTreeEstimate:
+		measure = getGoodEstimate(g, sgp, gp);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case numberOfBlocks:
+		measure = getNumberOfBlocks(g, sgp);			
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case numberOfBridges:
+		measure = getNumberOfBridges(g, sgp);			
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	}
+}
 
 int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
@@ -405,4 +392,48 @@ char isTree(struct Graph* g) {
 	} else { 
 		return 0;
 	}
+}
+
+char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
+	if (isConnected(g)) {
+		struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+		struct ShallowGraph* comp;
+		int compNumber = 0;
+		for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+			if (comp->m > 1) {
+				++compNumber;
+			}			
+		}
+		/* cleanup */
+		dumpShallowGraphCycle(sgp, biconnectedComponents);
+		return compNumber;
+	} else {
+		return 0;
+	}
+}
+
+/* TODO
+
+outerplanar.[ch]
+
+isMaximalOuterplanar() -> isOuterplanarBlock()
+isOuterplanar() -> isOuterplanarBlockShallow()
+isOuterplanarGraph() -> isOuterplanar()
+
+*/ 
+char isOuterplanarGraph(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+	struct ShallowGraph* comp;
+	char isOp = 1;
+	for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+		if (comp->m > 1) {
+			isOp = isOuterplanar(comp, sgp, gp);
+			if (isOp == 0) {
+				break;
+			}
+		}			
+	}
+	/* cleanup */
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	return isOp;
 }
