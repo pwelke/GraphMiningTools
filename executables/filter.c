@@ -25,48 +25,60 @@
  * Print --help message
  */
 void printHelp() {
-	printf("This is the Help().\n");
+printf("
+A stupid graph database processor that can evaluate some graph properties.\n
+Written 2014 by Pascal Welke in an attempt to clean up the mess of 3 years\n
+of writing theses.\n
+\n
+Usage: gf [options] [FILE]\n
+\n
+By default, or if FILE is '-', gf reads from stdin. It always outputs to\n
+stdout.\n
+\n
+For each graph in the input database, a measure, specified by the -f flag\n
+is computed and compared to a value, specified by the -v flag by means of\n
+a comparator specified by the -c flag. The output of gf is either the db \n
+of all graphs that satisfy the above condition or a list of those values \n
+or graph ids, which can be specified by the -o flag.\n
+\n
+options: options are always followed by a value.\n
+\t-v 'value': an integer (default -1)\n
+\t-c 'comparator': (default <=)\n
+\t\t<=\n
+\t\t==\n
+\t\t>=\n
+\t\t!=\n
+\t\t<\n
+\t\t>\n
+\t-f 'filter': specify which property of the graph or db is to be used\n
+\t             for comparison. (default count)\n
+\t\t*counting*\n
+\t\tgraphName\tthe graph ids, or names, specified in the database\n
+\t\tcount\trunning number of the graph (e.g. select the first 10 graphs)\n
+\t\t\t \n
+\t\t*labels* (labels are integer in our db format)\n
+\t\tlabel\tthe label of a graph, specified in the graph db\n
+\t\tAvsI\tfor AIDS99-target attributes\n
+\t\tAMvsI\tfor AIDS99-target attributes\n
+\t\tAvsMI\tfor AIDS99-target attributes\n
+\t\t\t \n
+\t\t*boolean properties* (return 0 or 1)\n
+\t\tconnected\tcheck if a graph is connected\n
+\t\touterplanar\t check if a graph is outerplanar\n
+\t\ttree\t check if a graph is a tree\n
+\t\tcactus\t check if a graph is a connected cactus graph\n
+\t\t\t \n
+\t\t*numerical properties*\n
+\t\tspanningTreeEstimate\tcompute an upper bound on the number of\n
+\t\t\t\tspanning trees in a graph\n
+\t\tnumberOfBlocks\tcompute the number of biconnected blocks\n
+\t\tnumberOfBridges\tcompute the number of bridges in a graph\n
+\t\t\t \n
+\t\t*TODO additional Parameter needed*\n
+\t\tspanningTreeListing\t \n
+\n
+");
 }
-
-char conditionHolds(int measure, int threshold, Comparator comparator) {
-	switch (comparator) {
-	case leq:
-		return measure <= threshold;
-		break;
-	case eq:
-		return measure == threshold;
-		break;
-	case geq:
-		return measure >= threshold;
-		break;
-	case neq:
-		return measure != threshold;
-		break;
-	case less:
-		return measure < threshold;
-		break;
-	case greater:
-		return measure > threshold;
-		break;
-	}
-	// should not happen
-	return 0;
-}
-
-void output(struct Graph* g, int measure, OutputOption option, FILE* out) {
-	switch (option) {
-	case graph:
-		writeCurrentGraph(out);
-		break;
-	case idAndValue:
-		fprintf(out, "%i %i\n", g->number, measure);
-		break;
-	case value:
-		fprintf(out, "%i\n", measure);
-	case id:
-		fprintf(out, "%i\n", g->number);
-	}
-} 
 
 
 /**
@@ -91,7 +103,7 @@ int main(int argc, char** argv) {
 	Filter filter = count;
 	Comparator comparator = geq;
 	OutputOption oOption = graph;
-	int value = 0;
+	int value = -1;
 
 	/* parse command line arguments */
 	int arg;
@@ -315,7 +327,7 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case outerplanar:
 		// isMaximalOuterplanar alters g. do not attempt to do something with g after this.
-		measure = isMaximalOuterplanar(g, sgp);
+		measure = isOuterplanarGraph(g, sgp, gp);
 		if (conditionHolds(measure, value, comparator)) {
 			output(g, measure, oOption, out);
 		}
@@ -355,6 +367,53 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 	}
 }
 
+/**
+Check if a condition of the form measure comparator threshold holds.
+E.g. measure <= threshold.
+*/
+char conditionHolds(int measure, int threshold, Comparator comparator) {
+	switch (comparator) {
+	case leq:
+		return measure <= threshold;
+		break;
+	case eq:
+		return measure == threshold;
+		break;
+	case geq:
+		return measure >= threshold;
+		break;
+	case neq:
+		return measure != threshold;
+		break;
+	case less:
+		return measure < threshold;
+		break;
+	case greater:
+		return measure > threshold;
+		break;
+	}
+	// should not happen
+	return 0;
+}
+
+void output(struct Graph* g, int measure, OutputOption option, FILE* out) {
+	switch (option) {
+	case graph:
+		writeCurrentGraph(out);
+		break;
+	case idAndValue:
+		fprintf(out, "%i %i\n", g->number, measure);
+		break;
+	case value:
+		fprintf(out, "%i\n", measure);
+	case id:
+		fprintf(out, "%i\n", g->number);
+	}
+} 
+
+/**
+Count the number of biconnected components that are not a bridge.
+*/
 int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	struct ShallowGraph* comp;
@@ -369,6 +428,10 @@ int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp) {
 	return compNumber;
 }
 
+/**
+Count the number of edges in the graph that are bridges. 
+I.e. count the number of biconnected components with only one edge.
+*/
 int getNumberOfBridges(struct Graph* g, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	struct ShallowGraph* comp;
@@ -394,6 +457,10 @@ char isTree(struct Graph* g) {
 	}
 }
 
+/**
+A cactus is a connected graph where each nontrivial biconnected block (i.e., a
+biconnected component that is not a bridge) is a simple cycle.
+*/
 char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
 	if (isConnected(g)) {
 		struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
@@ -412,7 +479,14 @@ char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
 	}
 }
 
-/* TODO
+/**
+An outerplanar graph is a graph that can be drawn in the plane such that
+(1) edges only intersect at vertices and
+(2) each vertex can be reached from the outer face without crossing an edge.
+
+A graph is outerplanar if and only if each of its biconnected components is outerplanar.
+
+TODO
 
 outerplanar.[ch]
 
