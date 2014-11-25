@@ -25,59 +25,17 @@
  * Print --help message
  */
 void printHelp() {
-printf("
-A stupid graph database processor that can evaluate some graph properties.\n
-Written 2014 by Pascal Welke in an attempt to clean up the mess of 3 years\n
-of writing theses.\n
-\n
-Usage: gf [options] [FILE]\n
-\n
-By default, or if FILE is '-', gf reads from stdin. It always outputs to\n
-stdout.\n
-\n
-For each graph in the input database, a measure, specified by the -f flag\n
-is computed and compared to a value, specified by the -v flag by means of\n
-a comparator specified by the -c flag. The output of gf is either the db \n
-of all graphs that satisfy the above condition or a list of those values \n
-or graph ids, which can be specified by the -o flag.\n
-\n
-options: options are always followed by a value.\n
-\t-v 'value': an integer (default -1)\n
-\t-c 'comparator': (default <=)\n
-\t\t<=\n
-\t\t==\n
-\t\t>=\n
-\t\t!=\n
-\t\t<\n
-\t\t>\n
-\t-f 'filter': specify which property of the graph or db is to be used\n
-\t             for comparison. (default count)\n
-\t\t*counting*\n
-\t\tgraphName\tthe graph ids, or names, specified in the database\n
-\t\tcount\trunning number of the graph (e.g. select the first 10 graphs)\n
-\t\t\t \n
-\t\t*labels* (labels are integer in our db format)\n
-\t\tlabel\tthe label of a graph, specified in the graph db\n
-\t\tAvsI\tfor AIDS99-target attributes\n
-\t\tAMvsI\tfor AIDS99-target attributes\n
-\t\tAvsMI\tfor AIDS99-target attributes\n
-\t\t\t \n
-\t\t*boolean properties* (return 0 or 1)\n
-\t\tconnected\tcheck if a graph is connected\n
-\t\touterplanar\t check if a graph is outerplanar\n
-\t\ttree\t check if a graph is a tree\n
-\t\tcactus\t check if a graph is a connected cactus graph\n
-\t\t\t \n
-\t\t*numerical properties*\n
-\t\tspanningTreeEstimate\tcompute an upper bound on the number of\n
-\t\t\t\tspanning trees in a graph\n
-\t\tnumberOfBlocks\tcompute the number of biconnected blocks\n
-\t\tnumberOfBridges\tcompute the number of bridges in a graph\n
-\t\t\t \n
-\t\t*TODO additional Parameter needed*\n
-\t\tspanningTreeListing\t \n
-\n
-");
+	FILE* helpFile = fopen("executables/filterHelp.txt", "r");
+	if (helpFile != NULL) {
+		int c = EOF;
+		while ((c = fgetc(helpFile)) != EOF) {
+			fputc(c, stdout);
+		}
+		fclose(helpFile);
+	} else {
+		fprintf(stderr, "Could not read helpfile\n");
+		return EXIT_FAILURE;
+	}
 }
 
 
@@ -86,11 +44,11 @@ options: options are always followed by a value.\n
  */
 int main(int argc, char** argv) {
 
-	/* create object pools */
-	struct ListPool *lp = createListPool(10000);
-	struct VertexPool *vp = createVertexPool(10000);
-	struct ShallowGraphPool *sgp = createShallowGraphPool(1000, lp);
-	struct GraphPool *gp = createGraphPool(100, vp, lp);
+	/* object pools */
+	struct ListPool *lp;
+	struct VertexPool *vp;
+	struct ShallowGraphPool *sgp;
+	struct GraphPool *gp;
 
 	/* pointer to the current graph which is returned by the input iterator */
 	struct Graph* g = NULL;
@@ -175,6 +133,10 @@ int main(int argc, char** argv) {
 				comparator = greater;
 				break;
 			}
+			if (strcmp(optarg, "!=") == 0) {
+				comparator = neq;
+				break;
+			}
 			fprintf(stderr, "Unknown comparator: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -209,6 +171,12 @@ int main(int argc, char** argv) {
 			break;
 		}
 	}
+
+	/* init object pools */
+	lp = createListPool(10000);
+	vp = createVertexPool(10000);
+	sgp = createShallowGraphPool(1000, lp);
+	gp = createGraphPool(100, vp, lp);
 
 	/* initialize the stream to read graphs from */
 	createStdinIterator(gp);
