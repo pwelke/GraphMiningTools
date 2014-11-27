@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include "loading.h"
 
@@ -94,15 +95,41 @@ struct Graph* readSimpleFormat(char* filename, int undirected, struct GraphPool 
 
 
 /* global variables used by the file iterator */
-FILE *FI_DATABASE = NULL;
+FILE* FI_DATABASE = NULL;
 struct GraphPool* FI_GP = NULL;
-long int STARTPOSITION;
+// long int STARTPOSITION = 0;
+
+/* cache for current graph */
+char** HEAD_PTR = NULL;
+size_t* HEAD_SIZE = NULL;
+char** VERTEX_PTR = NULL;
+size_t* VERTEX_SIZE = NULL;
+char** EDGE_PTR = NULL;
+size_t* EDGE_SIZE = NULL;
+
+void initCache() {
+	HEAD_SIZE = malloc(sizeof(size_t));
+	*HEAD_SIZE = 20;
+	HEAD_PTR = malloc(sizeof(char*));
+	*HEAD_PTR = malloc(*HEAD_SIZE * sizeof(char));
+
+	VERTEX_SIZE = malloc(sizeof(size_t));
+	*VERTEX_SIZE = 20;
+	VERTEX_PTR = malloc(sizeof(char*));
+	*VERTEX_PTR = malloc(*VERTEX_SIZE * sizeof(char));
+
+	EDGE_SIZE = malloc(sizeof(size_t));
+	*EDGE_SIZE = 20;
+	EDGE_PTR = malloc(sizeof(char*));
+	*EDGE_PTR = malloc(*EDGE_SIZE * sizeof(char));
+}
 
 /* open a database file to stream graphs from */
 void createFileIterator(char* filename, struct GraphPool* p) {
 
 	if ((FI_DATABASE = fopen(filename, "r"))) {
 		FI_GP = p;
+		initCache();
 	} else {
 		printf("File %s not found\n", filename);
 	}
@@ -115,11 +142,30 @@ init stdin to be the stream to read graphs from
 void createStdinIterator(struct GraphPool* p) {
 	FI_DATABASE = stdin;
 	FI_GP = p;
+	initCache();
 }
 
 /** close the datastream */
 void destroyFileIterator() {
 	fclose(FI_DATABASE);
+	
+	free(HEAD_SIZE);
+	free(*HEAD_PTR);
+	free(HEAD_PTR);
+	HEAD_PTR = NULL;
+	HEAD_SIZE = NULL;
+
+	free(VERTEX_SIZE);
+	free(*VERTEX_PTR);
+	free(VERTEX_PTR);
+	VERTEX_PTR = NULL;
+	VERTEX_SIZE = NULL;
+
+	free(EDGE_SIZE);
+	free(*EDGE_PTR);
+	free(EDGE_PTR);
+	EDGE_PTR = NULL;
+	EDGE_SIZE = NULL;
 }
 
 
@@ -127,19 +173,9 @@ void destroyFileIterator() {
 A method to directly print a graph from the input stream to the specified output stream.
 */
 void writeCurrentGraph(FILE* out) {
-	long int endPosition;
-	long int currentPosition;
-	
-	endPosition = ftell(FI_DATABASE);
-	fseek(FI_DATABASE, STARTPOSITION, SEEK_SET);
-	for (currentPosition = ftell(FI_DATABASE); currentPosition!=endPosition; currentPosition = ftell(FI_DATABASE)) {
-		int c = fgetc(FI_DATABASE);
-		fputc(c, out);
-		if (c == EOF) {
-			fseek(FI_DATABASE, endPosition, SEEK_SET);
-			break;
-		}
-	}
+	fputs(*HEAD_PTR, out);
+	fputs(*VERTEX_PTR, out);
+	fputs(*EDGE_PTR, out);
 }
 
 /* stream a graph from a database file of the format described in the documentation */
@@ -149,26 +185,32 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 		int error = 0;
 		struct Graph* g = getGraph(FI_GP);
 
-		// store position for possible writethrough
-		STARTPOSITION = ftell(FI_DATABASE);
+		// dependent on GNU C
+		getline(HEAD_PTR, HEAD_SIZE, FI_DATABASE);
 
-		if (fscanf(FI_DATABASE, " # %i %i %i %i", &(g->number), &(g->activity), &(g->n), &(g->m)) == 4) {
+		if (sscanf(*HEAD_PTR, " # %i %i %i %i", &(g->number), &(g->activity), &(g->n), &(g->m)) == 4) {
 
 			if ((g->vertices = malloc(g->n * sizeof(struct Graph*)))) {
 
 				if (error == 0) {
+					char* currentPosition;
+					// dependent on GNU C
+					getline(VERTEX_PTR, VERTEX_SIZE, FI_DATABASE);
+					currentPosition = *VERTEX_PTR;
+
 					/* read vertex info */
 					for (i=0; i<g->n; ++i) {
 						int label = -1;
-
-						if (fscanf(FI_DATABASE, " %i", &label) == 1) {
+						int charsRead;
+						if (sscanf(currentPosition, " %i%n", &label, &charsRead) == 1) {
+							currentPosition += charsRead;
 
 							g->vertices[i] = getVertex(FI_GP->vertexPool);
 							g->vertices[i]->label = getVertexLabel(label);
 							g->vertices[i]->number = i;
 							g->vertices[i]->isStringMaster = 1;
 						} else {
-							printf("Error vertex\n");
+							fprintf(stderr, "Error vertex\n");
 							error = 1;
 							free(g->vertices);
 							break;
@@ -177,14 +219,22 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 				}
 
 				if (error == 0) {
+					char* currentPosition;
+					// dependent on GNU C
+					getline(EDGE_PTR, EDGE_SIZE, FI_DATABASE);
+					currentPosition = *EDGE_PTR;
 					/* read edge info */
 					for (i=0; i<g->m; ++i) {
 						int label = -1;
 						int v,w;
+						int charsRead;
 
-						if (fscanf(FI_DATABASE, " %i %i %i", &v, &w, &label) == 3) {
+						if (sscanf(currentPosition, " %i %i %i%n", &v, &w, &label, &charsRead) == 3) {
+							
 							struct VertexList* e = getVertexList(FI_GP->listPool);
 							struct VertexList* f = getVertexList(FI_GP->listPool);
+							
+							currentPosition += charsRead;
 
 							/* edge */
 							e->startPoint = g->vertices[v-1];
@@ -201,7 +251,7 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 
 							addEdge(f->startPoint, f);
 						} else {
-							printf("Error edge\n");
+							fprintf(stderr, "Error edge\n");
 							error = 1;
 							free(g->vertices);
 							break;
@@ -210,7 +260,7 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 				}
 			} else {
 				error = 1;
-				printf("Error allocating vertices\n");
+				fprintf(stderr, "Error allocating vertices\n");
 			}
 
 			/* if everything worked, return graph, otherwise return graph initialized to -1 */
@@ -222,19 +272,19 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 
 				/* go to the next occurrence of # */
 				if (fgetpos(FI_DATABASE, &previous) != 0)
-					printf("Error obtaining file stream position\n");
+					fprintf(stderr, "Error obtaining file stream position\n");
 				if (fscanf(FI_DATABASE, "%c", &c) != 1)
-					printf("Error skipping invalid graph\n");
+					fprintf(stderr, "Error skipping invalid graph\n");
 				while (c != '#') {
 					if (fgetpos(FI_DATABASE, &previous) != 0)
-						printf("Error obtaining file stream position\n");
+						fprintf(stderr, "Error obtaining file stream position\n");
 					if (fscanf(FI_DATABASE, "%c", &c) != 1)
-						printf("Error skipping invalid graph\n");
+						fprintf(stderr, "Error skipping invalid graph\n");
 				}
 
 				/* go to the previous position s.t. the next char in the file stream is # */
 				if (fsetpos(FI_DATABASE, &previous) != 0)
-					printf("Error positioning file stream pointer");
+					fprintf(stderr, "Error positioning file stream pointer");
 
 				g->n = g->m = g->number = g->activity = -1;
 				return g;
@@ -243,6 +293,9 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 		} else {
 			/* if reading of header does not work anymore, there is no graph left */
 			dumpGraph(FI_GP, g);
+			if (**HEAD_PTR != '$') {
+				fprintf(stderr, "Invalid Graph header: %s\n", *HEAD_PTR);
+			}
 			return NULL;
 		}
 	} else {
