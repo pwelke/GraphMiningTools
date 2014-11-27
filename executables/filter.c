@@ -24,7 +24,7 @@
 /**
  * Print --help message
  */
-void printHelp() {
+int printHelp() {
 	FILE* helpFile = fopen("executables/filterHelp.txt", "r");
 	if (helpFile != NULL) {
 		int c = EOF;
@@ -32,6 +32,7 @@ void printHelp() {
 			fputc(c, stdout);
 		}
 		fclose(helpFile);
+		return EXIT_SUCCESS;
 	} else {
 		fprintf(stderr, "Could not read helpfile\n");
 		return EXIT_FAILURE;
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
 
 	/* user set variables to specify what needs to be done */
 	Filter filter = count;
-	Comparator comparator = geq;
+	Comparator comparator = pass;
 	OutputOption oOption = graph;
 	int value = -1;
 
@@ -106,7 +107,23 @@ int main(int argc, char** argv) {
 				break;
 			}
 			if (strcmp(optarg, "numberOfBridges") == 0) {
-				filter = outerplanar;
+				filter = numberOfBridges;
+				break;
+			}
+			if (strcmp(optarg, "maxCycleDegree") == 0) {
+				filter = maxCycleDegree;
+				break;
+			}
+			if (strcmp(optarg, "minCycleDegree") == 0) {
+				filter = minCycleDegree;
+				break;
+			}
+			if (strcmp(optarg, "maxDegree") == 0) {
+				filter = maxDegree;
+				break;
+			}
+			if (strcmp(optarg, "minDegree") == 0) {
+				filter = minDegree;
 				break;
 			}
 			fprintf(stderr, "Unknown filter: %s\n", optarg);
@@ -115,6 +132,10 @@ int main(int argc, char** argv) {
 		case 'c':
 			if (strcmp(optarg, "==") == 0) {
 				comparator = eq;
+				break;
+			}
+			if (strcmp(optarg, "!=") == 0) {
+				comparator = neq;
 				break;
 			}
 			if (strcmp(optarg, "<=") == 0) {
@@ -131,10 +152,6 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, ">") == 0) {
 				comparator = greater;
-				break;
-			}
-			if (strcmp(optarg, "!=") == 0) {
-				comparator = neq;
 				break;
 			}
 			fprintf(stderr, "Unknown comparator: %s\n", optarg);
@@ -178,20 +195,23 @@ int main(int argc, char** argv) {
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
 
-	/* initialize the stream to read graphs from */
-	createStdinIterator(gp);
-	char* filename = "stdin";
-	/* check if there is a filename present in the command line arguments */
+	/* initialize the stream to read graphs from 
+	   check if there is a filename present in the command line arguments 
+	   if so, open the file, if not, read from stdin */
 	if (optind < argc) {
-		filename = argv[optind];
+		char* filename = argv[optind];
 		/* if the present filename is not '-' then init a file iterator for that file name */
 		if (strcmp(filename, "-") != 0) {
 			createFileIterator(filename, gp);
-		} 
+		} else {
+			createStdinIterator(gp);
+		}
+	} else {
+		createStdinIterator(gp);
 	}
 
-	// // debug
-	// fprintf(stdout, "filter=%i, comparator=%i, oOption=%i, value=%i, stream=%s\n", filter, comparator, oOption, value, filename);
+	// debug
+	// fprintf(stderr, "filter=%i, comparator=%i, oOption=%i, value=%i, stream=%s\n", filter, comparator, oOption, value, filename);
 
 	/* iterate over all graphs in the database */
 	while ((g = iterateFile(&aids99VertexLabel, &aids99EdgeLabel))) {
@@ -214,7 +234,7 @@ int main(int argc, char** argv) {
 
 	/* terminate output stream, if we write graphs */
 	if (oOption == graph) {
-		fprintf(out, "\n$\n");
+		fprintf(out, "$\n");
 	}
 
 	/* global garbage collection */
@@ -332,8 +352,33 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 			output(g, measure, oOption, out);
 		}
 		break;
+	case maxDegree:
+		measure = getMaxDegree(g);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case minDegree:
+		measure = getMinDegree(g);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case maxCycleDegree:
+		measure = getMaxCycleDegree(g, sgp);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case minCycleDegree:
+		measure = getMinCycleDegree(g, sgp);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
 	}
 }
+
 
 /**
 Check if a condition of the form measure comparator threshold holds.
@@ -359,10 +404,14 @@ char conditionHolds(int measure, int threshold, Comparator comparator) {
 	case greater:
 		return measure > threshold;
 		break;
+	case pass:
+		return 1;
+		break;
 	}
 	// should not happen
 	return 0;
 }
+
 
 void output(struct Graph* g, int measure, OutputOption option, FILE* out) {
 	switch (option) {
@@ -378,6 +427,7 @@ void output(struct Graph* g, int measure, OutputOption option, FILE* out) {
 		fprintf(out, "%i\n", g->number);
 	}
 } 
+
 
 /**
 Count the number of biconnected components that are not a bridge.
@@ -395,6 +445,7 @@ int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp) {
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	return compNumber;
 }
+
 
 /**
 Count the number of edges in the graph that are bridges. 
@@ -414,6 +465,122 @@ int getNumberOfBridges(struct Graph* g, struct ShallowGraphPool* sgp) {
 	return bridgeNumber;
 }
 
+
+/**
+Compute the maximum degree of any vertex in g.
+A graph without vertices has maxdegree -1.
+
+This method can handle graphs that are not full, i.e. there
+are positions in the g->vertices array that are NULL.
+*/
+int getMaxDegree(struct Graph* g) {
+	int max = -1;
+	int v;
+	for (v=0; v<g->n; ++v) {
+		if (g->vertices[v] != NULL) {
+			int deg = degree(g->vertices[v]);
+			if (max < deg) {
+				max = deg;
+			}
+		}
+	}
+	return max;
+}
+
+
+/**
+Compute the minimum degree of any vertex in g.
+A graph without vertices has mindegree INT_MAX.
+
+This method can handle graphs that are not full, i.e. there
+are positions in the g->vertices array that are NULL.
+*/
+int getMinDegree(struct Graph* g) {
+	int min = INT_MAX;
+	int v;
+	for (v=0; v<g->n; ++v) {
+		if (g->vertices[v] != NULL) {
+			int deg = degree(g->vertices[v]);
+			if (min > deg) {
+				min = deg;
+			}
+		}
+	}
+	return min;
+}
+
+int* computeCycleDegrees(struct Graph* g, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+
+	/* store for each vertex if the current bic.comp was already counted */
+	int* occurrences = malloc(g->n * sizeof(int));
+	/* store the cycle degrees of each vertex in g */
+	int* cycleDegrees = malloc(g->n * sizeof(int));
+
+	int v;
+	struct ShallowGraph* comp;
+	int compNumber = 0;
+
+	for (v=0; v<g->n; ++v) {
+		occurrences[v] = -1;
+		cycleDegrees[v] = 0;
+	}
+
+	for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+		if (comp->m > 1) {
+			struct VertexList* e;
+			for (e=comp->edges; e!=NULL; e=e->next) {
+				if (occurrences[e->startPoint->number] < compNumber) {
+					occurrences[e->startPoint->number] = compNumber;
+					++cycleDegrees[e->startPoint->number];
+				}
+				if (occurrences[e->endPoint->number] < compNumber) {
+					occurrences[e->endPoint->number] = compNumber;
+					++cycleDegrees[e->endPoint->number];
+				}
+			}
+			++compNumber;
+		}			
+	}
+	free(occurrences);
+	return cycleDegrees;
+}
+
+
+int getMaxCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
+	int maxDegree = -1;
+	int* cycleDegrees = computeCycleDegrees(g, sgp);
+
+	int v;
+	for (v=0; v<g->n; ++v) {
+		if (maxDegree < cycleDegrees[v]) {
+			maxDegree = cycleDegrees[v];
+		}
+	}
+
+	free(cycleDegrees);
+
+	return maxDegree;
+}
+
+
+int getMinCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
+	int minDegree = INT_MAX;
+	int* cycleDegrees = computeCycleDegrees(g, sgp);
+
+	int v;
+	for (v=0; v<g->n; ++v) {
+		if (minDegree > cycleDegrees[v]) {
+			minDegree = cycleDegrees[v];
+		}
+	}
+
+	free(cycleDegrees);
+
+	return minDegree;
+}
+
+
 /**
 A tree is a connected graph with m = n-1 edges.
 */
@@ -424,6 +591,7 @@ char isTree(struct Graph* g) {
 		return 0;
 	}
 }
+
 
 /**
 A cactus is a connected graph where each nontrivial biconnected block (i.e., a
@@ -446,6 +614,7 @@ char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
 		return 0;
 	}
 }
+
 
 /**
 An outerplanar graph is a graph that can be drawn in the plane such that

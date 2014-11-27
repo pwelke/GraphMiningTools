@@ -14,38 +14,47 @@ of all graphs that satisfy the above condition or a list of those values
 or graph ids, which can be specified by the -o flag.
 
 options: options (except -h) are always followed by a value.
+    
     -h Output this help and exit
+    
     -v 'value': an integer (default -1)
-    -c 'comparator': (default <=)
+    
+    -c 'comparator': (default pass everything)
         <=
         ==
         >=
         !=
         <
         >
+
     -f 'filter': specify which property of the graph or db is to be used
                  for comparison. (default count)
         *counting*
         graphName    the graph ids, or names, specified in the database
-        count    running number of the graph (e.g. select the first 10 graphs)
+        count        running number of the graph (e.g. select the 
+                     first 10 graphs)
              
         *labels* (labels are integer in our db format)
         label    the label of a graph, specified in the graph db
-        AvsI    for AIDS99-target attributes
+        AvsI     for AIDS99-target attributes
         AMvsI    for AIDS99-target attributes
         AvsMI    for AIDS99-target attributes
              
         *boolean properties* (return 0 or 1)
         connected    check if a graph is connected
-        outerplanar     check if a graph is outerplanar
-        tree     check if a graph is a tree
-        cactus     check if a graph is a connected cactus graph
+        outerplanar  check if a graph is outerplanar
+        tree         check if a graph is a tree
+        cactus       check if a graph is a connected cactus graph
              
         *numerical properties*
-        spanningTreeEstimate    compute an upper bound on the number of
-                spanning trees in a graph
-        numberOfBlocks    compute the number of biconnected blocks
+        spanningTreeEstimate  compute an upper bound on the number of
+                              spanning trees in a graph
+        numberOfBlocks     compute the number of biconnected blocks
         numberOfBridges    compute the number of bridges in a graph
+        maxCycleDegree     compute the maximum cycle degree of a graph
+        minCycleDegree     compute the minimum cycle degree of a graph
+        maxDegree          compute the maximum vertex degree of a graph
+        minDegree          compute the minimum vertex degree of a graph
              
         *TODO additional Parameter needed*
         spanningTreeListing     
