@@ -8,7 +8,7 @@ STSNAME = sts
 STTNAME = stt
 CCDNAME = ccd
 GFNAME = gf
-CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=c99
+CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99
 # OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c)) $(patsubst %.c,%.o,$(wildcard ./executables/*.c))
 # TPKOBJECTS = $(filter-out ./executables/cpkExtendedMain.o ./executables/countCycleDegree.o ./executables/cpkMain.o ./executables/levelwiseMain.o ./executables/map2gaston.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
 # LWMOBJECTS = $(filter-out ./executables/countCycleDegree.o ./executables/cpkMain.o ./executables/main.o ./executables/map2gaston.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
