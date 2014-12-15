@@ -128,6 +128,10 @@ int main(int argc, char** argv) {
 				filter = numberOfVertices;
 				break;
 			}
+			if (strcmp(optarg, "numberOfConnectedComponents") == 0) {
+				filter = numberOfConnectedComponents;
+				break;
+			}
 			if (strcmp(optarg, "numberOfEdges") == 0) {
 				filter = numberOfEdges;
 				break;
@@ -400,6 +404,13 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case numberOfSimpleCycles:
 		measure = getNumberOfSimpleCycles(g, sgp, gp);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+		
+	case numberOfConnectedComponents:
+		measure = listConnectedComponents(g);
 		if (conditionHolds(measure, value, comparator)) {
 			output(g, measure, oOption, out);
 		}

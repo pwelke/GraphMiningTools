@@ -44,6 +44,7 @@ typedef enum {
 	numberOfBridgeTrees,
 	numberOfSimpleCycles,
 	numberOfNonIsoCycles,
+	numberOfConnectedComponents,
 	numberOfVertices,
 	numberOfEdges,
 	maxCycleDegree,
