@@ -203,7 +203,7 @@ int main(int argc, char** argv) {
 				break;
 			}
 			if ((strcmp(optarg, "value") == 0) || (strcmp(optarg, "v") == 0)) {
-				oOption = value;
+				oOption = onlyValue;
 				break;
 			}
 			fprintf(stderr, "Unknown output option: %s\n", optarg);
@@ -425,11 +425,11 @@ void output(struct Graph* g, int measure, OutputOption option, FILE* out) {
 	case graph:
 		writeCurrentGraph(out);
 		break;
+	case onlyValue:
+		fprintf(out, "%i\n", measure);
+		break;
 	case idAndValue:
 		fprintf(out, "%i %i\n", g->number, measure);
-		break;
-	case value:
-		fprintf(out, "%i\n", measure);
 		break;
 	case id:
 		fprintf(out, "%i\n", g->number);

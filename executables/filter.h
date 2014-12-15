@@ -16,8 +16,8 @@ char conditionHolds(int measure, int threshold, Comparator comparator);
 typedef enum {
 	graph,
 	idAndValue,
-	id,
-	value
+	onlyValue,
+	id
 } OutputOption;
 
 typedef enum {
