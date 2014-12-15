@@ -538,6 +538,7 @@ int getNumberOfBridgeTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct
 	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
 	int nConnectedComponents = listConnectedComponents(forest);
 	dumpGraphList(gp, forest);
+	return nConnectedComponents;
 }
 
 
