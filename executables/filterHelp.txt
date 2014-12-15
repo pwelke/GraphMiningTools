@@ -55,9 +55,9 @@ options: options (except -h) are always followed by a value.
                               in the graph
         numberOfBlocks     number of biconnected blocks
         numberOfBridges    number of bridges in a graph
-        numberOfBridgeTrees   number of connected components
-                              when all blocks are removed from
-                              the graph
+        numberOfBridgeTrees   number of edges in the graph that are 
+                              bridges. I.e. count the number of 
+                              biconnected components with only one edge.
         numberOfVertices   number of vertices in the graph
         numberOfEdges      number of edges in the graph
         maxCycleDegree     maximum cycle degree of a graph

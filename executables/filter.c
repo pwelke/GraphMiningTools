@@ -374,6 +374,12 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 			output(g, measure, oOption, out);
 		}
 		break;
+	case numberOfBridgeTrees:
+		measure = getNumberOfBridgeTrees(g, sgp, gp);			
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
 	case numberOfVertices:
 		measure = g->n;
 		if (conditionHolds(measure, value, comparator)) {
@@ -509,6 +515,18 @@ int getNumberOfBridges(struct Graph* g, struct ShallowGraphPool* sgp) {
 	/* cleanup */
 	dumpShallowGraphCycle(sgp, biconnectedComponents);
 	return bridgeNumber;
+}
+
+
+/**
+Count the number of connected components in the graph obtained from g by removing
+all block edges (i.e. all edges that are not bridges)
+*/
+int getNumberOfBridgeTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
+	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
+	int nConnectedComponents = listConnectedComponents(forest);
+	dumpGraphList(gp, forest);
 }
 
 
