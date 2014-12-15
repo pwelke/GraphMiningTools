@@ -181,7 +181,6 @@ void writeCurrentGraph(FILE* out) {
 /* stream a graph from a database file of the format described in the documentation */
 struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)) {
 	int i;
-	// int error = 0;
 	struct Graph* g = getGraph(FI_GP);
 	char* currentPosition;
 
@@ -206,6 +205,7 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 		if (**HEAD_PTR != '$') {
 			fprintf(stderr, "Invalid Graph header: %s\n", *HEAD_PTR);
 		}
+		dumpGraph(FI_GP, g);
 		return NULL;
 	}
 
@@ -285,35 +285,7 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 			return NULL;
 		}
 	}
-
 	return g;
-					
-	// /* if everything worked, return graph, otherwise return graph initialized to -1 */
-	// if (error == 0) {
-	// 	return g;
-	// } else {
-	// 	char c;
-	// 	fpos_t previous;
-
-	// 	/* go to the next occurrence of # */
-	// 	if (fgetpos(FI_DATABASE, &previous) != 0)
-	// 		fprintf(stderr, "Error obtaining file stream position\n");
-	// 	if (fscanf(FI_DATABASE, "%c", &c) != 1)
-	// 		fprintf(stderr, "Error skipping invalid graph\n");
-	// 	while (c != '#') {
-	// 		if (fgetpos(FI_DATABASE, &previous) != 0)
-	// 			fprintf(stderr, "Error obtaining file stream position\n");
-	// 		if (fscanf(FI_DATABASE, "%c", &c) != 1)
-	// 			fprintf(stderr, "Error skipping invalid graph\n");
-	// 	}
-
-	// 	/* go to the previous position s.t. the next char in the file stream is # */
-	// 	if (fsetpos(FI_DATABASE, &previous) != 0)
-	// 		fprintf(stderr, "Error positioning file stream pointer");
-
-	// 	g->n = g->m = g->number = g->activity = -1;
-	// 	return g;
-	// }
 }
 
 
