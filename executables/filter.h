@@ -41,6 +41,11 @@ typedef enum {
 	spanningTreeEstimate,
 	numberOfBlocks,
 	numberOfBridges,
+	numberOfBridgeTrees,
+	numberOfSimpleCycles,
+	numberOfNonIsoCycles,
+	numberOfVertices,
+	numberOfEdges,
 	maxCycleDegree,
 	minCycleDegree,
 	maxDegree,
@@ -62,6 +67,8 @@ int getMaxDegree(struct Graph* g);
 int getMinDegree(struct Graph* g);
 int getMaxCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp);
 int getMinCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp);
+int getNumberOfSimpleCycles(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp);
+int getNumberOfNonIsoCycles(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 
 void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, int value, FILE* out, OutputOption oOption, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 void output(struct Graph* g, int measure, OutputOption option, FILE* out);

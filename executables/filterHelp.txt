@@ -47,14 +47,23 @@ options: options (except -h) are always followed by a value.
         cactus       check if a graph is a connected cactus graph
              
         *numerical properties*
-        spanningTreeEstimate  compute an upper bound on the number of
+        spanningTreeEstimate  upper bound on the number of
                               spanning trees in a graph
-        numberOfBlocks     compute the number of biconnected blocks
-        numberOfBridges    compute the number of bridges in a graph
-        maxCycleDegree     compute the maximum cycle degree of a graph
-        minCycleDegree     compute the minimum cycle degree of a graph
-        maxDegree          compute the maximum vertex degree of a graph
-        minDegree          compute the minimum vertex degree of a graph
+        numberOfSimpleCycles  total number of simple cycles
+                              in the graph
+        numberOfNonIsoCycles  number of nonisomorphic cycles
+                              in the graph
+        numberOfBlocks     number of biconnected blocks
+        numberOfBridges    number of bridges in a graph
+        numberOfBridgeTrees   number of connected components
+                              when all blocks are removed from
+                              the graph
+        numberOfVertices   number of vertices in the graph
+        numberOfEdges      number of edges in the graph
+        maxCycleDegree     maximum cycle degree of a graph
+        minCycleDegree     minimum cycle degree of a graph
+        maxDegree          maximum vertex degree of a graph
+        minDegree          minimum vertex degree of a graph
              
         *TODO additional Parameter needed*
         spanningTreeListing     

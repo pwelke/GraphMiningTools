@@ -18,6 +18,8 @@
 #include "../connectedComponents.h"
 #include "../cs_Tree.h"
 #include "../wilsonsAlgorithm.h"
+#include "../listCycles.h"
+#include "../cs_Cycle.h"
 #include "filter.h"
 
 
@@ -108,6 +110,26 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "numberOfBridges") == 0) {
 				filter = numberOfBridges;
+				break;
+			}
+			if (strcmp(optarg, "numberOfBridgeTrees") == 0) {
+				filter = numberOfBridgeTrees;
+				break;
+			}
+			if (strcmp(optarg, "numberOfSimpleCycles") == 0) {
+				filter = numberOfSimpleCycles;
+				break;
+			}
+			if (strcmp(optarg, "numberOfNonIsoCycles") == 0) {
+				filter = numberOfNonIsoCycles;
+				break;
+			}
+			if (strcmp(optarg, "numberOfVertices") == 0) {
+				filter = numberOfVertices;
+				break;
+			}
+			if (strcmp(optarg, "numberOfEdges") == 0) {
+				filter = numberOfEdges;
 				break;
 			}
 			if (strcmp(optarg, "maxCycleDegree") == 0) {
@@ -352,6 +374,30 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 			output(g, measure, oOption, out);
 		}
 		break;
+	case numberOfVertices:
+		measure = g->n;
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case numberOfEdges:
+		measure = g->m;
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case numberOfNonIsoCycles:
+		measure = getNumberOfNonIsoCycles(g, sgp, gp);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
+	case numberOfSimpleCycles:
+		measure = getNumberOfSimpleCycles(g, sgp, gp);
+		if (conditionHolds(measure, value, comparator)) {
+			output(g, measure, oOption, out);
+		}
+		break;
 	case maxDegree:
 		measure = getMaxDegree(g);
 		if (conditionHolds(measure, value, comparator)) {
@@ -578,6 +624,106 @@ int getMinCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
 	free(cycleDegrees);
 
 	return minDegree;
+}
+
+
+int getNumberOfSimpleCycles(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct Graph* tmp;
+	struct Graph* idx;
+	int numCycles = 0;
+
+	/* find biconnected Components */
+	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
+	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
+	/* TODO refactor */
+	struct Graph* biconnectedComponents = forest->next;
+
+	/* list all cycles */
+	struct ShallowGraph* simpleCycles = NULL;
+
+
+	for (idx=biconnectedComponents; idx; idx=idx->next) {
+		simpleCycles = addComponent(simpleCycles, listCycles(idx, sgp));
+	}
+
+	/* if cycles were found, compute canonical strings */
+	if (simpleCycles) {
+		struct ShallowGraph* cycle = NULL;
+
+		/* transform cycle of shallow graphs to a list */
+		simpleCycles->prev->next = NULL;
+		simpleCycles->prev = NULL;
+
+		for (cycle=simpleCycles; cycle!=NULL; cycle=cycle->next) {
+			++numCycles;
+		}
+
+		dumpShallowGraphCycle(sgp, simpleCycles);
+	} 
+
+	/* garbage collection */
+	for (idx=biconnectedComponents; idx; idx=tmp) {
+		tmp = idx->next;
+		dumpGraph(gp, idx);
+	}
+	dumpGraph(gp, forest);
+
+	/* each cycle is found twice */
+	return numCycles / 2;
+}
+
+int getNumberOfNonIsoCycles(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct Graph* tmp;
+	struct Graph* idx;
+	int numCycles;
+
+	/* find biconnected Components */
+	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
+	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
+	/* TODO refactor */
+	struct Graph* biconnectedComponents = forest->next;
+
+	/* list all cycles */
+	struct ShallowGraph* simpleCycles = NULL;
+	struct ShallowGraph* cyclePatterns = NULL;
+	struct Vertex* cyclePatternSearchTree = NULL;
+
+	for (idx=biconnectedComponents; idx; idx=idx->next) {
+		simpleCycles = addComponent(simpleCycles, listCycles(idx, sgp));
+	}
+
+	/* if cycles were found, compute canonical strings */
+	if (simpleCycles) {
+		/* transform cycle of shallow graphs to a list */
+		simpleCycles->prev->next = NULL;
+		simpleCycles->prev = NULL;
+
+		cyclePatterns = getCyclePatterns(simpleCycles, sgp);
+		cyclePatternSearchTree = buildSearchTree(cyclePatterns, gp, sgp);
+
+		numCycles = cyclePatternSearchTree->number;
+	} else {
+		numCycles = 0;
+	}
+
+	/* garbage collection */
+
+	/* dump cycles, if any
+	 * TODO may be moved upwards directly after finding simple cycles */
+	if (cyclePatternSearchTree) {
+			dumpSearchTree(gp, cyclePatternSearchTree);
+	}
+
+	/* dump biconnected components list */
+	for (idx=biconnectedComponents; idx; idx=tmp) {
+		tmp = idx->next;
+		dumpGraph(gp, idx);
+	}
+
+	dumpGraph(gp, forest);
+
+	/* each cycle is found twice */
+	return numCycles / 2;
 }
 
 
