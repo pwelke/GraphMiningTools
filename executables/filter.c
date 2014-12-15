@@ -280,21 +280,15 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 	/* counts */ 
 	case count:
 		// TODO break condition for <= ==
-		if (conditionHolds(i, value, comparator)) {
-			output(g, i, oOption, out);
-		}
+		measure = i;
 		break;
 	case graphName:
-		if (conditionHolds(g->number, value, comparator)) {
-			output(g, g->number, oOption, out);
-		}
+		measure = g->number;
 		break;
 
 	/* labels */
 	case label:
-		if (conditionHolds(g->activity, value, comparator)) {
-			output(g, g->activity, oOption, out);
-		}
+		measure = g->activity;
 		break;
 	case AvsI:
 		if (g->activity == 1) {
@@ -309,6 +303,7 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		if (conditionHolds(g->activity, value, comparator)) {
 			output(g, g->activity, oOption, out);
 		}
+		measure = g->activity;
 		break;
 	case AvsMI:
 		if (g->activity == 2) {
@@ -316,9 +311,7 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		} else {
 			g->activity = -1;
 		}
-		if (conditionHolds(g->activity, value, comparator)) {
-			output(g, g->activity, oOption, out);
-		}
+		measure = g->activity;
 		break;
 	case AMvsI:
 		if (g->activity == 0) {
@@ -327,118 +320,69 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		if (g->activity == 2) {
 			g->activity = 1;
 		}
-		if (conditionHolds(g->activity, value, comparator)) {
-			output(g, g->activity, oOption, out);
-		}
+		measure = g->activity;
 		break;
 
 	/* boolean properties */
 	case connected:
 		measure = isConnected(g);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case outerplanar:
 		// isMaximalOuterplanar alters g. do not attempt to do something with g after this.
 		measure = isOuterplanarGraph(g, sgp, gp);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case tree:
 		measure = isTree(g);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case cactus:
 		measure = isCactus(g, sgp);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 
 	/* numeric properties */
 	case spanningTreeEstimate:
 		measure = getGoodEstimate(g, sgp, gp);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case numberOfBlocks:
 		measure = getNumberOfBlocks(g, sgp);			
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case numberOfBridges:
 		measure = getNumberOfBridges(g, sgp);			
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case numberOfBridgeTrees:
 		measure = getNumberOfBridgeTrees(g, sgp, gp);			
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case numberOfVertices:
 		measure = g->n;
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case numberOfEdges:
 		measure = g->m;
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case numberOfNonIsoCycles:
 		measure = getNumberOfNonIsoCycles(g, sgp, gp);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case numberOfSimpleCycles:
 		measure = getNumberOfSimpleCycles(g, sgp, gp);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 		
 	case numberOfConnectedComponents:
 		measure = listConnectedComponents(g);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case maxDegree:
 		measure = getMaxDegree(g);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case minDegree:
 		measure = getMinDegree(g);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case maxCycleDegree:
 		measure = getMaxCycleDegree(g, sgp);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
 	case minCycleDegree:
 		measure = getMinCycleDegree(g, sgp);
-		if (conditionHolds(measure, value, comparator)) {
-			output(g, measure, oOption, out);
-		}
 		break;
+	}
+
+	if (conditionHolds(measure, value, comparator)) {
+		output(g, measure, oOption, out);
 	}
 }
 
@@ -486,8 +430,10 @@ void output(struct Graph* g, int measure, OutputOption option, FILE* out) {
 		break;
 	case value:
 		fprintf(out, "%i\n", measure);
+		break;
 	case id:
 		fprintf(out, "%i\n", g->number);
+		break;
 	}
 } 
 
