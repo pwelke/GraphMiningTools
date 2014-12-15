@@ -201,7 +201,6 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 	/* parse header */
 	if (sscanf(*HEAD_PTR, " # %i %i %i %i", &(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
 		/* if reading of header does not work anymore, check if we have readched the correct end of the stream */
-		dumpGraph(FI_GP, g);
 		if (**HEAD_PTR != '$') {
 			fprintf(stderr, "Invalid Graph header: %s\n", *HEAD_PTR);
 		}
