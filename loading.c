@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <math.h>
 #include <sys/types.h>
 
 #include "loading.h"
@@ -285,6 +286,24 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 		}
 	}
 	return g;
+}
+
+/* return the base 10 string representation of label in a correctly sized newly allocated buffer */
+char* intLabel(int label) {
+	int bufferSize;
+	char* representation;
+	
+	if (label) {
+		bufferSize = (int)ceil(log10(label)) + 1;
+	} else {
+		bufferSize = 2;
+	}
+
+	representation = malloc(bufferSize * sizeof(char));
+	if (representation) {
+		sprintf(representation, "%i", label);
+	}
+	return representation;
 }
 
 
