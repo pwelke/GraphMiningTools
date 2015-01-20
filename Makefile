@@ -31,6 +31,13 @@ CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
 GFOBJECTS = $(OBJECTS) ./executables/filter.o
 CSTROBJECTS = $(OBJECTS) ./executables/cstring.o
 
+# visualize the include dependencies between the source files.
+# for this, .c and .h files with the same name are interpreted as one entity
+dependencies.png: executables/cinclude2dot
+	$< | sed 's/\.c/\.h/' | dot -Tpng -Gsize=40,40 > $@
+	eog $@
+
+
 main: sts
 	
 
