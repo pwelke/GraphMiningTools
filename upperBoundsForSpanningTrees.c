@@ -172,7 +172,7 @@ long int getGoodEstimatePrecomputedBlocks(struct Graph* g, struct ShallowGraph* 
 	for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
 		if (idx->m != 1) {
 			int nInd = getVertexNumberOfInducedGraph(idx, g->n, vertices);
-			if (!isOuterplanar(idx, sgp, gp)) {
+			if (!isOuterplanarBlockShallow(idx, sgp, gp)) {
 				long bound = trivialBound(idx->m, nInd);
 				if (bound == -1){
 					free(vertices);
@@ -210,7 +210,7 @@ long int getEstimate(struct Graph* g, long int estimateFunction(long int, long i
 		if (idx->m != 1) {
 			int nInd;
 			if (checkOuterplanarity) {
-				if (!isOuterplanar(idx, sgp, gp)) {
+				if (!isOuterplanarBlockShallow(idx, sgp, gp)) {
 					dumpShallowGraphCycle(sgp, biconnectedComponents);
 					return -1;
 				} else {

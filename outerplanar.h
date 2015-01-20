@@ -26,8 +26,8 @@ struct BBTree{
 	struct ShallowGraph** blockComponents;
 };
 
-char isMaximalOuterplanar(struct Graph* g, struct ShallowGraphPool* sgp);
-char isOuterplanar(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp);
+char isOuterplanarBlock(struct Graph* g, struct ShallowGraphPool* sgp);
+char isOuterplanarBlockShallow(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 
 char isTree(struct Graph* g);
 char isCactus(struct Graph* g, struct ShallowGraphPool* sgp);

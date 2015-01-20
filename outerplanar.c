@@ -50,15 +50,6 @@ An outerplanar graph is a graph that can be drawn in the plane such that
 (2) each vertex can be reached from the outer face without crossing an edge.
 
 A graph is outerplanar if and only if each of its biconnected components is outerplanar.
-
-TODO
-
-outerplanar.[ch]
-
-isMaximalOuterplanar() -> isOuterplanarBlock()
-isOuterplanar() -> isOuterplanarBlockShallow()
-isOuterplanarGraph() -> isOuterplanar()
-
 */ 
 char isOuterplanarGraph(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
@@ -66,7 +57,7 @@ char isOuterplanarGraph(struct Graph* g, struct ShallowGraphPool* sgp, struct Gr
 	char isOp = 1;
 	for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
 		if (comp->m > 1) {
-			isOp = isOuterplanar(comp, sgp, gp);
+			isOp = isOuterplanarBlockShallow(comp, sgp, gp);
 			if (isOp == 0) {
 				break;
 			}
@@ -91,7 +82,7 @@ char isOuterplanarGraph(struct Graph* g, struct ShallowGraphPool* sgp, struct Gr
  * number 5, 16.12.1979
  *
  */
-char isMaximalOuterplanar(struct Graph* g, struct ShallowGraphPool* sgp) {
+char isOuterplanarBlock(struct Graph* g, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* list = getShallowGraph(sgp);
 	struct ShallowGraph* pairs = getShallowGraph(sgp);
 	struct ShallowGraph* edges = getGraphEdges(g, sgp);
@@ -343,9 +334,9 @@ char isMaximalOuterplanar(struct Graph* g, struct ShallowGraphPool* sgp) {
  *
  * Does not change original.
  */
-char isOuterplanar(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+char isOuterplanarBlockShallow(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct Graph* g = shallowGraphToGraph(original, gp);
-	char isOP = isMaximalOuterplanar(g, sgp);
+	char isOP = isOuterplanarBlock(g, sgp);
 	dumpGraph(gp, g);
 	return isOP;
 }
