@@ -18,6 +18,7 @@ CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 # CPKOBJECTS = $(filter-out ./executables/countCycleDegree.o ./executables/countSpanningTreeClasses.o ./executables/main.o ./executables/map2gaston.o ./executables/levelwiseMain.o, $(OBJECTS))
 # CPKEOBJECTS = $(filter-out ./executables/countCycleDegree.o ./executables/countSpanningTreeClasses.o ./executables/main.o ./executables/map2gaston.o ./executables/levelwiseMain.o, $(OBJECTS))
 # CCDOBJECTS = $(filter-out ./executables/cpkMain.o  ./executables/countSpanningTreeClasses.o ./executables/main.o ./executables/map2gaston.o ./executables/levelwiseMain.o, $(OBJECTS))
+EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 TPKOBJECTS = $(OBJECTS) ./executables/main.o
 LWMOBJECTS = $(OBJECTS) ./executables/levelwiseMain.o
@@ -33,8 +34,9 @@ CSTROBJECTS = $(OBJECTS) ./executables/cstring.o
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
-dependencies.png: executables/cinclude2dot
-	$< | sed 's/\.c/\.h/' | dot -Tpng -Gsize=40,40 > $@
+
+dependencies.png: $(EVERYTHING)
+	executables/cinclude2dot | sed 's/\.c/\.h/' | dot -Tpng -Gsize=40,40 > $@
 	eog $@
 
 
