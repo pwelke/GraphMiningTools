@@ -6,6 +6,7 @@
 #include <getopt.h>
 
 #include "../graph.h"
+#include "../outerplanar.h"
 #include "../cs_Tree.h"
 #include "../cs_Parsing.h"
 #include "../loading.h"

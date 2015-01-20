@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
 					char op = 1;
 					for (comp=biconnectedComponents; comp!=NULL; comp=comp->next) {
 						if (comp->m != 1) {
-							op = isMaximalOuterplanarConv(comp, sgp, gp);
+							op = isOuterplanarBlockShallow(comp, sgp, gp);
 							if (op == 0) break;	
 						}
 					}
