@@ -29,6 +29,11 @@ struct BBTree{
 char isMaximalOuterplanar(struct Graph* g, struct ShallowGraphPool* sgp);
 char isOuterplanar(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 
+char isTree(struct Graph* g);
+char isCactus(struct Graph* g, struct ShallowGraphPool* sgp);
+char isOuterplanarGraph(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp);
+
+
 struct BBTree* createBlockAndBridgeTree(struct ShallowGraph* list, struct Graph *original, struct GraphPool* gp, struct ShallowGraphPool *sgp);
 void dumpBBTree(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct BBTree* tree);
 

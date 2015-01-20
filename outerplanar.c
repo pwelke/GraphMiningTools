@@ -4,7 +4,79 @@
 #include "cs_Parsing.h"
 #include "cs_Compare.h"
 #include "cs_Outerplanar.h"
+#include "listComponents.h"
+#include "connectedComponents.h"
 #include "outerplanar.h"
+
+
+/**
+A tree is a connected graph with m = n-1 edges.
+*/
+char isTree(struct Graph* g) {
+	if (isConnected(g)) {
+		return g->m == g->n - 1;
+	} else { 
+		return 0;
+	}
+}
+
+
+/**
+A cactus is a connected graph where each nontrivial biconnected block (i.e., a
+biconnected component that is not a bridge) is a simple cycle.
+*/
+char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
+	if (isConnected(g)) {
+		struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+		struct ShallowGraph* comp;
+		int compNumber = 0;
+		for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+			if (comp->m > 1) {
+				++compNumber;
+			}			
+		}
+		/* cleanup */
+		dumpShallowGraphCycle(sgp, biconnectedComponents);
+		return compNumber;
+	} else {
+		return 0;
+	}
+}
+
+
+/**
+An outerplanar graph is a graph that can be drawn in the plane such that
+(1) edges only intersect at vertices and
+(2) each vertex can be reached from the outer face without crossing an edge.
+
+A graph is outerplanar if and only if each of its biconnected components is outerplanar.
+
+TODO
+
+outerplanar.[ch]
+
+isMaximalOuterplanar() -> isOuterplanarBlock()
+isOuterplanar() -> isOuterplanarBlockShallow()
+isOuterplanarGraph() -> isOuterplanar()
+
+*/ 
+char isOuterplanarGraph(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+	struct ShallowGraph* comp;
+	char isOp = 1;
+	for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+		if (comp->m > 1) {
+			isOp = isOuterplanar(comp, sgp, gp);
+			if (isOp == 0) {
+				break;
+			}
+		}			
+	}
+	/* cleanup */
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	return isOp;
+}
+
 
 
 /**

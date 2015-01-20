@@ -1,6 +1,132 @@
 #include <stdio.h>
+#include <malloc.h>
+#include <limits.h>
+
 #include "intMath.h"
 #include "listComponents.h"
+
+
+int* computeCycleDegrees(struct Graph* g, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+
+	/* store for each vertex if the current bic.comp was already counted */
+	int* occurrences = malloc(g->n * sizeof(int));
+	/* store the cycle degrees of each vertex in g */
+	int* cycleDegrees = malloc(g->n * sizeof(int));
+
+	int v;
+	struct ShallowGraph* comp;
+	int compNumber = 0;
+
+	for (v=0; v<g->n; ++v) {
+		occurrences[v] = -1;
+		cycleDegrees[v] = 0;
+	}
+
+	for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+		if (comp->m > 1) {
+			struct VertexList* e;
+			for (e=comp->edges; e!=NULL; e=e->next) {
+				if (occurrences[e->startPoint->number] < compNumber) {
+					occurrences[e->startPoint->number] = compNumber;
+					++cycleDegrees[e->startPoint->number];
+				}
+				if (occurrences[e->endPoint->number] < compNumber) {
+					occurrences[e->endPoint->number] = compNumber;
+					++cycleDegrees[e->endPoint->number];
+				}
+			}
+			++compNumber;
+		}			
+	}
+	free(occurrences);
+	return cycleDegrees;
+}
+
+
+int getMaxCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
+	int maxDegree = -1;
+	int* cycleDegrees = computeCycleDegrees(g, sgp);
+
+	int v;
+	for (v=0; v<g->n; ++v) {
+		if (maxDegree < cycleDegrees[v]) {
+			maxDegree = cycleDegrees[v];
+		}
+	}
+
+	free(cycleDegrees);
+
+	return maxDegree;
+}
+
+
+int getMinCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
+	int minDegree = INT_MAX;
+	int* cycleDegrees = computeCycleDegrees(g, sgp);
+
+	int v;
+	for (v=0; v<g->n; ++v) {
+		if (minDegree > cycleDegrees[v]) {
+			minDegree = cycleDegrees[v];
+		}
+	}
+
+	free(cycleDegrees);
+
+	return minDegree;
+}
+
+
+
+/**
+Count the number of biconnected components that are not a bridge.
+*/
+int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+	struct ShallowGraph* comp;
+	int compNumber = 0;
+	for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+		if (comp->m > 1) {
+			++compNumber;
+		}			
+	}
+	/* cleanup */
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	return compNumber;
+}
+
+
+/**
+Count the number of edges in the graph that are bridges. 
+I.e. count the number of biconnected components with only one edge.
+*/
+int getNumberOfBridges(struct Graph* g, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+	struct ShallowGraph* comp;
+	int bridgeNumber = 0;
+	for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+		if (comp->m == 1) {
+			++bridgeNumber;
+		}			
+	}
+	/* cleanup */
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	return bridgeNumber;
+}
+
+
+/**
+Count the number of connected components in the graph obtained from g by removing
+all block edges (i.e. all edges that are not bridges)
+*/
+int getNumberOfBridgeTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
+	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
+	int nConnectedComponents = getAndMarkConnectedComponents(forest);
+	dumpGraphList(gp, forest);
+	return nConnectedComponents;
+}
 
 
 /**
@@ -28,7 +154,7 @@ Indexing starts with 0 and is stored in ->visited.
 Vertex 0 will always be in connected component 0.
 Returns the number of connected components in the graph.
 */
-int listConnectedComponents(struct Graph* g) {
+int getAndMarkConnectedComponents(struct Graph* g) {
 	int component = 0;
 	int v;
 	for (v=0; v<g->n; ++v) {

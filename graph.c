@@ -1,4 +1,5 @@
 #include <malloc.h>
+#include <limits.h>
 #include <stdio.h>
 #include "graph.h"
 
@@ -536,6 +537,50 @@ struct Graph* createGraph(int n, struct GraphPool* gp) {
 		empty->vertices[v]->number = v;
 	}
 	return empty;
+}
+
+
+/**
+Compute the maximum degree of any vertex in g.
+A graph without vertices has maxdegree -1.
+
+This method can handle graphs that are not full, i.e. there
+are positions in the g->vertices array that are NULL.
+*/
+int getMaxDegree(struct Graph* g) {
+	int max = -1;
+	int v;
+	for (v=0; v<g->n; ++v) {
+		if (g->vertices[v] != NULL) {
+			int deg = degree(g->vertices[v]);
+			if (max < deg) {
+				max = deg;
+			}
+		}
+	}
+	return max;
+}
+
+
+/**
+Compute the minimum degree of any vertex in g.
+A graph without vertices has mindegree INT_MAX.
+
+This method can handle graphs that are not full, i.e. there
+are positions in the g->vertices array that are NULL.
+*/
+int getMinDegree(struct Graph* g) {
+	int min = INT_MAX;
+	int v;
+	for (v=0; v<g->n; ++v) {
+		if (g->vertices[v] != NULL) {
+			int deg = degree(g->vertices[v]);
+			if (min > deg) {
+				min = deg;
+			}
+		}
+	}
+	return min;
 }
 
 

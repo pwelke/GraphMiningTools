@@ -1,5 +1,113 @@
-#include "stdlib.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "listComponents.h"
 #include "listCycles.h"
+#include "cs_Cycle.h"
+#include "searchTree.h"
+
+
+int getNumberOfSimpleCycles(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct Graph* tmp;
+	struct Graph* idx;
+	int numCycles = 0;
+
+	/* find biconnected Components */
+	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
+	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
+	/* TODO refactor */
+	struct Graph* biconnectedComponents = forest->next;
+
+	/* list all cycles */
+	struct ShallowGraph* simpleCycles = NULL;
+
+
+	for (idx=biconnectedComponents; idx; idx=idx->next) {
+		simpleCycles = addComponent(simpleCycles, listCycles(idx, sgp));
+	}
+
+	/* if cycles were found, compute canonical strings */
+	if (simpleCycles) {
+		struct ShallowGraph* cycle = NULL;
+
+		/* transform cycle of shallow graphs to a list */
+		simpleCycles->prev->next = NULL;
+		simpleCycles->prev = NULL;
+
+		for (cycle=simpleCycles; cycle!=NULL; cycle=cycle->next) {
+			++numCycles;
+		}
+
+		dumpShallowGraphCycle(sgp, simpleCycles);
+	} 
+
+	/* garbage collection */
+	for (idx=biconnectedComponents; idx; idx=tmp) {
+		tmp = idx->next;
+		dumpGraph(gp, idx);
+	}
+	dumpGraph(gp, forest);
+
+	/* each cycle is found twice */
+	return numCycles / 2;
+}
+
+
+/* Get the number of nonisomorphic simple cycles the graph contains. */
+int getNumberOfNonIsoCycles(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	struct Graph* tmp;
+	struct Graph* idx;
+	int numCycles;
+
+	/* find biconnected Components */
+	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
+	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
+	/* TODO refactor */
+	struct Graph* biconnectedComponents = forest->next;
+
+	/* list all cycles */
+	struct ShallowGraph* simpleCycles = NULL;
+	struct ShallowGraph* cyclePatterns = NULL;
+	struct Vertex* cyclePatternSearchTree = NULL;
+
+	for (idx=biconnectedComponents; idx; idx=idx->next) {
+		simpleCycles = addComponent(simpleCycles, listCycles(idx, sgp));
+	}
+
+	/* if cycles were found, compute canonical strings */
+	if (simpleCycles) {
+		/* transform cycle of shallow graphs to a list */
+		simpleCycles->prev->next = NULL;
+		simpleCycles->prev = NULL;
+
+		cyclePatterns = getCyclePatterns(simpleCycles, sgp);
+		cyclePatternSearchTree = buildSearchTree(cyclePatterns, gp, sgp);
+
+		numCycles = cyclePatternSearchTree->number;
+	} else {
+		numCycles = 0;
+	}
+
+	/* garbage collection */
+
+	/* dump cycles, if any
+	 * TODO may be moved upwards directly after finding simple cycles */
+	if (cyclePatternSearchTree) {
+			dumpSearchTree(gp, cyclePatternSearchTree);
+	}
+
+	/* dump biconnected components list */
+	for (idx=biconnectedComponents; idx; idx=tmp) {
+		tmp = idx->next;
+		dumpGraph(gp, idx);
+	}
+
+	dumpGraph(gp, forest);
+
+	/* each cycle is found twice */
+	return numCycles / 2;
+}
+
 
 /******************************* List all cycles *********************************************/
 
