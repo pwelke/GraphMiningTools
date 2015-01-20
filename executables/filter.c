@@ -237,11 +237,8 @@ int main(int argc, char** argv) {
 		createStdinIterator(gp);
 	}
 
-	// debug
-	// fprintf(stderr, "filter=%i, comparator=%i, oOption=%i, value=%i, stream=%s\n", filter, comparator, oOption, value, filename);
-
 	/* iterate over all graphs in the database */
-	while ((g = iterateFile(&aids99VertexLabel, &aids99EdgeLabel))) {
+	while ((g = iterateFile(&intLabel, &intLabel))) {
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n > 0) {
 			
