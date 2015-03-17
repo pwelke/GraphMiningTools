@@ -21,6 +21,7 @@ int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPo
     int i = 0;
     representatives = malloc(graph->n * sizeof(struct Vertex *));
     //TODO remove debug
+    /*
     printf("MAIN\n");
     for(shlp=bComponents;shlp;shlp=shlp->next){
         printf("Component: %i\n", numComponents++);
@@ -31,7 +32,7 @@ int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPo
     }
     //TODO remove when debug is removed
     numComponents=0;
-
+    */
     if(representatives == NULL){
         //TODO clean up
         return 0;
@@ -61,14 +62,14 @@ int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPo
         if(shlp->edges->startPoint->d< 0) shlp->edges->startPoint->d=++i;
         shlp->edges->startPoint->visited=0;
     }
-    printf("Allocating component tree\n");
+    //printf("Allocating component tree\n");
     struct Graph * componentTree = createGraph(numComponents, gPool);
     struct ShallowGraph **rootedComponents=calloc(numComponents,sizeof(struct ShallowGraph *));
     struct ShallowGraph *tmp;
     int oldNumber, newNumber;
     struct Vertex *currentRoot;
     //TODO error behviour for componentTree 
-    printf("constructing component Tree\n");
+    //printf("constructing component Tree\n");
     shlp=bComponents;
     while(shlp){
         currentRoot=shlp->edges->startPoint;
@@ -79,10 +80,10 @@ int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPo
             currentRoot->visited=1;
             //setting backreference to original graph.
             componentTree->vertices[newNumber]->d=oldNumber;
-            printf("testing for representative\n");
+            //printf("testing for representative\n");
             if(representatives[oldNumber]){
-                printf("adding edge between original (%i,%i) and new (%i,%i)\n",representatives[shlp->edges->startPoint->number]->number, 
-                        shlp->edges->startPoint->number, newNumber, representatives[oldNumber]->d);
+                //printf("adding edge between original (%i,%i) and new (%i,%i)\n",representatives[shlp->edges->startPoint->number]->number, 
+                        //shlp->edges->startPoint->number, newNumber, representatives[oldNumber]->d);
                 addEdgeBetweenVertices(newNumber,representatives[oldNumber]->d,NULL,componentTree,gPool);
             }
             shlp->data=1;
@@ -102,7 +103,7 @@ int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPo
     free(representatives);
     res=processRootTree(componentTree->vertices[graph->vertices[0]->d], graph, rootedComponents, pattern, gPool, sgPool);
     for(i=0;i<numComponents;++i)
-        dumpShallowGraphCycle(sgPool, rootedComponents[i]);
+       dumpShallowGraphCycle(sgPool, rootedComponents[i]);
     free(rootedComponents);
     dumpGraph(gPool,componentTree);
     if(hasSolution(res)){
@@ -130,8 +131,8 @@ struct Characteristics *processRootTree(struct Vertex *root, struct Graph *graph
             chars=mergeCharacteristics(chars,res);
         }
     }
-    printf("root tree %i", root->number);
-    printCharacteristics(chars);
+    //printf("root tree %i", root->number);
+    //printCharacteristics(chars);
 
     numComponents=rootedComponents[root->number]->data;
     deletedEdges=malloc(numComponents*sizeof(struct VertexList *));
@@ -139,55 +140,56 @@ struct Characteristics *processRootTree(struct Vertex *root, struct Graph *graph
     initSpanningTree(rootedComponents[root->number], deletedEdges,1);
     treeNumber=0;
     do{
-        //for(i=0;i<pattern->n;++i){
-            //printf("\n\n pattern vertex %i\n",pattern->vertices[i]->number);
-            newChars=processComponentTree(graph, graph->vertices[rootedComponents[root->number]->edges->startPoint->number], graph->vertices[rootedComponents[root->number]->edges->startPoint->number], treeNumber, rootedComponents, chars, newChars, pattern, pattern->n, gPool, sgPool);
-        //}
-            exNext=nextSpanningTree(rootedComponents[root->number], deletedEdges,1);
-            ++treeNumber;
-        }while(exNext);
+        newChars=processComponentTree(graph, graph->vertices[root->d], graph->vertices[root->d], treeNumber, rootedComponents, chars, newChars, pattern, gPool, sgPool);
+        exNext=nextSpanningTree(rootedComponents[root->number], deletedEdges,1);
+        ++treeNumber;
+    }while(exNext);
     freeCharacteristics(chars);
     free(deletedEdges);
     return newChars;
 }
 
-//TODO treeids or characteristics.
-struct Characteristics *processComponentTree(struct Graph *graph, struct Vertex *root, struct Vertex *componentRoot, int treeNumber, struct ShallowGraph **rootedComponents, struct Characteristics *oldChars, struct Characteristics *newChars, struct Graph *pattern, int patternSize, struct GraphPool *gPool, struct ShallowGraphPool *sgPool){
+struct Characteristics *processComponentTree(struct Graph *graph, struct Vertex *root, struct Vertex *componentRoot, int treeNumber, struct ShallowGraph **rootedComponents, struct Characteristics *oldChars, struct Characteristics *newChars, struct Graph *pattern, struct GraphPool *gPool, struct ShallowGraphPool *sgPool){
     struct VertexList *ehlp, **deletedEdges;
     struct Characteristics *ret=newChars;
     char exNext;
     int wTreeNumber=0;
-    printf("\nComproot %i root%i \n",componentRoot->number, root->number);
+    //printf("\nComproot %i root%i \n",componentRoot->number, root->number);
     for(ehlp=root->neighborhood;ehlp;ehlp=ehlp->next){
         //no need to check for visited as flags imply a arborescence with no back edges =]
-        printf("\t neighbour is %i flag: %i\n",ehlp->endPoint->number,ehlp->flag);
+        //printf("\t neighbour is %i flag: %i\n",ehlp->endPoint->number,ehlp->flag);
         if((ehlp->flag & 1)){
-            ret=processComponentTree(graph, ehlp->endPoint, componentRoot, treeNumber, rootedComponents, oldChars, ret, pattern, patternSize, gPool, sgPool);
-            printf("After returning from %i:\n",ehlp->endPoint->number);
-            printCharacteristics(ret);
+            ret=processComponentTree(graph, ehlp->endPoint, componentRoot, treeNumber, rootedComponents, oldChars, ret, pattern, gPool, sgPool);
+            //printf("After returning from %i:\n",ehlp->endPoint->number);
+            //printCharacteristics(ret);
         }
     }
-    printf("\nComp root number is %i \n",componentRoot->number);
+    /*
+    printf("\ncomproot number is %i \n",componentRoot->number);
 
     printf("\nroot number is %i\n",root->number);
+    printf("----------old----------\n");
+    printCharacteristics(oldChars);
+    printf("--------new-----------\n");
+    printCharacteristics(ret);
+    */
     int i =0;
     if((componentRoot->number != root->number) || root->number==0){
         if(root->d <0){// not a component root
-            for(i=0;i<pattern->n;++i)
-            ret=characteristics(graph, root, treeNumber, 0, oldChars, ret, pattern->vertices[i], patternSize, gPool, sgPool);
+            for(;i<pattern->n;++i)
+                ret=characteristics(graph, root, treeNumber, 0, oldChars, ret, pattern->vertices[i], pattern->n, gPool, sgPool);
         }
         else{
             deletedEdges = malloc((rootedComponents[root->d]->data)*sizeof(struct VertexList *));
-            for(i=0;i<pattern->n;++i){
-                wTreeNumber=0;
-                initSpanningTree(rootedComponents[root->d], deletedEdges,2);
-                do{
-                    ret= characteristics(graph, root, treeNumber, wTreeNumber, oldChars, ret, pattern->vertices[i], patternSize, gPool, sgPool);
-                    exNext=nextSpanningTree(rootedComponents[root->d], deletedEdges,2);
-                    ++wTreeNumber;
-                }while(exNext);
-            }
-        free(deletedEdges);
+            initSpanningTree(rootedComponents[root->d], deletedEdges,2);
+            wTreeNumber=0;
+            do{
+                for(i=0;i<pattern->n;++i)
+                    ret= characteristics(graph, root, treeNumber, wTreeNumber, oldChars, ret, pattern->vertices[i], pattern->n, gPool, sgPool);
+                exNext=nextSpanningTree(rootedComponents[root->d], deletedEdges,2);
+                ++wTreeNumber;
+            }while(exNext);
+            free(deletedEdges);
         }
     }
     return ret;
@@ -200,68 +202,83 @@ struct Characteristics *characteristics(struct Graph *graph, struct Vertex *w, c
     int i=0, j=0, numTree=0, numPattern, matchingSize, numRem=0;
 
     //TODO single vertex pattern.
-    printf("gV %i pV %i\n",w->number, patternVertex->number);
-    if(isLeaf(patternVertex) && (w->number != 0)){
-        printf("leaf %i\n",w->number);
+    //printf("gV %i pV %i\n",w->number, patternVertex->number);
+    if(isLeaf(patternVertex)){
+        //printf("leaf %i\n",w->number);
+        for(edgehlp=w->neighborhood; edgehlp; edgehlp=edgehlp->next)
+            if(((edgehlp->flag & 1) && (checkCharacteristic(newCharacteristics,edgehlp->endPoint->number,patternVertex->number, patternVertex->neighborhood->endPoint->number, treeID)))
+                    ||((edgehlp->flag & 2) && (checkCharacteristic(oldCharacteristics,edgehlp->endPoint->number,patternVertex->number, patternVertex->neighborhood->endPoint->number, wTreeID)))){
+                freeCharacteristics(ret);
+                return insertCharacteristic(NULL, patternSize, w->number, patternVertex->number, patternVertex->number, treeID);
+            }
         return insertCharacteristic(ret,patternSize,w->number, patternVertex->neighborhood->endPoint->number, patternVertex->number, treeID);
     }
-    printf("Checking neighbours of gV\n");
+    
+    //printf("Checking neighbours of gV\n");
     for(edgehlp=w->neighborhood; edgehlp;edgehlp=edgehlp->next){
-        printf("\t(%i %i)" ,edgehlp->endPoint->number, edgehlp->flag);
+        //printf("\t(%i %i)" ,edgehlp->endPoint->number, edgehlp->flag);
         if((edgehlp->flag)){//part of the tree
            ++numTree;
         }
     }
-    printf("\n");
+    //printf("\n");
     numPattern=degree(patternVertex);
+    if(numPattern-1>numTree) return ret;
     edgehlp=patternVertex->neighborhood;
     bipartite=createGraph(numPattern+numTree, gPool);
-    printf("\n nP %i nt %i  T %i wT %i\n",numPattern, numTree, treeID, wTreeID);
+    //printf("\n nP %i nt %i  T %i wT %i\n",numPattern, numTree, treeID, wTreeID);
     for(;i<numPattern;++i){
+        bipartite->vertices[i]->lowPoint =0;
         //setting vertexnumber for neighborhood.
         edgehlp->endPoint->d=i;
         edgehlp2=w->neighborhood;
         bipartite->vertices[i]->d=edgehlp->endPoint->number;
         for(j=0;j<numTree;++j){
             while(!(edgehlp2->flag)) edgehlp2=edgehlp2->next;
+            /*
             printf("checking edge ");
             if(edgehlp2) printf(" (gN %i %i) ", edgehlp2->endPoint->number ,edgehlp2->flag);
-            if((edgehlp)) printf(" (pN %i %i) ", edgehlp->endPoint->number, edgehlp2->flag);
+            if((edgehlp)) printf(" (pN %i) ", edgehlp->endPoint->number);
             printf("\n");
-            if(edgehlp2 && (((edgehlp2->flag & 1) && checkCharacteristic(newCharacteristics,edgehlp2->endPoint->number,patternVertex->number, edgehlp->endPoint->number,treeID))
+            */
+            if( (((edgehlp2->flag & 1) && checkCharacteristic(newCharacteristics,edgehlp2->endPoint->number,patternVertex->number, edgehlp->endPoint->number,treeID))
                     ||((edgehlp2->flag & 2) && checkCharacteristic(oldCharacteristics, edgehlp2->endPoint->number, patternVertex->number, edgehlp->endPoint->number,wTreeID)))){
                 edgehlp3=getVertexList(gPool->listPool);
                 edgehlp4=getVertexList(gPool->listPool);
-                edgehlp3->label = (int)edgehlp4;
+                edgehlp3->label = (char *)edgehlp4;
                 edgehlp3->startPoint=bipartite->vertices[i];
+                ++(bipartite->vertices[i]->lowPoint);
                 edgehlp3->endPoint=bipartite->vertices[numPattern+j];
                 addEdge(edgehlp3->startPoint,edgehlp3);
-                edgehlp4->label = (int)edgehlp3;
+                edgehlp4->label = (char *)edgehlp3;
                 edgehlp4->endPoint=bipartite->vertices[i];
                 edgehlp4->startPoint=bipartite->vertices[numPattern+j];
                 addEdge(edgehlp4->startPoint,edgehlp4);
                 ++(bipartite->m);
-                printf("bedge %i,%i\t\n",i,numPattern+j);
+                //printf("bedge %i,%i\t\n",i,numPattern+j);
             }
             edgehlp2=edgehlp2->next;
         }
+        //printf("%i=%i\n",degree(bipartite->vertices[i]),bipartite->vertices[i]->lowPoint);
         edgehlp=edgehlp->next;
     }
-    if(bipartite->m==0){
+    //printf("\n");
+    if(bipartite->m<numPattern-1){
         dumpGraph(gPool, bipartite);
         return ret;
     }
     bipartite->number=numPattern;
     initBipartite(bipartite);
     matchingSize=bipartiteMatchingFastAndDirty(bipartite, gPool); 
-    printf("\nmatching size is %i\n", matchingSize);
+    //printf("\nmatching size is %i\n", matchingSize);
     if(matchingSize==numPattern){//we have a matching that covers.
-        printf("\n\n\nAND IT MATCHES!!!!111elf\n\n\n");
+        //printf("\n\n\nAND IT MATCHES!!!!111elf\n\n\n");
         freeCharacteristics(ret);
         dumpGraph(gPool,bipartite);
         return insertCharacteristic(NULL, patternSize, w->number, patternVertex->number, patternVertex->number, treeID);
     }
     // now start removing neighbours.
+    /*
     int p;
     struct VertexList *debug;
     printf("\n complete bipartie\n");
@@ -269,45 +286,50 @@ struct Characteristics *characteristics(struct Graph *graph, struct Vertex *w, c
             printf("%i",bipartite->vertices[p]->number);
             for(debug=bipartite->vertices[p]->neighborhood;debug;debug=debug->next) printf("  (%i cb  %i)", debug->startPoint->number, debug->endPoint->number);
         }
+    */
     for(j=0;j<numPattern;++j){
-        printf("rem vert %i ",j);
-        tmprm=bipartite->vertices[j]->neighborhood;
-        bipartite->vertices[j]->neighborhood=NULL;
-        for(edgehlp=tmprm;edgehlp;edgehlp=edgehlp->next){
-            deleteEdge(bipartite, edgehlp->endPoint->number, j);
-            ++numRem;
-        }
+        //printf("rem vert %i ",j);
+        //printf("%i %i \n",bipartite->vertices[j]->lowPoint , degree(bipartite->vertices[i]));
+        if(bipartite->m - bipartite->vertices[j]->lowPoint >= numPattern-1){
+            tmprm=bipartite->vertices[j]->neighborhood;
+            bipartite->vertices[j]->neighborhood=NULL;
+            for(edgehlp=tmprm;edgehlp;edgehlp=edgehlp->next){
+                deleteEdge(bipartite, edgehlp->endPoint->number, j);
+                ++numRem;
+            }
+            
+            bipartite->m -= numRem;
+            /*
+            printf("after removal " );
+            for(p=0;p<numPattern+numTree;++p){
+                printf("%i",bipartite->vertices[p]->number);
+                for(debug=bipartite->vertices[p]->neighborhood;debug;debug=debug->next) printf("  (%i ar %i)", debug->startPoint->number, debug->endPoint->number);
+            }
+            */
+            initBipartite(bipartite);
+            matchingSize=bipartiteMatchingFastAndDirty(bipartite, gPool);
+            //printf("\nmatching size is %i\n", matchingSize);
+            if(matchingSize ==numPattern-1){//we have a matching that covers.
+                //printf("\nsmall matching\n");
+                ret=insertCharacteristic(ret, patternSize, w->number, bipartite->vertices[j]->d, patternVertex->number, treeID);
+            }
         
-        bipartite->m -= numRem+numRem;
-        printf("after removal " );
-        for(p=0;p<numPattern+numTree;++p){
-            printf("%i",bipartite->vertices[p]->number);
-            for(debug=bipartite->vertices[p]->neighborhood;debug;debug=debug->next) printf("  (%i ar %i)", debug->startPoint->number, debug->endPoint->number);
-        }
-        initBipartite(bipartite);
-        matchingSize=bipartiteMatchingFastAndDirty(bipartite, gPool);
-        printf("\nmatching size is %i\n", matchingSize);
-        if(matchingSize ==numPattern-1){//we have a matching that covers.
-            printf("\nsmall matching\n");
-            printf("before:\n");
-            printCharacteristics(ret);
-            ret=insertCharacteristic(ret, patternSize, w->number, bipartite->vertices[j]->d, patternVertex->number, treeID);
-            printf("after:\n");
-            printCharacteristics(ret);
-        }
         //reinsert removed Edges.
-        bipartite->vertices[j]->neighborhood=tmprm;
-        for(edgehlp=tmprm;edgehlp;edgehlp=edgehlp->next){
-            edgehlp2=(struct VertexList *)edgehlp->label;
-            addEdge(edgehlp2->startPoint,edgehlp2);
+            bipartite->vertices[j]->neighborhood=tmprm;
+            for(edgehlp=tmprm;edgehlp;edgehlp=edgehlp->next){
+                edgehlp2=(struct VertexList *)edgehlp->label;
+                addEdge(edgehlp2->startPoint,edgehlp2);
+            }
+            /*
+            printf("\nAfter reinsertion: \n");
+            for(p=0;p<numPattern+numTree;++p){
+                printf("%i",bipartite->vertices[p]->number);
+                for(debug=bipartite->vertices[p]->neighborhood;debug;debug=debug->next) printf("  (%i ai %i)", debug->startPoint->number, debug->endPoint->number);
+            }
+            */
+            bipartite->m += numRem;
+            numRem=0;
         }
-        printf("\nAfter reinsertion: \n");
-        for(p=0;p<numPattern+numTree;++p){
-            printf("%i",bipartite->vertices[p]->number);
-            for(debug=bipartite->vertices[p]->neighborhood;debug;debug=debug->next) printf("  (%i ai %i)", debug->startPoint->number, debug->endPoint->number);
-        }
-        bipartite->m += numRem+numRem;
-        numRem=0;
     }
     dumpGraph(gPool,bipartite);
     return ret;
@@ -343,7 +365,7 @@ char nextSpanningTree(struct ShallowGraph *rootedComponent, struct VertexList **
     int i =-1;
     struct ShallowGraph *shlp=rootedComponent;
     struct VertexList *ehlp;
-    while(shlp){//TODO iterate over i or rootedComponent?
+    while(shlp){
         if(deletedEdges[++i]==NULL) shlp=shlp->next;
         else{//indicator for component of size > 1
             //Reinsert Edge into Graph
@@ -438,10 +460,10 @@ struct Characteristics *allocateCharacteristics(int size, int master){
 void freeCharacteristics(struct Characteristics *characteristics){
     struct Characteristics *chlp1,*chlp2;
     struct TreeList *hlp1,*hlp2;
-    int i=0, j;
+    int i, j;
     chlp1=characteristics;
     while(chlp1){
-        for(;i<chlp1->size;++i){
+        for(i=0;i<chlp1->size;++i){
             for(j=0;j<chlp1->size;++j){
                 hlp1=chlp1->treeIDs[i][j];
                 while(hlp1){
@@ -464,12 +486,17 @@ struct Characteristics *mergeCharacteristics(struct Characteristics *one, struct
     int i=0;
     if(one == NULL) return two;
     if(two == NULL) return one;
-    printf("\n\n\t\t\t\t\t\tmerging chars\n\n\n\n");
+    /*
+    printf("\n\t\t\tmerging chars\n\n");
+    printCharacteristics(one);
+    printf("\n===============\n");
+    printCharacteristics(two);
     printf("\t both are not null\n");
     printf("\t %i\n",hlp1);
     printf("\t %i\n", hlp2->masterID);
+    */
     if(hlp1->masterID==hlp2->masterID){
-    printf("\t equal\n");
+   // printf("\t equal\n");
         hlp3=hlp2;
         hlp2=hlp2->next;
         hlp1->treeIDs=mergeTreeArrays(hlp1->treeIDs, hlp3->treeIDs, hlp1->size);
@@ -480,7 +507,7 @@ struct Characteristics *mergeCharacteristics(struct Characteristics *one, struct
         free(hlp3);
     }
     if(hlp1->masterID>hlp2->masterID){
-    printf("\t first larger\n");
+    //printf("\t first larger\n");
         hlp3=hlp1;
         hlp1=hlp2;
         hlp2=hlp3;
@@ -489,7 +516,7 @@ struct Characteristics *mergeCharacteristics(struct Characteristics *one, struct
     hlp1=start->next;
     hlp3=start;
     while(hlp1 && hlp2){
-    printf("\t while loop\n");
+    //printf("\t while loop\n");
         if(hlp1->masterID<hlp2->masterID){
             hlp3->next=hlp1;
             hlp3=hlp1;
@@ -513,19 +540,20 @@ struct Characteristics *mergeCharacteristics(struct Characteristics *one, struct
     }
     if(hlp1) hlp3->next=hlp1;
     else hlp3->next=hlp2;
+    //printCharacteristics(start);
     return start;
 }
 
 struct Characteristics *insertCharacteristic(struct Characteristics * characteristics, int size, int masterID, int patternRoot, int patternSubRoot, int treeID){
     struct Characteristics *start=characteristics, *hlp1=characteristics, *hlp2;
-    printf("\tchar %i %i %i %i\n", masterID, patternRoot,patternSubRoot,treeID);
+    //printf("\tchar %i %i %i %i\n", masterID, patternRoot,patternSubRoot,treeID);
     if(hlp1 && hlp1->masterID<=masterID){
-        printf("\t\t\tinster at middle of chars\n");
+        //printf("\t\t\tinster at middle of chars\n");
         while(hlp1->next && hlp1->next->masterID <= masterID){
             hlp1=hlp1->next;
         }
         if(hlp1->masterID<masterID){
-        printf("\t\t\tinster at new Entry of chars\n");
+       // printf("\t\t\tinster at new Entry of chars\n");
             hlp2=allocateCharacteristics(size, masterID);
             hlp2->next=hlp1->next;
             hlp1->next=hlp2;
@@ -534,21 +562,21 @@ struct Characteristics *insertCharacteristic(struct Characteristics * characteri
         // o/w hlp1 is already at the equal entry.
     }
     else{//hlp1==NULL or beginning is larger.
-        printf("\t\t\tinster at beginning of chars\n");
+        //printf("\t\t\tinster at beginning of chars\n");
         start=allocateCharacteristics(size,masterID);
         start->next=hlp1;//hlp1 is either NULL or the beginning.
         hlp1=start;
         
         // o/w we have already the right entry as it has the correct masterID.
     }
-    printCharacteristics(hlp1);
-    printf("insert %i %i %i at master %i\n",patternRoot, patternSubRoot, treeID,hlp1->masterID);
-    printTL(hlp1->treeIDs[patternRoot][patternSubRoot]);
+   // printCharacteristics(hlp1);
+    //printf("insert %i %i %i at master %i\n",patternRoot, patternSubRoot, treeID,hlp1->masterID);
+    //printTL(hlp1->treeIDs[patternRoot][patternSubRoot]);
     hlp1->treeIDs[patternRoot][patternSubRoot]=insertTree(hlp1->treeIDs[patternRoot][patternSubRoot],treeID);
-    printTL(hlp1->treeIDs[patternRoot][patternSubRoot]);
-    printCharacteristics(hlp1);
-    printf("char for return \n");
-    printCharacteristics(start);
+    //printTL(hlp1->treeIDs[patternRoot][patternSubRoot]);
+   // printCharacteristics(hlp1);
+    //printf("char for return \n");
+    //printCharacteristics(start);
     return start;
 }
 
@@ -558,7 +586,7 @@ char hasSolution(struct Characteristics *characteristic){
     for(;chlp;chlp=chlp->next){
         for(i=0;i<chlp->size;++i){
             if(chlp->treeIDs[i][i]){
-                printf("\n\nFOUND SOMETHING\n\n)");
+ //               printf("\n\nFOUND SOMETHING\n\n)");
                 return 1;
             }
         }
@@ -630,7 +658,7 @@ struct TreeList* insertTree(struct TreeList *trees, int treeID){
                 treehlp=treehlp->next;
             }
             if(treehlp->treeID<treeID){
-                printf("Inserting new tree in the middle\n");
+                //printf("Inserting new tree in the middle\n");
                 treehlp2=treehlp->next;
                 treehlp->next=malloc(sizeof(struct TreeList));
                 treehlp=treehlp->next;
@@ -640,23 +668,24 @@ struct TreeList* insertTree(struct TreeList *trees, int treeID){
             return trees;
         }
     }
-    printf("insert at the beginning\n");
+    //printf("insert at the beginning\n");
     treehlp2=malloc(sizeof(struct TreeList));
     treehlp2->treeID=treeID;
     treehlp2->next=treehlp;//treehlp is either null or has a larger treeID
     return treehlp2;
 }
-//TODO make non recursive.
-char checkCharacteristic(const struct Characteristics *characteristics, const int masterID, const int patternRoot, const int patternSubRoot, const int treeID){
-    if(!(characteristics) || characteristics->masterID > masterID) return 0;
-    if(characteristics->masterID < masterID) return checkCharacteristic(characteristics->next, masterID, patternRoot, patternSubRoot, treeID);
-    return checkTreeList(characteristics->treeIDs[patternRoot][patternSubRoot],treeID);
+char checkCharacteristic(struct Characteristics *characteristics, const int masterID, const int patternRoot, const int patternSubRoot, const int treeID){
+    struct Characteristics *hlp=characteristics;
+    for(; hlp && hlp->masterID < masterID; hlp=hlp->next);
+    if (hlp && hlp->masterID==masterID) return checkTreeList(hlp->treeIDs[patternRoot][patternSubRoot], treeID);
+    return 0;
 }
 
-char checkTreeList(const struct TreeList *treeList, const int treeID){
-    if(!treeList || treeList->treeID > treeID) return 0;
-    if(treeList->treeID < treeID) return checkTreeList(treeList->next, treeID);
-    return 1;
+char checkTreeList(struct TreeList *treeList, const int treeID){
+    struct TreeList *hlp=treeList;
+    for(;hlp && hlp->treeID < treeID;hlp=hlp->next);
+    if(hlp && hlp->treeID == treeID) return 1;
+    return 0;
 }
 
 
