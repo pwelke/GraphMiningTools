@@ -9,6 +9,8 @@ STTNAME = stt
 CCDNAME = ccd
 GFNAME = gf
 CSTRNAME = cstring
+TCIPERFNAME = tciperf
+
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 # OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c)) $(patsubst %.c,%.o,$(wildcard ./executables/*.c))
 # TPKOBJECTS = $(filter-out ./executables/cpkExtendedMain.o ./executables/countCycleDegree.o ./executables/cpkMain.o ./executables/levelwiseMain.o ./executables/map2gaston.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
@@ -30,7 +32,7 @@ STTOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingTest.o
 CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
 GFOBJECTS = $(OBJECTS) ./executables/filter.o
 CSTROBJECTS = $(OBJECTS) ./executables/cstring.o
-
+TCIPERFOBJECTS = $(OBJECTS) ./executables/cactus.o
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
 dependencies.png: executables/cinclude2dot
@@ -50,7 +52,11 @@ gf: $(GFOBJECTS)
 cstr: $(CSTROBJECTS)
 	@echo "\nLink Graph Filter executable:"
 	gcc -o $(CSTRNAME) $(CSTROBJECTS) $(CPPFLAGS)
-	
+
+tciperf: $(TCIPERFOBJECTS)
+	@echo "\nLink Tree Cactus Performance Test executable:"
+	gcc -o $(TCIPERFNAME) $(TCIPERFOBJECTS) $(CPPFLAGS)
+
 cpk: $(CPKOBJECTS)
 	@echo "\nLink Cyclic Pattern Kernel executable:"
 	gcc -o $(CPKNAME) $(CPKOBJECTS) $(CPPFLAGS)
