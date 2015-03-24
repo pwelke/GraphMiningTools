@@ -92,10 +92,10 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 			/* y has to be a child of v */
 			if (g->vertices[y]->visited < g->vertices[v]->visited) {
 				/* vertex labels have to match */
-				if (strcmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
+				//if (strcmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
 					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h 
 					these values were stored in B->vertices[i,j]->label */
-					if (strcmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+				//	if (strcmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
 						if (S[y][x] != NULL) {
 							for (k=1; k<S[y][x][0]; ++k) {
 								if (S[y][x][k] == u) {
@@ -104,8 +104,8 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 								}
 							}
 						}
-					}
-				}
+					//}
+				//}
 			}
 		}
 	} 
@@ -153,10 +153,10 @@ struct Graph* makeBipartiteInstanceLF(struct Graph* g, int v, struct Graph* h, i
 			/* y has to be a child of v */
 			if (g->vertices[y]->visited < g->vertices[v]->visited) {
 				/* vertex labels have to match */
-				if (strcmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
+			//	if (strcmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
 					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h 
 					these values were stored in B->vertices[i,j]->label */
-					if (strcmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+			//		if (strcmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
 						if (S[y][x] != NULL) {
 							for (k=1; k<S[y][x][0]; ++k) {
 								if (S[y][x][k] == u) {
@@ -165,8 +165,8 @@ struct Graph* makeBipartiteInstanceLF(struct Graph* g, int v, struct Graph* h, i
 								}
 							}
 						}
-					}
-				}
+				//	}
+			//	}
 			}
 		}
 	} 
@@ -270,16 +270,16 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 	for (v=1; v<gLeaves[0]; ++v) {
 		for (u=1; u<hLeaves[0]; ++u) {
 			/* check compatibility of leaf labels */
-			if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
+			//if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
 				/* check for compatibility of edges */
-				if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
+			//	if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
 					S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
 					/* 'header' of array stores its length */
 					S[gLeaves[v]][hLeaves[u]][0] = 2;
 					/* the number of the unique neighbor of u in h*/
 					S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
-				}
-			}
+				//}
+			//}
 		}
 	}
 	/* garbage collection for init */
@@ -297,7 +297,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 				int degU = degree(h->vertices[u]);
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
-					if (strcmp(h->vertices[u]->label, current->label) == 0) {
+					//if (strcmp(h->vertices[u]->label, current->label) == 0) {
 						struct Graph* B = makeBipartiteInstanceL(g, postorder[v], h, u, S, gp);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
@@ -316,7 +316,8 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 						for (i=0; i<B->number; ++i) {
 							/* if the label of ith child of u is compatible to the label of the parent of v */
 							if ((current->lowPoint != -1) 
-								&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
+					//			&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
+                                                        ){
 								struct ShallowGraph* storage = removeVertexFromBipartiteInstance(B, i, sgp);
 								initBipartite(B);
 								matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
@@ -336,7 +337,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 						S[current->number][u] = matchings;
 
 						dumpGraph(gp, B);
-					}
+					//}
 				}
 			}		
 		}
@@ -379,16 +380,16 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 	for (v=1; v<gLeaves[0]; ++v) {
 		for (u=1; u<hLeaves[0]; ++u) {
 			/* check compatibility of leaf labels */
-			if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
+			//if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
 				/* check for compatibility of edges */
-				if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
+			//	if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
 					S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
 					/* 'header' of array stores its length */
 					S[gLeaves[v]][hLeaves[u]][0] = 2;
 					/* the number of the unique neighbor of u in h*/
 					S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
-				}
-			}
+				//}
+			//}
 		}
 	}
 	/* garbage collection for init */
@@ -406,7 +407,7 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 				int degU = degree(h->vertices[u]);
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
-					if (strcmp(h->vertices[u]->label, current->label) == 0) {
+					//if (strcmp(h->vertices[u]->label, current->label) == 0) {
 						struct Graph* B = makeBipartiteInstanceLF(g, postorder[v], h, u, S, cacheB);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
@@ -444,7 +445,8 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 						for (i=0; i<B->number; ++i) {
 							/* if the label of ith child of u is compatible to the label of the parent of v */
 							if ((current->lowPoint != -1) 
-								&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
+					//			&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
+                                                        ){
 								
 								struct VertexList* e;
 
@@ -485,7 +487,7 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 						dumpVertex(gp->vertexPool, s);
 						dumpVertex(gp->vertexPool, t);
 						returnCachedGraph(cacheB);
-					}
+					//}
 				}
 			}		
 		}
@@ -552,17 +554,17 @@ char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 	for (v=1; v<gLeaves[0]; ++v) {
 		for (u=1; u<hLeaves[0]; ++u) {
 			/* check compatibility of leaf labels */
-			if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
+			//if (strcmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
 				/* check for compatibility of edges */
-				if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
+			//	if (strcmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
 					S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
 					/* 'header' of array stores its length */
 					S[gLeaves[v]][hLeaves[u]][0] = 2;
 					/* the number of the unique neighbor of u in h*/
 					S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
 				}
-			}
-		}
+			//}
+		//}
 	}
 	/* garbage collection for init */
 	free(gLeaves);
@@ -579,7 +581,7 @@ char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 				int degU = degree(h->vertices[u]);
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
-					if (strcmp(h->vertices[u]->label, current->label) == 0) {
+					//if (strcmp(h->vertices[u]->label, current->label) == 0) {
 						struct Graph* B = makeBipartiteInstanceLF(g, postorder[v], h, u, S, cacheB);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
@@ -622,8 +624,8 @@ char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 						for (i=0; i<B->number; ++i) {
 							/* if the label of ith child of u is compatible to the label of the parent of v */
 							if ((current->lowPoint != -1) 
-								&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
-								
+								//&& (strcmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
+                                                            ){
 								struct VertexList* e;
 
 								/* remove vertex i from B and init B for matching algorithm */
@@ -663,7 +665,7 @@ char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 						dumpVertex(gp->vertexPool, t);
 						returnCachedGraph(cacheB);
 					}
-				}
+				//}
 			}		
 		}
 	}
