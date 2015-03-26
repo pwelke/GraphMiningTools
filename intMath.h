@@ -3,5 +3,6 @@
 
 int min(int a, int b);
 int mod(int a, int b);
+int pow(int b, int e);
 
 #endif

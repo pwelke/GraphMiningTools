@@ -18,3 +18,14 @@ int mod(int a, int b) {
 		return b + (a % b);
 	}
 }
+
+int pow(int b, int e){
+    //negative sucks just treat it as zero.
+    int r;
+    if(e<=0) return 1;
+    if(e%2==0){
+        r=pow(b,e/2);
+        return r*r;
+    }
+    return b*pow(b,e-1);
+}
