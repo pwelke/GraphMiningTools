@@ -164,6 +164,57 @@ int* findLeaves(struct Graph* g, int root) {
 }
 
 
+
+
+
+
+struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* temp = getShallowGraph(sgp);
+	struct VertexList* e;
+	struct VertexList* f;
+	struct VertexList* g;	
+	int w;
+
+
+	/* mark edges that will be removed */
+	for (e=B->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+		e->used = 1;
+		((struct VertexList*)e->label)->used = 1;
+	}
+
+	/* remove edges from v */
+	for (e=B->vertices[v]->neighborhood; e!=NULL; e=f) {
+		f = e->next;
+		appendEdge(temp, e);
+	}
+	B->vertices[v]->neighborhood = NULL;
+
+	/* remove residual edges */
+	for (w=B->number; w<B->n; ++w) {
+		f = NULL;
+		g = NULL;
+		/* partition edges */
+		for (e=B->vertices[w]->neighborhood; e!=NULL; e=B->vertices[w]->neighborhood) {
+			B->vertices[w]->neighborhood = e->next;
+			if (e->used == 1) {
+				e->next = f;
+				f = e;
+			} else {
+				e->next = g;
+				g = e;
+			}
+		}
+		/* set neighborhood to unused, append used to temp */
+		B->vertices[w]->neighborhood = g;
+		while (f!=NULL) {
+			e = f;
+			f = f->next;
+			appendEdge(temp, e);
+		}
+	}
+	return temp;
+}
+
 void addVertexToBipartiteInstance(struct ShallowGraph* temp) {
 	struct VertexList* e;
 
@@ -172,3 +223,5 @@ void addVertexToBipartiteInstance(struct ShallowGraph* temp) {
 		addEdge(e->startPoint, e);
 	}
 }
+
+
