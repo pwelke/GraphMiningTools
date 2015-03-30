@@ -18,7 +18,7 @@ int labelCmp(const char* l1, const char* l2) {
 	return ((l1 == NULL) || (l2 == NULL)) ? 0 : strcmp(l1, l2);
 }
 
-int dfsL(struct Vertex* v, int value) {
+int dfs(struct Vertex* v, int value) {
 	struct VertexList* e;
 
 	/* to make this method save for graphs that are not trees */
@@ -26,7 +26,7 @@ int dfsL(struct Vertex* v, int value) {
 
 	for (e=v->neighborhood; e!=NULL; e=e->next) {
 		if (e->endPoint->visited == -1) {
-			value = 1 + dfsL(e->endPoint, value);
+			value = 1 + dfs(e->endPoint, value);
 			e->endPoint->lowPoint = v->number; 
 		}
 	}
@@ -36,28 +36,28 @@ int dfsL(struct Vertex* v, int value) {
 
 
 /**
-Compute a dfsL order or postorder on g starting at vertex root.
+Compute a dfs order or postorder on g starting at vertex root.
 The ->visited members of vertices are set to the position they have in the order 
 (starting with 0). Vertices that cannot be reached from root get ->visited = -1
 The method returns an array of length g->n where position i contains the vertex number 
 of the ith vertex in the order. 
 The ->lowPoint s of vertices in g point to their parents in the postorder.
 */
-int* getPostorderL(struct Graph* g, int root) {
+int* getPostorder(struct Graph* g, int root) {
 	int i;
 	int* order = malloc(g->n * sizeof(int));
 	for (i=0; i<g->n; ++i) {
 		g->vertices[i]->visited = -1;
 		order[i] = -1;
 	}
-	dfsL(g->vertices[root], 0);
+	dfs(g->vertices[root], 0);
 	g->vertices[root]->lowPoint = -1; 
 	for (i=0; i<g->n; ++i) {
 		if (g->vertices[i]->visited != -1) {
 			order[g->vertices[i]->visited] = i;
 		} else {
 			/* should never happen if g is a tree */
-			fprintf(stderr, "Vertex %i was not visited by dfsL.\nThis can not happen, if g is a tree.\n", i);
+			fprintf(stderr, "Vertex %i was not visited by dfs.\nThis can not happen, if g is a tree.\n", i);
 		}
 	}
 	return order;
@@ -66,7 +66,7 @@ int* getPostorderL(struct Graph* g, int root) {
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp) {
+struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp) {
 	struct Graph* B;
 	int i, j;
 
@@ -127,7 +127,7 @@ struct Graph* makeBipartiteInstanceL(struct Graph* g, int v, struct Graph* h, in
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstanceLF(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct CachedGraph* cache) {
+struct Graph* makeBipartiteInstanceF(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct CachedGraph* cache) {
 	struct Graph* B;
 	int i, j;
 
@@ -186,7 +186,7 @@ struct Graph* makeBipartiteInstanceLF(struct Graph* g, int v, struct Graph* h, i
 }
 
 
-struct ShallowGraph* removeVertexFromBipartiteInstanceLF(struct Graph* B, int v, struct Vertex* s, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* removeVertexFromBipartiteInstanceF(struct Graph* B, int v, struct Vertex* s, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* temp = getShallowGraph(sgp);
 	struct VertexList* e;
 	struct VertexList* f;
@@ -265,13 +265,13 @@ Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2
 
 in the labeled version
 */
-char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* iterators */
 	int u, v;
 
 	struct Vertex* r = g->vertices[0];
 	int*** S = createCube(g->n, h->n);
-	int* postorder = getPostorderL(g, r->number);
+	int* postorder = getPostorder(g, r->number);
 
 
 	/* init the S(v,u) for v and u leaves */
@@ -309,7 +309,7 @@ char subtreeCheckL(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
 					if (labelCmp(h->vertices[u]->label, current->label) == 0) {
-						struct Graph* B = makeBipartiteInstanceL(g, postorder[v], h, u, S, gp);
+						struct Graph* B = makeBipartiteInstance(g, postorder[v], h, u, S, gp);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
 						matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
@@ -372,13 +372,13 @@ Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2
 
 in the labeled version
 */
-char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+char subtreeCheckF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* iterators */
 	int u, v;
 
 	struct Vertex* r = g->vertices[0];
 	int*** S = createCube(g->n, h->n);
-	int* postorder = getPostorderL(g, r->number);
+	int* postorder = getPostorder(g, r->number);
 
 	struct CachedGraph* cacheB = initCachedGraph(gp, g->n);
 
@@ -418,7 +418,7 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
 					if (labelCmp(h->vertices[u]->label, current->label) == 0) {
-						struct Graph* B = makeBipartiteInstanceLF(g, postorder[v], h, u, S, cacheB);
+						struct Graph* B = makeBipartiteInstanceF(g, postorder[v], h, u, S, cacheB);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
 						int w;
@@ -460,7 +460,7 @@ char subtreeCheckLF(struct Graph* g, struct Graph* h, struct GraphPool* gp, stru
 								struct VertexList* e;
 
 								/* remove vertex i from B and init B for matching algorithm */
-								struct ShallowGraph* storage = removeVertexFromBipartiteInstanceLF(B, i, s, sgp);
+								struct ShallowGraph* storage = removeVertexFromBipartiteInstanceF(B, i, s, sgp);
 								initBipartite(B);
 								for (e=s->neighborhood; e!=NULL; e=e->next) {
 									setFlag(e, 0);
@@ -554,7 +554,7 @@ char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 
 	struct Vertex* r = g->vertices[0];
 	int*** S = createCube(g->n, h->n);
-	int* postorder = getPostorderL(g, r->number);
+	int* postorder = getPostorder(g, r->number);
 
 	/* init the S(v,u) for v and u leaves */
 	int* gLeaves = findLeaves(g, 0);
@@ -591,7 +591,7 @@ char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 				if (degU <= currentDegree + 1) {
 					/* if vertex labels match */
 					if (labelCmp(h->vertices[u]->label, current->label) == 0) {
-						struct Graph* B = makeBipartiteInstanceLF(g, postorder[v], h, u, S, cacheB);
+						struct Graph* B = makeBipartiteInstanceF(g, postorder[v], h, u, S, cacheB);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
 						int w;
@@ -687,7 +687,7 @@ char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 }
 
 
-char subtreeCheckLFF(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+char subtreeCheckFF(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 	struct CachedGraph* cacheB = initCachedGraph(gp, g->n);
 	char isSubtree = subtreeCheckCached(g, h, gp, cacheB);
 	dumpCachedGraph(cacheB);
