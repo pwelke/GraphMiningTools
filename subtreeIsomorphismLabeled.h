@@ -1,6 +1,0 @@
-#ifndef SUBTREE_ISOMORPHISM_H_
-#define SUBTREE_ISOMORPHISM_H_
-
-
-
-#endif /* SUBTREE_ISOMORPHISM_H_ */
