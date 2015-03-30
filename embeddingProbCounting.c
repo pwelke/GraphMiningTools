@@ -5,7 +5,7 @@
 #include "graph.h"
 #include "treeCenter.h"
 #include "cachedGraph.h"
-#include "subtreeIsomorphismLabeled.h"
+#include "subtreeIsomorphism.h"
 #include "cs_Parsing.h"
 #include "cs_Tree.h"
 #include "searchTree.h"
