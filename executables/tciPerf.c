@@ -162,6 +162,7 @@ int main(int argc, char **argv){
     printf("There were %i matches\n", i);
     destroyFileIterator();
     fclose(outFile);
+    dumpCube();
     dumpGraph(gPool,h);
     freeVertexPool(gPool->vertexPool);
     freeListPool(gPool->listPool);
