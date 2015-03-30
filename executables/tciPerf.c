@@ -5,7 +5,7 @@
 
 #include "../loading.h"
 #include "../cactustree.h"
-#include "../subtreeIsomorphismLabeled.h"
+#include "../subtreeIsomorphism.h"
 #include "../graph.h"
 #include "../outerplanar.h"
 #include "../intMath.h"
@@ -131,7 +131,7 @@ int main(int argc, char **argv){
             time2=clock();
             seconds=((double) (time2-time1))/CLOCKS_PER_SEC;
             time1=clock();
-            tResult=subtreeCheckL(g,h,gPool,sgPool);
+            tResult=subtreeCheckF(g,h,gPool,sgPool);
             time2=clock();
             ratio=((double) (time2-time1))/CLOCKS_PER_SEC;
             fprintf(outFile,"%c %.10f %.10f %.20f\n", tResult + 42 + 3*(1-tResult), seconds , ratio , seconds/ratio);
