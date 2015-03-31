@@ -36,6 +36,7 @@ typedef enum {
 	outerplanar,
 	tree,
 	cactus,
+	traceableCactus,
 
 	/* numerical properties */
 	spanningTreeEstimate,

@@ -12,7 +12,7 @@
 #include "../upperBoundsForSpanningTrees.h"
 #include "../connectedComponents.h"
 #include "../listCycles.h"
-#include "../unsortedFilters.h"
+#include "../hp_cactus.h"
 #include "filter.h"
 
 
@@ -91,6 +91,10 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "cactus") == 0) {
 				filter = cactus;
+				break;
+			}
+			if (strcmp(optarg, "traceableCactus") == 0) {
+				filter = traceableCactus;
 				break;
 			}
 			if (strcmp(optarg, "spanningTreeEstimate") == 0) {
@@ -326,6 +330,9 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case cactus:
 		measure = isCactus(g, sgp);
+		break;
+	case traceableCactus:
+		measure = isTraceableCactus(g, sgp);
 		break;
 
 	/* numeric properties */

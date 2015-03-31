@@ -45,6 +45,9 @@ options: options (except -h) are always followed by a value.
         outerplanar  check if a graph is outerplanar
         tree         check if a graph is a tree
         cactus       check if a graph is a connected cactus graph
+        traceableCactus       check if the graph is a connected 
+                              cactus graph and contains a Hamiltonian 
+                              path
              
         *numerical properties*
         spanningTreeEstimate  upper bound on the number of
