@@ -180,7 +180,7 @@ void writeCurrentGraph(FILE* out) {
 }
 
 /* stream a graph from a database file of the format described in the documentation */
-struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)) {
+struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*getEdgeLabel)(const unsigned int)) {
 	int i;
 	struct Graph* g = getGraph(FI_GP);
 	char* currentPosition;
@@ -289,11 +289,11 @@ struct Graph* iterateFile(char*(*getVertexLabel)(int), char*(*getEdgeLabel)(int)
 }
 
 /* return the base 10 string representation of label in a correctly sized newly allocated buffer */
-char* intLabel(int label) {
+char* intLabel(const unsigned int label) {
 	int bufferSize;
 	char* representation;
 	
-	if (label) {
+	if (label>1) {
 		bufferSize = (int)ceil(log10(label)) + 1;
 	} else {
 		bufferSize = 2;
@@ -310,7 +310,7 @@ char* intLabel(int label) {
 /**
  * return the label strings corresponding to the numbers used in AIDS99.txt
  */
-char* aids99EdgeLabel(int label) {
+char* aids99EdgeLabel(const unsigned int label) {
 	char* res = malloc(5*sizeof(char));
 	sprintf(res, "%i", label);
 	return res;
@@ -320,7 +320,7 @@ char* aids99EdgeLabel(int label) {
 /**
  * return the label strings corresponding to the numbers used in AIDS99.txt
  */
-char* aids99VertexLabel(int label) {
+char* aids99VertexLabel(const unsigned int label) {
 	char* res = malloc(5*sizeof(char));
 
 	switch (label) {
