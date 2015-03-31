@@ -17,26 +17,19 @@
 /**
  * Print --help message
  */
-void printHelp() {
-	printf("This is a Levelwise Algorithm for TreePatterns\n");
-	printf("implemented by Pascal Welke 2013\n\n\n");
-	printf("usage: lwm F [parameterList]\n\n");
-	printf("    without parameters: display this help screen\n\n");
-	printf("    F: (required) use F as graph database\n\n");
-	printf("    -nGraphs N: maximum number of transaction graphs you\n");
-	printf("        want to process (default 10000)\n\n");
-	printf("    -frequency T: absolute frequency threshold for frequent\n");
-	printf("        subtree patterns (e.g. 32 if a pattern has to occur\n");
-	printf("        in at least 32 transactions to be frequent) (default 1000)\n\n");
-	printf("    -fraction F: relative fraction of spanning trees of a graph\n");
-	printf("        s.t. a subtree S is considered a match. I.e. S is subgraph of\n");
-	printf("        at least F*X trees given X trees for a graph.\n");
-	printf("        If you set F<=0 or F>1, matching will fall back to the standard\n");
-	printf("        case where S needs to be subgraph of at lease one spanning tree.\n\n");
-	printf("    -min M: process graphs starting from Mth instance (default 0)\n\n");
-	printf("    -patternSize P: maximum number of edges in frequent patterns\n");
-	printf("        (default 20)\n\n");
-	printf("    -h | --help: display this help\n\n");
+int printHelp() {
+	FILE* helpFile = fopen("executables/levelwiseMainHelp.txt", "r");
+	if (helpFile != NULL) {
+		int c = EOF;
+		while ((c = fgetc(helpFile)) != EOF) {
+			fputc(c, stdout);
+		}
+		fclose(helpFile);
+		return EXIT_SUCCESS;
+	} else {
+		fprintf(stderr, "Could not read helpfile\n");
+		return EXIT_FAILURE;
+	}
 }
 
 
@@ -63,11 +56,10 @@ int main(int argc, char** argv) {
 		/* init params to default values*/
 		char debugInfo = 1;
 		double fraction = 0.3;
-		int minGraph = 0;
-		int maxGraph = 10000;
 		int threshold = 1000;
 		int maxPatternSize = 20;
 		int minEdgeID = 100;
+		int nGraphs = 1000; //TODO replace by autoset size of db
 		char* inputFileName = argv[1];
 		char countFileName[500];
 		char featureFileName[500];
@@ -91,7 +83,7 @@ int main(int argc, char** argv) {
 				return EXIT_SUCCESS;
 			}
 			if (strcmp(argv[param], "-nGraphs") == 0) {
-				sscanf(argv[param+1], "%i", &maxGraph);
+				sscanf(argv[param+1], "%i", &nGraphs);
 				known = 1;
 			}
 			if (strcmp(argv[param], "-frequency") == 0) {
@@ -100,10 +92,6 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(argv[param], "-fraction") == 0) {
 				sscanf(argv[param+1], "%lf", &fraction);
-				known = 1;
-			}
-			if (strcmp(argv[param], "-min") == 0) {
-				sscanf(argv[param+1], "%i", &minGraph);
 				known = 1;
 			}
 			if (strcmp(argv[param], "-patternSize") == 0) {
@@ -132,7 +120,7 @@ int main(int argc, char** argv) {
 		strcat(patternFileName, suffix);
  		patternFile = fopen(patternFileName, "w");
 
-		initPruning(maxGraph);
+		initPruning(nGraphs);
 
 		/* choose the embedding operator for frequent pattern mining */
 		if ((fraction <= 0) || (fraction > 1)) {
@@ -144,7 +132,7 @@ int main(int argc, char** argv) {
 		/* find frequent single vertices and frequent edges */
 		/* set lowest id of any edge pattern to a number large enough to don't have collisions */
 		frequentEdges->lowPoint = minEdgeID;
-		getVertexAndEdgeHistogramsP(inputFileName, minGraph, maxGraph, frequentVertices, frequentEdges, countFile, gp, sgp);
+		getVertexAndEdgeHistogramsP(inputFileName, frequentVertices, frequentEdges, countFile, gp, sgp);
 		filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureFile, gp);
 		filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureFile, gp);
 
@@ -173,7 +161,7 @@ int main(int argc, char** argv) {
 			refinements = malloc(refinementSize * sizeof(struct Graph*));
 
 			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-			scanDBNoCache(inputFileName, candidateSet, refinements, pointers, refinementSize, minGraph, maxGraph, threshold, fraction, countFile, gp, sgp, embeddingOperator);
+			scanDBNoCache(inputFileName, candidateSet, refinements, pointers, refinementSize, threshold, nGraphs, fraction, countFile, gp, sgp, embeddingOperator);
 
 			/* threshold + 1 as candidateSet contains each candidate once, already */
 			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
