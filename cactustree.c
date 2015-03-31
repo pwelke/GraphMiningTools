@@ -722,66 +722,14 @@ int bfs(struct Graph *graph){
     return EXIT_SUCCESS;
 }
 
-struct Graph *computeComponentTree(struct Graph *graph, struct ShallowGraph *bComponents, struct GraphPool * gPool, struct ShallowGraphPool *sgPool){
-
-    struct Vertex *minVertex;
-    struct VertexList *hlp;
-    struct ShallowGraph * shlp;
-    struct Vertex ** roots;
-    struct Graph *compTree;
-    int num = 0;
-    int depth = 0;
-    int i;
-    if(!(roots=malloc(graph->n * sizeof(struct Vertex *)))){
-        printf("Could not initalise roots for BFS");
-        freeAllPools(gPool,sgPool);
-        return EXIT_FAILURE;
-    }
-    for(shlp=bComponents;shlp;shlp=shlp->next){
-        ++num;
-        depth = INT_MAX;
-        for(hlp=shlp->edges; hlp;hlp=hlp->next){ 
-            if(hlp->startPoint->d < depth){ //startPoint is enough as we either have a circle from the root of the component or we start with the vertex closer to the root!
-                depth = shlp->edges->startPoint->d;
-                minVertex = shlp->edges->startPoint;
-            }
-            //TODO possibility of adding root here and noting this in roots? use visited??? Probably not as number of components is not known yet.
-            //TODO check here if already visited??
-            for(hlp=shlp->edges; hlp; hlp=hlp->next){
-                roots[hlp->startPoint->number]=minVertex; //TODO it is important that vertex numbering starts with 0!
-                                                            //TODO or should we use linkedList of vertices??? is this used???
-            }
-        }
-    }
-    //creating componentTree
-    compTree=createGraph(num,gPool); //TODO same pool ok? we will add new vertices anyway.
-    num = 0; //TODO ugly repurposing!
-    //adding component roots to tree
-    //TODO What about roots that are already components.
-    //TODO maybe use visited or some other stuff?
-    for (i=0;i<graph->n;++i){
-        if(roots[i]->number==i) graph->vertices[num++]=shallowCopyVertex(roots[i], gPool->vertexPool);
-    }
-    //adding Edges to component Tree
-    for(i=0;i<compTree->n;++i){
-        for(hlp=graph->vertices[compTree->vertices[i]->number]->neighborhood;hlp;hlp=hlp->next){
-            //TODO Here be no ugliness! (If at all possible...)
-            if(hlp->endPoint->d < graph->vertices[compTree->vertices[i]->number]->d){
-                addEdgeBetweenVertices(roots[hlp->endPoint->number]->number, compTree->vertices[i]->number, NULL, compTree, gPool); //TODO do this manually, we want an undirected EDGE and have new numbering.
-                break;//there should be only one such vertex! o/w we would not have a root.
-            }
-        }
-    }
-    return NULL; // TODO real stuff.
-}
-
+    
 void printCharacteristics(struct Characteristics *chars){
     struct Characteristics *hlp;
     struct TreeList *thlp;
     int i,j ,k;
     for(hlp=chars; hlp; hlp=hlp->next){
         k=0;
-        printf("\n\tCA %i TIA %i",hlp, hlp->treeIDs);
+        printf("\n\tCA %li TIA %li",(long) hlp, (long)hlp->treeIDs);
         /*
     for (i=0;i<hlp->size;++i){
         printf("\t%i\n",hlp->treeIDs[i]);
