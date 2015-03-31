@@ -176,7 +176,7 @@ struct Characteristics *processComponentTree(struct Graph *graph, struct Vertex 
     if((componentRoot->number != root->number) || root->number==0){
         if(root->d <0){// not a component root
             for(;i<pattern->n;++i)
-                ret=characteristics(graph, root, treeNumber, 0, oldChars, ret, pattern->vertices[i], pattern->n, gPool, sgPool);
+                ret=characteristics(root, treeNumber, 0, oldChars, ret, pattern->vertices[i], pattern->n, gPool);
         }
         else{
             deletedEdges = malloc((rootedComponents[root->d]->data)*sizeof(struct VertexList *));
@@ -184,7 +184,7 @@ struct Characteristics *processComponentTree(struct Graph *graph, struct Vertex 
             wTreeNumber=0;
             do{
                 for(i=0;i<pattern->n;++i)
-                    ret= characteristics(graph, root, treeNumber, wTreeNumber, oldChars, ret, pattern->vertices[i], pattern->n, gPool, sgPool);
+                    ret= characteristics(root, treeNumber, wTreeNumber, oldChars, ret, pattern->vertices[i], pattern->n, gPool);
                 exNext=nextSpanningTree(rootedComponents[root->d], deletedEdges,2);
                 ++wTreeNumber;
             }while(exNext);
@@ -194,7 +194,7 @@ struct Characteristics *processComponentTree(struct Graph *graph, struct Vertex 
     return ret;
 }
 
-struct Characteristics *characteristics(struct Graph *graph, struct Vertex *w, const int treeID, const int wTreeID, struct Characteristics *oldCharacteristics, struct Characteristics *newCharacteristics, struct Vertex *patternVertex, int patternSize, struct GraphPool *gPool, struct ShallowGraphPool *sgPool){
+struct Characteristics *characteristics(struct Vertex *w, const int treeID, const int wTreeID, struct Characteristics *oldCharacteristics, struct Characteristics *newCharacteristics, struct Vertex *patternVertex, int patternSize, struct GraphPool *gPool){
     struct Characteristics *ret=newCharacteristics;
     struct VertexList *edgehlp, *edgehlp2, *edgehlp3, *edgehlp4, *tmprm=NULL;
     struct Graph *bipartite;
