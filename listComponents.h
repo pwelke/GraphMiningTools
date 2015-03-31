@@ -11,7 +11,9 @@ int getNumberOfBridges(struct Graph* g, struct ShallowGraphPool* sgp);
 int getNumberOfBridgeTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp);
 
-int* computeCycleDegrees(struct Graph* g, struct ShallowGraphPool* sgp);
+int* computeCycleDegrees(struct ShallowGraph* biconnectedComponents, int n);
+int* computeCriticality(struct ShallowGraph* biconnectedComponents, int n);
+
 int getMaxCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp);
 int getMinCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp);
 
