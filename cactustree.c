@@ -13,7 +13,8 @@ int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPo
     int numComponents =0;
     
     // Setting distances to vertex_0.
-    struct ShallowGraph *shlp;
+    struct ShallowGraph *shlp, **rootedComponents;
+    struct Graph *componentTree;
     struct VertexList *lhlp;
     struct Vertex ** representatives;
     struct Vertex * componentRepresentative, *rootRepresentative;
@@ -63,43 +64,9 @@ int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPo
         shlp->edges->startPoint->visited=0;
     }
     //printf("Allocating component tree\n");
-    struct Graph * componentTree = createGraph(numComponents, gPool);
-    struct ShallowGraph **rootedComponents=calloc(numComponents,sizeof(struct ShallowGraph *));
-    struct ShallowGraph *tmp;
-    int oldNumber, newNumber;
-    struct Vertex *currentRoot;
-    //TODO error behviour for componentTree 
-    //printf("constructing component Tree\n");
-    shlp=bComponents;
-    while(shlp){
-        currentRoot=shlp->edges->startPoint;
-        oldNumber=currentRoot->number;
-        newNumber=currentRoot->d;
-        //No root should be processed twice, to avoid double edges.
-        if(!(currentRoot->visited)){
-            currentRoot->visited=1;
-            //setting backreference to original graph.
-            componentTree->vertices[newNumber]->d=oldNumber;
-            //printf("testing for representative\n");
-            if(representatives[oldNumber]){
-                //printf("adding edge between original (%i,%i) and new (%i,%i)\n",representatives[shlp->edges->startPoint->number]->number, 
-                        //shlp->edges->startPoint->number, newNumber, representatives[oldNumber]->d);
-                addEdgeBetweenVertices(newNumber,representatives[oldNumber]->d,NULL,componentTree,gPool);
-            }
-            shlp->data=1;
-            rootedComponents[newNumber]=shlp;
-            shlp=shlp->next;
-            rootedComponents[newNumber]->next=NULL; 
-        }
-        else{
-            tmp=shlp->next;
-            //data is used to keep track of componnents assigned to a root.
-            shlp->data=rootedComponents[newNumber]->data+1;
-            shlp->next=rootedComponents[newNumber];
-            rootedComponents[newNumber]=shlp;
-            shlp=tmp;
-        }
-    }
+
+    rootedComponents=calloc(numComponents,sizeof(struct ShallowGraph *));
+    componentTree=computeComponentTree(representatives, bComponents, numComponents, rootedComponents, gPool);
     free(representatives);
     res=processRootTree(componentTree->vertices[graph->vertices[0]->d], graph, rootedComponents, pattern, gPool, sgPool);
     for(i=0;i<numComponents;++i)
@@ -333,7 +300,45 @@ struct Characteristics *characteristics(struct Vertex *w, const int treeID, cons
     dumpGraph(gPool,bipartite);
     return ret;
 }
-
+struct Graph *computeComponentTree(struct Vertex **representatives,  struct ShallowGraph * bComponents, int numComponents, struct ShallowGraph **rootedComponents, struct GraphPool *gPool){
+    struct Graph * componentTree = createGraph(numComponents, gPool);
+    struct ShallowGraph *tmp, *shlp;
+    int oldNumber, newNumber;
+    struct Vertex *currentRoot;
+    //TODO error behviour for componentTree 
+    //printf("constructing component Tree\n");
+    shlp=bComponents;
+    while(shlp){
+        currentRoot=shlp->edges->startPoint;
+        oldNumber=currentRoot->number;
+        newNumber=currentRoot->d;
+        //No root should be processed twice, to avoid double edges.
+        if(!(currentRoot->visited)){
+            currentRoot->visited=1;
+            //setting backreference to original graph.
+            componentTree->vertices[newNumber]->d=oldNumber;
+            //printf("testing for representative\n");
+            if(representatives[oldNumber]){
+                //printf("adding edge between original (%i,%i) and new (%i,%i)\n",representatives[shlp->edges->startPoint->number]->number, 
+                        //shlp->edges->startPoint->number, newNumber, representatives[oldNumber]->d);
+                addEdgeBetweenVertices(newNumber,representatives[oldNumber]->d,NULL,componentTree,gPool);
+            }
+            shlp->data=1;
+            rootedComponents[newNumber]=shlp;
+            shlp=shlp->next;
+            rootedComponents[newNumber]->next=NULL; 
+        }
+        else{
+            tmp=shlp->next;
+            //data is used to keep track of componnents assigned to a root.
+            shlp->data=rootedComponents[newNumber]->data+1;
+            shlp->next=rootedComponents[newNumber];
+            rootedComponents[newNumber]=shlp;
+            shlp=tmp;
+        }
+    }
+    return componentTree;
+}
 void initSpanningTree( struct ShallowGraph *rootedComponent, struct VertexList **deletedEdges, int mask){
     int i=0;
     struct ShallowGraph *shlp;

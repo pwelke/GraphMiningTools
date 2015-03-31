@@ -15,7 +15,7 @@ struct TreeList{
 
  int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPool *gPool, struct ShallowGraphPool *sgPool);
 int bfs(struct Graph *graph);
-struct Graph *computeComponentTree(struct Graph *graph, struct ShallowGraph *bComponents, struct GraphPool *gPool, struct ShallowGraphPool *sgPool);
+struct Graph * computeComponentTree(struct Vertex **representatives, struct ShallowGraph *bComponents, int numComponents, struct ShallowGraph **rootedComponents, struct GraphPool *gPool);
 struct Characteristics *processRootTree(struct Vertex *root, struct Graph *graph, struct ShallowGraph **rootedComponents, struct Graph *pattern, struct GraphPool *gPool, struct ShallowGraphPool *sgPool);
 struct Characteristics *processComponentTree(struct Graph *graph, struct Vertex *root, struct Vertex  *componentRoot, int treeNumber, struct ShallowGraph **rootedComponents, struct Characteristics *oldChars, struct Characteristics *newChars, struct Graph *pattern,  struct GraphPool *gPool, struct ShallowGraphPool *sgPool);
 struct Characteristics *characteristics(struct Vertex *w, const int treeID, const int wTreeID, struct Characteristics *oldCharacteristics, struct Characteristics *newCharacteristics, struct Vertex *patternVertex, int patternSize, struct GraphPool *gPool);
