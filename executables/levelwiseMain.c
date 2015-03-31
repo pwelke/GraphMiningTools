@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
 		/* find frequent single vertices and frequent edges */
 		/* set lowest id of any edge pattern to a number large enough to don't have collisions */
 		frequentEdges->lowPoint = minEdgeID;
-		getVertexAndEdgeHistogramsP(inputFileName, frequentVertices, frequentEdges, countFile, gp, sgp);
+		getVertexAndEdgeHistograms(inputFileName, frequentVertices, frequentEdges, countFile, gp, sgp);
 		filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureFile, gp);
 		filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureFile, gp);
 

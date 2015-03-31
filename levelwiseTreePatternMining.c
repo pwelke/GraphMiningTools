@@ -9,7 +9,7 @@
 #include "cs_Parsing.h"
 #include "cs_Tree.h"
 #include "searchTree.h"
-#include "embeddingProbCounting.h"
+#include "levelwiseTreePatternMining.h"
 
 static int* pruning;
 
@@ -57,7 +57,7 @@ mingraph and maxgraph specify a range in which to read patterns.
 'P' stands for pruning. it means that it uses a resultSet struct speed up some stuff 
 and fills up the pruning data structure.
 */
-void getVertexAndEdgeHistogramsP(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
 	int i = 0;
 	FILE* stream = fopen(fileName, "r");

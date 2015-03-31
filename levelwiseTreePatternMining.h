@@ -1,5 +1,5 @@
-#ifndef LEVELWISE_MINING_H_
-#define LEVELWISE_MINING_H_
+#ifndef LEVELWISE_TREE_PATTERN_MINING_H_
+#define LEVELWISE_TREE_PATTERN_MINING_H_
 
 #include "stdio.h"
 #include "graph.h"
@@ -16,8 +16,7 @@ struct TreeDB
 	char boring;
 };
 
-// void getVertexAndEdgeHistograms(char* fileName, int minGraph, int maxGraph, struct Vertex* frequentVertices, struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void getVertexAndEdgeHistogramsP(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void dumpTreeDB(struct GraphPool* gp, struct TreeDB* db);
 
 struct Graph* refinementGraph(struct Graph* g, int currentVertex, struct VertexList* newEdge, struct GraphPool* gp);
@@ -26,15 +25,10 @@ struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGra
 struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges);
 int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-// void scanDB(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, 
 					struct Vertex** pointers, int n, int threshold, int nGraphs,
 					double fraction, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp,
 					int (*embeddingOperator)(struct ShallowGraph*, struct Graph**, double, int, int, int**, struct Vertex**, struct GraphPool*));
-
-// void scanInMemoryDB(struct Graph** tp, int* tnp, struct Vertex* currentLevel, struct Graph** refinements, 
-// 		struct Vertex** pointers, int n, int minGraph, int maxGraph, int threshold, FILE* keyValueStream, 
-// 		struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, 
 					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp);
