@@ -10,6 +10,9 @@
 #include "outerplanar.h"
 #include "cs_Outerplanar.h"
 
+//debug
+#include "graphPrinting.h"
+
 /*****************************************************************************************
  ************************************ Outerplanar Blocks *********************************
  *****************************************************************************************/
@@ -308,12 +311,22 @@ struct ShallowGraph* __permutateBlock(struct ShallowGraph* cycle, struct Shallow
 		free(narray1);
 	}
 
+
 	cString = canonicalStringOfCycle(cycle, sgp);
+
+	//debug
+	printCanonicalString(cString, stdout);
+	printCanonicalString(secondPart, stdout);
+
 	cString->lastEdge->next = secondPart->edges;
 	cString->lastEdge = secondPart->lastEdge;
 	cString->m = cString->m + secondPart->m;
 	pushEdge(cString, getInitialisatorEdge(sgp->listPool));
 	appendEdge(cString, getTerminatorEdge(sgp->listPool));
+
+	//debug
+	fprintf(stdout, "something\n");
+	printCanonicalString(cString, stdout);
 
 	/* garbage collection */
 	secondPart->edges = NULL;
@@ -357,9 +370,16 @@ struct ShallowGraph* canonicalStringOfOuterplanarBlock(struct ShallowGraph* hami
 
 	/* now find the permutation and orientation of the hamiltonian cycle that results in the lex.
 	 * smallest string */
+
 	result1 = __permutateBlock(hamiltonianCycle, sgp);
+
+	//debug
+	printCanonicalString(result1, stdout);
+
 	result2 = __permutateBlock(inverse, sgp);
 
+	//debug
+	printCanonicalString(result2, stderr);
 
 	/* garbage collection */
 	dumpShallowGraph(sgp, inverse);
@@ -376,6 +396,8 @@ struct ShallowGraph* canonicalStringOfOuterplanarBlock(struct ShallowGraph* hami
 	}
 
 }
+
+
 
 
 /**

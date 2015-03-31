@@ -7,8 +7,12 @@ CPKNAME = cpk
 STSNAME = sts
 STTNAME = stt
 CCDNAME = ccd
+TCINAME = tci
+PERFNAME = perf
 GFNAME = gf
 CSTRNAME = cstring
+TCIPERFNAME = tciperf
+
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 # OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c)) $(patsubst %.c,%.o,$(wildcard ./executables/*.c))
 # TPKOBJECTS = $(filter-out ./executables/cpkExtendedMain.o ./executables/countCycleDegree.o ./executables/cpkMain.o ./executables/levelwiseMain.o ./executables/map2gaston.o ./executables/countSpanningTreeClasses.o, $(OBJECTS))
@@ -31,6 +35,8 @@ STTOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingTest.o
 CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
 GFOBJECTS = $(OBJECTS) ./executables/filter.o
 CSTROBJECTS = $(OBJECTS) ./executables/cstring.o
+TCIOBJECTS = $(OBJECTS) ./executables/cactus.o
+PERFOBJECTS= $(OBJECTS) ./executables/tciPerf.o
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
@@ -52,7 +58,7 @@ gf: $(GFOBJECTS)
 cstr: $(CSTROBJECTS)
 	@echo "\nLink Graph Filter executable:"
 	gcc -o $(CSTRNAME) $(CSTROBJECTS) $(CPPFLAGS)
-	
+
 cpk: $(CPKOBJECTS)
 	@echo "\nLink Cyclic Pattern Kernel executable:"
 	gcc -o $(CPKNAME) $(CPKOBJECTS) $(CPPFLAGS)
@@ -88,6 +94,14 @@ csc: $(CSCOBJECTS)
 ccd: $(CCDOBJECTS)
 	@echo "\nLink Count Graph Properties executable:"
 	gcc -o $(CCDNAME) $(CCDOBJECTS) $(CPPFLAGS)
+
+tci: $(TCIOBJECTS)
+	@echo "\nLink Cactree Subgraph Isomorphism:"
+	gcc -o $(TCINAME) $(TCIOBJECTS) $(CPPFLAGS)
+
+perf: $(PERFOBJECTS)
+	@echo "\nLink Cactree Subgraph Isomorphism Performance Test:"
+	gcc -o $(PERFNAME) $(PERFOBJECTS) $(CPPFLAGS)
 
 %.o : %.c %.h
 	gcc $(CPPFLAGS) -c $< -o $@
