@@ -8,6 +8,7 @@
 #include "../subtreeIsomorphism.h"
 #include "../graph.h"
 #include "../outerplanar.h"
+#include "../connectedComponents.h"
 #include "../intMath.h"
 
 int main(int argc, char **argv){
@@ -48,12 +49,12 @@ int main(int argc, char **argv){
     switch (argv[3][0]){
         case 't':
             size2=atoi(argv[5]);
-            printf("Tree with %i levels, %i childs ==> %i vertices\n",size1, size2, (pow(size2,size1+1)-1)/(size2-1));
-            h=createGraph((pow(size2,size1+1)-1)/(size2-1),gPool);
+            printf("Tree with %i levels, %i childs ==> %i vertices\n",size1, size2, (ipow(size2,size1+1)-1)/(size2-1));
+            h=createGraph((ipow(size2,size1+1)-1)/(size2-1),gPool);
             h->m=h->n -1;
             for(i=0;i<size1;++i){
-                l=(pow(size2,i+1)-1)/(size2-1);
-                for(j=(pow(size2,i)-1)/(size2-1);j<l;++j){
+                l=(ipow(size2,i+1)-1)/(size2-1);
+                for(j=(ipow(size2,i)-1)/(size2-1);j<l;++j){
                     for(k=1;k<=size2;++k){
                         printf("%i %i\n",j,j*size2+k);
                         addEdgeBetweenVertices(j,j*size2+k, NULL ,h, gPool);
