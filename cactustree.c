@@ -114,11 +114,10 @@ int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPo
     return 0;
 }
 struct Characteristics *processRootTree(struct Vertex *root, struct Graph *graph, struct ShallowGraph **rootedComponents, struct Graph *pattern, struct GraphPool *gPool, struct ShallowGraphPool *sgPool){
-    struct VertexList *ehlp,*hlp;
-    struct ShallowGraph *shlp, shlp2, *component;
-    struct VertexList **deletedEdges, *edgehlp;
+    struct VertexList *ehlp;
+    struct VertexList **deletedEdges;
     struct Characteristics *chars=NULL, *newChars, *res;
-    int numComponents, numFatComponents, i=0, treeNumber=0;
+    int numComponents, treeNumber=0;
     char exNext;
     root->visited=root->visited | 1;
     for(ehlp=root->neighborhood;ehlp;ehlp=ehlp->next){
