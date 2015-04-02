@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
 #include <limits.h>
+#include <getopt.h>
 
 #include "../graph.h"
 #include "../searchTree.h"
@@ -10,9 +10,6 @@
 #include "../listSpanningTrees.h"
 #include "../listComponents.h"
 #include "../upperBoundsForSpanningTrees.h"
-#include "../subtreeIsomorphism.h"
-#include "../graphPrinting.h"
-#include "../treeCenter.h"
 #include "../connectedComponents.h"
 #include "../cs_Tree.h"
 #include "../wilsonsAlgorithm.h"
@@ -63,6 +60,7 @@ struct ShallowGraph* sampleSpanningTreeEdgesFromCactus(struct ShallowGraph* bico
 	return spanningTree;
 }
 
+
 /**
 Sample a spanning tree from a cactus graph, given as a list of its biconnected components, uniformly at random.
 To this end, we just need to remove a random edge from each cycle = block of the graph. **/
@@ -86,10 +84,7 @@ struct Graph* sampleSpanningTreeFromCactus(struct Graph* original, struct Shallo
 	}
 	return spanningTree;
 }
-		// /* getGoodEstimate returns an upper bound on the number of spanning
-		// trees in g, or -1 if there was an overflow of long ints while computing */
-		// long upperBound = getGoodEstimate(g, sgp, gp);
-		// if ((upperBound < depth) && (upperBound != -1)) {
+
 
 /**
 Take k random spanning trees of g using Wilsons algorithm and return them as a list.
@@ -105,6 +100,9 @@ struct ShallowGraph* sampleSpanningTreesUsingWilson(struct Graph* g, int k, stru
 	return spanningTrees;
 }
 
+/**
+List all spanning trees of g and draw k of them uniformly at random, return these k spanning trees as a list. 
+*/
 struct ShallowGraph* sampleSpanningTreesUsingListing(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* spanningTrees = NULL;
 	struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
@@ -138,6 +136,10 @@ struct ShallowGraph* sampleSpanningTreesUsingListing(struct Graph* g, int k, str
 }
 
 
+/**
+If there are expected to be less than threshold spanning trees, sample spanning trees using explicit listing, 
+otherwise use wilsons algorithm.
+*/
 struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	long upperBound = getGoodEstimate(g, sgp, gp);
 	if ((upperBound < threshold) && (upperBound != -1)) {
@@ -147,6 +149,11 @@ struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, int thr
 	}
 }
 
+
+/**
+If g is a cactus graph, use a specialized method to sample spanning trees, 
+otherwise use sampleSpanningTreesUsingMix.
+*/
 struct ShallowGraph* sampleSpanningTreesUsingCactusMix(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* spanningTrees = NULL;
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
@@ -178,6 +185,10 @@ struct ShallowGraph* sampleSpanningTreesUsingCactusMix(struct Graph* g, int k, i
 	return spanningTrees;
 }
 
+
+/**
+Return the list of trees in the bridge forest of g.
+*/
 struct ShallowGraph* listBridgeForest(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* find biconnected Components */
 	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
@@ -194,6 +205,11 @@ struct ShallowGraph* listBridgeForest(struct Graph* g, struct GraphPool* gp, str
 	return bridgeTrees;
 }
 
+
+/**
+If there are expected to be less than threshold spanning trees, return a list containing all of them. 
+Otherwise, sample k spanning trees using Wilsons algorithm. 
+*/
 struct ShallowGraph* listOrSampleSpanningTrees(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* spanningTrees = NULL; 
 	long upperBound = getGoodEstimate(g, sgp, gp);
