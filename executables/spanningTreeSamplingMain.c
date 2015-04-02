@@ -272,16 +272,8 @@ int main(int argc, char** argv) {
 			}
 			break;
 		case 'u':
-		if (optarg[0] == '0') {
 			unsafe = 1;
 			break;
-		if (optarg[0] == '1') {
-			unsafe = 0;
-			break;
-		}
-		fprintf(stderr, "value of -u must be 0 or 1. Is: %s\n", optarg);
-		return EXIT_FAILURE;
-		}
 		case 't':
 			if (sscanf(optarg, "%li", &threshold) != 1) {
 				fprintf(stderr, "value must be integer, is: %s\n", optarg);
@@ -353,7 +345,7 @@ int main(int argc, char** argv) {
 	
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n > 0) {
-			if (isConnected(g)) {
+			if (unsafe || isConnected(g)) {
 				struct Vertex* searchTree = getVertex(gp->vertexPool);
 				struct ShallowGraph* sample = NULL;
 				struct ShallowGraph* tree;
