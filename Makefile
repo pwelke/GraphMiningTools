@@ -5,7 +5,6 @@ MGGNAME = mgg
 CSCNAME = csc
 CPKNAME = cpk
 STSNAME = sts
-STTNAME = stt
 CCDNAME = ccd
 TCINAME = tci
 PERFNAME = perf
@@ -31,7 +30,6 @@ MGGOBJECTS = $(OBJECTS) ./executables/mapAIDS2gaston.o
 CSCOBJECTS = $(OBJECTS) ./executables/countSpanningTreeClasses.o
 CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
 STSOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingMain.o
-STTOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingTest.o
 CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
 GFOBJECTS = $(OBJECTS) ./executables/filter.o
 CSTROBJECTS = $(OBJECTS) ./executables/cstring.o
@@ -66,10 +64,6 @@ cpk: $(CPKOBJECTS)
 sts: $(STSOBJECTS)
 	@echo "Link Spanning Tree Sampling executable:"
 	gcc -o $(STSNAME) $(STSOBJECTS) $(CPPFLAGS)
-
-stt: $(STTOBJECTS)
-	@echo "Link Spanning Tree Test executable:"
-	gcc -o $(STTNAME) $(STTOBJECTS) $(CPPFLAGS)
 
 tpk: $(TPKOBJECTS)
 	@echo "\nLink Tree Pattern Kernel executable:"
