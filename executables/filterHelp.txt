@@ -52,6 +52,9 @@ options: options (except -h) are always followed by a value.
         *numerical properties*
         spanningTreeEstimate  upper bound on the number of
                               spanning trees in a graph
+        spanningTreeListing   exact number of spanning trees, or -1 if there 
+                              are more than A spanningTrees (default 100). A 
+                              can be set via the option -a A
         numberOfSimpleCycles  total number of simple cycles
                               in the graph
         numberOfNonIsoCycles  number of nonisomorphic cycles
@@ -67,7 +70,6 @@ options: options (except -h) are always followed by a value.
         maxCycleDegree     maximum cycle degree of a graph
         minCycleDegree     minimum cycle degree of a graph
         maxDegree          maximum vertex degree of a graph
-        minDegree          minimum vertex degree of a graph
-             
-        *TODO additional Parameter needed*
-        spanningTreeListing     
+        minDegree          minimum vertex degree of a graph 
+     -a 'value': an Integer (default 100). This value is used by some of the filters
+                 that need an additional parameter to work (e.g. spanningTreeListing)    

@@ -8,6 +8,7 @@
 #include "../graph.h"
 #include "../loading.h"
 #include "../listComponents.h"
+#include "../listSpanningTrees.h"
 #include "../outerplanar.h"
 #include "../upperBoundsForSpanningTrees.h"
 #include "../connectedComponents.h"
@@ -58,10 +59,12 @@ int main(int argc, char** argv) {
 	Comparator comparator = pass;
 	OutputOption oOption = graph;
 	int value = -1;
+	/* can be set via -a. Used e.g. by spanningTreeListing filter */
+	int additionalParameter = 100;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hf:c:v:o:";
+	const char* validArgs = "hf:c:v:o:a:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -99,6 +102,10 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "spanningTreeEstimate") == 0) {
 				filter = spanningTreeEstimate;
+				break;
+			}
+			if (strcmp(optarg, "spanningTreeListing") == 0) {
+				filter = spanningTreeListing;
 				break;
 			}
 			if (strcmp(optarg, "numberOfBlocks") == 0) {
@@ -186,6 +193,12 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 			break;
+		case 'a':
+			if (sscanf(optarg, "%i", &additionalParameter) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
 		case 'o':
 			if ((strcmp(optarg, "graph") == 0) || (strcmp(optarg, "g") == 0)) {
 				oOption = graph;
@@ -238,7 +251,7 @@ int main(int argc, char** argv) {
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n > 0) {
 			
-			processGraph(i, g, filter, comparator, value, out, oOption, sgp, gp);
+			processGraph(i, g, filter, comparator, value, additionalParameter, out, oOption, sgp, gp);
 
 			/***** do not alter ****/
 
@@ -267,7 +280,7 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }	
 
-void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, int value, FILE* out, OutputOption oOption, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, int value, int additionalParameter, FILE* out, OutputOption oOption, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	int measure = -1;
 	switch (filter) {
 
@@ -339,6 +352,9 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 	case spanningTreeEstimate:
 		measure = getGoodEstimate(g, sgp, gp);
 		break;
+	case spanningTreeListing:
+		measure = countSpanningTrees(g, additionalParameter, sgp, gp);
+		break;
 	case numberOfBlocks:
 		measure = getNumberOfBlocks(g, sgp);			
 		break;
@@ -359,8 +375,7 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case numberOfSimpleCycles:
 		measure = getNumberOfSimpleCycles(g, sgp, gp);
-		break;
-		
+		break;		
 	case numberOfConnectedComponents:
 		measure = getAndMarkConnectedComponents(g);
 		break;

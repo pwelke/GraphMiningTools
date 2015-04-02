@@ -40,6 +40,7 @@ typedef enum {
 
 	/* numerical properties */
 	spanningTreeEstimate,
+	spanningTreeListing,
 	numberOfBlocks,
 	numberOfBridges,
 	numberOfBridgeTrees,
@@ -51,13 +52,11 @@ typedef enum {
 	maxCycleDegree,
 	minCycleDegree,
 	maxDegree,
-	minDegree,
+	minDegree
 
-	/* TODO additional Parameter needed*/
-	spanningTreeListing
 } Filter;
 
-void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, int value, FILE* out, OutputOption oOption, struct ShallowGraphPool* sgp, struct GraphPool* gp);
+void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, int value, int additionalParameter, FILE* out, OutputOption oOption, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 void output(struct Graph* g, int measure, OutputOption option, FILE* out);
 
 #endif

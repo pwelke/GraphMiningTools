@@ -19,35 +19,23 @@
 
 char DEBUG_INFO = 1;
 
+
 /**
  * Print --help message
  */
-void printHelp() {
-	printf("This is The TreePatternKernel\n");
-	printf("implemented by Pascal Welke 2014\n\n\n");
-	printf("usage: tpk F [parameterList]\n\n");
-	printf("    without parameters: display this help screen\n\n");
-	printf("    F: (required) use F as graph database\n\n");
-	printf("    -bound d: choose maximum number of spanning trees\n"
-		   "        of a graph for which you are willing to compute\n"
-		   "        the kernel (default 1000)\n\n");
-	printf("    -k v: number of spanning trees you want to sample\n");
-	printf("    -output O: write output to stdout (default p)\n"
-		   "        w: for all graphs with less than bound spts\n"
-		   "            sample k spts using Wilsons algorithm\n"
-		   "        l: for all graphs with less than bound spts\n"
-		   "            sample k spts using explicit enumeration\n"
-		   "        p print k spanning tree patterns of all graphs. Use\n"
-		   "            listing for graphs with less than bound spanning trees\n"
-		   "        b print tree patterns for all connected components of the\n"
-		   "            bridge forest of the graphs\n"
-		   "        x print the spanning tree patterns of all graphs with\n"
-		   "            less than filter spanning trees\n"
-		   "        s returns true number of spanning trees or -1 if\n"
-		   "            there are more than bound\n");
-	printf("    -limit N: process the first N graphs in F (default: process all)\n");
-	printf("    -min M process graphs starting from Mth instance (default 0)\n\n");
-	printf("    -h | --help: display this help\n\n");
+int printHelp() {
+	FILE* helpFile = fopen("executables/spanningTreeSamplingHelp.txt", "r");
+	if (helpFile != NULL) {
+		int c = EOF;
+		while ((c = fgetc(helpFile)) != EOF) {
+			fputc(c, stdout);
+		}
+		fclose(helpFile);
+		return EXIT_SUCCESS;
+	} else {
+		fprintf(stderr, "Could not read helpfile\n");
+		return EXIT_FAILURE;
+	}
 }
 
 
@@ -507,8 +495,7 @@ int main(int argc, char** argv) {
 						break;
 
 						case 's':
-						spanningTreeEstimate = countSpanningTrees(g, depth, sgp, gp);
-						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
+						fprintf(stdout, "%i %li\n", g->number, countSpanningTrees(g, depth, sgp, gp));
 						break;
 					}
 				}		
