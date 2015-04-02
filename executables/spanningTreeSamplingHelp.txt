@@ -1,34 +1,49 @@
-This is The TreePatternKernel
-implemented by Pascal Welke 2014
+A tree sampler that extracts a set of trees from a given graph. 
+Implemented 2014 by Pascal Welke. 
+
+The input is a graph database in standard format. Each graph contained 
+is processed with the selected sampling method and gf outputs a list of
+trees for each graph, currently given in a canonical string format.
+
+Some sampling methods involve a method to quickly estimate the number of 
+spanning trees in a graph. The implemented algorithm returns an upper 
+bound on the number of spanning trees, thus is always pessistic regarding
+the number of enumerated spanning trees.
 
 
-usage: tpk F [parameterList]
+Usage: ts [options] [FILE]
+
+By default, or if FILE is '-', ts reads from stdin. It always outputs to
+stdout.
+
+options: options (except -h and -u) are always followed by a value.
 
     without parameters: display this help screen
 
-    F: (required) use F as graph database
+    -k v: number of trees you want to sample
 
-    -bound d: choose maximum number of spanning trees
-        of a graph for which you are willing to compute
-        the kernel (default 1000)
+    -t v: choose maximum number of spanning trees
+        of a graph for which the listing algorithm should be invoked
+        (default 100)
 
-    -k v: number of spanning trees you want to sample
+    -s 'method': tree subset selection method
+        wilson:  sample k spanning trees uniformly at random using Wilsons 
+                 algorithm
+        listing: sample k spanning trees uniformly at random using explicit 
+                 enumeration of all spanning trees
+        mix:     sample k spanning trees uniformly at random using listing,
+                 if there are expected to be less than t spanning trees, and
+                 wilsons algorithm otherwise
+        cactus:  sample k spanning trees uniformly at random using a specialized
+                 method if the graph is a cactus and mix otherwise.
+        bridgeForest:  return all trees that are left if the biconnected blocks
+                       of the graph are removed
+        listOrSample:  if there are expected to be less than t spanning trees,
+                       return all of them, otherwise sample k spanning trees
+                       uniformly at random using wilson
 
-    -output O: write output to stdout (default p)
-        w: for all graphs with less than bound spts
-            sample k spts using Wilsons algorithm
-        l: for all graphs with less than bound spts
-            sample k spts using explicit enumeration
-        p print k spanning tree patterns of all graphs. Use
-            listing for graphs with less than bound spanning trees
-        b print tree patterns for all connected components of the
-            bridge forest of the graphs
-        x print the spanning tree patterns of all graphs with
-            less than filter spanning trees
+    -u: 'unsafe', skip the initial test if graphs are connected. Might be useful
+        for bridgeForest, or if you have ensured that all input graphs are connected
 
-    -limit N: process the first N graphs in F (default: process all)
-
-    -min M process graphs starting from Mth instance (default 0)
-
-    -h | --help: display this help
+    -h:  display this help
 

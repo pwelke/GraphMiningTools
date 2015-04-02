@@ -16,6 +16,16 @@
 
 char DEBUG_INFO = 1;
 
+typedef enum {
+		wilson,
+		listing,
+		mix,
+		cactus,
+		bridgeForest,
+		listOrSample
+	} SamplingMethod;	
+
+
 
 /**
  * Print --help message
@@ -140,7 +150,7 @@ struct ShallowGraph* sampleSpanningTreesUsingListing(struct Graph* g, int k, str
 If there are expected to be less than threshold spanning trees, sample spanning trees using explicit listing, 
 otherwise use wilsons algorithm.
 */
-struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	long upperBound = getGoodEstimate(g, sgp, gp);
 	if ((upperBound < threshold) && (upperBound != -1)) {
 		return sampleSpanningTreesUsingListing(g, k, gp, sgp);
@@ -154,7 +164,7 @@ struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, int thr
 If g is a cactus graph, use a specialized method to sample spanning trees, 
 otherwise use sampleSpanningTreesUsingMix.
 */
-struct ShallowGraph* sampleSpanningTreesUsingCactusMix(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* sampleSpanningTreesUsingCactusMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* spanningTrees = NULL;
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	int blockCount = 0;
@@ -210,7 +220,7 @@ struct ShallowGraph* listBridgeForest(struct Graph* g, struct GraphPool* gp, str
 If there are expected to be less than threshold spanning trees, return a list containing all of them. 
 Otherwise, sample k spanning trees using Wilsons algorithm. 
 */
-struct ShallowGraph* listOrSampleSpanningTrees(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* listOrSampleSpanningTrees(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* spanningTrees = NULL; 
 	long upperBound = getGoodEstimate(g, sgp, gp);
 	if ((upperBound < threshold) && (upperBound != -1)) {
@@ -226,150 +236,187 @@ struct ShallowGraph* listOrSampleSpanningTrees(struct Graph* g, int k, int thres
  * Input handling, parsing of database and call of opk feature extraction method.
  */
 int main(int argc, char** argv) {
-	if ((argc < 2) || (strcmp(argv[1], "--help") == 0) || (strcmp(argv[1], "-h") == 0)) {
-		printHelp();
+
+	/* object pools */
+	struct ListPool *lp;
+	struct VertexPool *vp;
+	struct ShallowGraphPool *sgp;
+	struct GraphPool *gp;
+
+	/* pointer to the current graph which is returned by the input iterator */
+	struct Graph* g = NULL;
+
+	/* user input handling variables */
+	long int threshold = 100;
+	int k = 1;
+	SamplingMethod samplingMethod = wilson;
+	char unsafe = 0;
+
+	/* i counts the number of graphs read */
+	int i = 0;
+	long int avgTrees = 0;
+
+	/* parse command line arguments */
+	int arg;
+	const char* validArgs = "hs:k:t:o:u";
+	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
+		switch (arg) {
+		case 'h':
+			printHelp();
+			return EXIT_SUCCESS;
+			break;
+		case 'k':
+			if (sscanf(optarg, "%i", &k) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
+		case 'u':
+		if (optarg[0] == '0') {
+			unsafe = 1;
+			break;
+		if (optarg[0] == '1') {
+			unsafe = 0;
+			break;
+		}
+		fprintf(stderr, "value of -u must be 0 or 1. Is: %s\n", optarg);
 		return EXIT_FAILURE;
-	} else {
-
-		/* create object pools */
-		struct ListPool *lp = createListPool(10000);
-		struct VertexPool *vp = createVertexPool(10000);
-		struct ShallowGraphPool *sgp = createShallowGraphPool(1000, lp);
-		struct GraphPool *gp = createGraphPool(100, vp, lp);
-
-		/* pointer to the current graph which is returned by the input iterator */
-		struct Graph* g = NULL;
-
-		/* user input handling variables */
-		char outputOption = 0;
-		int param;
-		long int threshold = 1000;
-		int k = 1;
-
-		/* i counts the number of graphs read */
-		int i = 0;
-
-		/* graph delimiter */
-		int maxGraphs = -1;
-		int minGraph = 0;
-
-		long int avgTrees = 0;
-		int cactusGraphs = 0;
-
-		/* user input handling */
-		for (param=2; param<argc; param+=2) {
-			char known = 0;
-			if ((strcmp(argv[param], "--help") == 0) || (strcmp(argv[param], "-h") == 0)) {
-				printHelp();
-				return EXIT_SUCCESS;
-			}
-			if (strcmp(argv[param], "-limit") == 0) {
-				sscanf(argv[param+1], "%i", &maxGraphs);
-				known = 1;
-			}
-			if (strcmp(argv[param], "-output") == 0) {
-				outputOption = argv[param+1][0];
-				known = 1;
-			}
-			if (strcmp(argv[param], "-bound") == 0) {
-				sscanf(argv[param+1], "%li", &threshold);
+		}
+		case 't':
+			if (sscanf(optarg, "%li", &threshold) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} else {
+				// negative encodes 'no restriction'
 				if (threshold < 0) {
 					threshold = LONG_MAX / 2;
 				}
-				known = 1;
 			}
-			if (strcmp(argv[param], "-k") == 0) {
-				sscanf(argv[param+1], "%i", &k);
-				known = 1;
+			break;
+		case 's':
+			if (strcmp(optarg, "wilson") == 0) {
+				samplingMethod = wilson;
+				break;
 			}
-			if (strcmp(argv[param], "-min") == 0) {
-				sscanf(argv[param+1], "%i", &minGraph);
-				known = 1;
+			if (strcmp(optarg, "listing") == 0) {
+				samplingMethod = listing;
+				break;
 			}
-			if (!known) {
-				fprintf(stderr, "Unknown parameter: %s\n",argv[param]);
-				return(EXIT_FAILURE);
+			if (strcmp(optarg, "mix") == 0) {
+				samplingMethod = mix;
+				break;
 			}
+			if (strcmp(optarg, "cactus") == 0) {
+				samplingMethod = cactus;
+				break;
+			}
+			if (strcmp(optarg, "bridgeForest") == 0) {
+				samplingMethod = bridgeForest;
+				break;
+			}
+			if (strcmp(optarg, "listOrSample") == 0) {
+				samplingMethod = listOrSample;
+				break;
+			}
+			fprintf(stderr, "Unknown sampling method: %s\n", optarg);
+			return EXIT_FAILURE;
+			break;
+		case '?':
+			return EXIT_FAILURE;
+			break;
 		}
-
-		if (outputOption == 0) {
-			outputOption = 'w';
-		}
-
-		/* try to load a file */
-		createFileIterator(argv[1], gp);
-
-		/* iterate over all graphs in the database */
-		while ((g = iterateFile(&intLabel, &intLabel))) {
-		
-			/* if there was an error reading some graph the returned n will be -1 */
-			if (g->n > 0) {
-				if (isConnected(g)) {
-					struct Vertex* searchTree = getVertex(gp->vertexPool);
-					struct ShallowGraph* sample = NULL;
-					struct ShallowGraph* tree;
-
-					switch (outputOption) {
-					case 'w':
-						sample = sampleSpanningTreesUsingWilson(g, k, sgp);
-						break;
-					case 'l':
-						sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
-						break;
-					case 'p':
-						sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
-						break;
-					case 'c':
-						sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
-						break;
-					case 'b':
-						sample = listBridgeForest(g, gp, sgp);
-						break;
-					case 'x':
-						sample = listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
-						break;
-					}
-
-					for (tree=sample; tree!=NULL; tree=tree->next) {
-						struct Graph* tmp = shallowGraphToGraph(tree, gp);
-						struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
-						addToSearchTree(searchTree, cString, gp, sgp);
-						/* garbage collection */
-						dumpGraph(gp, tmp);
-					}
-
-					/* output tree patterns represented as canonical strings */
-					printf("# %i %i\n", g->number, searchTree->d);
-					printStringsInSearchTree(searchTree, stdout, sgp);
-					fflush(stdout);
-
-					avgTrees += searchTree->number;
-					dumpShallowGraphCycle(sgp, sample);
-					dumpSearchTree(gp, searchTree);
-				}		
-
-				/***** do not alter ****/
-
-				++i;
-				/* garbage collection */
-				dumpGraph(gp, g);
-
-			} else {
-				/* TODO should be handled by dumpgraph */
-				free(g);
-			}
-		}
-
-		fprintf(stderr, "avgTrees = %f\n", avgTrees / (double)i);
-		fprintf(stderr, "#cactusGraphs = %i\n", cactusGraphs);
-
-		/* global garbage collection */
-		destroyFileIterator();
-		freeGraphPool(gp);
-		freeShallowGraphPool(sgp);
-		freeListPool(lp);
-		freeVertexPool(vp);
-
-		return EXIT_SUCCESS;
 	}
+
+	/* init object pools */
+	lp = createListPool(10000);
+	vp = createVertexPool(10000);
+	sgp = createShallowGraphPool(1000, lp);
+	gp = createGraphPool(100, vp, lp);
+
+	/* initialize the stream to read graphs from 
+   check if there is a filename present in the command line arguments 
+   if so, open the file, if not, read from stdin */
+	if (optind < argc) {
+		char* filename = argv[optind];
+		/* if the present filename is not '-' then init a file iterator for that file name */
+		if (strcmp(filename, "-") != 0) {
+			createFileIterator(filename, gp);
+		} else {
+			createStdinIterator(gp);
+		}
+	} else {
+		createStdinIterator(gp);
+	}
+
+	/* iterate over all graphs in the database */
+	while ((g = iterateFile(&intLabel, &intLabel))) {
+	
+		/* if there was an error reading some graph the returned n will be -1 */
+		if (g->n > 0) {
+			if (isConnected(g)) {
+				struct Vertex* searchTree = getVertex(gp->vertexPool);
+				struct ShallowGraph* sample = NULL;
+				struct ShallowGraph* tree;
+
+				switch (samplingMethod) {
+				case wilson:
+					sample = sampleSpanningTreesUsingWilson(g, k, sgp);
+					break;
+				case listing:
+					sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
+					break;
+				case mix:
+					sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
+					break;
+				case cactus:
+					sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
+					break;
+				case bridgeForest:
+					sample = listBridgeForest(g, gp, sgp);
+					break;
+				case listOrSample:
+					sample = listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
+					break;
+				}
+
+				for (tree=sample; tree!=NULL; tree=tree->next) {
+					struct Graph* tmp = shallowGraphToGraph(tree, gp);
+					struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
+					addToSearchTree(searchTree, cString, gp, sgp);
+					/* garbage collection */
+					dumpGraph(gp, tmp);
+				}
+
+				/* output tree patterns represented as canonical strings */
+				printf("# %i %i\n", g->number, searchTree->d);
+				printStringsInSearchTree(searchTree, stdout, sgp);
+				fflush(stdout);
+
+				avgTrees += searchTree->number;
+				dumpShallowGraphCycle(sgp, sample);
+				dumpSearchTree(gp, searchTree);
+			}		
+
+			/***** do not alter ****/
+
+			++i;
+			/* garbage collection */
+			dumpGraph(gp, g);
+
+		} else {
+			/* TODO should be handled by dumpgraph */
+			free(g);
+		}
+	}
+
+	fprintf(stderr, "avgTrees = %f\n", avgTrees / (double)i);
+
+	/* global garbage collection */
+	destroyFileIterator();
+	freeGraphPool(gp);
+	freeShallowGraphPool(sgp);
+	freeListPool(lp);
+	freeVertexPool(vp);
+
+	return EXIT_SUCCESS;
 }
