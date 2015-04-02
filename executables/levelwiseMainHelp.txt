@@ -1,0 +1,30 @@
+This is a Levelwise Algorithm for TreePatterns
+implemented by Pascal Welke 2013
+
+
+usage: lwm F [parameterList]
+
+    without parameters: display this help screen
+    
+    F: (required) duse F as graph database
+    
+    -nGraphs N: maximum number of transaction graphs you
+        want to process (default 10000)
+        
+    -frequency T: absolute frequency threshold for frequent
+        subtree patterns (e.g. 32 if a pattern has to occur
+        in at least 32 transactions to be frequent) (default 1000)
+        
+    -fraction F: relative fraction of spanning trees of a graph
+        s.t. a subtree S is considered a match. I.e. S is subgraph of
+        at least F*X trees given X trees for a graph.
+        If you set F<=0 or F>1, matching will fall back to the standard
+        case where S needs to be subgraph of at lease one spanning tree.
+        
+    -min M: process graphs starting from Mth instance (default 0)
+    
+    -patternSize P: maximum number of edges in frequent patterns
+        (default 20)
+        
+    -h | --help: display this help
+    
