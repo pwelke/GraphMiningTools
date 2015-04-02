@@ -86,6 +86,119 @@ struct Graph* sampleSpanningTreeFromCactus(struct Graph* original, struct Shallo
 	}
 	return spanningTree;
 }
+		// /* getGoodEstimate returns an upper bound on the number of spanning
+		// trees in g, or -1 if there was an overflow of long ints while computing */
+		// long upperBound = getGoodEstimate(g, sgp, gp);
+		// if ((upperBound < depth) && (upperBound != -1)) {
+
+/**
+Take k random spanning trees of g using Wilsons algorithm and return them as a list.
+*/
+struct ShallowGraph* sampleSpanningTreesUsingWilson(struct Graph* g, int k, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* spanningTrees = NULL;
+	int j;
+	for (j=0; j<k; ++j) {
+		struct ShallowGraph* spanningTree = randomSpanningTreeAsShallowGraph(g, sgp);
+		spanningTree->next = spanningTrees;
+		spanningTrees = spanningTree;
+	}
+	return spanningTrees;
+}
+
+struct ShallowGraph* sampleSpanningTreesUsingListing(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* spanningTrees = NULL;
+	struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+	struct ShallowGraph** array;
+	
+	struct ShallowGraph* idx;
+	int j;
+	int nTrees = 0;
+
+	/* find number of listed trees, put them in array */
+	for (idx=trees; idx; idx=idx->next) ++nTrees;
+
+	array = malloc(nTrees * sizeof(struct ShallowGraph*));
+	j = 0;
+	for (idx=trees; idx; idx=idx->next) {	
+		array[j] = idx;
+		++j;
+	}
+
+	/* sample k trees uniformly at random */
+	for (j=0; j<k; ++j) {
+		int rnd = rand() % nTrees;
+		// can't just use the listed tree itself, as it might get selected more than once
+		struct ShallowGraph* tree = cloneShallowGraph(array[rnd], sgp);
+		tree->next = spanningTrees;
+		spanningTrees = tree;
+	}
+	dumpShallowGraphCycle(sgp, trees);
+	free(array);
+	return spanningTrees;
+}
+
+
+struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	long upperBound = getGoodEstimate(g, sgp, gp);
+	if ((upperBound < threshold) && (upperBound != -1)) {
+		return sampleSpanningTreesUsingListing(g, k, gp, sgp);
+	} else {
+		return sampleSpanningTreesUsingWilson(g, k, sgp);
+	}
+}
+
+struct ShallowGraph* sampleSpanningTreesUsingCactusMix(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* spanningTrees = NULL;
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+	int blockCount = 0;
+	struct ShallowGraph* idx;
+	for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
+		if (idx->m > 1) {
+			++blockCount;
+		}
+	}
+	/* if g is a cactus graph */
+	if (g->n - 1 + blockCount == g->m) {
+		int j;
+		for (j=0; j<k; ++j) {	
+			struct ShallowGraph* spanningTree = sampleSpanningTreeEdgesFromCactus(biconnectedComponents, sgp);
+			spanningTrees->next = spanningTree;
+			spanningTrees = spanningTree;
+		}
+	} else {
+		// for speedup. this is sampleSpanningTreesUsingMix
+		long upperBound = getGoodEstimatePrecomputedBlocks(g, biconnectedComponents, sgp, gp);
+		if ((upperBound < threshold) && (upperBound != -1)) {
+			spanningTrees = sampleSpanningTreesUsingListing(g, k, gp, sgp);
+		} else {
+			spanningTrees = sampleSpanningTreesUsingWilson(g, k, sgp);
+		}
+	}
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	return spanningTrees;
+}
+
+struct ShallowGraph* listBridgeForest(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	/* find biconnected Components */
+	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
+	// TODO replace this by a method that just creates the forest without listing cycles
+	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
+	struct ShallowGraph* bridgeTrees = getConnectedComponents(forest, sgp);
+	/* garbage collection */
+	dumpGraphList(gp, forest);
+	return bridgeTrees;
+}
+
+struct ShallowGraph* listOrSampleSpanningTrees(struct Graph* g, int k, int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* spanningTrees = NULL; 
+	long upperBound = getGoodEstimate(g, sgp, gp);
+	if ((upperBound < threshold) && (upperBound != -1)) {
+		spanningTrees = listSpanningTrees(g, sgp, gp);	
+	} else {
+		spanningTrees = sampleSpanningTreesUsingWilson(g, k, sgp);
+	}
+	return spanningTrees;
+}
 
 
 /**
@@ -109,7 +222,7 @@ int main(int argc, char** argv) {
 		/* user input handling variables */
 		char outputOption = 0;
 		int param;
-		long int depth = 1000;
+		long int threshold = 1000;
 		int k = 1;
 
 		/* i counts the number of graphs read */
@@ -138,9 +251,9 @@ int main(int argc, char** argv) {
 				known = 1;
 			}
 			if (strcmp(argv[param], "-bound") == 0) {
-				sscanf(argv[param+1], "%li", &depth);
-				if (depth < 0) {
-					depth = LONG_MAX / 2;
+				sscanf(argv[param+1], "%li", &threshold);
+				if (threshold < 0) {
+					threshold = LONG_MAX / 2;
 				}
 				known = 1;
 			}
@@ -166,334 +279,338 @@ int main(int argc, char** argv) {
 		createFileIterator(argv[1], gp);
 
 		/* iterate over all graphs in the database */
-		while (((i < maxGraphs) || (maxGraphs == -1)) && (g = iterateFile(&aids99VertexLabel, &aids99EdgeLabel))) {
+		while ((g = iterateFile(&intLabel, &intLabel))) {
 		
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
-				if (i >= minGraph) {
+				if (isConnected(g)) {
+					struct Vertex* searchTree = getVertex(gp->vertexPool);
+					struct ShallowGraph* sample = NULL;
+					struct ShallowGraph* tree;
+
 					switch (outputOption) {
-						case 'w':
-						if (isConnected(g)) {
-							/* getGoodEstimate returns an upper bound on the number of spanning
-							trees in g, or -1 if there was an overflow of long ints while computing */
-							struct Vertex* searchTree = getVertex(gp->vertexPool);
-							long upperBound = getGoodEstimate(g, sgp, gp);
-							if ((upperBound < depth) && (upperBound != -1)) {
-								int j;
-								for (j=0; j<k; ++j) {
-									struct ShallowGraph* treeEdges = randomSpanningTreeAsShallowGraph(g, sgp);
-									struct Graph* tree = shallowGraphToGraph(treeEdges, gp);
-
-									/* assumes that tree is a tree */
-									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-
-									/* garbage collection */
-									dumpShallowGraphCycle(sgp, treeEdges);
-									dumpGraph(gp, tree);
-								}
-							}
-							/* output tree patterns represented as canonical strings */
-							printf("# %i %i\n", g->number, searchTree->d);
-							printStringsInSearchTree(searchTree, stdout, sgp);
-							fflush(stdout);
-
-							avgTrees += searchTree->number;
-							dumpSearchTree(gp, searchTree);
-						}
+					case 'w':
+						sample = sampleSpanningTreesUsingWilson(g, k, sgp);
 						break;
-
-						case 'l':
-						if (isConnected(g)) {
-							/* getGoodEstimate returns an upper bound on the number of spanning
-							trees in g, or -1 if there was an overflow of long ints while computing */
-							struct Vertex* searchTree = getVertex(gp->vertexPool);
-							long upperBound = getGoodEstimate(g, sgp, gp);
-							if ((upperBound < depth) && (upperBound != -1)) {
-								struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-								struct ShallowGraph* idx;
-
-								int j = 0;
-								struct ShallowGraph** array;
-								int nTrees;
-
-								/* find number of listed trees, put them in array */
-								for (idx=trees; idx; idx=idx->next) ++j;
-								nTrees = j;
-								array = malloc(nTrees * sizeof(struct ShallowGraph*));
-								j = 0;
-								for (idx=trees; idx; idx=idx->next) {	
-									array[j] = idx;
-									++j;
-								}
-
-								/* sample k trees uniformly at random */
-								for (j=0; j<k; ++j) {
-									struct Graph* tree;
-									struct ShallowGraph* cString;
-									int rnd = rand() % nTrees;
-
-									tree = shallowGraphToGraph(array[rnd], gp);
-
-									/* assumes that tree is a tree */
-									cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-
-									/* garbage collection */
-									dumpGraph(gp, tree);
-								}
-								dumpShallowGraphCycle(sgp, trees);
-							}
-
-							/* output tree patterns represented as canonical strings */
-							printf("# %i %i\n", g->number, searchTree->d);
-							printStringsInSearchTree(searchTree, stdout, sgp);
-							fflush(stdout);
-
-							avgTrees += searchTree->number;
-							dumpSearchTree(gp, searchTree);
-						}
+					case 'l':
+						sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
 						break;
-
-						case 'p':
-						if (isConnected(g)) {
-							/* getGoodEstimate returns an upper bound on the number of spanning
-							trees in g, or -1 if there was an overflow of long ints while computing */
-							struct Vertex* searchTree = getVertex(gp->vertexPool);
-							long upperBound = getGoodEstimate(g, sgp, gp);
-							if ((upperBound < depth) && (upperBound != -1)) {
-								struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-								struct ShallowGraph* idx;
-								int j = 0;
-								struct ShallowGraph** array;
-								int nTrees;
-
-								/* find number of listed trees, put them in array */
-								for (idx=trees; idx; idx=idx->next) ++j;
-								nTrees = j;
-								array = malloc(nTrees * sizeof(struct ShallowGraph*));
-								j = 0;
-								for (idx=trees; idx; idx=idx->next) {	
-									array[j] = idx;
-									++j;
-								}
-
-								/* sample k trees uniformly at random */
-								for (j=0; j<k; ++j) {
-									struct Graph* tree;
-									struct ShallowGraph* cString;
-									int rnd = rand() % nTrees;
-
-									tree = shallowGraphToGraph(array[rnd], gp);
-
-									/* assumes that tree is a tree */
-									cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-
-									/* garbage collection */
-									dumpGraph(gp, tree);
-								}
-								dumpShallowGraphCycle(sgp, trees);
-								free(array);
-							} else {
-								/* if there are more than depth spanning trees, we sample depth of them uniformly at random */
-								int j;
-								for (j=0; j<k; ++j) {
-									struct ShallowGraph* treeEdges = randomSpanningTreeAsShallowGraph(g, sgp);
-									struct Graph* tree = shallowGraphToGraph(treeEdges, gp);
-
-									/* assumes that tree is a tree */
-									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-
-									/* garbage collection */
-									dumpShallowGraphCycle(sgp, treeEdges);
-									dumpGraph(gp, tree);
-								}
-							}
-							/* output tree patterns represented as canonical strings */
-							printf("# %i %i\n", g->number, searchTree->d);
-							printStringsInSearchTree(searchTree, stdout, sgp);
-							fflush(stdout);
-
-							avgTrees += searchTree->number;
-							dumpSearchTree(gp, searchTree);
-						}
+					case 'p':
+						sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
 						break;
-
-						case 'c':
-						if (isConnected(g)) {
-							/* getGoodEstimate returns an upper bound on the number of spanning
-							trees in g, or -1 if there was an overflow of long ints while computing */
-							struct Vertex* searchTree = getVertex(gp->vertexPool);
-							struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
-							int compNumber = 0;
-							struct ShallowGraph* idx;
-							for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
-								if (idx->m > 1) {
-									++compNumber;
-								}
-							}
-							/* if g is a cactus graph */
-							if (g->n - 1 + compNumber == g->m) {
-								int j;
-								for (j=0; j<k; ++j) {
-									
-									struct Graph* tree = sampleSpanningTreeFromCactus(g, biconnectedComponents, gp);
-									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-
-									/* garbage collection */
-									dumpGraph(gp, tree);
-								}
-								++cactusGraphs;
-							} else {
-								long upperBound = getGoodEstimatePrecomputedBlocks(g, biconnectedComponents, sgp, gp);
-								if ((upperBound < depth) && (upperBound != -1)) {
-									struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-									
-									int j = 0;
-									struct ShallowGraph** array;
-									int nTrees;
-
-									/* find number of listed trees, put them in array */
-									for (idx=trees; idx; idx=idx->next) ++j;
-									nTrees = j;
-									array = malloc(nTrees * sizeof(struct ShallowGraph*));
-									j = 0;
-									for (idx=trees; idx; idx=idx->next) {	
-										array[j] = idx;
-										++j;
-									}
-
-									/* sample k trees uniformly at random */
-									for (j=0; j<k; ++j) {
-										struct Graph* tree;
-										struct ShallowGraph* cString;
-										int rnd = rand() % nTrees;
-
-										tree = shallowGraphToGraph(array[rnd], gp);
-
-										/* assumes that tree is a tree */
-										cString = canonicalStringOfTree(tree, sgp);
-										addToSearchTree(searchTree, cString, gp, sgp);
-
-										/* garbage collection */
-										dumpGraph(gp, tree);
-									}
-									dumpShallowGraphCycle(sgp, trees);
-								} else {
-									/* if there are more than depth spanning trees, we sample depth of them uniformly at random */
-									int j;
-									for (j=0; j<k; ++j) {
-										struct ShallowGraph* treeEdges = randomSpanningTreeAsShallowGraph(g, sgp);
-										struct Graph* tree = shallowGraphToGraph(treeEdges, gp);
-
-										/* assumes that tree is a tree */
-										struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-										addToSearchTree(searchTree, cString, gp, sgp);
-
-										/* garbage collection */
-										dumpShallowGraphCycle(sgp, treeEdges);
-										dumpGraph(gp, tree);
-									}
-								}
-							}
-							/* output tree patterns represented as canonical strings */
-							printf("# %i %i\n", g->number, searchTree->d);
-							printStringsInSearchTree(searchTree, stdout, sgp);
-							fflush(stdout);
-
-							avgTrees += searchTree->number;
-							dumpSearchTree(gp, searchTree);
-						}
-						break;
-
-						case 'b':
-						if (isConnected(g)) {
-							/* getGoodEstimate returns an upper bound on the number of spanning
-							trees in g, or -1 if there was an overflow of long ints while computing */
-							struct Vertex* searchTree = getVertex(gp->vertexPool);
-							/* find biconnected Components */
-							struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
-							// TODO replace this by a method that just creates the forest without listing cycles
-							struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
-							struct ShallowGraph* trees = getConnectedComponents(forest, sgp);
-							struct ShallowGraph* idx;
-							
-							for (idx=trees; idx!=NULL; idx=idx->next) {
-								if (idx->m > 0) {
-									struct Graph* tree = shallowGraphToGraph(idx, gp);
-									/* assumes that tree is a tree */
-									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-									searchTree = addToSearchTree(searchTree, cString, gp, sgp);
-
-									/* garbage collection */
-									dumpGraph(gp, tree);
-								}						
-							}
-							/* output tree patterns represented as canonical strings */
-							printf("# %i %i\n", g->number, searchTree->d);
-							printStringsInSearchTree(searchTree, stdout, sgp);
-							fflush(stdout);
-
-							avgTrees += searchTree->number;
-
-							/* garbage collection */
-							dumpSearchTree(gp, searchTree);
-							dumpGraphList(gp, forest);
-							dumpShallowGraphCycle(sgp, trees);
-						}
-						break;
-
-						case 'x':
-						if (isConnected(g)) {
-							/* getGoodEstimate returns an upper bound on the number of spanning
-							trees in g, or -1 if there was an overflow of long ints while computing */
-							struct Vertex* searchTree = getVertex(gp->vertexPool);
-							long upperBound = getGoodEstimate(g, sgp, gp);
-							if ((upperBound < depth) && (upperBound != -1)) {
-								struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-								struct ShallowGraph* idx;
-								//int st = 0;
-								for (idx=trees; idx; idx=idx->next) {	
-									struct Graph* tree = shallowGraphToGraph(idx, gp);
-
-									/* assumes that tree is a tree */
-									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-									//++st;
-
-									/* garbage collection */
-									dumpGraph(gp, tree);
-								}
-								dumpShallowGraphCycle(sgp, trees);
-							} else {
-								/* if there are more than depth spanning trees, we sample depth of them uniformly at random */
-								int i;
-								for (i=0; i<depth; ++i) {
-									struct ShallowGraph* treeEdges = randomSpanningTreeAsShallowGraph(g, sgp);
-									struct Graph* tree = shallowGraphToGraph(treeEdges, gp);
-
-									/* assumes that tree is a tree */
-									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-									//++st;
-
-									/* garbage collection */
-									dumpShallowGraphCycle(sgp, treeEdges);
-									dumpGraph(gp, tree);
-								}
-							}
-							/* output tree patterns represented as canonical strings */
-							printf("# %i %i\n", g->number, searchTree->d);
-							printStringsInSearchTree(searchTree, stdout, sgp);
-							fflush(stdout);
-
-							dumpSearchTree(gp, searchTree);
-						}
+					case 'c':
+						sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
 						break;
 					}
+
+					for (tree=sample; tree!=NULL; tree=tree->next) {
+						struct Graph* tmp = shallowGraphToGraph(tree, gp);
+						struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
+						addToSearchTree(searchTree, cString, gp, sgp);
+						/* garbage collection */
+						dumpGraph(gp, tmp);
+					}
+
+					/* output tree patterns represented as canonical strings */
+					printf("# %i %i\n", g->number, searchTree->d);
+					printStringsInSearchTree(searchTree, stdout, sgp);
+					fflush(stdout);
+
+					avgTrees += searchTree->number;
+					dumpSearchTree(gp, searchTree);
+
+
+				// switch (outputOption) {
+					// case 'l':
+					// if (isConnected(g)) {
+					// 	/* getGoodEstimate returns an upper bound on the number of spanning
+					// 	trees in g, or -1 if there was an overflow of long ints while computing */
+					// 	struct Vertex* searchTree = getVertex(gp->vertexPool);
+					// 	long upperBound = getGoodEstimate(g, sgp, gp);
+					// 	if ((upperBound < depth) && (upperBound != -1)) {
+					// 		struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+					// 		struct ShallowGraph* idx;
+
+					// 		int j = 0;
+					// 		struct ShallowGraph** array;
+					// 		int nTrees;
+
+					// 		/* find number of listed trees, put them in array */
+					// 		for (idx=trees; idx; idx=idx->next) ++j;
+					// 		nTrees = j;
+					// 		array = malloc(nTrees * sizeof(struct ShallowGraph*));
+					// 		j = 0;
+					// 		for (idx=trees; idx; idx=idx->next) {	
+					// 			array[j] = idx;
+					// 			++j;
+					// 		}
+
+					// 		/* sample k trees uniformly at random */
+					// 		for (j=0; j<k; ++j) {
+					// 			struct Graph* tree;
+					// 			struct ShallowGraph* cString;
+					// 			int rnd = rand() % nTrees;
+
+					// 			tree = shallowGraphToGraph(array[rnd], gp);
+
+					// 			/* assumes that tree is a tree */
+					// 			cString = canonicalStringOfTree(tree, sgp);
+					// 			addToSearchTree(searchTree, cString, gp, sgp);
+
+					// 			/* garbage collection */
+					// 			dumpGraph(gp, tree);
+					// 		}
+					// 		dumpShallowGraphCycle(sgp, trees);
+					// 	}
+
+					// 	/* output tree patterns represented as canonical strings */
+					// 	printf("# %i %i\n", g->number, searchTree->d);
+					// 	printStringsInSearchTree(searchTree, stdout, sgp);
+					// 	fflush(stdout);
+
+					// 	avgTrees += searchTree->number;
+					// 	dumpSearchTree(gp, searchTree);
+					// }
+					// break;
+
+					// case 'p':
+					// if (isConnected(g)) {
+					// 	/* getGoodEstimate returns an upper bound on the number of spanning
+					// 	trees in g, or -1 if there was an overflow of long ints while computing */
+					// 	struct Vertex* searchTree = getVertex(gp->vertexPool);
+					// 	long upperBound = getGoodEstimate(g, sgp, gp);
+					// 	if ((upperBound < depth) && (upperBound != -1)) {
+					// 		struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+					// 		struct ShallowGraph* idx;
+					// 		int j = 0;
+					// 		struct ShallowGraph** array;
+					// 		int nTrees;
+
+					// 		/* find number of listed trees, put them in array */
+					// 		for (idx=trees; idx; idx=idx->next) ++j;
+					// 		nTrees = j;
+					// 		array = malloc(nTrees * sizeof(struct ShallowGraph*));
+					// 		j = 0;
+					// 		for (idx=trees; idx; idx=idx->next) {	
+					// 			array[j] = idx;
+					// 			++j;
+					// 		}
+
+					// 		/* sample k trees uniformly at random */
+					// 		for (j=0; j<k; ++j) {
+					// 			struct Graph* tree;
+					// 			struct ShallowGraph* cString;
+					// 			int rnd = rand() % nTrees;
+
+					// 			tree = shallowGraphToGraph(array[rnd], gp);
+
+					// 			/* assumes that tree is a tree */
+					// 			cString = canonicalStringOfTree(tree, sgp);
+					// 			addToSearchTree(searchTree, cString, gp, sgp);
+
+					// 			/* garbage collection */
+					// 			dumpGraph(gp, tree);
+					// 		}
+					// 		dumpShallowGraphCycle(sgp, trees);
+					// 		free(array);
+					// 	} else {
+					// 		/* if there are more than depth spanning trees, we sample depth of them uniformly at random */
+					// 		int j;
+					// 		for (j=0; j<k; ++j) {
+					// 			struct ShallowGraph* treeEdges = randomSpanningTreeAsShallowGraph(g, sgp);
+					// 			struct Graph* tree = shallowGraphToGraph(treeEdges, gp);
+
+					// 			/* assumes that tree is a tree */
+					// 			struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
+					// 			addToSearchTree(searchTree, cString, gp, sgp);
+
+					// 			/* garbage collection */
+					// 			dumpShallowGraphCycle(sgp, treeEdges);
+					// 			dumpGraph(gp, tree);
+					// 		}
+					// 	}
+					// 	/* output tree patterns represented as canonical strings */
+					// 	printf("# %i %i\n", g->number, searchTree->d);
+					// 	printStringsInSearchTree(searchTree, stdout, sgp);
+					// 	fflush(stdout);
+
+					// 	avgTrees += searchTree->number;
+					// 	dumpSearchTree(gp, searchTree);
+					// }
+					// break;
+
+					// case 'c':
+					// if (isConnected(g)) {
+					// 	/* getGoodEstimate returns an upper bound on the number of spanning
+					// 	trees in g, or -1 if there was an overflow of long ints while computing */
+					// 	struct Vertex* searchTree = getVertex(gp->vertexPool);
+					// 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+					// 	int compNumber = 0;
+					// 	struct ShallowGraph* idx;
+					// 	for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
+					// 		if (idx->m > 1) {
+					// 			++compNumber;
+					// 		}
+					// 	}
+					// 	/* if g is a cactus graph */
+					// 	if (g->n - 1 + compNumber == g->m) {
+					// 		int j;
+					// 		for (j=0; j<k; ++j) {
+								
+					// 			struct Graph* tree = sampleSpanningTreeFromCactus(g, biconnectedComponents, gp);
+					// 			struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
+					// 			addToSearchTree(searchTree, cString, gp, sgp);
+
+					// 			/* garbage collection */
+					// 			dumpGraph(gp, tree);
+					// 		}
+					// 		++cactusGraphs;
+					// 	} else {
+					// 		long upperBound = getGoodEstimatePrecomputedBlocks(g, biconnectedComponents, sgp, gp);
+					// 		if ((upperBound < depth) && (upperBound != -1)) {
+					// 			struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+								
+					// 			int j = 0;
+					// 			struct ShallowGraph** array;
+					// 			int nTrees;
+
+					// 			/* find number of listed trees, put them in array */
+					// 			for (idx=trees; idx; idx=idx->next) ++j;
+					// 			nTrees = j;
+					// 			array = malloc(nTrees * sizeof(struct ShallowGraph*));
+					// 			j = 0;
+					// 			for (idx=trees; idx; idx=idx->next) {	
+					// 				array[j] = idx;
+					// 				++j;
+					// 			}
+
+					// 			/* sample k trees uniformly at random */
+					// 			for (j=0; j<k; ++j) {
+					// 				struct Graph* tree;
+					// 				struct ShallowGraph* cString;
+					// 				int rnd = rand() % nTrees;
+
+					// 				tree = shallowGraphToGraph(array[rnd], gp);
+
+					// 				/* assumes that tree is a tree */
+					// 				cString = canonicalStringOfTree(tree, sgp);
+					// 				addToSearchTree(searchTree, cString, gp, sgp);
+
+					// 				/* garbage collection */
+					// 				dumpGraph(gp, tree);
+					// 			}
+					// 			dumpShallowGraphCycle(sgp, trees);
+					// 		} else {
+					// 			/* if there are more than depth spanning trees, we sample depth of them uniformly at random */
+					// 			int j;
+					// 			for (j=0; j<k; ++j) {
+					// 				struct ShallowGraph* treeEdges = randomSpanningTreeAsShallowGraph(g, sgp);
+					// 				struct Graph* tree = shallowGraphToGraph(treeEdges, gp);
+
+					// 				/* assumes that tree is a tree */
+					// 				struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
+					// 				addToSearchTree(searchTree, cString, gp, sgp);
+
+					// 				/* garbage collection */
+					// 				dumpShallowGraphCycle(sgp, treeEdges);
+					// 				dumpGraph(gp, tree);
+					// 			}
+					// 		}
+					// 	}
+					// 	/* output tree patterns represented as canonical strings */
+					// 	printf("# %i %i\n", g->number, searchTree->d);
+					// 	printStringsInSearchTree(searchTree, stdout, sgp);
+					// 	fflush(stdout);
+
+					// 	avgTrees += searchTree->number;
+					// 	dumpSearchTree(gp, searchTree);
+					// }
+					// break;
+
+					// case 'b':
+					// if (isConnected(g)) {
+					// 	/* getGoodEstimate returns an upper bound on the number of spanning
+					// 	trees in g, or -1 if there was an overflow of long ints while computing */
+					// 	struct Vertex* searchTree = getVertex(gp->vertexPool);
+					// 	/* find biconnected Components */
+					// 	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
+					// 	// TODO replace this by a method that just creates the forest without listing cycles
+					// 	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
+					// 	struct ShallowGraph* trees = getConnectedComponents(forest, sgp);
+					// 	struct ShallowGraph* idx;
+						
+					// 	for (idx=trees; idx!=NULL; idx=idx->next) {
+					// 		if (idx->m > 0) {
+					// 			struct Graph* tree = shallowGraphToGraph(idx, gp);
+					// 			/* assumes that tree is a tree */
+					// 			struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
+					// 			searchTree = addToSearchTree(searchTree, cString, gp, sgp);
+
+					// 			/* garbage collection */
+					// 			dumpGraph(gp, tree);
+					// 		}						
+					// 	}
+					// 	/* output tree patterns represented as canonical strings */
+					// 	printf("# %i %i\n", g->number, searchTree->d);
+					// 	printStringsInSearchTree(searchTree, stdout, sgp);
+					// 	fflush(stdout);
+
+					// 	avgTrees += searchTree->number;
+
+					// 	/* garbage collection */
+					// 	dumpSearchTree(gp, searchTree);
+					// 	dumpGraphList(gp, forest);
+					// 	dumpShallowGraphCycle(sgp, trees);
+					// }
+					// break;
+
+					// case 'x':
+					// if (isConnected(g)) {
+					// 	 getGoodEstimate returns an upper bound on the number of spanning
+					// 	trees in g, or -1 if there was an overflow of long ints while computing 
+					// 	struct Vertex* searchTree = getVertex(gp->vertexPool);
+					// 	long upperBound = getGoodEstimate(g, sgp, gp);
+					// 	if ((upperBound < depth) && (upperBound != -1)) {
+					// 		struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
+					// 		struct ShallowGraph* idx;
+					// 		//int st = 0;
+					// 		for (idx=trees; idx; idx=idx->next) {	
+					// 			struct Graph* tree = shallowGraphToGraph(idx, gp);
+
+					// 			/* assumes that tree is a tree */
+					// 			struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
+					// 			addToSearchTree(searchTree, cString, gp, sgp);
+					// 			//++st;
+
+					// 			/* garbage collection */
+					// 			dumpGraph(gp, tree);
+					// 		}
+					// 		dumpShallowGraphCycle(sgp, trees);
+					// 	} else {
+					// 		/* if there are more than depth spanning trees, we sample depth of them uniformly at random */
+					// 		int i;
+					// 		for (i=0; i<depth; ++i) {
+					// 			struct ShallowGraph* treeEdges = randomSpanningTreeAsShallowGraph(g, sgp);
+					// 			struct Graph* tree = shallowGraphToGraph(treeEdges, gp);
+
+					// 			/* assumes that tree is a tree */
+					// 			struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
+					// 			addToSearchTree(searchTree, cString, gp, sgp);
+					// 			//++st;
+
+					// 			/* garbage collection */
+					// 			dumpShallowGraphCycle(sgp, treeEdges);
+					// 			dumpGraph(gp, tree);
+					// 		}
+					// 	}
+					// 	/* output tree patterns represented as canonical strings */
+					// 	printf("# %i %i\n", g->number, searchTree->d);
+					// 	printStringsInSearchTree(searchTree, stdout, sgp);
+					// 	fflush(stdout);
+
+					// 	dumpSearchTree(gp, searchTree);
+					// }
+					// break;
 				}		
 
 				/***** do not alter ****/
