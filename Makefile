@@ -10,7 +10,6 @@ TCINAME = tci
 PERFNAME = perf
 GFNAME = gf
 CSTRNAME = cstring
-TCIPERFNAME = tciperf
 
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
@@ -39,53 +38,53 @@ dependencies.png: $(EVERYTHING)
 main: sts
 	
 
-all: tpk lwm csc cpk sts mtg mgg stt gf cstr
+all: tpk lwm csc cpk ts mtg mgg stt gf cstr
 
-gf: $(GFOBJECTS)
+$(GFNAME): $(GFOBJECTS)
 	@echo "\nLink Graph Filter executable:"
-	gcc -o $(GFNAME) $(GFOBJECTS) $(CPPFLAGS)
+	gcc -o $@ $< $(CPPFLAGS)
 
-cstr: $(CSTROBJECTS)
+$(CSTRNAME): $(CSTROBJECTS)
 	@echo "\nLink Graph Filter executable:"
 	gcc -o $(CSTRNAME) $(CSTROBJECTS) $(CPPFLAGS)
 
-cpk: $(CPKOBJECTS)
+$(CPKNAME): $(CPKOBJECTS)
 	@echo "\nLink Cyclic Pattern Kernel executable:"
 	gcc -o $(CPKNAME) $(CPKOBJECTS) $(CPPFLAGS)
 
-sts: $(STSOBJECTS)
+$(STSNAME): $(STSOBJECTS)
 	@echo "Link Spanning Tree Sampling executable:"
 	gcc -o $(STSNAME) $(STSOBJECTS) $(CPPFLAGS)
 
-tpk: $(TPKOBJECTS)
+$(TPKNAME): $(TPKOBJECTS)
 	@echo "\nLink Tree Pattern Kernel executable:"
 	gcc -o $(TPKNAME) $(TPKOBJECTS) $(CPPFLAGS)
 
-lwm: $(LWMOBJECTS)
+$(LWMNAME): $(LWMOBJECTS)
 	@echo "\nLink Levelwise Mining executable:"
 	gcc -o $(LWMNAME) $(LWMOBJECTS) $(CPPFLAGS)
 
-mtg: $(MTGOBJECTS)
+$(MTGNAME): $(MTGOBJECTS)
 	@echo "\nLink Data Transformer executable:"
 	gcc -o $(MTGNAME) $(MTGOBJECTS) $(CPPFLAGS)
 
-mgg: $(MGGOBJECTS)
+$(MGGNAME): $(MGGOBJECTS)
 	@echo "\nLink Data Transformer executable:"
 	gcc -o $(MGGNAME) $(MGGOBJECTS) $(CPPFLAGS)
 
-csc: $(CSCOBJECTS)
+$(CSCNAME): $(CSCOBJECTS)
 	@echo "\nLink Count Graph Properties executable:"
 	gcc -o $(CSCNAME) $(CSCOBJECTS) $(CPPFLAGS)
 
-ccd: $(CCDOBJECTS)
+$(CCDNAME): $(CCDOBJECTS)
 	@echo "\nLink Count Graph Properties executable:"
 	gcc -o $(CCDNAME) $(CCDOBJECTS) $(CPPFLAGS)
 
-tci: $(TCIOBJECTS)
+$(TCINAME): $(TCIOBJECTS)
 	@echo "\nLink Cactree Subgraph Isomorphism:"
 	gcc -o $(TCINAME) $(TCIOBJECTS) $(CPPFLAGS)
 
-perf: $(PERFOBJECTS)
+$(PERFNAME): $(PERFOBJECTS)
 	@echo "\nLink Cactree Subgraph Isomorphism Performance Test:"
 	gcc -o $(PERFNAME) $(PERFOBJECTS) $(CPPFLAGS)
 
