@@ -112,58 +112,9 @@ int main(int argc, char** argv) {
 					long int spanningTreeEstimate;
 
 					switch (outputOption) {
-						case 's':
-						spanningTreeEstimate = countSpanningTrees(g, depth, sgp, gp);
-						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
-						break;
+						
 
-						case 'p':
-						if (isConnected(g)) {
-							/* getGoodEstimate returns an upper bound on the number of spanning
-							trees in g, or -1 if there was an overflow of long ints while computing */
-							struct Vertex* searchTree = getVertex(gp->vertexPool);
-							long upperBound = getGoodEstimate(g, sgp, gp);
-							if ((upperBound < depth) && (upperBound != -1)) {
-								struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-								struct ShallowGraph* idx;
-								//int st = 0;
-								for (idx=trees; idx; idx=idx->next) {	
-									struct Graph* tree = shallowGraphToGraph(idx, gp);
-
-									/* assumes that tree is a tree */
-									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-									//++st;
-
-									/* garbage collection */
-									dumpGraph(gp, tree);
-								}
-								dumpShallowGraphCycle(sgp, trees);
-							} else {
-								/* if there are more than depth spanning trees, we sample depth of them uniformly at random */
-								int i;
-								for (i=0; i<depth; ++i) {
-									struct ShallowGraph* treeEdges = randomSpanningTreeAsShallowGraph(g, sgp);
-									struct Graph* tree = shallowGraphToGraph(treeEdges, gp);
-
-									/* assumes that tree is a tree */
-									struct ShallowGraph* cString = canonicalStringOfTree(tree, sgp);
-									addToSearchTree(searchTree, cString, gp, sgp);
-									//++st;
-
-									/* garbage collection */
-									dumpShallowGraphCycle(sgp, treeEdges);
-									dumpGraph(gp, tree);
-								}
-							}
-							/* output tree patterns represented as canonical strings */
-							printf("# %i %i\n", g->number, searchTree->d);
-							printStringsInSearchTree(searchTree, stdout, sgp);
-							fflush(stdout);
-
-							dumpSearchTree(gp, searchTree);
-						}
-						break;
+						
 					}
 				}		
 				
