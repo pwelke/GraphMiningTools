@@ -1,5 +1,5 @@
-A stupid graph database processor that can evaluate some graph properties.\n
-Written 2014 by Pascal Welke in an attempt to clean up the mess of 3 years\n
+A stupid graph database processor that can evaluate some graph properties.
+Written 2014 by Pascal Welke in an attempt to clean up the mess of 3 years
 of writing theses.
 
 Usage: gf [options] [FILE]
