@@ -294,9 +294,9 @@ char* intLabel(const unsigned int label) {
 	char* representation;
 	
 	if (label>1) {
-		bufferSize = (int)ceil(log10(label)) + 1;
+		bufferSize = (int)ceil(log10(label)) + 2;
 	} else {
-		bufferSize = 2;
+		bufferSize = 3;
 	}
 
 	representation = malloc(bufferSize * sizeof(char));
