@@ -1,0 +1,34 @@
+This is The TreePatternKernel
+implemented by Pascal Welke 2014
+
+
+usage: tpk F [parameterList]
+
+    without parameters: display this help screen
+
+    F: (required) use F as graph database
+
+    -bound d: choose maximum number of spanning trees
+        of a graph for which you are willing to compute
+        the kernel (default 1000)
+
+    -k v: number of spanning trees you want to sample
+
+    -output O: write output to stdout (default p)
+        w: for all graphs with less than bound spts
+            sample k spts using Wilsons algorithm
+        l: for all graphs with less than bound spts
+            sample k spts using explicit enumeration
+        p print k spanning tree patterns of all graphs. Use
+            listing for graphs with less than bound spanning trees
+        b print tree patterns for all connected components of the
+            bridge forest of the graphs
+        x print the spanning tree patterns of all graphs with
+            less than filter spanning trees
+
+    -limit N: process the first N graphs in F (default: process all)
+
+    -min M process graphs starting from Mth instance (default 0)
+
+    -h | --help: display this help
+

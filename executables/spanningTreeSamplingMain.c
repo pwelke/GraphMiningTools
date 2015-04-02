@@ -493,10 +493,6 @@ int main(int argc, char** argv) {
 							dumpSearchTree(gp, searchTree);
 						}
 						break;
-
-						case 's':
-						fprintf(stdout, "%i %li\n", g->number, countSpanningTrees(g, depth, sgp, gp));
-						break;
 					}
 				}		
 
