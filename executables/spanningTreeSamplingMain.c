@@ -30,16 +30,9 @@ void printHelp() {
 	printf("    -bound d: choose maximum number of spanning trees\n"
 		   "        of a graph for which you are willing to compute\n"
 		   "        the kernel (default 1000)\n\n");
-	printf("    -label L: change labels\n\n");
-	printf("        n \"nothing\" (default) do not change anything\n"
-		   "        a \"active\" active - 1 | moderately active, inactive - -1\n"
-		   "        i \"CA vs. CI\" active - 1 | inactive - -1 moderately active removed\n"
-		   "        m \"moderately active\" active, moderately active  - 1 | inactive - -1\n\n");
 	printf("    -output O: write output to stdout (default p)\n"
-		   "        e returns the estimated number of spanning trees\n"
 		   "        s returns true number of spanning trees or -1 if\n"
 		   "            there are more than bound\n"
-		   "        c return if graph is connected\n"
 		   "        p print the spanning tree patterns of all graphs with\n"
 		   "            less than filter spanning trees\n");
 	printf("    -limit N: process the first N graphs in F (default: process all)\n");
@@ -47,37 +40,6 @@ void printHelp() {
 	printf("    -h | --help: display this help\n\n");
 }
 
-
-/**
- * Change label of graph according to -label input parameter.
- */
-void labelProcessing(struct Graph* g, char p) {
-
-	switch (p) {
-	/* change nothing */
-	case 'n':
-		break;
-	case 0:
-		break;
-	/* active */
-	case 'a':
-		if (g->activity == 2) {
-			g->activity = 1;
-		} else {
-			g->activity = -1;
-		}
-		break;
-	/* moderately active */
-	case 'm':
-		if (g->activity == 0) {
-			g->activity = -1;
-		}
-		if (g->activity == 2) {
-			g->activity = 1;
-		}
-		break;
-	}
-}
 
 
 /**
@@ -99,8 +61,7 @@ int main(int argc, char** argv) {
 		struct Graph* g = NULL;
 
 		/* user input handling variables */
-		char outputOption = 0;
-		char labelOption = 0;
+		char outputOption = 0;	
 		int param;
 		long int depth = 1000;
 
@@ -123,9 +84,6 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(argv[param], "-output") == 0) {
 				outputOption = argv[param+1][0];
-			}
-			if (strcmp(argv[param], "-label") == 0) {
-				labelOption = argv[param+1][0];
 			}
 			if (strcmp(argv[param], "-bound") == 0) {
 				sscanf(argv[param+1], "%li", &depth);
@@ -153,33 +111,9 @@ int main(int argc, char** argv) {
 				if (i >= minGraph) {
 					long int spanningTreeEstimate;
 
-					/* filter out moderately active molecules, if 'i' otherwise set labels */
-					if (labelOption == 'i') {
-						if (g->activity == 1) {
-							dumpGraph(gp, g);
-							continue;
-						} else {
-							labelProcessing(g, 'a');
-						}
-					}else {
-						labelProcessing(g, labelOption);
-					}
-
 					switch (outputOption) {
 						case 's':
 						spanningTreeEstimate = countSpanningTrees(g, depth, sgp, gp);
-						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
-						break;
-
-						// in filter
-						case 'c':
-						spanningTreeEstimate = isConnected(g);
-						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
-						break;
-
-						// in filter
-						case 'e':
-						spanningTreeEstimate = getGoodEstimate(g, sgp, gp);
 						fprintf(stdout, "%i %li\n", g->number, spanningTreeEstimate);
 						break;
 
