@@ -1,9 +1,9 @@
 TODO
 
 - levelwise: pruning and embedding should be separated.
-- documentation of listSpanningTrees!
 - buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
 - speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
+- separate sampling methods from treeSamplingMain.c into a lib file
 
 
 THEORY
@@ -13,8 +13,9 @@ THEORY
 
 DONE 
 
-- maybe add a prefix for private methods (that are not exposed in the header files)
+- documentation of listSpanningTrees!
 - check if isMaximalOuterplanar checks MAXIMAL outerplanar or just outerplanar: checks outerplanar
+- maybe add a prefix for private methods (that are not exposed in the header files)
 treeCenter
 cs_Tree
 cs_Compare
