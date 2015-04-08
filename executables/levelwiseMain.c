@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hdt:i:p:o:e:";
+	const char* validArgs = "hvt:i:p:o:e:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 			break;
-		case 'd':
+		case 'v':
 			debugInfo = 1;
 			break;
 		case 'o':
