@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
 	char* inputFileName = NULL; // mandatory argument
 
 	int minEdgeID = 100;
-	int nGraphs = 1000; //TODO replace by autoset size of db
+	int nGraphs = 1000; // arbitrary positive value used for initializing the pruning array. Will be reset to correct value by getVertexAndEdgeHistograms 
 	int (*embeddingOperator)(struct ShallowGraph*, struct Graph**, double, int, int, int**, struct Vertex**, struct GraphPool*) = &checkIfSubIsoCompatible;
 	
 	/* automatically set variables */
@@ -156,14 +156,14 @@ int main(int argc, char** argv) {
 	strcat(patternFileName, suffix);
 	patternFile = fopen(patternFileName, "w");
 
-	initPruning(nGraphs); // TODO
+	initPruning(nGraphs);
 
 	/* find frequent single vertices and frequent edges */
 	/* set lowest id of any edge pattern to a number large enough to don't have collisions */
 	frequentVertices = getVertex(vp);
 	frequentEdges = getVertex(vp);
 	frequentEdges->lowPoint = minEdgeID;
-	getVertexAndEdgeHistograms(inputFileName, frequentVertices, frequentEdges, countFile, gp, sgp);
+	nGraphs = getVertexAndEdgeHistograms(inputFileName, frequentVertices, frequentEdges, countFile, gp, sgp);
 	filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureFile, gp);
 	filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureFile, gp);
 
