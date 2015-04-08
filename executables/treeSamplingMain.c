@@ -254,6 +254,8 @@ int main(int argc, char** argv) {
 
 	/* i counts the number of graphs read */
 	int i = 0;
+	/* processedGraphs is the number of graphs that are considered (might be less, if some graphs are not connected) */
+	int processedGraphs = 0;
 	long int avgTrees = 0;
 
 	/* parse command line arguments */
@@ -387,6 +389,8 @@ int main(int argc, char** argv) {
 				avgTrees += searchTree->number;
 				dumpShallowGraphCycle(sgp, sample);
 				dumpSearchTree(gp, searchTree);
+
+				++processedGraphs;
 			}		
 
 			/***** do not alter ****/
@@ -401,7 +405,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	fprintf(stderr, "avgTrees = %f\n", avgTrees / (double)i);
+	fprintf(stderr, "avgTrees = %f\n", avgTrees / (double)processedGraphs);
 
 	/* global garbage collection */
 	destroyFileIterator();
