@@ -447,7 +447,7 @@ char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root
 Remove all strings from search tree that occur less than threshold times.
 (this is indicated by the ->visited field of the last vertex).
 
-Additionally, write the ids of the strings (stored in ->lowPoint) to the lowPoints stream.
+Additionally, write the ids of the strings that occur more than threshold times to the lowPoints stream.
 */
 char filterSearchTreeP(struct Vertex* current, int threshold, struct Vertex* root, FILE* lowPoints, struct GraphPool* gp) {
 	struct VertexList* e;
