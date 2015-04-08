@@ -16,7 +16,7 @@ struct TreeDB
 	char boring;
 };
 
-void getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+int getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void dumpTreeDB(struct GraphPool* gp, struct TreeDB* db);
 
 struct Graph* refinementGraph(struct Graph* g, int currentVertex, struct VertexList* newEdge, struct GraphPool* gp);

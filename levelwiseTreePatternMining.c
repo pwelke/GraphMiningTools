@@ -11,9 +11,11 @@
 #include "searchTree.h"
 #include "levelwiseTreePatternMining.h"
 
-static int* pruning;
+static int* pruning = NULL;
+static int nPruning = 0;
 
 void initPruning(int nGraphs) {
+	nPruning = nGraphs;
 	if ((pruning = malloc(nGraphs * sizeof(int)))) {
 		int i;
 		for (i=0; i<nGraphs; ++i) {
@@ -36,6 +38,22 @@ static inline void addToPruningSet(const int elementID, const int index) {
 	pruning[index] |= hashID(elementID);
 }
 
+/* if the current index is larger than the pruning array aka. bloom filter array, 
+double the size of the array. Then add the id hash to the filter. This method is 
+useful for getVertexAndEdgeHistograms as we might not know the correct number of 
+graphs in the database */
+static inline void initialAddToPruningSet(const int elementID, const int index) {
+	if (index >= nPruning) {
+		int i;
+		pruning = realloc(pruning, 2 * nPruning * sizeof(int));
+		for (i=nPruning; i<2*nPruning; ++i) {
+			pruning[i] = 0;
+		}
+		nPruning *= 2;
+	}
+	addToPruningSet(elementID, index);
+}
+
 static inline char containedInPruningSet(const int elementID, const int index) {
 	return (pruning[index] & hashID(elementID)) != 0;
 }
@@ -56,8 +74,11 @@ mingraph and maxgraph specify a range in which to read patterns.
 
 'P' stands for pruning. it means that it uses a resultSet struct speed up some stuff 
 and fills up the pruning data structure.
+
+The method expects that initPruning was called with a positive argument before and returns 
+the number of graphs in the database.
 */
-void getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
 	int i = 0;
 	FILE* stream = fopen(fileName, "r");
@@ -189,7 +210,7 @@ void getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices,
 		filter of the graph (i) for pruning */
 		for (v=0; v<resultPos; ++v) {
 			fprintf(keyValueStream, "%i %i\n", number, results[v].id);
-			addToPruningSet(results[v].id, i);
+			initialAddToPruningSet(results[v].id, i);
 		}
 		
 
@@ -201,6 +222,7 @@ void getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices,
 		free(results);
 	}
 	fclose(stream);
+	return i;
 }
 
 
