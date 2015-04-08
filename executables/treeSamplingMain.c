@@ -31,7 +31,7 @@ typedef enum {
  * Print --help message
  */
 int printHelp() {
-	FILE* helpFile = fopen("executables/spanningTreeSamplingHelp.txt", "r");
+	FILE* helpFile = fopen("executables/treeSamplingHelp.txt", "r");
 	if (helpFile != NULL) {
 		int c = EOF;
 		while ((c = fgetc(helpFile)) != EOF) {
