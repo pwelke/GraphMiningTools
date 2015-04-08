@@ -1,30 +1,34 @@
-This is a Levelwise Algorithm for TreePatterns
-implemented by Pascal Welke 2013
+This is a Levelwise Mining Algorithm for TreePatterns
+implemented by Pascal Welke 2013, 2015
 
 
-usage: lwm F [parameterList]
+usage: lwm [ARGS] FILE
+    
+    FILE: (required) use FILE as tree database
 
-    without parameters: display this help screen
-    
-    F: (required) duse F as graph database
-    
-    -nGraphs N: maximum number of transaction graphs you
-        want to process (default 10000)
+    -t THRESHOLD: absolute frequency threshold for subtree patterns
+                  (e.g. 32 if a pattern has to occur in at least 32
+                  transactions to be frequent) (default 1000)
+
+    -e OPERATOR:  embedding operator used for frequent subtree mining.
+            existence:  A subtree T matches a transaction graph G if there
+                        is at least one tree H in the set representing G 
+                        such that T is subgraph isomorphic to H.
+            importance: A subtree T matches a transaction graph G if T is
+                        subgraph isomorphic to at least a FRACTION-fraction 
+                        of all trees representing G.
         
-    -frequency T: absolute frequency threshold for frequent
-        subtree patterns (e.g. 32 if a pattern has to occur
-        in at least 32 transactions to be frequent) (default 1000)
+    -i FRACTION: relative fraction of spanning trees of a graph s.t.
+                 a subtree S is considered a match. I.e. S is subgraph 
+                 of at least F*X trees given X trees for a graph. Must
+                 be a float between 0 and 1.
+         
+    -p SIZE:  maximum number of edges in frequent patterns (default 20). 
+              I.e. mining will stop after P levels.
+
+    -o PREFIX: Specify a common prefix for the output files of the program.
+               By default, the name of the input file is used.
         
-    -fraction F: relative fraction of spanning trees of a graph
-        s.t. a subtree S is considered a match. I.e. S is subgraph of
-        at least F*X trees given X trees for a graph.
-        If you set F<=0 or F>1, matching will fall back to the standard
-        case where S needs to be subgraph of at lease one spanning tree.
-        
-    -min M: process graphs starting from Mth instance (default 0)
-    
-    -patternSize P: maximum number of edges in frequent patterns
-        (default 20)
-        
-    -h | --help: display this help
+    -v:  display some process information during mining
+    -h:  display this help
     
