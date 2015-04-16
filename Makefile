@@ -38,47 +38,36 @@ main: $(GFNAME)
 all: $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) 
 
 $(GFNAME): $(GFOBJECTS)
-	@echo "\nLink Graph Filter executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(CSTRNAME): $(CSTROBJECTS)
-	@echo "\nLink Canonical String executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(CPKNAME): $(CPKOBJECTS)
-	@echo "\nLink Cyclic Pattern Kernel executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(STSNAME): $(STSOBJECTS)
-	@echo "Link Spanning Tree Sampling executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(TPKNAME): $(TPKOBJECTS)
-	@echo "\nLink Tree Pattern Kernel executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(LWMNAME): $(LWMOBJECTS)
-	@echo "\nLink Levelwise Treeset Mining executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(MTGNAME): $(MTGOBJECTS)
-	@echo "\nLink Data Transformer executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(MGGNAME): $(MGGOBJECTS)
-	@echo "\nLink Data Transformer executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(CCDNAME): $(CCDOBJECTS)
-	@echo "\nLink Count Graph Properties executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(TCINAME): $(TCIOBJECTS)
-	@echo "\nLink Cactree Subgraph Isomorphism:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(PERFNAME): $(PERFOBJECTS)
-	@echo "\nLink Cactree Subgraph Isomorphism Performance Test:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 %.o : %.c %.h
@@ -87,3 +76,6 @@ $(PERFNAME): $(PERFOBJECTS)
 clean:
 	rm *.o
 	rm ./executables/*.o
+
+print-%:
+	@echo $*=$($*)
