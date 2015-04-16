@@ -774,9 +774,12 @@ struct ShallowGraph* streamReadPatternsAndTheirNumber(FILE* stream, int bufferSi
 	int head = fscanf(stream, " # %i %i\n", number, nPatterns);
 	int writeCount = 0;
 
-	if (head != 2) {
+	/* fscanf should read 2 values, unless its the end of the file */
+	if ((head != 2)) {
+		if (head != -1) {
+			fprintf(stderr, "Could not read pattern. Wrong number: %i (must be 2)\n", head);
+		}
 		free(buffer);
-		//fprintf(stderr, "Could not read pattern. Wrong number: %i (must be 2)\n", head);
 		return NULL;
 	}
 
