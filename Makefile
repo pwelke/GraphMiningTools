@@ -20,7 +20,7 @@ MTGOBJECTS = $(OBJECTS) ./executables/mapTrees2gaston.o
 MGGOBJECTS = $(OBJECTS) ./executables/mapAIDS2gaston.o
 CSCOBJECTS = $(OBJECTS) ./executables/countSpanningTreeClasses.o
 CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
-STSOBJECTS = $(OBJECTS) ./executables/spanningTreeSamplingMain.o
+STSOBJECTS = $(OBJECTS) ./executables/treeSamplingMain.o
 CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
 GFOBJECTS = $(OBJECTS) ./executables/filter.o
 CSTROBJECTS = $(OBJECTS) ./executables/cstring.o
@@ -35,10 +35,9 @@ dependencies.png: $(EVERYTHING)
 	eog $@
 
 
-main: sts
+main: $(GFNAME)
 	
-
-all: tpk lwm csc cpk ts mtg mgg sts gf cstr
+all: $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CSCNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) 
 
 $(GFNAME): $(GFOBJECTS)
 	@echo "\nLink Graph Filter executable:"
