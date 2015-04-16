@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
 
 	/* init params to default values*/
 	char debugInfo = 0;
+	char onlyCountClasses = 0;
 	double fraction = 0.3;
 	int threshold = 1000;
 	int maxPatternSize = 20;
@@ -75,18 +76,9 @@ int main(int argc, char** argv) {
 	// counter
 	int patternSize = NULL;
 
-	/* get the input file name */
-	if (optind < argc) {
-		inputFileName = argv[optind];
-		outputPrefix = inputFileName;
-	} else {
-		fprintf(stderr, "No input file name given.\n");
-		return EXIT_FAILURE;
-	}
-
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hvt:i:p:o:e:";
+	const char* validArgs = "hvt:i:p:o:e:c";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -127,17 +119,49 @@ int main(int argc, char** argv) {
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
 			return EXIT_FAILURE;
+		case 'c':
+			onlyCountClasses = 1;
+			break;
 		case '?':
 			return EXIT_FAILURE;
 			break;
 		}
 	}	
 
+	/* get the input file name */
+	if (optind < argc) {
+		inputFileName = argv[optind];
+		outputPrefix = !outputPrefix ? inputFileName : outputPrefix;
+	} else {
+		fprintf(stderr, "No input file name given.\n");
+		return EXIT_FAILURE;
+	}
+
 	/* init object pools */
 	lp = createListPool(10000);
 	vp = createVertexPool(10000);
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
+
+	if (onlyCountClasses) {		
+		FILE* stream = fopen(inputFileName, "r");
+		int bufferSize = 20;
+		int number = 0;
+		int count = 0;
+		struct ShallowGraph* patterns;
+
+		while ((patterns = streamReadPatternsAndTheirNumber(stream, bufferSize, &number, &count, sgp))) {
+			printf("%i %i\n", number, count);
+			dumpShallowGraphCycle(sgp, patterns);	
+		}
+
+		fclose(stream);
+		freeGraphPool(gp);
+		freeShallowGraphPool(sgp);
+		freeListPool(lp);
+		freeVertexPool(vp);
+		return EXIT_SUCCESS;
+	}
 
 
 	/* open output files */
