@@ -8,8 +8,8 @@
 #include "../listSpanningTrees.h"
 #include "../upperBoundsForSpanningTrees.h"
 #include "../subtreeIsomorphism.h"
-#include "../levelwiseMining.h"
-#include "levelwiseMain.h" 
+#include "../levelwiseTreePatternMining.h"
+#include "levelwiseTreesetMiningMain.h" 
 
 
 

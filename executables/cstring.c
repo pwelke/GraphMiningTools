@@ -10,7 +10,7 @@
 #include "../cs_Tree.h"
 #include "../cs_Parsing.h"
 #include "../loading.h"
-#include "../unsortedFilters.h"
+#include "cstring.h"
 
 
 /**
@@ -51,8 +51,8 @@ int main(int argc, char** argv) {
 	FILE* out = stdout;
 
 	/* user set variables to specify what needs to be done */
-	char*(*vertexLabelFunction)(int) = &intLabel;
-	char*(*edgeLabelFunction)(int) = &intLabel;
+	char*(*vertexLabelFunction)(const unsigned int) = &intLabel;
+	char*(*edgeLabelFunction)(const unsigned int) = &intLabel;
 	char safe = 1;
 
 	/* parse command line arguments */
