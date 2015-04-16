@@ -2,7 +2,6 @@ TPKNAME = tpk
 LWMNAME = lwm
 MTGNAME = mtg
 MGGNAME = mgg
-CSCNAME = csc
 CPKNAME = cpk
 STSNAME = ts
 CCDNAME = ccd
@@ -18,7 +17,6 @@ TPKOBJECTS = $(OBJECTS) ./executables/main.o
 LWMOBJECTS = $(OBJECTS) ./executables/levelwiseTreesetMiningMain.o
 MTGOBJECTS = $(OBJECTS) ./executables/mapTrees2gaston.o
 MGGOBJECTS = $(OBJECTS) ./executables/mapAIDS2gaston.o
-CSCOBJECTS = $(OBJECTS) ./executables/countSpanningTreeClasses.o
 CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
 STSOBJECTS = $(OBJECTS) ./executables/treeSamplingMain.o
 CCDOBJECTS = $(OBJECTS) ./executables/countCycleDegree.o
@@ -37,7 +35,7 @@ dependencies.png: $(EVERYTHING)
 
 main: $(GFNAME)
 	
-all: $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CSCNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) 
+all: $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) 
 
 $(GFNAME): $(GFOBJECTS)
 	@echo "\nLink Graph Filter executable:"
@@ -69,10 +67,6 @@ $(MTGNAME): $(MTGOBJECTS)
 
 $(MGGNAME): $(MGGOBJECTS)
 	@echo "\nLink Data Transformer executable:"
-	@gcc -o $@ $^ $(CPPFLAGS)
-
-$(CSCNAME): $(CSCOBJECTS)
-	@echo "\nLink Count Graph Properties executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(CCDNAME): $(CCDOBJECTS)

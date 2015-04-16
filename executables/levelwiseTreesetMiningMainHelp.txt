@@ -29,6 +29,8 @@ usage: lwm [ARGS] FILE
     -o PREFIX: Specify a common prefix for the output files of the program.
                By default, the name of the input file is used.
         
+    -c:  don't mine frequent subtrees, but return the cardinality of each tree 
+               set in the input file.
     -v:  display some process information during mining
     -h:  display this help
     
