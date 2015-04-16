@@ -10,7 +10,7 @@
 #include "../upperBoundsForSpanningTrees.h"
 #include "../subtreeIsomorphism.h"
 #include "../levelwiseTreePatternMining.h"
-#include "levelwiseMain.h" 
+#include "levelwiseTreesetMiningMain.h" 
 
 
 
@@ -18,7 +18,7 @@
  * Print --help message
  */
 int printHelp() {
-	FILE* helpFile = fopen("executables/levelwiseMainHelp.txt", "r");
+	FILE* helpFile = fopen("executables/levelwiseTreesetMiningMainHelp.txt", "r");
 	if (helpFile != NULL) {
 		int c = EOF;
 		while ((c = fgetc(helpFile)) != EOF) {

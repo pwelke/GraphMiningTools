@@ -15,7 +15,7 @@ CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 TPKOBJECTS = $(OBJECTS) ./executables/main.o
-LWMOBJECTS = $(OBJECTS) ./executables/levelwiseMain.o
+LWMOBJECTS = $(OBJECTS) ./executables/levelwiseTreesetMiningMain.o
 MTGOBJECTS = $(OBJECTS) ./executables/mapTrees2gaston.o
 MGGOBJECTS = $(OBJECTS) ./executables/mapAIDS2gaston.o
 CSCOBJECTS = $(OBJECTS) ./executables/countSpanningTreeClasses.o
@@ -61,7 +61,7 @@ $(TPKNAME): $(TPKOBJECTS)
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(LWMNAME): $(LWMOBJECTS)
-	@echo "\nLink Levelwise Mining executable:"
+	@echo "\nLink Levelwise Treeset Mining executable:"
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(MTGNAME): $(MTGOBJECTS)
