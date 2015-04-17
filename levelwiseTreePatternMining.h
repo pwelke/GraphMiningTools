@@ -37,8 +37,4 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 int checkIfSubIsoCompatible(struct ShallowGraph* transactionTrees, struct Graph** patternTrees, double fraction, 
 					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp);
 
-
-void initPruning(int nGraphs);
-void freePruning();
-
 #endif

@@ -9,58 +9,8 @@
 #include "cs_Parsing.h"
 #include "cs_Tree.h"
 #include "searchTree.h"
+#include "bloomFilter.h"
 #include "levelwiseTreePatternMining.h"
-
-static int* pruning = NULL;
-static int nPruning = 0;
-
-void initPruning(int nGraphs) {
-	nPruning = nGraphs;
-	if ((pruning = malloc(nGraphs * sizeof(int)))) {
-		int i;
-		for (i=0; i<nGraphs; ++i) {
-			pruning[i] = 0;
-		}
-	}
-}
-
-void freePruning() {
-	free(pruning);
-}
-
-static const int hashMod = sizeof(int) * 8;
-
-static inline int hashID(const int elementID) {
-	return 1<<(elementID % (hashMod));
-}
-
-static inline void addToPruningSet(const int elementID, const int index) {
-	pruning[index] |= hashID(elementID);
-}
-
-/* if the current index is larger than the pruning array aka. bloom filter array, 
-double the size of the array. Then add the id hash to the filter. This method is 
-useful for getVertexAndEdgeHistograms as we might not know the correct number of 
-graphs in the database */
-static inline void initialAddToPruningSet(const int elementID, const int index) {
-	if (index >= nPruning) {
-		int i;
-		pruning = realloc(pruning, 2 * nPruning * sizeof(int));
-		for (i=nPruning; i<2*nPruning; ++i) {
-			pruning[i] = 0;
-		}
-		nPruning *= 2;
-	}
-	addToPruningSet(elementID, index);
-}
-
-static inline char containedInPruningSet(const int elementID, const int index) {
-	return (pruning[index] & hashID(elementID)) != 0;
-}
-
-static inline char isSubset(const int fingerPrint, const int index) {
-	return ((pruning[index] & fingerPrint) == fingerPrint);
-}
 
 
 /**
@@ -574,7 +524,7 @@ int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternT
 	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
 	
 	/* if there is no frequent pattern from lower level contained in i, dont even start searching */
-	if (pruning[i] != 0) {
+	if (!isEmpty(i)) {
 		/* set d to one, meaning that all patternTrees have not yet been recognized to be subtree
 		of current graph */
 		/* for each spanning tree */
@@ -629,7 +579,7 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 
 	
 	/* if there is no frequent pattern from lower level contained in i, dont even start searching */
-	if (pruning[i] != 0) {
+	if (!isEmpty(i)) {
 		int pattern;
 
 		/* convert streamed spanning tree strings to graph */
@@ -727,7 +677,7 @@ void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** r
 	// fprintf(stderr, "mingraph=%i nGraphs=%i\n", minGraph, nGraphs);
 	for (i=0; i<nGraphs; ++i) {
 		int refinement;
-		pruning[i] = 0;
+		resetPruningSet(i);
 		for (refinement=0; refinement<n; ++refinement) {
 			if ((features[i][refinement] == 1) && (pointers[refinement]->visited >= threshold)) {
 				fprintf(keyValueStream, "%i %i\n", features[i][n], pointers[refinement]->lowPoint);

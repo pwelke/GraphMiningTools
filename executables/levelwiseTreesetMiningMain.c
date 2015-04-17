@@ -10,6 +10,7 @@
 #include "../upperBoundsForSpanningTrees.h"
 #include "../subtreeIsomorphism.h"
 #include "../levelwiseTreePatternMining.h"
+#include "../bloomFilter.h"
 #include "levelwiseTreesetMiningMain.h" 
 
 
