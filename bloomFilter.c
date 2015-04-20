@@ -5,7 +5,7 @@ static int nPruning = 0;
 
 static const int hashMod = sizeof(int) * 8;
 
-void initPruning(int nGraphs) {
+void initPruning(const int nGraphs) {
 	nPruning = nGraphs;
 	if ((pruning = malloc(nGraphs * sizeof(int)))) {
 		int i;

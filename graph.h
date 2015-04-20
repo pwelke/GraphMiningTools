@@ -100,6 +100,7 @@ struct VertexList* inverseEdge(struct VertexList* e, struct ListPool* p);
 struct Vertex* shallowCopyVertex(struct Vertex *v, struct VertexPool *p);
 
 void removeEdge(struct Vertex* v, struct Vertex* w, struct ListPool* p);
+struct VertexList* snatchEdge(struct Vertex* v, struct Vertex* w);
 void addEdge(struct Vertex* v, struct VertexList* e);
 
 int degree(struct Vertex* v);

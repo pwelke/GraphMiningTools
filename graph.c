@@ -192,6 +192,31 @@ void removeEdge(struct Vertex* v, struct Vertex* w, struct ListPool* p) {
 }
 
 
+/**
+ * Removes vertex w from the adjacency list of vertex v and returns the edge
+ */
+struct VertexList* snatchEdge(struct Vertex* v, struct Vertex* w) {
+	struct VertexList* idx, *tmp;
+
+	if (v->neighborhood->endPoint == w) {
+		tmp = v->neighborhood;
+		v->neighborhood = v->neighborhood->next;	
+		tmp->next = NULL;
+		return tmp;
+	}
+
+	tmp = v->neighborhood;
+	for (idx=tmp->next; idx; idx=idx->next, tmp=tmp->next) {
+		if (idx->endPoint == w) {
+			tmp->next = idx->next;
+			idx->next = NULL;
+			return idx;
+		}
+	}
+	return NULL;
+}
+
+
 
 /********************************************************************************************************
 ******************************* Methods that deal with Graphs ****************************************

@@ -4,24 +4,21 @@
 #include "stdio.h"
 #include "graph.h"
 
-struct TreeDB
-{
-	/* a list of graphs being the spanning trees of the graph with number n */
-	struct Graph* treeSet;
-	/* TreeDB is a list */
-	struct TreeDB* next;
-	/* unique identifier of the graph this treeSet corresponds to */
-	int number;
-	/* for pruning */
-	char boring;
-};
+// struct TreeDB
+// {
+// 	/* a list of graphs being the spanning trees of the graph with number n */
+// 	struct Graph* treeSet;
+// 	/* TreeDB is a list */
+// 	struct TreeDB* next;
+// 	/* unique identifier of the graph this treeSet corresponds to */
+// 	int number;
+// 	/* for pruning */
+// 	char boring;
+// };
 
 int getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void dumpTreeDB(struct GraphPool* gp, struct TreeDB* db);
+// void dumpTreeDB(struct GraphPool* gp, struct TreeDB* db);
 
-struct Graph* refinementGraph(struct Graph* g, int currentVertex, struct VertexList* newEdge, struct GraphPool* gp);
-struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp);
-struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges);
 int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Graph** patterns, struct Vertex** pointers, int i, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp);
