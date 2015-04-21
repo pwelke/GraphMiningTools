@@ -9,12 +9,14 @@ TCINAME = tci
 PERFNAME = perf
 GFNAME = gf
 CSTRNAME = cstring
+LWGNAME = lwg
 
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 TPKOBJECTS = $(OBJECTS) ./executables/main.o
 LWMOBJECTS = $(OBJECTS) ./executables/levelwiseTreesetMiningMain.o
+LWGOBJECTS = $(OBJECTS) ./executables/levelwiseGraphMining.o
 MTGOBJECTS = $(OBJECTS) ./executables/mapTrees2gaston.o
 MGGOBJECTS = $(OBJECTS) ./executables/mapAIDS2gaston.o
 CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
@@ -35,7 +37,7 @@ dependencies.png: $(EVERYTHING)
 
 main: $(GFNAME)
 	
-all: $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) 
+all: $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME)
 
 $(GFNAME): $(GFOBJECTS)
 	@gcc -o $@ $^ $(CPPFLAGS)
@@ -68,6 +70,9 @@ $(TCINAME): $(TCIOBJECTS)
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 $(PERFNAME): $(PERFOBJECTS)
+	@gcc -o $@ $^ $(CPPFLAGS)
+
+$(LWGNAME): $(LWGOBJECTS)
 	@gcc -o $@ $^ $(CPPFLAGS)
 
 %.o : %.c %.h
