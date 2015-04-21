@@ -20,10 +20,8 @@ traverses the db once.
 the db is expected to have the format outputted by printStringsInSearchTree().
 both output parameters (frequent* ) should be initialized to "empty" structs.
 fileName specifies the file the db is contained in.
-mingraph and maxgraph specify a range in which to read patterns.
 
-'P' stands for pruning. it means that it uses a resultSet struct speed up some stuff 
-and fills up the pruning data structure.
+It uses a resultSet struct speed up some stuff and fills up the pruning data structure.
 
 The method expects that initPruning was called with a positive argument before and returns 
 the number of graphs in the database.

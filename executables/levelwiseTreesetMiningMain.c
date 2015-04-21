@@ -11,6 +11,7 @@
 #include "../subtreeIsomorphism.h"
 #include "../levelwiseTreePatternMining.h"
 #include "../bloomFilter.h"
+#include "../treeEnumeration.h"
 #include "levelwiseTreesetMiningMain.h" 
 
 
