@@ -35,5 +35,6 @@ void resetToUnique(struct Vertex* root);
 void setLowPoints(struct Vertex* root);
 char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp);
 char filterSearchTreeP(struct Vertex* current, int threshold, struct Vertex* root, FILE* lowPoints, struct GraphPool* gp);
+void offsetSearchTreeIds(struct Vertex* root, int offset);
 
 #endif

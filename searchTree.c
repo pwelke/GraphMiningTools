@@ -113,7 +113,7 @@ char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int
 }
 
 
-int containsStringRec(struct Vertex* root, struct VertexList* edge) {
+static int containsStringRec(struct Vertex* root, struct VertexList* edge) {
 
 	/* if edge == NULL, we are done. check if visited > 0.  */
 	if (edge == NULL) {
@@ -143,7 +143,7 @@ int containsString(struct Vertex* root, struct ShallowGraph* string) {
 }
 
 
-int getIDRec(struct Vertex* root, struct VertexList* edge) {
+static int getIDRec(struct Vertex* root, struct VertexList* edge) {
 
 	/* if edge == NULL, we are done. check if visited > 0.  */
 	if (edge == NULL) {
@@ -336,7 +336,7 @@ void mergeSearchTrees(struct Vertex* globalTree, struct Vertex* localTree, int d
 Given a search tree, omit any multiplicity of strings contained. 
 that is: if current->visited > 0, set visited = 1 for current != root.
 root visited will be updated to store number of unique strings */ 
-void resetToUniqueRec(struct Vertex* root, struct Vertex* current) {
+static void resetToUniqueRec(struct Vertex* root, struct Vertex* current) {
 	struct VertexList* e;
 	if (current != root) {
 		if (current->visited > 0) {
@@ -362,7 +362,7 @@ void resetToUnique(struct Vertex* root) {
 Given a search tree, omit any multiplicity of strings contained. 
 that is: if current->visited > 0, set visited = 1 for current != root.
 root visited will be updated to store number of unique strings */ 
-void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
+static void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
 	struct VertexList* e;
 	if (current != root) {
 		if (current->visited > 0) {
@@ -378,6 +378,33 @@ void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
 
 void setLowPoints(struct Vertex* root) {
 	setLowPointsRec(root, root);
+}
+
+
+static void offsetSearchTreeIdsRec(struct Vertex* root, struct Vertex* current, int offset) {
+	struct VertexList* e;
+	if (current != root) {
+		if (current->lowPoint > 0) {
+			current->lowPoint += offset;
+		}
+	}
+
+	for (e=current->neighborhood; e!=NULL; e=e->next) {
+		offsetSearchTreeIdsRec(root, e->endPoint, offset);
+	}
+}
+
+
+/**
+Given a search tree, shift the ids of each string by the provided offset.
+Note, that this function also increases root->d by offset such that adding
+new strings to the tree does not result in id collisions.
+This means, however, that root->d does not give the correct number of elements 
+containted in the searchtree any more, but the current highest index in the searchtree + 1.
+To obtain the number of unique items, substract offset. */ 
+void offsetSearchTreeIds(struct Vertex* root, int offset) {
+	root->d += offset;
+	offsetSearchTreeIdsRec(root, root, offset);
 }
 
 
@@ -634,7 +661,7 @@ struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* g
 }
 
 
-void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph* prefix, FILE* stream, struct ShallowGraphPool* sgp) {
+static void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph* prefix, FILE* stream, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
 	if (root != trueRoot) {
@@ -666,7 +693,7 @@ void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph*
 	}
 }
 
-void recListString(struct ShallowGraph* stringList, struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph* prefix, struct ShallowGraphPool* sgp) {
+static void recListString(struct ShallowGraph* stringList, struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph* prefix, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
 	if (root != trueRoot) {
