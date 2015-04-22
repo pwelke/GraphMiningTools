@@ -22,8 +22,9 @@ char isTree(struct Graph* g) {
 
 
 /**
-A cactus is a connected graph where each nontrivial biconnected block (i.e., a
+A cactus is a connected graph where each block (i.e., a
 biconnected component that is not a bridge) is a simple cycle.
+Thus, n - 1 == m - numberOfBlocks.
 */
 char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
 	if (isConnected(g)) {
@@ -37,7 +38,7 @@ char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
 		}
 		/* cleanup */
 		dumpShallowGraphCycle(sgp, biconnectedComponents);
-		return compNumber;
+		return g->m - compNumber == g->n - 1 ? 1 : 0;
 	} else {
 		return 0;
 	}
