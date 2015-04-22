@@ -39,7 +39,10 @@ char isThisCactusTraceable(struct Graph* g, struct ShallowGraphPool* sgp) {
 	for (c=biconnectedComponents; c!=NULL; c=c->next) {
 		struct VertexList* e;
 		int criticalVertexCount = 0;
+
+		// TODO measure if the alg is faster with or without this line
 		if (c->m == 1) continue;
+
 		// init ->visited = 0
 		for (e=c->edges; e!=NULL; e=e->next) {
 			e->startPoint->visited = 0;
@@ -54,30 +57,48 @@ char isThisCactusTraceable(struct Graph* g, struct ShallowGraphPool* sgp) {
 			free(criticality);
 			dumpShallowGraphCycle(sgp, biconnectedComponents);
 			return 0;
+		 } else {
+			if (criticalVertexCount == 2) {
+				char notFound = 1;
+				// search for the edge that contains both critical vertices
+				for (e=c->edges; e!=NULL; e=e->next) {
+					if ((criticality[e->startPoint->number] > 1) && (criticality[e->endPoint->number] > 1)) {
+						notFound = 0;
+						break;
+					} 
+				}
+				if (notFound) {
+					free(criticality);
+					dumpShallowGraphCycle(sgp, biconnectedComponents);
+					return 0;
+				}
+			}
 		}
 	}
 
-	// test if the critical vertices of each block are adjacent
-	for (c=biconnectedComponents; c!=NULL; c=c->next) {
-		struct VertexList* e;
-		char notFound = 1;
+	// // TODO is there a bug below? if there is only one critical vertex, then the method cannot find the edge its looking for
 
-		// TODO measure if the alg is faster with or without this line
-		if (c->m == 1) continue;
+	// // test if the critical vertices of each block are adjacent
+	// for (c=biconnectedComponents; c!=NULL; c=c->next) {
+	// 	struct VertexList* e;
+	// 	char notFound = 1;
 
-		// search for the edge that contains both critical vertices
-		for (e=c->edges; e!=NULL; e=e->next) {
-			if ((criticality[e->startPoint->number] > 1) && (criticality[e->endPoint->number] > 1)) {
-				notFound = 0;
-				break;
-			} 
-		}
-		if (notFound) {
-			free(criticality);
-			dumpShallowGraphCycle(sgp, biconnectedComponents);
-			return 0;
-		}
-	}
+	// 	// TODO measure if the alg is faster with or without this line
+	// 	if (c->m == 1) continue;
+
+	// 	// search for the edge that contains both critical vertices
+	// 	for (e=c->edges; e!=NULL; e=e->next) {
+	// 		if ((criticality[e->startPoint->number] > 1) && (criticality[e->endPoint->number] > 1)) {
+	// 			notFound = 0;
+	// 			break;
+	// 		} 
+	// 	}
+	// 	if (notFound) {
+	// 		free(criticality);
+	// 		dumpShallowGraphCycle(sgp, biconnectedComponents);
+	// 		return 0;
+	// 	}
+	// }
 
 	// otherwise, there exists a Hamiltonian path
 	return 1;
