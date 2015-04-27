@@ -4,4 +4,7 @@
 char isTraceableCactus(struct Graph* g, struct ShallowGraphPool* sgp);
 char isThisCactusTraceable(struct Graph* g, struct ShallowGraphPool* sgp);
 
+char isWeaklyTraceableUnsafe(struct Graph* g, struct ShallowGraphPool* sgp);
+char isWeaklyTraceable(struct Graph* g, struct ShallowGraphPool* sgp);
+
 #endif
