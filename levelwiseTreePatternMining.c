@@ -447,7 +447,8 @@ int makeGraphsAndPointers(struct Vertex* root, struct Vertex* current, struct Gr
 		/* TODO could also reset lowpoints here for speedup */
 		patterns[i] = treeCanonicalString2Graph(prefix, gp);
 		pointers[i] = current;
-		return i+1;
+		++i; // for search trees that contain only strings of the same length, we could return i+1 here. 
+		     // In general, we need to check if there are children at the current vertex
 	}
 
 	/* recursively access the subtree dangling from current */
