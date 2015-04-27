@@ -17,8 +17,9 @@
  * the same time. They are implemented using struct Vertex and struct VertexList.
  * A search tree is given by its root Vertex which plays a different role than all other vertices
  * in the search tree. It contains global information about the strings contained in the tree.
- * root->number : the number of strings that were added to the search tree. (multiset size)
- * root->d      : the number of unique strings that were added to the search tree. (set size)
+ * root->number  : the number of strings that were added to the search tree. (multiset size)
+ * root->d       : the number of unique strings that were added to the search tree. (set size)
+ * root->lowPoint: the current highest id given to any string in the search tree
  * all other members of the root node are undefined.
  * All other vertices v contain information about strings that end there or continue. That is, the 
  * path from root to v consists of labeled edges. The concatenation of these edge labels is the 
@@ -34,14 +35,7 @@
  */
 
 
-/**
- * Recursively add a string represented by a list of edges to a search tree given by its root.
- * The string is consumed
- * This method DOES NOT INCREASE the current number of strings contained in the search tree.
- * You have to maintain the correct number of strings in the search tree yourself.
- * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
- */
-char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p) {
+static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edge, int id, struct GraphPool* p) {
 
 	/* if edge == NULL, stop recursion, remember, that some string ends here */
 	if (edge == NULL) {
@@ -49,6 +43,7 @@ char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
 		if (root->visited == 1) {
 			return 1;
 		} else {
+			root->lowPoint = id;
 			return 0;
 		}
 	} else {
@@ -74,6 +69,21 @@ char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct 
 	}
 }
 
+
+
+/**
+ * Recursively add a string represented by a list of edges to a search tree given by its root.
+ * The string is consumed.
+ * It assigns a new id to the string if it was not contained in the search tree, yet.
+ * This method DOES NOT INCREASE the current number of strings contained in the search tree.
+ * You have to maintain the correct number of strings in the search tree yourself.
+ * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
+ */
+char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p) {
+	char wasAdded = addStringToSearchTreeRec(root, edge, root->lowPoint + 1, p);
+	root->lowPoint += wasAdded;
+	return wasAdded;
+}
 
 /**
  * Recursively add a string represented by a list of edges to a search tree given by its root.
@@ -358,28 +368,6 @@ void resetToUnique(struct Vertex* root) {
 }
 
 
-/**
-Given a search tree, omit any multiplicity of strings contained. 
-that is: if current->visited > 0, set visited = 1 for current != root.
-root visited will be updated to store number of unique strings */ 
-static void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
-	struct VertexList* e;
-	if (current != root) {
-		if (current->visited > 0) {
-			++root->lowPoint;
-			current->lowPoint = root->lowPoint;
-		}
-	}
-
-	for (e=current->neighborhood; e!=NULL; e=e->next) {
-		setLowPointsRec(root, e->endPoint);
-	}
-}
-
-void setLowPoints(struct Vertex* root) {
-	setLowPointsRec(root, root);
-}
-
 
 static void offsetSearchTreeIdsRec(struct Vertex* root, struct Vertex* current, int offset) {
 	struct VertexList* e;
@@ -403,7 +391,7 @@ This means, however, that root->d does not give the correct number of elements
 containted in the searchtree any more, but the current highest index in the searchtree + 1.
 To obtain the number of unique items, substract offset. */ 
 void offsetSearchTreeIds(struct Vertex* root, int offset) {
-	root->d += offset;
+	root->lowPoint += offset;
 	offsetSearchTreeIdsRec(root, root, offset);
 }
 
@@ -667,6 +655,7 @@ static void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct Shallo
 	if (root != trueRoot) {
 		if (root->visited != 0) {
 			fprintf(stream, "%i\t", root->visited);
+			// fprintf(	stream, "%i\t%i\t", root->visited, root->lowPoint);
 			printCanonicalString(prefix, stream);
 		}
 	}																																																																								
