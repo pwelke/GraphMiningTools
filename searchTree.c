@@ -52,7 +52,7 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
 		for (idx=root->neighborhood; idx; idx=idx->next) {
 			/* if the next label is already in the tree, continue recursively */
 			if (strcmp(idx->label, edge->label) == 0) {
-				char isNew = addStringToSearchTree(idx->endPoint, edge->next, p);
+				char isNew = addStringToSearchTreeRec(idx->endPoint, edge->next, id, p);
 				/* edges dangling at edge are consumed or dumped by the following recursion steps */
 				edge->next = NULL;
 				dumpVertexList(p->listPool, edge);
@@ -103,7 +103,7 @@ static char addStringToSearchTreeSetDRec(struct Vertex* root, struct VertexList*
 		for (idx=root->neighborhood; idx; idx=idx->next) {
 			/* if the next label is already in the tree, continue recursively */
 			if (strcmp(idx->label, edge->label) == 0) {
-				char isNew = addStringToSearchTreeSetD(idx->endPoint, edge->next, d, p);
+				char isNew = addStringToSearchTreeSetDRec(idx->endPoint, edge->next, d, id, p);
 				/* edges dangling at edge are consumed or dumped by the following recursion steps */
 				edge->next = NULL;
 				dumpVertexList(p->listPool, edge);
@@ -116,7 +116,7 @@ static char addStringToSearchTreeSetDRec(struct Vertex* root, struct VertexList*
 		edge->startPoint = root;
 		edge->endPoint = getVertex(p->vertexPool);
 		addEdge(root, edge);
-		return addStringToSearchTreeSetD(edge->endPoint, idx, d, p);
+		return addStringToSearchTreeSetDRec(edge->endPoint, idx, d, id, p);
 	}
 }
 
@@ -409,6 +409,30 @@ void offsetSearchTreeIds(struct Vertex* root, int offset) {
 }
 
 
+static void compressSearchTreeIdsRec(struct Vertex* root, struct Vertex* current) {
+	struct VertexList* e;
+	if (current != root) {
+		if (current->lowPoint > 0) {
+			++root->lowPoint;
+			current->lowPoint = root->lowPoint;
+		}
+	}
+
+	for (e=current->neighborhood; e!=NULL; e=e->next) {
+		compressSearchTreeIdsRec(root, e->endPoint);
+	}
+}
+
+
+/**
+Given a search tree, compress the ids stored at ->lowPoint's. Offset specifies the smallest id that will be granted
+to any string in the search tree. */ 
+void compressSearchTreeIds(struct Vertex* root, int offset) {
+	root->lowPoint = offset;
+	compressSearchTreeIdsRec(root, root);
+}
+
+
 /**
 Remove all strings from search tree that occur less than threshold times.
 (this is indicated by the ->visited field of the last vertex).
@@ -667,8 +691,8 @@ static void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct Shallo
 
 	if (root != trueRoot) {
 		if (root->visited != 0) {
-			fprintf(stream, "%i\t", root->visited);
-			// fprintf(	stream, "%i\t%i\t", root->visited, root->lowPoint);
+			// fprintf(stream, "%i\t", root->visited);
+			fprintf(stream, "%i\t%i\t", root->visited, root->lowPoint);
 			printCanonicalString(prefix, stream);
 		}
 	}																																																																								
