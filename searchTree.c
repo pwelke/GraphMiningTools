@@ -35,6 +35,7 @@
  */
 
 
+
 static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edge, int id, struct GraphPool* p) {
 
 	/* if edge == NULL, stop recursion, remember, that some string ends here */
@@ -70,7 +71,6 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
 }
 
 
-
 /**
  * Recursively add a string represented by a list of edges to a search tree given by its root.
  * The string is consumed.
@@ -80,25 +80,24 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
  * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
  */
 char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p) {
-	char wasAdded = addStringToSearchTreeRec(root, edge, root->lowPoint + 1, p);
-	root->lowPoint += wasAdded;
-	return wasAdded;
+	char isNew = addStringToSearchTreeRec(root, edge, root->lowPoint + 1, p);
+	root->lowPoint += isNew;
+	return isNew;
 }
 
-/**
- * Recursively add a string represented by a list of edges to a search tree given by its root.
- * The string is consumed
- * This method DOES NOT INCREASE the current number of strings contained in the search tree.
- * You have to maintain the correct number of strings in the search tree yourself.
- * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
- */
-char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int d, struct GraphPool* p) {
+
+static char addStringToSearchTreeSetDRec(struct Vertex* root, struct VertexList* edge, int d, int id, struct GraphPool* p) {
 
 	/* if edge == NULL, stop recursion, remember, that some string ends here */
 	if (edge == NULL) {
 		root->visited += 1;
 		root->d = d;
-		return 0;
+		if (root->visited == 1) {
+			root->lowPoint = id;
+			return 1;
+		} else {
+			return 0;
+		}
 	} else {
 		struct VertexList* idx;
 		for (idx=root->neighborhood; idx; idx=idx->next) {
@@ -117,9 +116,23 @@ char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int
 		edge->startPoint = root;
 		edge->endPoint = getVertex(p->vertexPool);
 		addEdge(root, edge);
-		addStringToSearchTreeSetD(edge->endPoint, idx, d, p);
-		return 1;
+		return addStringToSearchTreeSetD(edge->endPoint, idx, d, p);
 	}
+}
+
+
+/**
+ * Recursively add a string represented by a list of edges to a search tree given by its root. Set ->d value of last vertex in that 
+ * string in the search tree.
+ * The string is consumed
+ * This method DOES NOT INCREASE the current number of strings contained in the search tree.
+ * You have to maintain the correct number of strings in the search tree yourself.
+ * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
+ */
+char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int d, struct GraphPool* p) {
+	char isNew = addStringToSearchTreeSetDRec(root, edge, d, root->lowPoint + 1, p);
+	root->lowPoint += isNew;
+	return isNew;
 }
 
 
