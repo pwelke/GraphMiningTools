@@ -100,6 +100,10 @@ int main(int argc, char** argv) {
 				filter = traceableCactus;
 				break;
 			}
+			if (strcmp(optarg, "weaklyTraceable") == 0) {
+				filter = weaklyTraceable;
+				break;
+			}
 			if (strcmp(optarg, "spanningTreeEstimate") == 0) {
 				filter = spanningTreeEstimate;
 				break;
@@ -346,6 +350,9 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case traceableCactus:
 		measure = isTraceableCactus(g, sgp);
+		break;
+	case weaklyTraceable:
+		measure = isWeaklyTraceable(g, sgp);
 		break;
 
 	/* numeric properties */

@@ -37,6 +37,7 @@ typedef enum {
 	tree,
 	cactus,
 	traceableCactus,
+	weaklyTraceable,
 
 	/* numerical properties */
 	spanningTreeEstimate,
