@@ -240,7 +240,6 @@ struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGra
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
 	/* set smallest id of pattern in current level to be largest id of any pattern in lower level plus 1 */
 	currentLevel->lowPoint = lowerLevel->lowPoint;
-
 	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, lowerLevel, prefix, gp, sgp);
 	dumpShallowGraph(sgp, prefix);
 	return currentLevel;
