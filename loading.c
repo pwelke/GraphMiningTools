@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctype.h>
 #include <malloc.h>
 #include <string.h>
 #include <math.h>
@@ -179,6 +180,47 @@ void writeCurrentGraph(FILE* out) {
 	fputs(*EDGE_PTR, out);
 }
 
+static inline int parseHeader(int* id, int* activity, int* n, int* m) {
+	return sscanf(*HEAD_PTR, " # %i %i %i %i", id, activity, n, m);
+}
+
+
+static int fastAtoi( char ** pos )
+{
+    int val = 0;
+    char* str = *pos;
+    // skip whitespaces
+    for ( ; isspace(*str); str++) {}
+
+    // parse number
+    while ( !isspace(*str) ) {
+        val = val*10 + (*str - '0');
+        ++str;
+    }
+    // fprintf(stderr, "found: %i ", val);
+	// fprintf(stderr, "current pos:%p\n", str);
+	*pos = str;
+    return val;
+}
+
+
+
+static inline int parseHeaderNew(int* id, int* activity, int* n, int* m) { 
+	char* current = *HEAD_PTR + 1;
+	// fprintf(stderr, "starting at:%c:\n", *current);
+	if ((*HEAD_PTR)[0] != '#') { 
+		// fprintf(stderr, "did not find #\n");
+		return -1; 
+	}
+	*id = fastAtoi(&current);
+	*activity = fastAtoi(&current);
+	*n = fastAtoi(&current);
+	*m = fastAtoi(&current); 
+	// fprintf(stderr, "\n");
+	return 4;
+}
+
+
 /* stream a graph from a database file of the format described in the documentation */
 struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*getEdgeLabel)(const unsigned int)) {
 	int i;
@@ -200,7 +242,8 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 	}
 			
 	/* parse header */
-	if (sscanf(*HEAD_PTR, " # %i %i %i %i", &(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
+	
+	if (parseHeaderNew(&(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
 		/* if reading of header does not work anymore, check if we have readched the correct end of the stream */
 		if (**HEAD_PTR != '$') {
 			fprintf(stderr, "Invalid Graph header: %s\n", *HEAD_PTR);
