@@ -180,7 +180,8 @@ void writeCurrentGraph(FILE* out) {
 	fputs(*EDGE_PTR, out);
 }
 
-static inline int parseHeader(int* id, int* activity, int* n, int* m) {
+
+static inline int parseHeaderSlowAndSafe(int* id, int* activity, int* n, int* m) {
 	return sscanf(*HEAD_PTR, " # %i %i %i %i", id, activity, n, m);
 }
 
@@ -213,8 +214,7 @@ static inline int fastAtoi( char ** pos )
 }
 
 
-
-static inline int parseHeaderNew(int* id, int* activity, int* n, int* m) { 
+static inline int parseHeader(int* id, int* activity, int* n, int* m) { 
 	char* current = *HEAD_PTR + 1;
 	// fprintf(stderr, "starting at:%c:\n", *current);
 	if ((*HEAD_PTR)[0] != '#') { 
@@ -230,11 +230,15 @@ static inline int parseHeaderNew(int* id, int* activity, int* n, int* m) {
 }
 
 
-static inline int parseEdge(char* currentPosition, int* v, int* w, int* label, int* charsRead) {
-	return sscanf(currentPosition, " %i %i %i%n", v, w, label, charsRead);
+static inline int parseEdgeSlowAndSafe(char** currentPosition, int* v, int* w, int* label) {
+	int charsRead;
+	int ret = sscanf(*currentPosition, " %i %i %i%n", v, w, label, &charsRead);
+	*currentPosition += charsRead;
+	return ret;
 }
 
-static inline int parseEdgeNew(char** currentPosition, int* v, int* w, int* label) {
+
+static inline int parseEdge(char** currentPosition, int* v, int* w, int* label) {
 	*v = fastAtoi(currentPosition);
 	*w = fastAtoi(currentPosition);
 	*label = fastAtoi(currentPosition);
@@ -264,7 +268,7 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 			
 	/* parse header */
 	
-	if (parseHeaderNew(&(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
+	if (parseHeader(&(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
 		/* if reading of header does not work anymore, check if we have readched the correct end of the stream */
 		if (**HEAD_PTR != '$') {
 			fprintf(stderr, "Invalid Graph header: %s\n", *HEAD_PTR);
@@ -287,26 +291,6 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 		dumpGraph(FI_GP, g);
 		return NULL;
 	}
-
-	// /* parse vertex info */
-	// currentPosition = *VERTEX_PTR;
-	// for (i=0; i<g->n; ++i) {
-	// 	int label = -1;
-	// 	int charsRead;
-	// 	if (sscanf(currentPosition, " %i%n", &label, &charsRead) == 1) {
-	// 		currentPosition += charsRead;
-
-	// 		g->vertices[i] = getVertex(FI_GP->vertexPool);
-	// 		g->vertices[i]->label = getVertexLabel(label);
-	// 		g->vertices[i]->number = i;
-	// 		g->vertices[i]->isStringMaster = 1;
-	// 	} else {
-	// 		fprintf(stderr, "Error while parsing vertices\n");
-	// 		dumpGraph(FI_GP, g);
-	// 		return NULL;
-	// 	}
-	// }
-
 
 	/* parse vertex info */
 	currentPosition = *VERTEX_PTR;
@@ -340,14 +324,11 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 	for (i=0; i<g->m; ++i) {
 		int label = -1;
 		int v,w;
-		// int charsRead;
 
-		if (parseEdgeNew(&currentPosition, &v, &w, &label) == 3) {
+		if (parseEdge(&currentPosition, &v, &w, &label) == 3) {
 			
 			struct VertexList* e = getVertexList(FI_GP->listPool);
 			struct VertexList* f = getVertexList(FI_GP->listPool);
-			
-			// currentPosition += charsRead;
 
 			/* edge */
 			e->startPoint = g->vertices[v-1];
