@@ -203,8 +203,7 @@ static inline int fastAtoi( char ** pos )
         val = val*10 + (*str - '0');
         ++str;
     }
-    // fprintf(stderr, "found: %i ", val);
-	// fprintf(stderr, "current pos:%p\n", str);
+
 	if (*pos != str) {
 		*pos = str;
     	return val;
@@ -216,17 +215,16 @@ static inline int fastAtoi( char ** pos )
 
 static inline int parseHeader(int* id, int* activity, int* n, int* m) { 
 	char* current = *HEAD_PTR + 1;
-	// fprintf(stderr, "starting at:%c:\n", *current);
 	if ((*HEAD_PTR)[0] != '#') { 
-		// fprintf(stderr, "did not find #\n");
 		return -1; 
 	}
 	*id = fastAtoi(&current);
 	*activity = fastAtoi(&current);
 	*n = fastAtoi(&current);
-	*m = fastAtoi(&current); 
-	// fprintf(stderr, "\n");
-	return (*id != -1) + (*activity != -1) + (*n != -1) + (*m != -1); // C11(ISO/IEC 9899:201x) §6.5.8 Relational operators
+	*m = fastAtoi(&current);
+	/* return number of correctly read items.
+		See: C11(ISO/IEC 9899:201x) §6.5.8 Relational operators */
+	return (*id != -1) + (*activity != -1) + (*n != -1) + (*m != -1);
 }
 
 
@@ -242,6 +240,8 @@ static inline int parseEdge(char** currentPosition, int* v, int* w, int* label) 
 	*v = fastAtoi(currentPosition);
 	*w = fastAtoi(currentPosition);
 	*label = fastAtoi(currentPosition);
+	/* return number of correctly read items.
+   		See: C11(ISO/IEC 9899:201x) §6.5.8 Relational operators */
 	return (*v != -1) + (*w != -1) + (*label != -1);
 }
 
@@ -258,24 +258,19 @@ static inline void fastLabelLength(char* pos, size_t* offset, size_t* labelSize)
     // get labelSize
     for ( ; !isspace(*pos); pos++) {
 		++(*labelSize);
-		// fputc(*pos, stderr);
     }
-    // fprintf(stderr, " offset=%i labelSize=%i\n", *offset, *labelSize);
 }
 
 static inline int grabLabel(char** currentPosition, char** label) {
 	size_t offset;
 	size_t labelSize;
 	*label = NULL;
-	// fprintf(stderr, "enter fastLabelLength\n");
 	fastLabelLength(*currentPosition, &offset, &labelSize);
-	// fprintf(stderr, "outside: offset=%i labelSize=%i\n", offset, labelSize);
 	if (labelSize != 0) {
 		if ((*label = malloc((labelSize + 1) * sizeof(char)))) {
 			memcpy(*label, *currentPosition + offset, labelSize);
 			(*label)[labelSize] = '\0';
 			*currentPosition += offset + labelSize;	
-			// fprintf(stderr, "found label:%s:\n", *label);
 			return labelSize;
 		}
 	} 
@@ -289,8 +284,6 @@ static inline int parseEdgeNew(char** currentPosition, int* v, int* w, char** la
 	grabLabel(currentPosition, label);
 	return (*v != -1) + (*w != -1) + (*label != NULL);
 }
-
-
 
 
 /* stream a graph from a database file of the format described in the documentation */
@@ -313,8 +306,7 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 		return NULL;
 	}
 			
-	/* parse header */
-	
+	/* parse header */	
 	if (parseHeader(&(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
 		/* if reading of header does not work anymore, check if we have readched the correct end of the stream */
 		if (**HEAD_PTR != '$') {
@@ -339,30 +331,10 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 		return NULL;
 	}
 
-	// /* parse vertex info */
-	// currentPosition = *VERTEX_PTR;
-	// for (i=0; i<g->n; ++i) {
-	// 	int label = -1;
-	// 	// int charsRead;
-	// 	if (fastAtoi(&currentPosition) != -1) {
-	// 		// currentPosition += charsRead;
-
-	// 		g->vertices[i] = getVertex(FI_GP->vertexPool);
-	// 		g->vertices[i]->label = getVertexLabel(label);
-	// 		g->vertices[i]->number = i;
-	// 		g->vertices[i]->isStringMaster = 1;
-	// 	} else {
-	// 		fprintf(stderr, "Error while parsing vertices\n");
-	// 		dumpGraph(FI_GP, g);
-	// 		return NULL;
-	// 	}
-	// }
-
 	/* parse vertex info */
 	currentPosition = *VERTEX_PTR;
 	for (i=0; i<g->n; ++i) {
 		char* label;
-		// int charsRead;
 		if (grabLabel(&currentPosition, &label) != -1) {
 			g->vertices[i] = getVertex(FI_GP->vertexPool);
 			g->vertices[i]->label = label;
@@ -382,38 +354,6 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 		dumpGraph(FI_GP, g);
 		return NULL;
 	}
-
-	// /* parse edge info */
-	// currentPosition = *EDGE_PTR;
-	// for (i=0; i<g->m; ++i) {
-	// 	int label = -1;
-	// 	int v,w;
-
-	// 	if (parseEdge(&currentPosition, &v, &w, &label) == 3) {
-			
-	// 		struct VertexList* e = getVertexList(FI_GP->listPool);
-	// 		struct VertexList* f = getVertexList(FI_GP->listPool);
-
-	// 		/* edge */
-	// 		e->startPoint = g->vertices[v-1];
-	// 		e->endPoint = g->vertices[w-1];
-	// 		e->label = getEdgeLabel(label);
-	// 		e->isStringMaster = 1;
-
-	// 		addEdge(e->startPoint, e);
-
-	// 		/* reverse edge*/
-	// 		f->startPoint = g->vertices[w-1];
-	// 		f->endPoint = g->vertices[v-1];
-	// 		f->label = e->label;
-
-	// 		addEdge(f->startPoint, f);
-	// 	} else {
-	// 		fprintf(stderr, "Error while parsing edges\n");
-	// 		dumpGraph(FI_GP, g);
-	// 		return NULL;
-	// 	}
-	// }
 
 	/* parse edge info */
 	currentPosition = *EDGE_PTR;
@@ -446,7 +386,6 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 			return NULL;
 		}
 	}
-
 	return g;
 }
 
