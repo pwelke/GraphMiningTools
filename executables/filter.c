@@ -14,6 +14,7 @@
 #include "../connectedComponents.h"
 #include "../listCycles.h"
 #include "../hp_cactus.h"
+#include "../graphPrinting.h"
 #include "filter.h"
 
 
@@ -218,6 +219,10 @@ int main(int argc, char** argv) {
 			}
 			if ((strcmp(optarg, "value") == 0) || (strcmp(optarg, "v") == 0)) {
 				oOption = onlyValue;
+				break;
+			}
+			if ((strcmp(optarg, "print") == 0) || (strcmp(optarg, "p") == 0)) {
+				oOption = printVerbose;
 				break;
 			}
 			fprintf(stderr, "Unknown output option: %s\n", optarg);
@@ -453,6 +458,8 @@ void output(struct Graph* g, int measure, OutputOption option, FILE* out) {
 	case id:
 		fprintf(out, "%i\n", g->number);
 		break;
+	case printVerbose:
+		printGraph(g);
 	}
 } 
 
