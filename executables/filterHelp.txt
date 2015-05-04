@@ -72,4 +72,11 @@ options: options (except -h) are always followed by a value.
         maxDegree          maximum vertex degree of a graph
         minDegree          minimum vertex degree of a graph 
      -a 'value': an Integer (default 100). This value is used by some of the filters
-                 that need an additional parameter to work (e.g. spanningTreeListing)    
+                 that need an additional parameter to work (e.g. spanningTreeListing)  
+     -o 'style': output style of the graphs fulfilling the filter criterion
+        graph, g        output format identical to input format (default)
+        idAndValue, iv  id of graph <space> value returned by filter criterion
+        id, i           id of graph
+        value, v        value returned by filter criterion
+        print, p        print graphs in a very verbose format
+

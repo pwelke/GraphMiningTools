@@ -17,7 +17,8 @@ typedef enum {
 	graph,
 	idAndValue,
 	onlyValue,
-	id
+	id,
+	printVerbose
 } OutputOption;
 
 typedef enum {
