@@ -50,7 +50,7 @@ int getDB(struct Graph*** db) {
 	int dbSize = 0;
 	int i = 0;
 
-	while ((g = iterateFile(&intLabel, &intLabel))) {
+	while ((g = iterateFile())) {
 		/* make space for storing graphs in array */
 		if (dbSize <= i) {
 			dbSize = dbSize == 0 ? 128 : dbSize * 2;

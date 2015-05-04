@@ -343,7 +343,7 @@ int main(int argc, char** argv) {
 	}
 
 	/* iterate over all graphs in the database */
-	while ((g = iterateFile(&intLabel, &intLabel))) {
+	while ((g = iterateFile())) {
 	
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n > 0) {

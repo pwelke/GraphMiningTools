@@ -117,13 +117,13 @@ int main(int argc, char **argv){
     outFile=fopen(argv[2], "w+");
 
     createFileIterator(argv[1],gPool);
-    g=iterateFile(&aids99VertexLabel,&aids99EdgeLabel);
+    g=iterateFile();
     i=0;
     while(g){
         printf("Testing graph %i\n",g->number);
         if((g->m != g->n -1) || !isConnected(g)){
             dumpGraph(gPool,g);
-            g=iterateFile(&aids99VertexLabel,&aids99EdgeLabel);
+            g=iterateFile();
             continue;
         }
         printf("is a tree\n");
@@ -158,7 +158,7 @@ int main(int argc, char **argv){
             }
         if(cResult) ++i;       
         dumpGraph(gPool,g);
-        g=iterateFile(&aids99VertexLabel,&aids99EdgeLabel);
+        g=iterateFile();
     }
     printf("There were %i matches\n", i);
     destroyFileIterator();

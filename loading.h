@@ -9,7 +9,7 @@ char* aids99VertexLabel(const unsigned int label);
 char** aids99VertexLabelArray();
 char* aids99EdgeLabel(const unsigned int label);
 char* intLabel(const unsigned int label);
-struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*getEdgeLabel)(const unsigned int));
+struct Graph* iterateFile();
 void createFileIterator(char* filename, struct GraphPool* p);
 void createStdinIterator(struct GraphPool* p);
 void destroyFileIterator();

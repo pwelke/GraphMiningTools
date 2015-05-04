@@ -24,7 +24,7 @@ void mapGraph2Gaston(int maxGraphs, struct GraphPool* gp, struct ShallowGraphPoo
 
 
 	/* iterate over all graphs in the database */
-	while (((i < maxGraphs) || (maxGraphs == -1)) && (g = iterateFile(&aids99VertexLabel, &aids99EdgeLabel))) {
+	while (((i < maxGraphs) || (maxGraphs == -1)) && (g = iterateFile())) {
 
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n > 0) {

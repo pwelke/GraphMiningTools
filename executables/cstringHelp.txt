@@ -13,7 +13,5 @@ stdout.
 Options:
     -h Print this help and exit
 
-    -l Use Molecular label representation instead of integer label representation
-
     -u Unsafe: Skip the test whether a graph is a tree. Probably results in secfault
        or other nasty stuff, if the database contains non-tree graphs.

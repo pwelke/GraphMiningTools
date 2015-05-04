@@ -6,7 +6,6 @@ TODO
 - remove countCycleDegree.c and store the only important functionality somewhere (i.e. cycle degrees of all vertices)
 - treeEnumeration might be too slow, as we do not enumerate perfectly
 
-
 THEORY
 
 - is it useful to choose particular roots for subgraph iso checks, e.g. canonical roots?

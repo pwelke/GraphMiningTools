@@ -287,7 +287,7 @@ static inline int parseEdgeNew(char** currentPosition, int* v, int* w, char** la
 
 
 /* stream a graph from a database file of the format described in the documentation */
-struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*getEdgeLabel)(const unsigned int)) {
+struct Graph* iterateFile() {
 	int i;
 	struct Graph* g = getGraph(FI_GP);
 	char* currentPosition;

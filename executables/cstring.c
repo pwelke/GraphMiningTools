@@ -51,22 +51,16 @@ int main(int argc, char** argv) {
 	FILE* out = stdout;
 
 	/* user set variables to specify what needs to be done */
-	char*(*vertexLabelFunction)(const unsigned int) = &intLabel;
-	char*(*edgeLabelFunction)(const unsigned int) = &intLabel;
 	char safe = 1;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hlu";
+	const char* validArgs = "hu";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
 			printHelp();
 			return EXIT_SUCCESS;
-		case 'l':
-			vertexLabelFunction = &aids99VertexLabel;
-			edgeLabelFunction = &aids99EdgeLabel;
-			break;
 		case 'u':
 			safe = 0;
 			break;
@@ -96,7 +90,7 @@ int main(int argc, char** argv) {
 
 	if (safe) {
 		/* iterate over all graphs in the database */
-		while ((g = iterateFile(vertexLabelFunction, edgeLabelFunction))) {
+		while ((g = iterateFile())) {
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
 				if (isTree(g)) {
@@ -120,7 +114,7 @@ int main(int argc, char** argv) {
 		}
 	} else {
 		/* iterate over all graphs in the database */
-		while ((g = iterateFile(vertexLabelFunction, edgeLabelFunction))) {
+		while ((g = iterateFile())) {
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
 				struct ShallowGraph* cString = canonicalStringOfTree(g, sgp);
