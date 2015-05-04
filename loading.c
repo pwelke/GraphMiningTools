@@ -185,7 +185,12 @@ static inline int parseHeader(int* id, int* activity, int* n, int* m) {
 }
 
 
-static int fastAtoi( char ** pos )
+/**
+Parse a positive integer from the string starting at *pos.
+Skip any number of initial white spaces.
+Return -1 if nothing was read.
+*/
+static inline int fastAtoi( char ** pos )
 {
     int val = 0;
     char* str = *pos;
@@ -199,8 +204,12 @@ static int fastAtoi( char ** pos )
     }
     // fprintf(stderr, "found: %i ", val);
 	// fprintf(stderr, "current pos:%p\n", str);
-	*pos = str;
-    return val;
+	if (*pos != str) {
+		*pos = str;
+    	return val;
+	} else {
+		return -1;
+	}
 }
 
 
@@ -217,7 +226,19 @@ static inline int parseHeaderNew(int* id, int* activity, int* n, int* m) {
 	*n = fastAtoi(&current);
 	*m = fastAtoi(&current); 
 	// fprintf(stderr, "\n");
-	return 4;
+	return (*id != -1) + (*activity != -1) + (*n != -1) + (*m != -1); // C11(ISO/IEC 9899:201x) §6.5.8 Relational operators
+}
+
+
+static inline int parseEdge(char* currentPosition, int* v, int* w, int* label, int* charsRead) {
+	return sscanf(currentPosition, " %i %i %i%n", v, w, label, charsRead);
+}
+
+static inline int parseEdgeNew(char** currentPosition, int* v, int* w, int* label) {
+	*v = fastAtoi(currentPosition);
+	*w = fastAtoi(currentPosition);
+	*label = fastAtoi(currentPosition);
+	return (*v != -1) + (*w != -1) + (*label != -1);
 }
 
 
@@ -267,13 +288,33 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 		return NULL;
 	}
 
+	// /* parse vertex info */
+	// currentPosition = *VERTEX_PTR;
+	// for (i=0; i<g->n; ++i) {
+	// 	int label = -1;
+	// 	int charsRead;
+	// 	if (sscanf(currentPosition, " %i%n", &label, &charsRead) == 1) {
+	// 		currentPosition += charsRead;
+
+	// 		g->vertices[i] = getVertex(FI_GP->vertexPool);
+	// 		g->vertices[i]->label = getVertexLabel(label);
+	// 		g->vertices[i]->number = i;
+	// 		g->vertices[i]->isStringMaster = 1;
+	// 	} else {
+	// 		fprintf(stderr, "Error while parsing vertices\n");
+	// 		dumpGraph(FI_GP, g);
+	// 		return NULL;
+	// 	}
+	// }
+
+
 	/* parse vertex info */
 	currentPosition = *VERTEX_PTR;
 	for (i=0; i<g->n; ++i) {
 		int label = -1;
-		int charsRead;
-		if (sscanf(currentPosition, " %i%n", &label, &charsRead) == 1) {
-			currentPosition += charsRead;
+		// int charsRead;
+		if (fastAtoi(&currentPosition) != -1) {
+			// currentPosition += charsRead;
 
 			g->vertices[i] = getVertex(FI_GP->vertexPool);
 			g->vertices[i]->label = getVertexLabel(label);
@@ -299,14 +340,14 @@ struct Graph* iterateFile(char*(*getVertexLabel)(const unsigned int), char*(*get
 	for (i=0; i<g->m; ++i) {
 		int label = -1;
 		int v,w;
-		int charsRead;
+		// int charsRead;
 
-		if (sscanf(currentPosition, " %i %i %i%n", &v, &w, &label, &charsRead) == 3) {
+		if (parseEdgeNew(&currentPosition, &v, &w, &label) == 3) {
 			
 			struct VertexList* e = getVertexList(FI_GP->listPool);
 			struct VertexList* f = getVertexList(FI_GP->listPool);
 			
-			currentPosition += charsRead;
+			// currentPosition += charsRead;
 
 			/* edge */
 			e->startPoint = g->vertices[v-1];
