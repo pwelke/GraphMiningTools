@@ -91,10 +91,10 @@ void printGraph(struct Graph* g) {
 
 	do {
 		if (index) {
-			printf("Graph %i has %i edges:\n", i, index->m);
+			printf("Graph %i has id %i, %i vertices, and %i edges:\n", i, index->number, index->n, index->m);
 			for (j=0; j<index->n; ++j) {
 				if (index->vertices[j]) {
-					printf("Neighbors of vertex %i:\n", index->vertices[j]->number);
+					printf("Vertex %i has label %s and the following neighbors:\n", index->vertices[j]->number, index->vertices[j]->label);
 					printVertexList(index->vertices[j]->neighborhood);
 				} else {
 					printf("Vertex %i is not used by the current (induced) graph\n", j);
