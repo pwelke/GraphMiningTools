@@ -186,27 +186,36 @@ static inline int parseHeaderSlowAndSafe(int* id, int* activity, int* n, int* m)
 }
 
 
+/* from http://stackoverflow.com/questions/16826422/c-most-efficient-way-to-convert-string-to-int-faster-than-atoi 
+fastAtoi also is an altered version of code that can be found there. */
+static unsigned int digitValue (char c)
+{
+   return (unsigned int)(c - '0');
+}
+
+
 /**
 Parse a positive integer from the string starting at *pos.
 Skip any number of initial white spaces.
 Return -1 if nothing was read.
 */
-static inline int fastAtoi( char ** pos )
+static inline int fastAtoi( const char ** pos )
 {
-    int val = 0;
-    char* str = *pos;
-    // skip whitespaces
-    for ( ; isspace(*str); str++) {}
+   const char *p = *pos;
+   unsigned int d;
+   unsigned int n;
 
-    // parse number
-    while ( !isspace(*str) ) {
-        val = val*10 + (*str - '0');
-        ++str;
-    }
+   for ( ; isspace(*p); p++) {}
+   
+   n = digitValue(*p);
+   while ((d = digitValue(*++p)) <= 9)
+   {
+      n = n * 10 + d;
+   }
 
-	if (*pos != str) {
-		*pos = str;
-    	return val;
+	if (*pos != p) {
+		*pos = p;
+    	return n;
 	} else {
 		return -1;
 	}
@@ -214,7 +223,7 @@ static inline int fastAtoi( char ** pos )
 
 
 static inline int parseHeader(int* id, int* activity, int* n, int* m) { 
-	char* current = *HEAD_PTR + 1;
+	const char *current = *HEAD_PTR + 1;
 	if ((*HEAD_PTR)[0] != '#') { 
 		return -1; 
 	}
@@ -228,7 +237,7 @@ static inline int parseHeader(int* id, int* activity, int* n, int* m) {
 }
 
 
-static inline int parseEdgeSlowAndSafe(char** currentPosition, int* v, int* w, int* label) {
+static inline int parseEdgeSlowAndSafe(const char** currentPosition, int* v, int* w, int* label) {
 	int charsRead;
 	int ret = sscanf(*currentPosition, " %i %i %i%n", v, w, label, &charsRead);
 	*currentPosition += charsRead;
@@ -236,7 +245,7 @@ static inline int parseEdgeSlowAndSafe(char** currentPosition, int* v, int* w, i
 }
 
 
-static inline int parseEdge(char** currentPosition, int* v, int* w, int* label) {
+static inline int parseEdge(const char** currentPosition, int* v, int* w, int* label) {
 	*v = fastAtoi(currentPosition);
 	*w = fastAtoi(currentPosition);
 	*label = fastAtoi(currentPosition);
@@ -246,7 +255,7 @@ static inline int parseEdge(char** currentPosition, int* v, int* w, int* label) 
 }
 
 
-static inline void fastLabelLength(char* pos, size_t* offset, size_t* labelSize) {
+static inline void fastLabelLength(const char* pos, size_t* offset, size_t* labelSize) {
 	*offset = 0;
 	*labelSize = 0;
 
@@ -261,7 +270,7 @@ static inline void fastLabelLength(char* pos, size_t* offset, size_t* labelSize)
     }
 }
 
-static inline int grabLabel(char** currentPosition, char** label) {
+static inline int grabLabel(const char** currentPosition, char** label) {
 	size_t offset;
 	size_t labelSize;
 	*label = NULL;
@@ -278,7 +287,7 @@ static inline int grabLabel(char** currentPosition, char** label) {
 }
 
 
-static inline int parseEdgeNew(char** currentPosition, int* v, int* w, char** label) {
+static inline int parseEdgeNew(const char** currentPosition, int* v, int* w, char** label) {
 	*v = fastAtoi(currentPosition);
 	*w = fastAtoi(currentPosition);
 	grabLabel(currentPosition, label);
@@ -290,7 +299,7 @@ static inline int parseEdgeNew(char** currentPosition, int* v, int* w, char** la
 struct Graph* iterateFile() {
 	int i;
 	struct Graph* g = getGraph(FI_GP);
-	char* currentPosition;
+	const char* currentPosition;
 
 	if (!FI_DATABASE) {
 		fprintf(stderr, "Could not access input stream.\n");
