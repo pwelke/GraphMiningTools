@@ -32,6 +32,10 @@ void markComp(struct Vertex* v, int compNumber) {
 	}
 }
 
+/* returns a list of shallowgraphs that each contain the edges of a connected
+component of the graph (each edge is contained only once as a -> b, where a->number < b->number)
+If there is an isolated vertex v in the graph, then there will be a Shallowgraph c with
+c->m == 0 and c->data == i->number. */
 struct ShallowGraph* getConnectedComponents(struct Graph* g, struct ShallowGraphPool* sgp) {
 	int v;
 	int i = 0;
@@ -47,6 +51,11 @@ struct ShallowGraph* getConnectedComponents(struct Graph* g, struct ShallowGraph
 			comp->next = result;
 			result = comp;
 			++i;
+		}
+		/* there might be connected components consisting of a single vertex.
+		in this case, we store its number in the -> data field of the shallow graph */
+		if (g->vertices[v]->neighborhood == NULL) {
+			result->data = v;
 		}
 	}
 	return result;
