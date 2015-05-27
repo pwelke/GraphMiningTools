@@ -1,6 +1,15 @@
 This is a Levelwise Mining Algorithm for TreePatterns
 implemented by Pascal Welke 2013, 2015
 
+The algorithm expects a file in the format produced by the tree sampler
+ts and ouotputs three files with different suffixes:
+    FILE.patterns: contains canonical string representations of the 
+                   frequent tree patterns found by the algorithm
+    FILE.counts:   contains pairs of values: a pattern id and its
+                   frequency in the input, as evaluated by the 
+                   OPERATOR
+    FILE.features: contains pairs of values: a graph id and a pattern id
+                   indicating that the pattern matches the graph
 
 usage: lwm [ARGS] FILE
     
