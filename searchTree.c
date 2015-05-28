@@ -838,15 +838,16 @@ struct ShallowGraph* streamReadPatternsAndTheirNumber(FILE* stream, int bufferSi
 
 	for (i=0; i<*nPatterns; ++i) {
 		int multiplicity;
+		int id;
 		struct ShallowGraph* string;
-		writeCount += fscanf(stream, "%i\t", &multiplicity);
+		writeCount += fscanf(stream, "%i\t%i\t", &multiplicity, &id);
 		string = parseCString(stream, buffer, sgp);
 		string->data = multiplicity;
 		string->next = patterns;
 		patterns = string;
 	}	
 	
-	if (writeCount != *nPatterns) {
+	if (writeCount != *nPatterns * 2) {
 		fprintf(stderr, "Error: Wrote %i patterns, should have been %i\n", writeCount, *nPatterns);
 	}
 
