@@ -3,6 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "../graph.h"
 #include "../searchTree.h"
@@ -257,10 +258,13 @@ int main(int argc, char** argv) {
 	/* processedGraphs is the number of graphs that are considered (might be less, if some graphs are not connected) */
 	int processedGraphs = 0;
 	long int avgTrees = 0;
+	/* set random seed */
+	srand(time(NULL));
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hs:k:t:o:u";
+	int seed;
+	const char* validArgs = "hs:k:t:o:ur:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -314,6 +318,14 @@ int main(int argc, char** argv) {
 			}
 			fprintf(stderr, "Unknown sampling method: %s\n", optarg);
 			return EXIT_FAILURE;
+			break;
+		case 'r':
+			if (sscanf(optarg, "%i", &seed) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} else {
+				srand(seed);
+			}
 			break;
 		case '?':
 			return EXIT_FAILURE;
