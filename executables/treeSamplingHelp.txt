@@ -29,7 +29,9 @@ options: options (except -h and -u) are always followed by a value.
     -s 'method': tree subset selection method
         wilson:  sample k spanning trees uniformly at random using Wilsons 
                  algorithm
-        listing: sample k spanning trees uniformly at random using explicit 
+        kruskal: sample k spanning trees using a uniformly drawn permutation
+                 of the edge set as input to Kruskals MST algorithm 
+        listing: sample k spanning trees uniformly at random using explicit
                  enumeration of all spanning trees
         mix:     sample k spanning trees uniformly at random using listing,
                  if there are expected to be less than t spanning trees, and

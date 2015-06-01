@@ -14,11 +14,13 @@
 #include "../connectedComponents.h"
 #include "../cs_Tree.h"
 #include "../wilsonsAlgorithm.h"
+#include "../kruskalsAlgorithm.h"
 
 char DEBUG_INFO = 1;
 
 typedef enum {
 		wilson,
+		kruskal,
 		listing,
 		mix,
 		cactus,
@@ -110,6 +112,67 @@ struct ShallowGraph* sampleSpanningTreesUsingWilson(struct Graph* g, int k, stru
 	}
 	return spanningTrees;
 }
+
+
+/** from http://stackoverflow.com/questions/6127503/shuffle-array-in-c, 
+but replaced their use of drand48 by rand
+make sure you randomize properly using srand()! */
+static void shuffle(struct VertexList** array, size_t n) {    
+    // struct timeval tv;
+    // gettimeofday(&tv, NULL);
+    // int usec = tv.tv_usec;
+    // srand48(usec);
+
+    if (n > 1) {
+        size_t i;
+        for (i = n - 1; i > 0; i--) {
+            size_t j = (unsigned int) (rand() % i);
+            struct VertexList* t = array[j];
+            array[j] = array[i];
+            array[i] = t;
+        }
+    }
+}
+
+
+static struct ShallowGraph* sampleSpanningTreesUsingKruskalOnce(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* spanningTree = NULL;
+	int i;
+
+	// create and shuffle array of edges of g
+	struct ShallowGraph* edges = getGraphEdges(g, sgp);
+	struct VertexList** edgeArray = malloc(g->m * sizeof(struct VertexList*));
+	if (edges->m != 0) {
+		edgeArray[0] = edges->edges;
+	}
+	for (i=1; i < g->m; ++i) {
+		edgeArray[i] = edgeArray[i-1]->next;
+	}
+	shuffle(edgeArray, g->m);
+
+	// do the kruskal
+	spanningTree = kruskalMST(g, edgeArray, gp, sgp);
+
+	// garbage collection
+	dumpShallowGraphCycle(sgp, edges);
+	free(edgeArray);
+
+	return spanningTree;
+}
+
+
+struct ShallowGraph* sampleSpanningTreesUsingKruskal(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* spanningTrees = NULL;
+	int i;
+
+	for (i=0; i<k; ++i) {
+		struct ShallowGraph* tmp = sampleSpanningTreesUsingKruskalOnce(g, gp, sgp);
+		tmp->next = spanningTrees;
+		spanningTrees = tmp;
+	}
+	return spanningTrees;
+}
+
 
 /**
 List all spanning trees of g and draw k of them uniformly at random, return these k spanning trees as a list. 
@@ -296,6 +359,10 @@ int main(int argc, char** argv) {
 				samplingMethod = wilson;
 				break;
 			}
+			if (strcmp(optarg, "kruskal") == 0) {
+				samplingMethod = kruskal;
+				break;
+			}
 			if (strcmp(optarg, "listing") == 0) {
 				samplingMethod = listing;
 				break;
@@ -367,6 +434,9 @@ int main(int argc, char** argv) {
 				switch (samplingMethod) {
 				case wilson:
 					sample = sampleSpanningTreesUsingWilson(g, k, sgp);
+					break;
+				case kruskal:
+					sample = sampleSpanningTreesUsingKruskal(g, k, gp, sgp);
 					break;
 				case listing:
 					sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
