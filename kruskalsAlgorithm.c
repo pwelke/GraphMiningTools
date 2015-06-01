@@ -42,13 +42,13 @@ static char isCycleFree(struct Graph* branching, struct VertexList* e, struct Li
 }
 
 
-struct ShallowGraph* kruskal(struct Graph* g, struct VertexList** sortedEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* kruskalMST(struct Graph* g, struct VertexList** sortedEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* branching = createGraph(g->n, gp);
 	struct ShallowGraph* spanningTree = getShallowGraph(sgp);
 	int i;
 
 	for (i=0; i<g->m; ++i) {
-		if (isCycleFree(branching, sortedEdges[i])) {
+		if (isCycleFree(branching, sortedEdges[i], sgp->listPool)) {
 			appendEdge(spanningTree, shallowCopyEdge(sortedEdges[i], sgp->listPool));
 		}
 	}
