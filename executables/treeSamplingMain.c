@@ -34,16 +34,17 @@ typedef enum {
  * Print --help message
  */
 int printHelp() {
-	FILE* helpFile = fopen("executables/treeSamplingHelp.txt", "r");
-	if (helpFile != NULL) {
-		int c = EOF;
-		while ((c = fgetc(helpFile)) != EOF) {
-			fputc(c, stdout);
+#include "treeSamplingHelp.help"
+	unsigned char* help = executables_treeSamplingHelp_txt;
+	int len = executables_treeSamplingHelp_txt_len;
+	if (help != NULL) {
+		int i=0;
+		for (i=0; i<len; ++i) {
+			fputc(help[i], stdout);
 		}
-		fclose(helpFile);
 		return EXIT_SUCCESS;
 	} else {
-		fprintf(stderr, "Could not read helpfile\n");
+		fprintf(stderr, "Could not read help file\n");
 		return EXIT_FAILURE;
 	}
 }

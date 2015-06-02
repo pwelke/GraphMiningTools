@@ -14,6 +14,7 @@ LWGNAME = lwg
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
+HELPFILES = $(patsubst ./executables/%.txt, ./executables/%.help, $(wildcard ./executables/*.txt))
 TPKOBJECTS = $(OBJECTS) ./executables/main.o
 LWMOBJECTS = $(OBJECTS) ./executables/levelwiseTreesetMiningMain.o
 LWGOBJECTS = $(OBJECTS) ./executables/levelwiseGraphMining.o
@@ -38,6 +39,12 @@ dependencies.png: $(EVERYTHING)
 main: $(GFNAME)
 	
 all: $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME)
+
+%.help: %.txt
+	xxd -i $< > $@
+	echo ', 0x00'
+
+help: $(HELPFILES)
 
 $(GFNAME): $(GFOBJECTS)
 	@gcc -o $@ $^ $(CPPFLAGS)
@@ -81,6 +88,7 @@ $(LWGNAME): $(LWGOBJECTS)
 clean:
 	rm *.o
 	rm ./executables/*.o
+	rm ./executables/*.help
 
 print-%:
 	@echo $*=$($*)

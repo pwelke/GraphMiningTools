@@ -17,16 +17,17 @@
  * Print --help message
  */
 int printHelp() {
-	FILE* helpFile = fopen("executables/cstringHelp.txt", "r");
-	if (helpFile != NULL) {
-		int c = EOF;
-		while ((c = fgetc(helpFile)) != EOF) {
-			fputc(c, stdout);
+#include "cstringHelp.help"
+	unsigned char* help = executables_cstringHelp_txt;
+	int len = executables_cstringHelp_txt_len;
+	if (help != NULL) {
+		int i=0;
+		for (i=0; i<len; ++i) {
+			fputc(help[i], stdout);
 		}
-		fclose(helpFile);
 		return EXIT_SUCCESS;
 	} else {
-		fprintf(stderr, "Could not read helpfile\n");
+		fprintf(stderr, "Could not read help file\n");
 		return EXIT_FAILURE;
 	}
 }
