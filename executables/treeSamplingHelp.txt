@@ -44,11 +44,13 @@ options: options (except -h and -u) are always followed by a value.
                        return all of them, otherwise sample k spanning trees
                        uniformly at random using wilson
 
-    -u: 'unsafe', skip the initial test if graphs are connected. Might be useful
+    -u: Skip the initial test if graphs are connected. Might be useful
         for bridgeForest, or if you have ensured that all input graphs are connected
 
     -r 'randomSeed': specify the random seed used for the sampling methods. If not
                      present, it is initialized from the current system time.
+
+    -v: Be verbose and print the average number of trees found per graph up to isomorphism.
 
     -h:  display this help
 

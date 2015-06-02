@@ -316,6 +316,7 @@ int main(int argc, char** argv) {
 	int k = 1;
 	SamplingMethod samplingMethod = wilson;
 	char unsafe = 0;
+	char verbosity = 0;
 
 	/* i counts the number of graphs read */
 	int i = 0;
@@ -328,7 +329,7 @@ int main(int argc, char** argv) {
 	/* parse command line arguments */
 	int arg;
 	int seed;
-	const char* validArgs = "hs:k:t:o:ur:";
+	const char* validArgs = "hs:k:t:o:ur:v";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -395,6 +396,8 @@ int main(int argc, char** argv) {
 				srand(seed);
 			}
 			break;
+		case 'v': 
+			verbosity = 1;
 		case '?':
 			return EXIT_FAILURE;
 			break;
@@ -457,11 +460,23 @@ int main(int argc, char** argv) {
 				}
 
 				for (tree=sample; tree!=NULL; tree=tree->next) {
-					struct Graph* tmp = shallowGraphToGraph(tree, gp);
-					struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
-					addToSearchTree(searchTree, cString, gp, sgp);
-					/* garbage collection */
-					dumpGraph(gp, tmp);
+					if (tree->m != 0) {
+						struct Graph* tmp = shallowGraphToGraph(tree, gp);
+						struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
+						addToSearchTree(searchTree, cString, gp, sgp);
+						/* garbage collection */
+						dumpGraph(gp, tmp);
+					} else {
+						// in the case of bridge forests or singleton graphs, we might get a tree without an edge.
+						// sinlgeton graphs are not supported, yet.
+						if (samplingMethod == bridgeForest) {
+							struct ShallowGraph* cString = getShallowGraph(sgp);
+							struct VertexList* e = getVertexList(sgp->listPool);
+							e->label = g->vertices[tree->data]->label;
+							appendEdge(cString, e);
+							addToSearchTree(searchTree, cString, gp, sgp);
+						}
+					}
 				}
 
 				/* output tree patterns represented as canonical strings */
@@ -488,7 +503,9 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	fprintf(stderr, "avgTrees = %f\n", avgTrees / (double)processedGraphs);
+	if (verbosity) {
+		fprintf(stderr, "avgTrees = %f\n", avgTrees / (double)processedGraphs);
+	}
 
 	/* global garbage collection */
 	destroyFileIterator();
