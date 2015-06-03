@@ -25,6 +25,7 @@ typedef enum {
 	/* counting */
 	graphName,
 	count,
+	randomSample,
 
 	/* labels */
 	label,

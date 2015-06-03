@@ -33,6 +33,10 @@ options: options (except -h) are always followed by a value.
         graphName    the graph ids, or names, specified in the database
         count        running number of the graph (e.g. select the 
                      first 10 graphs)
+        randomSample returns a random number between 0 and 1000 for each
+                     graph. Can be used for sampling a subset of the 
+                     graphs. Random seed needs to be set via -a parameter
+                     (default 100)
              
         *labels* (labels are integer in our db format)
         label    the label of a graph, specified in the graph db

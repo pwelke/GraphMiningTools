@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	Comparator comparator = pass;
 	OutputOption oOption = graph;
 	int value = -1;
-	/* can be set via -a. Used e.g. by spanningTreeListing filter */
+	/* can be set via -a. Used e.g. by spanningTreeListing filter, and randomSample*/
 	int additionalParameter = 100;
 
 	/* parse command line arguments */
@@ -162,6 +162,10 @@ int main(int argc, char** argv) {
 				filter = minDegree;
 				break;
 			}
+			if (strcmp(optarg, "randomSample") == 0) {
+				filter = randomSample;
+				break;
+			}
 			fprintf(stderr, "Unknown filter: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -235,6 +239,9 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	/* set initial random seed */
+	srand(additionalParameter);
+
 	/* init object pools */
 	lp = createListPool(10000);
 	vp = createVertexPool(10000);
@@ -302,7 +309,9 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 	case graphName:
 		measure = g->number;
 		break;
-
+	case randomSample:
+		measure = rand() % 1000;
+		break;
 	/* labels */
 	case label:
 		measure = g->activity;
