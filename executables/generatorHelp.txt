@@ -1,0 +1,2 @@
+This program generates a database of random graphs according to the Erdos-Renyi
+model.
