@@ -193,6 +193,81 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 }
 
 
+char isPath(struct graph* tree) {
+	int v;
+	for (v=0; v<tree->n; ++v) {
+		if (degree(g->vertices[v]) > 2) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+
+/**
+for each graph g in extension (that is the list starting at extension and continuing at extension->next), 
+two tests are run: g itself must not be contained in currentLevel and any subtree of g must be contained
+in lowerLevel. 
+if g fulfills both conditions, it is added to the output and to currentLevel.
+*/ 
+struct Graph* filterExtensionForPaths(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Graph* idx = extension; 
+	struct Graph* filteredExtension = NULL;
+	
+	while (idx != NULL) {
+		struct VertexList* e;
+		int fingerPrint;
+
+		struct Graph* current = idx;
+		struct ShallowGraph* string;
+		idx = idx->next;
+		current->next = NULL;
+
+		/* filter out patterns that are not paths */
+		if (!isPath(current)) {
+			dumpGraph(gp, current);
+			continue;
+		}
+		
+		/* filter out patterns that were already enumerated as the extension of some other pattern
+		and are in the search tree */
+		string = canonicalStringOfTree(current, sgp);
+		if (containsString(currentLevel, string)) {
+			dumpShallowGraph(sgp, string);
+ 			dumpGraph(gp, current);
+ 			continue;
+		} 
+
+		/* filter out patterns where a subtree is not frequent */
+		fingerPrint = getPatternFingerPrint(current, lowerLevel, gp, sgp);
+		if (fingerPrint == 0) {
+			dumpShallowGraph(sgp, string);
+			dumpGraph(gp, current);
+			continue;
+		} 
+
+		/* make shallow copies of labels to real copies 
+		TODO: Might not be necessary any more, as addStringToSearchTree should handle this. */
+		for (e=string->edges; e!=NULL; e=e->next) {
+			if (!e->isStringMaster) {
+				e->isStringMaster = 1;
+				e->label = copyString(e->label);
+			}
+		}
+		current->next = filteredExtension;
+		filteredExtension = current;
+
+		/* add string to current level, update relevant bookkeeping info of search tree
+		and then dump the empty shell of string */
+		currentLevel->d += addStringToSearchTreeSetD(currentLevel, string->edges, fingerPrint, gp);
+		++currentLevel->number;
+		string->edges = NULL;
+		dumpShallowGraph(sgp, string);
+	}
+	return filteredExtension;
+}
+
+
 static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Vertex* root, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
