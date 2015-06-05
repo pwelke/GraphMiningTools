@@ -10,6 +10,7 @@ PERFNAME = perf
 GFNAME = gf
 CSTRNAME = cstring
 LWGNAME = lwg
+GENNAME = ggen
 
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
@@ -40,6 +41,8 @@ TCIOBJECTS = $(OBJECTS) ./executables/cactus.o
 TCIHELP =
 PERFOBJECTS = $(OBJECTS) ./executables/tciPerf.o
 PERFHELP =
+GENOBJECTS = $(OBJECTS) ./executables/generator.o
+GENHELP = ./executables/generatorHelp.help
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
@@ -91,6 +94,9 @@ $(PERFNAME): $(PERFHELP) $(PERFOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(LWGNAME): $(LWGHELP) $(LWGOBJECTS)
+	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+
+$(GENNAME): $(GENHELP) $(GENOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 %.o : %.c %.h
