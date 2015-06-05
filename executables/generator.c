@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hp:s:a:b:N:";
+	const char* validArgs = "hp:s:a:b:c:d:N:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
 	for (i=0; i<numberOfGeneratedGraphs; ++i) {
 		int n = rand() % (upperBoundVertices - lowerBoundVertices) + lowerBoundVertices;
 		struct Graph* g = erdosRenyiWithLabels(n, edgeProbability, nVertexLabels, nEdgeLabels, gp);
-		g->number = i;
+		g->number = i+1;
 		printGraphAidsFormat(g, out);
 	}
 
