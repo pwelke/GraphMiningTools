@@ -1,2 +1,16 @@
 This program generates a database of random graphs according to the Erdos-Renyi
 model.
+
+Usage: ggen [ARGS] 
+or ggen [ARGS] FILE
+
+the first reads from stdin.
+
+Parameters:
+  N int:    specify number of generated graphs (default 100)
+  a int:    lower bound on number of vertices in each graph (default 1)
+  b int:    upper bound on number of vertices in each graph (default 50)
+  c int:    number of different vertex labels (default 5)
+  d int:    number of different edge labels (default 1)
+  p double: edge probability (default 0.5)
+  s int:    random seed (default 100)
