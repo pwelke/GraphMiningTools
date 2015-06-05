@@ -5,6 +5,29 @@
 #include "graph.h"
 #include "graphPrinting.h"
 
+void printGraphAidsFormat(struct Graph* g, FILE* out) {
+	int i;
+	// print header line
+	fprintf(out, "# %i %i %i %i\n", g->number, g->activity, g->n, g->m);
+
+	// print vertex labels
+	for (i=0; i<g->n; ++i) {
+		fprintf(out, "%s ", g->vertices[i]->label);
+	}
+	fputc('\n', out);
+
+	// print edges
+	for (i=0; i<g->n; ++i) {
+		struct VertexList* e;
+		for (e=g->vertices[i]->neighborhood; e!=NULL; e=e->next) {
+			if (e->startPoint->number < e->endPoint->number) {
+				fprintf(out, "%i %i %s ", e->startPoint->number + 1, e->endPoint->number + 1, e->label);
+			}
+		}
+	}
+	fputc('\n', out);
+}
+
 
 /**
  * Print some information about a ShallowGraph

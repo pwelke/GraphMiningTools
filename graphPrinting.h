@@ -1,6 +1,7 @@
 #ifndef GRAPH_PRINTING_H
 #define GRAPH_PRINTING_H
 
+void printGraphAidsFormat(struct Graph* g, FILE* out);
 void printGraphEdgesOfTwoGraphs(char* name, struct Graph *g, struct Graph* h);
 char diffGraphs(char* name, struct Graph *g, struct Graph* h);
 void printVertexList(struct VertexList *f);
