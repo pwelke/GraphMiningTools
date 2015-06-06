@@ -193,10 +193,10 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 }
 
 
-char isPath(struct graph* tree) {
+char isPath(struct 	Graph* tree) {
 	int v;
 	for (v=0; v<tree->n; ++v) {
-		if (degree(g->vertices[v]) > 2) {
+		if (degree(tree->vertices[v]) > 2) {
 			return 0;
 		}
 	}
@@ -268,7 +268,7 @@ struct Graph* filterExtensionForPaths(struct Graph* extension, struct Vertex* lo
 }
 
 
-static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Vertex* root, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Graph* (*filter)(struct Graph*, struct Vertex*, struct Vertex*, struct GraphPool*, struct ShallowGraphPool*), struct Vertex* root, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
 	if ((root->visited != 0) && (root != lowerLevel)) {
@@ -276,7 +276,7 @@ static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* cu
 		filter interesting candidates and then scan the db of patterns  */
 		struct Graph* pattern = treeCanonicalString2Graph(prefix, gp);
 		struct Graph* refinements = extendPattern(pattern, frequentEdges, gp);
-		refinements = filterExtension(refinements, lowerLevel, currentLevel, gp, sgp);
+		refinements = filter(refinements, lowerLevel, currentLevel, gp, sgp);
 
 		/* to just generate the search tree of candidates, we do not need the graphs any more */
 		dumpGraph(gp, pattern);
@@ -295,7 +295,7 @@ static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* cu
 		struct VertexList* lastEdge = prefix->lastEdge;
 		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
 
-		generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, e->endPoint, prefix, gp, sgp);
+		generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, filter, e->endPoint, prefix, gp, sgp);
 
 		dumpVertexList(sgp->listPool, prefix->lastEdge);
 		prefix->lastEdge = lastEdge;
@@ -310,12 +310,24 @@ static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* cu
 }
 
 
-struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct Vertex* generateCandidateTreeSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Vertex* currentLevel = getVertex(gp->vertexPool);
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
 	/* set smallest id of pattern in current level to be largest id of any pattern in lower level plus 1 */
 	currentLevel->lowPoint = lowerLevel->lowPoint;
-	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, lowerLevel, prefix, gp, sgp);
+	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, &filterExtension, lowerLevel, prefix, gp, sgp);
 	dumpShallowGraph(sgp, prefix);
 	return currentLevel;
 }
+
+
+struct Vertex* generateCandidatePathSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Vertex* currentLevel = getVertex(gp->vertexPool);
+	struct ShallowGraph* prefix = getShallowGraph(sgp);
+	/* set smallest id of pattern in current level to be largest id of any pattern in lower level plus 1 */
+	currentLevel->lowPoint = lowerLevel->lowPoint;
+	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, &filterExtensionForPaths, lowerLevel, prefix, gp, sgp);
+	dumpShallowGraph(sgp, prefix);
+	return currentLevel;
+}
+
