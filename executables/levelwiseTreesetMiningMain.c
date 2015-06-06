@@ -81,7 +81,8 @@ int main(int argc, char** argv) {
 	int minEdgeID = 100;
 	int nGraphs = 1000; // arbitrary positive value used for initializing the pruning array. Will be reset to correct value by getVertexAndEdgeHistograms 
 	int (*embeddingOperator)(struct ShallowGraph*, struct Graph**, double, int, int, int**, struct Vertex**, struct GraphPool*) = &checkIfSubIsoCompatible;
-	
+	struct Vertex* (*listingOperator)(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) = &generateCandidateTreeSet;
+
 	/* automatically set variables */
 	// io
 	char* outputPrefix = NULL;
@@ -102,7 +103,7 @@ int main(int argc, char** argv) {
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hvt:i:p:o:e:c";
+	const char* validArgs = "hvt:i:p:o:e:cl:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -139,6 +140,17 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "importance") == 0) {
 				embeddingOperator = &checkIfImportantSubIso;
+				break;
+			}
+			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
+			return EXIT_FAILURE;
+		case 'l':
+			if (strcmp(optarg, "trees") == 0) {
+				listingOperator = &generateCandidateTreeSet;
+				break;
+			}
+			if (strcmp(optarg, "paths") == 0) {
+				listingOperator = &generateCandidatePathSet;
 				break;
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
@@ -233,7 +245,7 @@ int main(int argc, char** argv) {
 		struct Graph** refinements;
 		int refinementSize;
 		
-		candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
+		candidateSet = listingOperator(frequentPatterns, extensionEdges, gp, sgp);
 		setLowPoints(candidateSet);
 		refinementSize = candidateSet->d;
 		pointers = malloc(refinementSize * sizeof(struct Vertex*));

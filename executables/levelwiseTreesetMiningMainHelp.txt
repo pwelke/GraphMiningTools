@@ -22,10 +22,14 @@ usage: lwm [ARGS] FILE
     -e OPERATOR:  embedding operator used for frequent subtree mining.
             existence:  A subtree T matches a transaction graph G if there
                         is at least one tree H in the set representing G 
-                        such that T is subgraph isomorphic to H.
+                        such that T is subgraph isomorphic to H. (default)
             importance: A subtree T matches a transaction graph G if T is
                         subgraph isomorphic to at least a FRACTION-fraction 
                         of all trees representing G.
+
+    -l OPERATOR: listing operator used for frequent substructure mining
+            trees: list frequent subtrees (default)
+            paths: list frequent subpaths
         
     -i FRACTION: relative fraction of spanning trees of a graph s.t.
                  a subtree S is considered a match. I.e. S is subgraph 
