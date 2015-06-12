@@ -758,8 +758,9 @@ struct ShallowGraph* listStringsInSearchTree(struct Vertex* root, struct Shallow
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
 	recListString(listHead, root, root, prefix, sgp);
 	dumpShallowGraph(sgp, prefix);
-	prefix = listHead->next;
+	prefix = listHead;
 	listHead = listHead->next;
+	prefix->next = NULL;
 	dumpShallowGraph(sgp, prefix);
 	return listHead;
 }
