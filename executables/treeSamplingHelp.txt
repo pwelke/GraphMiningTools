@@ -28,7 +28,7 @@ options: options (except -h and -u) are always followed by a value.
 
     -s 'method': tree subset selection method
         wilson:  sample k spanning trees uniformly at random using Wilsons 
-                 algorithm
+                 algorithm (default)
         kruskal: sample k spanning trees using a uniformly drawn permutation
                  of the edge set as input to Kruskals MST algorithm 
         listing: sample k spanning trees uniformly at random using explicit
@@ -51,6 +51,13 @@ options: options (except -h and -u) are always followed by a value.
                      present, it is initialized from the current system time.
 
     -v: Be verbose and print the average number of trees found per graph up to isomorphism.
+
+    -o 'format': choose output format
+       canonicalString: output a list of canonical strings of sampled trees for each graph
+                        This is the input expected by lwm (default)
+       graph:           Output sampled trees as forest in the standard graph db format.
+                        Graph number and activity of each forest are equal to the values
+                        of the input graph.
 
     -h:  display this help
 

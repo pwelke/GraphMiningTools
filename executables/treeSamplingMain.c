@@ -408,7 +408,6 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "graph") == 0) {
 				outputMethod = gr;
-				fprintf(stderr, "Warning: This method is not fully implemented and will\nonly return the first spanning tree!\n");
 				break;
 			}
 			fprintf(stderr, "Unknown output method: %s\n", optarg);
@@ -499,21 +498,29 @@ int main(int argc, char** argv) {
 
 				switch (outputMethod) {
 				struct ShallowGraph* strings;
-				struct Graph* tree;
+				struct ShallowGraph* string;
+				struct Graph* trees;
 				case cs:
 					/* output tree patterns represented as canonical strings */
 					printf("# %i %i\n", g->number, searchTree->d);
 					printStringsInSearchTree(searchTree, stdout, sgp);
 					fflush(stdout);
 					break;
-				case gr:				
-					// TODO: ADD ALL TREES TO THE OUTPUT
+				case gr:
+					/* output tree patterns as forest un standard format */
+					trees = NULL;
 					strings = listStringsInSearchTree(searchTree, sgp);
-					tree = treeCanonicalString2Graph(strings, gp);
-					tree->number = g->number;
-					tree->activity = g->activity;
-					printGraphAidsFormat(tree, stdout);
-					dumpGraph(gp, tree);
+					for (string=strings; string!=NULL; string=string->next) {
+						struct Graph* tmp;
+						tmp = treeCanonicalString2Graph(string, gp);
+						tmp->next = trees;
+						trees = tmp;
+					}
+					trees = mergeGraphs(trees, gp);
+					trees->number = g->number;
+					trees->activity = g->activity;
+					printGraphAidsFormat(trees, stdout);
+					dumpGraph(gp, trees);
 					dumpShallowGraphCycle(sgp, strings);
 					break;
 				}
@@ -537,6 +544,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	/* if output is standard graph db, terminate it with dollar sign */
 	if (outputMethod == gr) {
 		fprintf(stdout, "$\n");
 	}
