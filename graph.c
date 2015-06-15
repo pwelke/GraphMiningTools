@@ -223,6 +223,41 @@ struct VertexList* snatchEdge(struct Vertex* v, struct Vertex* w) {
 ********************************************************************************************************/
 
 
+/** Merge all graphs in the NULL terminated list starting at g into one big graph.
+Reuses the vertices and edges of the input graphs, but dumps the graphs themselves.
+The vertex numbers of the vertices change (except for those of g). **/
+struct Graph* mergeGraphs(struct Graph* g, struct GraphPool* gp) {
+	int n = 0;
+	int m = 0;
+	int i = 0;
+	struct Graph* current;
+	struct Graph* bigGraph = getGraph(gp);
+
+	for (current=g; current!=NULL; current=current->next) {
+		n += current->n;
+		m += current->m;
+	}
+	setVertexNumber(bigGraph, n);
+	bigGraph->m = m;
+
+	for (current=g; current!=NULL; current=current->next) {
+		int v;
+		for (v=0; v<current->n; ++v, ++i) {
+			bigGraph->vertices[i] = current->vertices[v];
+			bigGraph->vertices[i]->number = i;
+			current->vertices[v] = NULL;
+		}
+	}
+	for (current=g; current!=NULL; ) {
+		struct Graph* tmp = current;
+		current = current->next;
+		tmp->next = NULL;
+		dumpGraph(gp, tmp);
+	}
+	return bigGraph;
+}
+
+
 /** Delete the directed edge between vertices v and w in g and return it */
 struct VertexList* deleteEdge(struct Graph* g, int v, int w) {
 	struct VertexList* e = g->vertices[v]->neighborhood;
