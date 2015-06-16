@@ -38,11 +38,16 @@ options: options (except -h and -u) are always followed by a value.
                  wilsons algorithm otherwise
         cactus:  sample k spanning trees uniformly at random using a specialized
                  method if the graph is a cactus and mix otherwise.
-        bridgeForest:  return all trees that are left if the biconnected blocks
-                       of the graph are removed
-        listOrSample:  if there are expected to be less than t spanning trees,
-                       return all of them, otherwise sample k spanning trees
-                       uniformly at random using wilson
+        partialListing: sample one spanning tree uniformly at random by returning
+                        the ith spt for some random i between 1 and t if expected 
+                        number of spanning trees is smaller than t. If there are 
+                        expected to be more than t spanning trees, return one 
+                        sampled using wilsons algorithm.
+        bridgeForest:   return all trees that are left if the biconnected blocks
+                        of the graph are removed
+        listOrSample:   if there are expected to be less than t spanning trees,
+                        return all of them, otherwise sample k spanning trees
+                        uniformly at random using wilson
 
     -u: Skip the initial test if graphs are connected. Might be useful
         for bridgeForest, or if you have ensured that all input graphs are connected

@@ -24,6 +24,7 @@ typedef enum {
 		kruskal,
 		listing,
 		mix,
+		partialListing,
 		cactus,
 		bridgeForest,
 		listOrSample
@@ -230,6 +231,40 @@ struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, long in
 
 
 /**
+If there are expected to be less than threshold spanning trees, sample spanning trees using explicit listing, 
+otherwise use wilsons algorithm.
+*/
+struct ShallowGraph* sampleSpanningTreesUsingPartialListingMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	long upperBound = getGoodEstimate(g, sgp, gp);
+
+	if (k != 1) {
+		fprintf(stderr, "This method will only sample one spanning tree, you asked for %i\n", k);
+		k = 1;
+	}
+	if ((upperBound < threshold) && (upperBound != -1)) {
+		int i = rand() % threshold;
+		int storeI = i;
+		struct ShallowGraph* garbage = listKSpanningTrees(g, &i, sgp, gp);
+		if (i == 0) {
+			struct ShallowGraph* result = garbage->prev;
+			result->prev->next=garbage;
+			dumpShallowGraphCycle(sgp, garbage);
+			return result;
+		} else {
+			// TODO: do something sensible
+			struct ShallowGraph* result = garbage->prev;
+			result->prev->next=garbage;
+			dumpShallowGraphCycle(sgp, garbage);
+			fprintf(stderr, "oversampled! i=%i leftover=%i\n", i, storeI);
+			return result;
+		}
+	} else {
+		return sampleSpanningTreesUsingWilson(g, k, sgp);
+	}
+}
+
+
+/**
 If g is a cactus graph, use a specialized method to sample spanning trees, 
 otherwise use sampleSpanningTreesUsingMix.
 */
@@ -378,6 +413,10 @@ int main(int argc, char** argv) {
 				samplingMethod = mix;
 				break;
 			}
+			if (strcmp(optarg, "partialListing") == 0) {
+				samplingMethod = partialListing;
+				break;
+			}
 			if (strcmp(optarg, "cactus") == 0) {
 				samplingMethod = cactus;
 				break;
@@ -465,6 +504,8 @@ int main(int argc, char** argv) {
 				case mix:
 					sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
 					break;
+				case partialListing:
+					sample = sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
 				case cactus:
 					sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
 					break;
