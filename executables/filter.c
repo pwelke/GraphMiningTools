@@ -73,6 +73,19 @@ int main(int argc, char** argv) {
 			printHelp();
 			return EXIT_SUCCESS;
 		case 'f':
+			/* labels */
+			if (strcmp(optarg, "AvsI") == 0) {
+				filter = AvsI;
+				break;
+			}
+			if (strcmp(optarg, "AvsMI") == 0) {
+				filter = AvsMI;
+				break;
+			}
+			if (strcmp(optarg, "AMvsI") == 0) {
+				filter = AMvsI;
+				break;
+			}
 			/* counting */
 			if (strcmp(optarg, "graphName") == 0) {
 				filter = graphName;
@@ -318,7 +331,7 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case AvsI:
 		if (g->activity == 1) {
-			break;
+			g->activity = 0;
 		}
 		if (g->activity == 0) {
 			g->activity = -1;

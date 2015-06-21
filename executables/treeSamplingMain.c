@@ -15,6 +15,7 @@
 #include "../cs_Tree.h"
 #include "../wilsonsAlgorithm.h"
 #include "../kruskalsAlgorithm.h"
+#include "../graphPrinting.h"
 
 char DEBUG_INFO = 1;
 
@@ -28,7 +29,10 @@ typedef enum {
 		listOrSample
 	} SamplingMethod;	
 
-
+typedef enum {
+		cs,
+		gr
+} OutputMethod;
 
 /**
  * Print --help message
@@ -317,6 +321,7 @@ int main(int argc, char** argv) {
 	SamplingMethod samplingMethod = wilson;
 	char unsafe = 0;
 	char verbosity = 0;
+	OutputMethod outputMethod = cs;
 
 	/* i counts the number of graphs read */
 	int i = 0;
@@ -395,6 +400,18 @@ int main(int argc, char** argv) {
 			} else {
 				srand(seed);
 			}
+			break;
+		case 'o':
+			if (strcmp(optarg, "canonicalString") == 0) {
+				outputMethod = cs;
+				break;
+			}
+			if (strcmp(optarg, "graph") == 0) {
+				outputMethod = gr;
+				break;
+			}
+			fprintf(stderr, "Unknown output method: %s\n", optarg);
+			return EXIT_FAILURE;
 			break;
 		case 'v': 
 			verbosity = 1;
@@ -479,10 +496,34 @@ int main(int argc, char** argv) {
 					}
 				}
 
-				/* output tree patterns represented as canonical strings */
-				printf("# %i %i\n", g->number, searchTree->d);
-				printStringsInSearchTree(searchTree, stdout, sgp);
-				fflush(stdout);
+				switch (outputMethod) {
+				struct ShallowGraph* strings;
+				struct ShallowGraph* string;
+				struct Graph* trees;
+				case cs:
+					/* output tree patterns represented as canonical strings */
+					printf("# %i %i\n", g->number, searchTree->d);
+					printStringsInSearchTree(searchTree, stdout, sgp);
+					fflush(stdout);
+					break;
+				case gr:
+					/* output tree patterns as forest un standard format */
+					trees = NULL;
+					strings = listStringsInSearchTree(searchTree, sgp);
+					for (string=strings; string!=NULL; string=string->next) {
+						struct Graph* tmp;
+						tmp = treeCanonicalString2Graph(string, gp);
+						tmp->next = trees;
+						trees = tmp;
+					}
+					trees = mergeGraphs(trees, gp);
+					trees->number = g->number;
+					trees->activity = g->activity;
+					printGraphAidsFormat(trees, stdout);
+					dumpGraph(gp, trees);
+					dumpShallowGraphCycle(sgp, strings);
+					break;
+				}
 
 				avgTrees += searchTree->number;
 				dumpShallowGraphCycle(sgp, sample);
@@ -501,6 +542,11 @@ int main(int argc, char** argv) {
 			/* TODO should be handled by dumpgraph */
 			free(g);
 		}
+	}
+
+	/* if output is standard graph db, terminate it with dollar sign */
+	if (outputMethod == gr) {
+		fprintf(stdout, "$\n");
 	}
 
 	if (verbosity) {

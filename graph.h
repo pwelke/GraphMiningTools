@@ -126,6 +126,7 @@ struct ShallowGraph* addComponent(struct ShallowGraph* g, struct ShallowGraph* h
 /******* Graph *************************************************/
 struct Graph* cloneGraph(struct Graph* g, struct GraphPool* gp);
 struct Graph* cloneInducedGraph(struct Graph* g, struct GraphPool* gp);
+struct Graph* mergeGraphs(struct Graph* g, struct GraphPool* gp);
 
 struct Vertex** setVertexNumber(struct Graph* g, int n);
 struct Graph* emptyGraph(struct Graph* g, struct GraphPool* gp);
