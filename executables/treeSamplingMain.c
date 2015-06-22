@@ -31,7 +31,8 @@ typedef enum {
 
 typedef enum {
 		cs,
-		gr
+		fo,
+		tr
 } OutputMethod;
 
 /**
@@ -406,8 +407,12 @@ int main(int argc, char** argv) {
 				outputMethod = cs;
 				break;
 			}
-			if (strcmp(optarg, "graph") == 0) {
-				outputMethod = gr;
+			if ((strcmp(optarg, "forest") == 0) || (strcmp(optarg, "graph") == 0)) {
+				outputMethod = fo;
+				break;
+			}
+			if (strcmp(optarg, "tree") == 0) {
+				outputMethod = tr;
 				break;
 			}
 			fprintf(stderr, "Unknown output method: %s\n", optarg);
@@ -499,28 +504,62 @@ int main(int argc, char** argv) {
 				switch (outputMethod) {
 				struct ShallowGraph* strings;
 				struct ShallowGraph* string;
-				struct Graph* trees;
+				struct Graph* forest;
+				struct Vertex* rootNode;
+				struct Graph* rootGraph;
 				case cs:
 					/* output tree patterns represented as canonical strings */
 					printf("# %i %i\n", g->number, searchTree->d);
 					printStringsInSearchTree(searchTree, stdout, sgp);
 					fflush(stdout);
 					break;
-				case gr:
+				case fo:
 					/* output tree patterns as forest un standard format */
-					trees = NULL;
+					forest = NULL;
 					strings = listStringsInSearchTree(searchTree, sgp);
 					for (string=strings; string!=NULL; string=string->next) {
 						struct Graph* tmp;
 						tmp = treeCanonicalString2Graph(string, gp);
-						tmp->next = trees;
-						trees = tmp;
+						tmp->next = forest;
+						forest = tmp;
 					}
-					trees = mergeGraphs(trees, gp);
-					trees->number = g->number;
-					trees->activity = g->activity;
-					printGraphAidsFormat(trees, stdout);
-					dumpGraph(gp, trees);
+					forest = mergeGraphs(forest, gp);
+					forest->number = g->number;
+					forest->activity = g->activity;
+					printGraphAidsFormat(forest, stdout);
+					dumpGraph(gp, forest);
+					dumpShallowGraphCycle(sgp, strings);
+					break;
+				case tr:
+					/* output tree patterns as single tree in standard format by adding a new vertex with unique label */
+					forest = createGraph(1, gp);
+					rootGraph = forest;
+					rootNode = forest->vertices[0];
+					rootNode->label = intLabel(g->number);
+					rootNode->isStringMaster = 1;
+
+					strings = listStringsInSearchTree(searchTree, sgp);
+					for (string=strings; string!=NULL; string=string->next) {
+						struct VertexList* e = getVertexList(gp->listPool);
+						struct Graph* tmp;
+						tmp = treeCanonicalString2Graph(string, gp);
+
+						/* evil: add edge between vertices that do not belong to the same graph, yet. */
+						rootGraph->m += 1;
+						e->startPoint = rootNode;
+						e->endPoint = tmp->vertices[0];
+						e->label = rootNode->label;
+						addEdge(rootNode, e);
+						addEdge(tmp->vertices[0], inverseEdge(e, gp->listPool));
+
+						tmp->next = forest;
+						forest = tmp;
+					}
+					forest = mergeGraphs(forest, gp);
+					forest->number = g->number;
+					forest->activity = g->activity;
+					printGraphAidsFormat(forest, stdout);
+					dumpGraph(gp, forest);
 					dumpShallowGraphCycle(sgp, strings);
 					break;
 				}
@@ -545,7 +584,7 @@ int main(int argc, char** argv) {
 	}
 
 	/* if output is standard graph db, terminate it with dollar sign */
-	if (outputMethod == gr) {
+	if ((outputMethod == tr)  || (outputMethod == fo)) {
 		fprintf(stdout, "$\n");
 	}
 
