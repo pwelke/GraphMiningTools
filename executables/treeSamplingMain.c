@@ -308,26 +308,40 @@ static int compare (const void * a, const void * b)
 
 char* getWLLabel(struct Vertex* v, struct Vertex* trie, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	char* resultingLabel;
+	struct Vertex* local = getVertex(gp->vertexPool);
 	struct ShallowGraph* string = getShallowGraph(sgp);
 	struct ShallowGraph* copy;
 	int deg = degree(v);
 	char** neighborlabels = malloc(deg * sizeof(char*));
 	int i = 0;
 	struct VertexList* e;
+
 	for (e=v->neighborhood; e!=NULL; e=e->next) {
 		neighborlabels[i] = e->endPoint->label;
 		++i;
 	}
 	qsort(neighborlabels, deg, sizeof(char*), &compare);
+
+	e = getVertexList(sgp->listPool);
+	e->label = v->label;
+	appendEdge(string, e);
 	for (i=0; i<deg; ++i) {
 		e = getVertexList(sgp->listPool);
 		e->label = neighborlabels[i];
 		appendEdge(string, e);
 	}
+	// fprintf(stderr, "adding string ");
+	// printCanonicalString(string, stdout);
 	copy = cloneShallowGraph(string, sgp);
-	addToSearchTree(trie, string, gp, sgp);
-	resultingLabel = intLabel(getID(trie, copy));
-	dumpShallowGraphCycle(sgp, copy);
+	// fprintf(stderr, "copy          ");
+	// printCanonicalString(copy, stdout);
+	addToSearchTree(local, copy, gp, sgp);
+	mergeSearchTrees(trie, local, 1, NULL, 0, trie, 0, gp);
+	i = getID(trie, string);
+	// fprintf(stderr, "resulting label %i\n", i);
+	resultingLabel = intLabel(i);
+	dumpShallowGraphCycle(sgp, string);
+	free(neighborlabels);
 	return resultingLabel;
 }
 
@@ -339,7 +353,8 @@ struct Graph* weisfeilerLehmanRelabel(struct Graph* g, struct Vertex* wlLabels, 
 		h->vertices[v]->label = getWLLabel(g->vertices[v], wlLabels, gp, sgp);
 		h->vertices[v]->isStringMaster = 1;
 	}
-	printStringsInSearchTree(wlLabels, stderr, sgp);
+	// fprintf(stderr, "\n\n\n");
+	// printStringsInSearchTree(wlLabels, stderr, sgp);
 	return h;
 }
 
