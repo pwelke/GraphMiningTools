@@ -26,7 +26,8 @@ typedef enum {
 		mix,
 		cactus,
 		bridgeForest,
-		listOrSample
+		listOrSample,
+		wl
 	} SamplingMethod;	
 
 typedef enum {
@@ -300,6 +301,48 @@ struct ShallowGraph* listOrSampleSpanningTrees(struct Graph* g, int k, long int 
 	return spanningTrees;
 }
 
+static int compare (const void * a, const void * b)
+{
+    return strcmp (*(char **) a, *(char **) b);
+}
+
+char* getWLLabel(struct Vertex* v, struct Vertex* trie, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	char* resultingLabel;
+	struct ShallowGraph* string = getShallowGraph(sgp);
+	struct ShallowGraph* copy;
+	int deg = degree(v);
+	char** neighborlabels = malloc(deg * sizeof(char*));
+	int i = 0;
+	struct VertexList* e;
+	for (e=v->neighborhood; e!=NULL; e=e->next) {
+		neighborlabels[i] = e->endPoint->label;
+		++i;
+	}
+	qsort(neighborlabels, deg, sizeof(char*), &compare);
+	for (i=0; i<deg; ++i) {
+		e = getVertexList(sgp->listPool);
+		e->label = neighborlabels[i];
+		appendEdge(string, e);
+	}
+	copy = cloneShallowGraph(string, sgp);
+	addToSearchTree(trie, string, gp, sgp);
+	resultingLabel = intLabel(getID(trie, copy));
+	dumpShallowGraphCycle(sgp, copy);
+	return resultingLabel;
+}
+
+struct Graph* weisfeilerLehmanRelabel(struct Graph* g, struct Vertex* wlLabels, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Graph* h = cloneGraph(g, gp);
+	int v;
+
+	for (v=0; v<g->n; ++v) {
+		h->vertices[v]->label = getWLLabel(g->vertices[v], wlLabels, gp, sgp);
+		h->vertices[v]->isStringMaster = 1;
+	}
+	printStringsInSearchTree(wlLabels, stderr, sgp);
+	return h;
+}
+
 
 /**
  * Input handling, parsing of database and call of opk feature extraction method.
@@ -330,6 +373,9 @@ int main(int argc, char** argv) {
 	long int avgTrees = 0;
 	/* set random seed */
 	srand(time(NULL));
+
+	/* TODO refactor Weisfeiler Lehman Label store */
+	struct Vertex* wlLabels = NULL;
 
 	/* parse command line arguments */
 	int arg;
@@ -390,6 +436,10 @@ int main(int argc, char** argv) {
 				samplingMethod = listOrSample;
 				break;
 			}
+			if (strcmp(optarg, "weisfeilerlehman") == 0) {
+				samplingMethod = wl;
+				break;
+			}
 			fprintf(stderr, "Unknown sampling method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -426,6 +476,11 @@ int main(int argc, char** argv) {
 	vp = createVertexPool(10000);
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
+
+	if (samplingMethod == wl) {
+		wlLabels = getVertex(vp);
+		outputMethod = gr;
+	}
 
 	/* initialize the stream to read graphs from 
    check if there is a filename present in the command line arguments 
@@ -476,58 +531,67 @@ int main(int argc, char** argv) {
 					break;
 				}
 
-				for (tree=sample; tree!=NULL; tree=tree->next) {
-					if (tree->m != 0) {
-						struct Graph* tmp = shallowGraphToGraph(tree, gp);
-						struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
-						addToSearchTree(searchTree, cString, gp, sgp);
-						/* garbage collection */
-						dumpGraph(gp, tmp);
-					} else {
-						// in the case of bridge forests or singleton graphs, we might get a tree without an edge.
-						// sinlgeton graphs are not supported, yet.
-						if (samplingMethod == bridgeForest) {
-							struct ShallowGraph* cString = getShallowGraph(sgp);
-							struct VertexList* e = getVertexList(sgp->listPool);
-							e->label = g->vertices[tree->data]->label;
-							appendEdge(cString, e);
+				// nasty handling of weisfeiler lehman labeling
+				if (samplingMethod == wl) {
+					struct Graph* h = weisfeilerLehmanRelabel(g, wlLabels, gp, sgp);
+					printGraphAidsFormat(h, stdout);					
+					dumpGraph(gp, h);
+				} else {
+
+					for (tree=sample; tree!=NULL; tree=tree->next) {
+						if (tree->m != 0) {
+							struct Graph* tmp = shallowGraphToGraph(tree, gp);
+							struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
 							addToSearchTree(searchTree, cString, gp, sgp);
+							/* garbage collection */
+							dumpGraph(gp, tmp);
+						} else {
+							// in the case of bridge forests or singleton graphs, we might get a tree without an edge.
+							// sinlgeton graphs are not supported, yet.
+							if (samplingMethod == bridgeForest) {
+								struct ShallowGraph* cString = getShallowGraph(sgp);
+								struct VertexList* e = getVertexList(sgp->listPool);
+								e->label = g->vertices[tree->data]->label;
+								appendEdge(cString, e);
+								addToSearchTree(searchTree, cString, gp, sgp);
+							}
 						}
 					}
-				}
 
-				switch (outputMethod) {
-				struct ShallowGraph* strings;
-				struct ShallowGraph* string;
-				struct Graph* trees;
-				case cs:
-					/* output tree patterns represented as canonical strings */
-					printf("# %i %i\n", g->number, searchTree->d);
-					printStringsInSearchTree(searchTree, stdout, sgp);
-					fflush(stdout);
-					break;
-				case gr:
-					/* output tree patterns as forest un standard format */
-					trees = NULL;
-					strings = listStringsInSearchTree(searchTree, sgp);
-					for (string=strings; string!=NULL; string=string->next) {
-						struct Graph* tmp;
-						tmp = treeCanonicalString2Graph(string, gp);
-						tmp->next = trees;
-						trees = tmp;
+					switch (outputMethod) {
+					struct ShallowGraph* strings;
+					struct ShallowGraph* string;
+					struct Graph* trees;
+					case cs:
+						/* output tree patterns represented as canonical strings */
+						printf("# %i %i\n", g->number, searchTree->d);
+						printStringsInSearchTree(searchTree, stdout, sgp);
+						fflush(stdout);
+						break;
+					case gr:
+						/* output tree patterns as forest un standard format */
+						trees = NULL;
+						strings = listStringsInSearchTree(searchTree, sgp);
+						for (string=strings; string!=NULL; string=string->next) {
+							struct Graph* tmp;
+							tmp = treeCanonicalString2Graph(string, gp);
+							tmp->next = trees;
+							trees = tmp;
+						}
+						trees = mergeGraphs(trees, gp);
+						trees->number = g->number;
+						trees->activity = g->activity;
+						printGraphAidsFormat(trees, stdout);
+						dumpGraph(gp, trees);
+						dumpShallowGraphCycle(sgp, strings);
+						break;
 					}
-					trees = mergeGraphs(trees, gp);
-					trees->number = g->number;
-					trees->activity = g->activity;
-					printGraphAidsFormat(trees, stdout);
-					dumpGraph(gp, trees);
-					dumpShallowGraphCycle(sgp, strings);
-					break;
-				}
 
-				avgTrees += searchTree->number;
-				dumpShallowGraphCycle(sgp, sample);
-				dumpSearchTree(gp, searchTree);
+					avgTrees += searchTree->number;
+					dumpShallowGraphCycle(sgp, sample);
+					dumpSearchTree(gp, searchTree);
+
+				}
 
 				++processedGraphs;
 			}		
@@ -554,6 +618,9 @@ int main(int argc, char** argv) {
 	}
 
 	/* global garbage collection */
+	if (samplingMethod == wl) {
+		dumpSearchTree(gp, wlLabels);
+	}
 	destroyFileIterator();
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);
