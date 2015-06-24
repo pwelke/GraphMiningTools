@@ -42,9 +42,9 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
 	if (edge == NULL) {
 		root->visited += 1;
 		if (root->visited == 1) {
+			root->lowPoint = id;
 			return 1;
 		} else {
-			root->lowPoint = id;
 			return 0;
 		}
 	} else {
@@ -65,7 +65,7 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
 		edge->startPoint = root;
 		edge->endPoint = getVertex(p->vertexPool);
 		addEdge(root, edge);
-		addStringToSearchTree(edge->endPoint, idx, p);
+		addStringToSearchTreeRec(edge->endPoint, idx, id, p);
 		return 1;
 	}
 }
