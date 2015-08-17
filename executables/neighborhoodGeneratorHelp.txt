@@ -1,0 +1,3 @@
+Generates a new set of graphs corresponding to the 1-neighborhoods of each
+vertex in each graph of the input database.
+
