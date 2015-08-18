@@ -60,9 +60,15 @@ options: options (except -h and -u) are always followed by a value.
     -o 'format': choose output format
        canonicalString: output a list of canonical strings of sampled trees for each graph
                         This is the input expected by lwm (default)
-       graph:           Output sampled trees as forest in the standard graph db format.
+       forest / graph:  Output sampled trees as forest in the standard graph db format.
                         Graph number and activity of each forest are equal to the values
                         of the input graph.
+       tree:            Output sampled trees as a single tree in the standard graph db
+                        format. A new vertex with label equal to the graph id is added and
+                        connected to one vertex in each tree in the above forest with an
+                        edge, that as well has a label equal to the graph id. This might
+                        be useful to feed the output to a tree mining algorithm that can
+                        only handle tree transactions, not forest transactions. 
 
     -h:  display this help
 
