@@ -193,10 +193,10 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 }
 
 
-char isPath(struct graph* tree) {
+char isPath(struct Graph* tree) {
 	int v;
 	for (v=0; v<tree->n; ++v) {
-		if (degree(g->vertices[v]) > 2) {
+		if (degree(tree->vertices[v]) > 2) {
 			return 0;
 		}
 	}
