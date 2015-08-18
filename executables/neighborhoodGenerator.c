@@ -8,6 +8,7 @@
 #include "../graph.h"
 #include "../loading.h"
 #include "../graphPrinting.h"
+#include "neighborhoodGenerator.h"
 
 
 /**
@@ -30,8 +31,27 @@ static int printHelp() {
 }
 
 
+static char isInducedEdge(struct Graph* newGraph, struct VertexList* e) {
+	int visitId = e->endPoint->visited;
+	// sanity check: we did only set ->visited for neighbors of v, and don't know anything about other ->visiteds.
+	char result = (visitId >=0) && (visitId < newGraph->n);
+	// if the ->visited of the new copy equals the number of the endpoint, it must be a neighbor of v or v.
+	return result && (newGraph->vertices[visitId]->visited == e->endPoint->number);
+}
+
+
+static void addInducedEdge(struct Graph* newGraph, struct VertexList* e, struct ListPool* lp) {
+	struct VertexList* copy = getVertexList(lp);
+
+	copy->label = e->label;
+	copy->startPoint = newGraph->vertices[e->startPoint->visited];
+	copy->endPoint = newGraph->vertices[e->endPoint->visited];
+	addEdge(newGraph->vertices[e->startPoint->visited], copy);
+	++newGraph->m;
+}
+
 /* uses ->visited of neighborhood of v */
-struct Graph* getNeighborhoodGraph(struct Vertex* v, struct GraphPool* gp) {
+struct Graph* getDiskGraph(struct Vertex* v, struct GraphPool* gp) {
 	int i;
 	int delta = degree(v);
 	struct Graph* newGraph = createGraph(delta + 1, gp);
@@ -51,36 +71,15 @@ struct Graph* getNeighborhoodGraph(struct Vertex* v, struct GraphPool* gp) {
 
 	for (e=v->neighborhood; e!=NULL; e=e->next) {
 		struct VertexList* f;
-		struct VertexList* copy = getVertexList(gp->listPool);
 
-		struct Vertex* currentNeighbor = e->endPoint;
-		struct Vertex* currentNewNeighbor = newGraph->vertices[currentNeighbor->visited];
-		
 		// add copy of edge from v to current neighbor to new graph
-		copy->label = e->label;
-		copy->startPoint = newV;
-		copy->endPoint = currentNewNeighbor;
-		addEdge(newV, copy);
-		++newGraph->m;
+		addInducedEdge(newGraph, e, gp->listPool);
 
 		// for each outgoing edge of current neighbor, check if it goes to the neighborhood of v
 		// or to v itself
-		for (f=currentNeighbor->neighborhood; f!=NULL; f=f->next) {
-			int visitId = f->endPoint->visited;
-			// sanity check: we did only set ->visited for neighbors of v, and don't know anything about other ->visiteds.
-			if ((visitId >=0) && (visitId < delta+1)) {
-				// if the ->visited of the new copy equals the number of the endpoint, it must be a neighbor of v or v.
-				if (newGraph->vertices[visitId]->visited == f->endPoint->number) {
-					struct Vertex* someNewNeighbor = newGraph->vertices[visitId];
-					
-					// add a copy for each such edge 
-					copy = getVertexList(gp->listPool);
-					copy->label = f->label;
-					copy->startPoint = currentNewNeighbor;
-					copy->endPoint = someNewNeighbor;
-					addEdge(currentNewNeighbor, copy);
-					++newGraph->m;
-				}
+		for (f=e->endPoint->neighborhood; f!=NULL; f=f->next) {
+			if (isInducedEdge(newGraph, f)) {
+				addInducedEdge(newGraph, f, gp->listPool);
 			}
 		}
 	}
@@ -95,6 +94,48 @@ struct Graph* getNeighborhoodGraph(struct Vertex* v, struct GraphPool* gp) {
 
 	return newGraph;
 }
+
+
+/* uses ->visited of neighborhood of v */
+struct Graph* getNeighborhoodGraph(struct Vertex* v, struct GraphPool* gp) {
+	int i;
+	int delta = degree(v);
+	struct Graph* newGraph = createGraph(delta, gp);
+	struct VertexList* e;
+
+	// v is not contained in new graph
+	v->visited = delta + 1;
+	// set ->visited in old graph to index of copy in newGraph
+	// and ->visited in new graph to number of original in old graph
+	for (i=0, e=v->neighborhood; e!=NULL; ++i, e=e->next) {
+		e->endPoint->visited = i;
+		newGraph->vertices[i]->visited = e->endPoint->number;
+		newGraph->vertices[i]->label = e->endPoint->label;
+	}
+
+	for (e=v->neighborhood; e!=NULL; e=e->next) {
+		struct VertexList* f;
+
+		// for each outgoing edge of current neighbor, check if it goes to the neighborhood of v
+		// or to v itself
+		for (f=e->endPoint->neighborhood; f!=NULL; f=f->next) {
+			if (isInducedEdge(newGraph, f)) {
+				addInducedEdge(newGraph, f, gp->listPool);
+			}
+		}
+	}
+
+	// each edge was added twice
+	newGraph->m /= 2;
+
+	// clean up visiteds of new graph
+	for (i=0; i<delta; ++i) {
+		newGraph->vertices[i]->visited = 0;
+	}
+
+	return newGraph;
+}
+
 
 
 /**
@@ -118,11 +159,11 @@ int main(int argc, char** argv) {
 
 	/* user set variables to specify what needs to be done */
 	int depth = 1;
-
+	SubgraphSelector selector = disk;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hp:s:a:b:c:d:N:";
+	const char* validArgs = "hd:s:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -133,6 +174,18 @@ int main(int argc, char** argv) {
 				fprintf(stderr, "value must be integer, is: %s\n", optarg);
 				return EXIT_FAILURE;
 			}
+			break;
+		case 's':
+			if (strcmp(optarg, "disk") == 0) {
+				selector = disk;
+				break;
+			}
+			if (strcmp(optarg, "neighbors") == 0) {
+				selector = neighbors;
+				break;
+			}
+			fprintf(stderr, "unknown argument: %s\n", optarg);
+			return EXIT_FAILURE;
 			break;
 		case '?':
 			return EXIT_FAILURE;
@@ -170,10 +223,19 @@ int main(int argc, char** argv) {
 			int v;
 
 			for (v=0; v<g->n; ++v, ++neighborhoodCount) {
-				struct Graph* neighborhood = getNeighborhoodGraph(g->vertices[v], gp);
-				neighborhood->number = neighborhoodCount;
-				neighborhood->activity = atoi(g->vertices[v]->label);
-				printGraphAidsFormat(neighborhood, stdout);
+				struct Graph* subgraph = NULL;
+
+				switch (selector) {
+				case disk:
+					subgraph = getDiskGraph(g->vertices[v], gp);
+					break;
+				case neighbors:
+					subgraph = getNeighborhoodGraph(g->vertices[v], gp);
+					break;
+				} 
+				subgraph->number = neighborhoodCount;
+				subgraph->activity = atoi(g->vertices[v]->label);
+				printGraphAidsFormat(subgraph, stdout);
 			}
 
 			/***** do not alter ****/
