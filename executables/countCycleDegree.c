@@ -13,7 +13,7 @@
 /**
  * Print --help message
  */
-void printHelp() {
+static void printHelp() {
 	printf("This program counts the cycle degrees of vertices in a set of graphs.\n");
 	printf("The cycle degree of a vertex is the number of nontrivial biconnected \n");
 	printf("components, it is contained in. The cyc.deg of a graph G is the \n");
