@@ -54,6 +54,7 @@ int main(int argc, char** argv) {
 	SamplingMethod samplingMethod = wilson;
 	char unsafe = 0;
 	char verbosity = 0;
+	char processDisconnectedGraphs = 0;
 	OutputMethod outputMethod = cs;
 
 	/* i counts the number of graphs read */
@@ -67,7 +68,7 @@ int main(int argc, char** argv) {
 	/* parse command line arguments */
 	int arg;
 	int seed;
-	const char* validArgs = "hs:k:t:o:ur:v";
+	const char* validArgs = "hs:k:t:o:ur:vd";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -82,6 +83,9 @@ int main(int argc, char** argv) {
 			break;
 		case 'u':
 			unsafe = 1;
+			break;
+		case 'd':
+			processDisconnectedGraphs = 1;
 			break;
 		case 't':
 			if (sscanf(optarg, "%li", &threshold) != 1) {
@@ -193,30 +197,73 @@ int main(int argc, char** argv) {
 				struct ShallowGraph* sample = NULL;
 				struct ShallowGraph* tree;
 
-				switch (samplingMethod) {
-				case wilson:
-					sample = sampleSpanningTreesUsingWilson(g, k, sgp);
-					break;
-				case kruskal:
-					sample = sampleSpanningTreesUsingKruskal(g, k, gp, sgp);
-					break;
-				case listing:
-					sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
-					break;
-				case mix:
-					sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
-					break;
-				case partialListing:
-					sample = sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
-				case cactus:
-					sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
-					break;
-				case bridgeForest:
-					sample = listBridgeForest(g, gp, sgp);
-					break;
-				case listOrSample:
-					sample = listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
-					break;
+				if (!processDisconnectedGraphs) {
+					switch (samplingMethod) {
+					case wilson:
+						sample = sampleSpanningTreesUsingWilson(g, k, sgp);
+						break;
+					case kruskal:
+						sample = sampleSpanningTreesUsingKruskal(g, k, gp, sgp);
+						break;
+					case listing:
+						sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
+						break;
+					case mix:
+						sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
+						break;
+					case partialListing:
+						sample = sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
+					case cactus:
+						sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
+						break;
+					case bridgeForest:
+						sample = listBridgeForest(g, gp, sgp);
+						break;
+					case listOrSample:
+						sample = listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
+						break;
+					}
+				else {
+					switch (samplingMethod) {
+					case wilson:
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson,
+							(g, k, threshold, gp, sgp);
+						break;
+					case kruskal:
+						// sample = sampleSpanningTreesUsingKruskal(g, k, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingKruskal,
+							(g, k, threshold, gp, sgp);
+						break;
+					case listing:
+						// sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingListing,
+							(g, k, threshold, gp, sgp);
+						break;
+					case mix:
+						// sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingMix,
+							(g, k, threshold, gp, sgp);
+						break;
+					case partialListing:
+						// sample = sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingPartialListingMix,
+							(g, k, threshold, gp, sgp);
+					case cactus:
+						// sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingCactusMix,
+							(g, k, threshold, gp, sgp);
+						break;
+					case bridgeForest:
+						// sample = listBridgeForest(g, gp, sgp);
+						sample = runForEachConnectedComponent(&xlistBridgeForest,
+							(g, k, threshold, gp, sgp);
+						break;
+					case listOrSample:
+						// sample = listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
+						sample = runForEachConnectedComponent(&xlistOrSampleSpanningTrees,
+							(g, k, threshold, gp, sgp);
+						break;
+					}
 				}
 
 				for (tree=sample; tree!=NULL; tree=tree->next) {
