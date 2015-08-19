@@ -4,7 +4,7 @@
 #include "graph.h"
 
 
-void markConnectedComponents(struct Vertex *v, int component);
+void markConnectedComponent(struct Vertex *v, int component);
 int getAndMarkConnectedComponents(struct Graph* g);
 struct Graph* listConnectedComponents(struct Graph* g, struct GraphPool* gp);
 
