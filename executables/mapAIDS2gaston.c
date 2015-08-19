@@ -16,8 +16,8 @@ void printHelp() {
 }
 
 
-void mapGraph2Gaston(int maxGraphs, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	int bufferSize = 100;
+void mapGraph2Gaston(int maxGraphs, struct GraphPool* gp) {
+	// int bufferSize = 100;
 	struct Graph* g;	
 	char** labels = aids99VertexLabelArray();
 	int i = 0;
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 		createFileIterator(argv[1], gp);
-		mapGraph2Gaston(-1, gp, sgp);
+		mapGraph2Gaston(-1, gp);
 		destroyFileIterator();
 		
 		/* garbage collection */
