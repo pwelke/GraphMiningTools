@@ -75,6 +75,12 @@ struct ShallowGraph* sampleSpanningTreesUsingWilson(struct Graph* g, int k, stru
 	return spanningTrees;
 }
 
+struct ShallowGraph* xsampleSpanningTreesUsingWilson(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)threshold;
+	(void)gp;
+	return sampleSpanningTreesUsingWilson(g, k, sgp);
+}
+
 
 /** from http://stackoverflow.com/questions/6127503/shuffle-array-in-c, 
 but replaced their use of drand48 by rand
@@ -122,6 +128,12 @@ struct ShallowGraph* sampleSpanningTreesUsingKruskalOnce(struct Graph* g, struct
 	return spanningTree;
 }
 
+struct ShallowGraph* xsampleSpanningTreesUsingKruskalOnce(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)k;
+	(void)threshold;
+	return sampleSpanningTreesUsingKruskalOnce(g, gp, sgp);
+}
+
 
 struct ShallowGraph* sampleSpanningTreesUsingKruskal(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* spanningTrees = NULL;
@@ -133,6 +145,12 @@ struct ShallowGraph* sampleSpanningTreesUsingKruskal(struct Graph* g, int k, str
 		spanningTrees = tmp;
 	}
 	return spanningTrees;
+}
+
+
+struct ShallowGraph* xsampleSpanningTreesUsingKruskal(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)threshold;
+	return sampleSpanningTreesUsingKruskal(g, k, gp, sgp);
 }
 
 
@@ -172,6 +190,12 @@ struct ShallowGraph* sampleSpanningTreesUsingListing(struct Graph* g, int k, str
 }
 
 
+struct ShallowGraph* xsampleSpanningTreesUsingListing(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)threshold;
+	return sampleSpanningTreesUsingListing(g, k, gp, sgp);
+}
+
+
 /**
 If there are expected to be less than threshold spanning trees, sample spanning trees using explicit listing, 
 otherwise use wilsons algorithm.
@@ -183,6 +207,11 @@ struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, long in
 	} else {
 		return sampleSpanningTreesUsingWilson(g, k, sgp);
 	}
+}
+
+
+struct ShallowGraph* xsampleSpanningTreesUsingMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	return sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
 }
 
 
@@ -217,6 +246,11 @@ struct ShallowGraph* sampleSpanningTreesUsingPartialListingMix(struct Graph* g, 
 	} else {
 		return sampleSpanningTreesUsingWilson(g, k, sgp);
 	}
+}
+
+
+struct ShallowGraph* xsampleSpanningTreesUsingPartialListingMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	return sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
 }
 
 
@@ -256,6 +290,11 @@ struct ShallowGraph* sampleSpanningTreesUsingCactusMix(struct Graph* g, int k, l
 }
 
 
+struct ShallowGraph* xsampleSpanningTreesUsingCactusMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	return sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
+}
+
+
 /**
 Return the list of trees in the bridge forest of g.
 */
@@ -276,6 +315,13 @@ struct ShallowGraph* listBridgeForest(struct Graph* g, struct GraphPool* gp, str
 }
 
 
+struct ShallowGraph* xlistBridgeForest(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {	
+	(void)k;
+	(void)threshold;
+	return listBridgeForest(g, gp, sgp);
+}
+
+
 /**
 If there are expected to be less than threshold spanning trees, return a list containing all of them. 
 Otherwise, sample k spanning trees using Wilsons algorithm. 
@@ -289,4 +335,32 @@ struct ShallowGraph* listOrSampleSpanningTrees(struct Graph* g, int k, long int 
 		spanningTrees = sampleSpanningTreesUsingWilson(g, k, sgp);
 	}
 	return spanningTrees;
+}
+
+
+struct ShallowGraph* xlistOrSampleSpanningTrees(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	return listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
+}
+
+struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler)(struct Graph*, int, long int, struct GraphPool*, struct ShallowGraphPool*), 
+	struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	struct ShallowGraph* results = NULL;
+	struct Graph* connectedComponents = listConnectedComponents(g, gp);
+
+	struct Graph* current;
+	for (current=connectedComponents; current!=NULL; current=current->next) {
+		struct ShallowGraph* currentResult = sampler(g, k, threshold, gp, sgp);
+
+		// find last element in currentResult
+		struct ShallowGraph* idx;	
+		for (idx=currentResult; idx->next!=NULL; idx=idx->next);
+
+		// add previous results after last element, reset results to head of current results
+		if (idx) {
+			idx->next = results;
+			results = currentResult;
+		}
+	}
+	return results;
 }
