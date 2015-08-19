@@ -6,6 +6,7 @@
 
 void markConnectedComponents(struct Vertex *v, int component);
 int getAndMarkConnectedComponents(struct Graph* g);
+struct Graph* listConnectedComponents(struct Graph* g, struct GraphPool* gp);
 
 int getNumberOfBridges(struct Graph* g, struct ShallowGraphPool* sgp);
 int getNumberOfBridgeTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct GraphPool* gp);

@@ -193,24 +193,79 @@ void markConnectedComponents(struct Vertex *v, int component) {
 
 
 /**
+Traverses a graph and marks all vertices reachable from v with the number given
+by the argument component. Return the number of vertices that were marked.
+ */
+void markAndStoreConnectedComponent(struct Vertex *v, struct Graph* copy, int component) {
+	struct VertexList *index;
+
+	/* mark vertex as visited */
+	v->visited = component;
+
+	/*recursive call for all neighbors that are not visited so far */
+	for (index = v->neighborhood; index; index = index->next) {
+		if (!(index->endPoint->visited)) {
+			markConnectedComponents(index->endPoint, component);
+			// 
+			copy->vertices[index->endPoint->number] = index->endPoint;
+		}
+	}
+}
+
+
+/** Return a list of all connected components as struct Graph*'s.
+
+Attention: Bad Runtime: O(n * c) where c is number of components!
+Could be implemented in O(n).
+*/
+struct Graph* listConnectedComponents(struct Graph* g, struct GraphPool* gp) {
+	struct Graph* components = NULL;
+	int v;
+	int componentNumber = 0;
+
+	struct Graph* copy = getGraph(gp);
+	setVertexNumber(copy, g->n);
+
+	for (v=0; v<g->n; ++v) {
+		g->vertices[v]->visited = -1;
+	}
+	for (v=0; v<g->n; ++v) {
+		if (g->vertices[v]->visited == -1) {
+			int w;
+			struct Graph* currentComponent;
+			markAndStoreConnectedComponent(g->vertices[v], copy, componentNumber);
+			currentComponent = cloneInducedGraph(copy, gp);
+			currentComponent->next = components;
+			components = currentComponent;
+			for (w=0; w<copy->n; ++w) {
+				copy->vertices[w] = NULL;
+			}
+
+			++componentNumber;
+		}
+	}
+	return components;
+}
+
+/**
 Mark all connected components with a unique number.
 Indexing starts with 0 and is stored in ->visited.
 Vertex 0 will always be in connected component 0.
 Returns the number of connected components in the graph.
 */
 int getAndMarkConnectedComponents(struct Graph* g) {
-	int component = 0;
+	int componentNumber = 0;
 	int v;
 	for (v=0; v<g->n; ++v) {
 		g->vertices[v]->visited = -1;
 	}
 	for (v=0; v<g->n; ++v) {
 		if (g->vertices[v]->visited == -1) {
-			markConnectedComponents(g->vertices[v], component);
-			++component;
+			markConnectedComponents(g->vertices[v], componentNumber);
+			++componentNumber;
 		}
 	}
-	return component;
+	return componentNumber;
 }
 
 
