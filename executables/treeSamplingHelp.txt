@@ -52,6 +52,11 @@ options: options (except -h and -u) are always followed by a value.
     -u: Skip the initial test if graphs are connected. Might be useful
         for bridgeForest, or if you have ensured that all input graphs are connected
 
+    -d: Also process disconnected graphs. Implies -u. The selection method and choice
+        of parameters is applied to each connected component of each graph g. Therefore, 
+        for most selection methods, k*c trees are returned for each graph g, where c is 
+        the number of connected components of g.
+
     -r 'randomSeed': specify the random seed used for the sampling methods. If not
                      present, it is initialized from the current system time.
 
