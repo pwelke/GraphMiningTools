@@ -349,8 +349,9 @@ struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler
 	struct Graph* connectedComponents = listConnectedComponents(g, gp);
 
 	struct Graph* current;
+
 	for (current=connectedComponents; current!=NULL; current=current->next) {
-		struct ShallowGraph* currentResult = sampler(g, k, threshold, gp, sgp);
+		struct ShallowGraph* currentResult = sampler(current, k, threshold, gp, sgp);
 
 		// find last element in currentResult
 		struct ShallowGraph* idx;	
