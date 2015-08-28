@@ -54,6 +54,8 @@ typedef enum {
 	numberOfEdges,
 	maxCycleDegree,
 	minCycleDegree,
+	maxLocalEasiness,
+	minLocalEasiness,
 	maxDegree,
 	minDegree
 

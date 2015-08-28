@@ -15,6 +15,7 @@
 #include "../listCycles.h"
 #include "../hp_cactus.h"
 #include "../graphPrinting.h"
+#include "../localEasiness.h"
 #include "filter.h"
 
 
@@ -165,6 +166,14 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "minCycleDegree") == 0) {
 				filter = minCycleDegree;
+				break;
+			}
+			if (strcmp(optarg, "minLocalEasiness") == 0) {
+				filter = minLocalEasiness;
+				break;
+			}
+			if (strcmp(optarg, "maxLocalEasiness") == 0) {
+				filter = maxLocalEasiness;
 				break;
 			}
 			if (strcmp(optarg, "maxDegree") == 0) {
@@ -425,6 +434,12 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case minCycleDegree:
 		measure = getMinCycleDegree(g, sgp);
+		break;
+	case maxLocalEasiness:
+		measure = getMaxLocalEasiness(g, additionalParameter, gp, sgp);
+		break;
+	case minLocalEasiness:
+		measure = getMinLocalEasiness(g, additionalParameter, gp, sgp);
 		break;
 	}
 

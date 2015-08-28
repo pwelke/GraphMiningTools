@@ -79,6 +79,14 @@ options: options (except -h) are always followed by a value.
         numberOfEdges      number of edges in the graph
         maxCycleDegree     maximum cycle degree of a graph
         minCycleDegree     minimum cycle degree of a graph
+        maxLocalEasiness   maximum local easiness of a graph, or -1 if there 
+                              are more than A spanningTrees in some block of
+                              the graph (default 100). A can be set via 
+                              the option -a A
+        minLocalEasiness   minimum local easiness of a graph, or -1 if there 
+                              are more than A spanningTrees in all blocks of
+                              the graph (default 100). A can be set via 
+                              the option -a A
         maxDegree          maximum vertex degree of a graph
         minDegree          minimum vertex degree of a graph 
      -a 'value': an Integer (default 100). This value is used by some of the filters
