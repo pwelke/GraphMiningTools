@@ -65,6 +65,13 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
 		edge->startPoint = root;
 		edge->endPoint = getVertex(p->vertexPool);
 		addEdge(root, edge);
+		// if edge is not responsible for its label, make it by making a copy of the label.
+		// as search trees tend to live longer than the graphs they are derived from, this saves trouble
+		// although it makes the method depend on the length of the strings.
+		if (edge->isStringMaster == 0) {
+			edge->label = copyString(edge->label);
+			edge->isStringMaster = 1;
+		}
 		addStringToSearchTree(edge->endPoint, idx, p);
 		return 1;
 	}
