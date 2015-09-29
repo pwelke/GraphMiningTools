@@ -354,7 +354,7 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 			/* if we cross the frequency threshold, we mark the pattern as matched and update 
 			 * bookkeeping information accordingly. This must be done exactly once */ 
 			// fprintf(stderr, "fraction %lf nTransactions %i count %i c>=f*n %i\n", fraction, weightedNTransactions, count, (count >= fraction * weightedNTransactions));
-			if ((count > fraction * weightedNTransactions) || ((fraction == 1.0) && (count == weightedNTransactions)) { 
+			if ((count > fraction * weightedNTransactions) || ((fraction == 1.0) && (count == weightedNTransactions))) { 
 				features[i][pattern] = 1;
 				++pointers[pattern]->visited;
 				++currentLevelNumber;
