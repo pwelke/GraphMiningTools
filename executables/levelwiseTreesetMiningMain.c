@@ -153,6 +153,10 @@ int main(int argc, char** argv) {
 				listingOperator = &generateCandidatePathSet;
 				break;
 			}
+			if (strcmp(optarg, "aprioriTrees") == 0) {
+				listingOperator = &generateCandidateAprioriTreeSet;
+				break;
+			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
 			return EXIT_FAILURE;
 		case 'c':

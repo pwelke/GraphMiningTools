@@ -33,8 +33,9 @@ usage: lwm [ARGS] FILE
                         representing G.
 
     -l OPERATOR: listing operator used for frequent substructure mining
-            trees: list frequent subtrees (default)
-            paths: list frequent subpaths
+            trees:        list frequent subtrees (default)
+            aprioriTrees: same as above, but use standard apriori pruning
+            paths:        list frequent subpaths
         
     -i FRACTION: relative fraction of spanning trees of a graph s.t.
                  a subtree S is considered a match. I.e. S is subgraph 
