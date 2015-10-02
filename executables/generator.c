@@ -169,21 +169,6 @@ int main(int argc, char** argv) {
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(1, vp, lp);
 
-	/* initialize the stream to read graphs from 
-	   check if there is a filename present in the command line arguments 
-	   if so, open the file, if not, read from stdin */
-	if (optind < argc) {
-		char* filename = argv[optind];
-		/* if the present filename is not '-' then init a file iterator for that file name */
-		if (strcmp(filename, "-") != 0) {
-			createFileIterator(filename, gp);
-		} else {
-			createStdinIterator(gp);
-		}
-	} else {
-		createStdinIterator(gp);
-	}
-
 	/* iterate over all graphs in the database */
 	for (i=0; i<numberOfGeneratedGraphs; ++i) {
 		int n = rand() % (upperBoundVertices - lowerBoundVertices) + lowerBoundVertices;
@@ -197,7 +182,6 @@ int main(int argc, char** argv) {
 
 
 	/* global garbage collection */
-	destroyFileIterator();
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);
 	freeListPool(lp);

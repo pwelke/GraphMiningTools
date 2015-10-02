@@ -35,7 +35,7 @@
  */
 
 
-/* careful if adding edges that are string masters. those edges are dumped. */
+/* careful if adding edges that are string masters. those edges might be dumped. */
 static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edge, int id, struct GraphPool* p) {
 
 	/* if edge == NULL, stop recursion, remember, that some string ends here */
@@ -55,15 +55,6 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
 				char isNew = addStringToSearchTreeRec(idx->endPoint, edge->next, id, p);
 				/* edges dangling at edge are consumed or dumped by the following recursion steps */
 				edge->next = NULL;
-				/* if edge is a string master and idx is not, steal edges 
-				string and make idx a string master */
-				if (edge->isStringMaster) {
-					if (idx->isStringMaster) {
-						idx->isStringMaster = 1;
-						idx->label = edge->label;
-						edge->isStringMaster = 0;
-					}
-				}
 				dumpVertexList(p->listPool, edge);
 				return isNew;
 			}
@@ -74,7 +65,15 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
 		edge->startPoint = root;
 		edge->endPoint = getVertex(p->vertexPool);
 		addEdge(root, edge);
-		return addStringToSearchTreeRec(edge->endPoint, idx, id, p);
+		// if edge is not responsible for its label, make it by making a copy of the label.
+		// as search trees tend to live longer than the graphs they are derived from, this saves trouble
+		// although it makes the method depend on the length of the strings.
+		if (edge->isStringMaster == 0) {
+			edge->label = copyString(edge->label);
+			edge->isStringMaster = 1;
+		}
+		addStringToSearchTree(edge->endPoint, idx, p);
+		return 1;
 	}
 }
 

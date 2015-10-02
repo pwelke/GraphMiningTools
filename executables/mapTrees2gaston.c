@@ -12,7 +12,7 @@
 /**
  * Print --help message
  */
-void printHelp() {
+static void printHelp() {
 	printf("Maps a output file of sts or tpk to the expected input of gaston graph mining\n");
 	printf("Either give filename as an argument or pipe something in\n");
 }

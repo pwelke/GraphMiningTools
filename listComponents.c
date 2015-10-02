@@ -173,11 +173,82 @@ int getNumberOfBridgeTrees(struct Graph* g, struct ShallowGraphPool* sgp, struct
 }
 
 
+
+/**
+Traverses a graph and marks all vertices reachable from v with the number given
+by the argument component. Return the number of edges that visited. Note, that this
+is twice the number of edges in the connected component, due to standard reasons.
+
+Careful: To avoid infinite runtime, the method tests if a visited vertex has ->visited == component.
+Thus, either initialize ->visited's  with some value < 0 or start component counting with 1.
+ */
+int markAndStoreConnectedComponent(struct Vertex *v, struct Graph* copy, int component) {
+	struct VertexList *index;
+	int m = 0;
+
+	/* mark vertex as visited */
+	v->visited = component;
+	// store pointer to vertex in copy graph
+	copy->vertices[v->number] = v;
+
+	/*recursive call for all neighbors that are not visited so far */
+	for (index = v->neighborhood; index; index = index->next) {
+		++m;
+		if (index->endPoint->visited != component) {
+			m += markAndStoreConnectedComponent(index->endPoint, copy, component);
+		}
+	}
+	return m;
+}
+
+
+/** Return a list of all connected components as struct Graph*'s.
+
+Attention: Bad Runtime: O(n * c) where c is number of components!
+Could be implemented in O(n).
+*/
+struct Graph* listConnectedComponents(struct Graph* g, struct GraphPool* gp) {
+	struct Graph* components = NULL;
+	int v;
+	int componentNumber = 0;
+
+	struct Graph* copy = getGraph(gp);
+	setVertexNumber(copy, g->n);
+
+	for (v=0; v<g->n; ++v) {
+		g->vertices[v]->visited = -1;
+	}
+	for (v=0; v<g->n; ++v) {
+		if (g->vertices[v]->visited == -1) {
+			int m = -1;
+			int w;
+			struct Graph* currentComponent;
+
+			m = markAndStoreConnectedComponent(g->vertices[v], copy, componentNumber);
+			currentComponent = cloneInducedGraph(copy, gp);
+			currentComponent->m = m / 2;
+			currentComponent->next = components;
+			components = currentComponent;
+			
+			for (w=0; w<copy->n; ++w) {
+				copy->vertices[w] = NULL;
+			}
+
+			++componentNumber;
+		}
+	}
+	return components;
+}
+
+
 /**
 Traverses a graph and marks all vertices reachable from v with the number given
 by the argument component.
+
+Careful: To avoid infinite runtime, the method tests if a visited vertex has ->visited == component.
+Thus, either initialize ->visited's  with some value < 0 or start component counting with 1.
  */
-void markConnectedComponents(struct Vertex *v, int component) {
+void markConnectedComponent(struct Vertex *v, int component) {
 	struct VertexList *index;
 
 	/* mark vertex as visited */
@@ -185,8 +256,8 @@ void markConnectedComponents(struct Vertex *v, int component) {
 
 	/*recursive call for all neighbors that are not visited so far */
 	for (index = v->neighborhood; index; index = index->next) {
-		if (!(index->endPoint->visited)) {
-			markConnectedComponents(index->endPoint, component);
+		if (index->endPoint->visited != component) {
+			markConnectedComponent(index->endPoint, component);
 		}
 	}
 }
@@ -199,18 +270,18 @@ Vertex 0 will always be in connected component 0.
 Returns the number of connected components in the graph.
 */
 int getAndMarkConnectedComponents(struct Graph* g) {
-	int component = 0;
+	int componentNumber = 0;
 	int v;
 	for (v=0; v<g->n; ++v) {
 		g->vertices[v]->visited = -1;
 	}
 	for (v=0; v<g->n; ++v) {
 		if (g->vertices[v]->visited == -1) {
-			markConnectedComponents(g->vertices[v], component);
-			++component;
+			markConnectedComponent(g->vertices[v], componentNumber);
+			++componentNumber;
 		}
 	}
-	return component;
+	return componentNumber;
 }
 
 

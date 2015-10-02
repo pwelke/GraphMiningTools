@@ -1,7 +1,7 @@
 TPKNAME = tpk
 LWMNAME = lwm
-MTGNAME = mtg
-MGGNAME = mgg
+MTGNAME = tree2gaston
+MGGNAME = aids2gaston
 CPKNAME = cpk
 STSNAME = ts
 CCDNAME = ccd
@@ -11,6 +11,9 @@ GFNAME = gf
 CSTRNAME = cstring
 LWGNAME = lwg
 GENNAME = ggen
+NGENNAME = ngen
+
+ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME)
 
 CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
@@ -43,6 +46,8 @@ PERFOBJECTS = $(OBJECTS) ./executables/tciPerf.o
 PERFHELP =
 GENOBJECTS = $(OBJECTS) ./executables/generator.o
 GENHELP = ./executables/generatorHelp.help
+NGENOBJECTS = $(OBJECTS) ./executables/neighborhoodGenerator.o
+NGENHELP = ./executables/neighborhoodGeneratorHelp.help
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
@@ -53,7 +58,7 @@ dependencies.png: $(EVERYTHING)
 
 main: $(GFNAME)
 	
-all: $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME)
+all: $(ALLTARGETS)
 
 %.help: %.txt
 	@xxd -i $< > $@
@@ -99,13 +104,17 @@ $(LWGNAME): $(LWGHELP) $(LWGOBJECTS)
 $(GENNAME): $(GENHELP) $(GENOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
+$(NGENNAME): $(NGENHELP) $(NGENOBJECTS)
+	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+
 %.o : %.c %.h
 	@gcc $(CPPFLAGS) -c $< -o $@
 
 clean:
-	rm *.o
-	rm ./executables/*.o
-	rm ./executables/*.help
+	@rm -f *.o
+	@rm -f ./executables/*.o
+	@rm -f ./executables/*.help
+	@rm -f $(ALLTARGETS)
 
 print-%:
 	@echo $*=$($*)

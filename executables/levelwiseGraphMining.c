@@ -354,7 +354,7 @@ int main(int argc, char** argv) {
 			struct Graph** refinements;
 			int refinementSize;
 			
-			candidateSet = generateCandidateSet(frequentPatterns, extensionEdges, gp, sgp);
+			candidateSet = generateCandidateTreeSet(frequentPatterns, extensionEdges, gp, sgp);
 			
 			fprintf(stdout, "level %i candidates\n", patternSize);
 			printStringsInSearchTree(candidateSet, stdout, sgp);

@@ -6,39 +6,18 @@
 #include <time.h>
 
 #include "../graph.h"
-#include "../searchTree.h"
 #include "../loading.h"
-#include "../listSpanningTrees.h"
-#include "../listComponents.h"
-#include "../upperBoundsForSpanningTrees.h"
-#include "../connectedComponents.h"
+#include "../searchTree.h"
 #include "../cs_Tree.h"
-#include "../wilsonsAlgorithm.h"
-#include "../kruskalsAlgorithm.h"
 #include "../graphPrinting.h"
-
-char DEBUG_INFO = 1;
-
-typedef enum {
-		wilson,
-		kruskal,
-		listing,
-		mix,
-		cactus,
-		bridgeForest,
-		listOrSample,
-		wl
-	} SamplingMethod;	
-
-typedef enum {
-		cs,
-		gr
-} OutputMethod;
+#include "../connectedComponents.h"
+#include "../sampleSubtrees.h"
+#include "treeSamplingMain.h"
 
 /**
  * Print --help message
  */
-int printHelp() {
+static int printHelp() {
 #include "treeSamplingHelp.help"
 	unsigned char* help = executables_treeSamplingHelp_txt;
 	int len = executables_treeSamplingHelp_txt_len;
@@ -52,253 +31,6 @@ int printHelp() {
 		fprintf(stderr, "Could not read help file\n");
 		return EXIT_FAILURE;
 	}
-}
-
-
-/**
-Sample a spanning tree from a cactus graph, given as a list of its biconnected components, uniformly at random.
-To this end, we just need to remove a random edge from each cycle = block of the graph. **/
-struct ShallowGraph* sampleSpanningTreeEdgesFromCactus(struct ShallowGraph* biconnectedComponents, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* spanningTree = getShallowGraph(sgp);
-	struct ShallowGraph* idx;
-	for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
-		if (idx->m == 1) {
-			appendEdge(spanningTree, shallowCopyEdge(idx->edges, sgp->listPool));
-		} else {
-			int removalEdgeId = rand() % idx->m;
-			struct VertexList* e;
-			int i = 0;
-			for (e=idx->edges; e!=NULL; e=e->next) {
-				if (i != removalEdgeId) {
-					appendEdge(spanningTree, shallowCopyEdge(e, sgp->listPool));
-				}
-				++i;
-			}
-		}
-	}
-	return spanningTree;
-}
-
-
-/**
-Sample a spanning tree from a cactus graph, given as a list of its biconnected components, uniformly at random.
-To this end, we just need to remove a random edge from each cycle = block of the graph. **/
-struct Graph* sampleSpanningTreeFromCactus(struct Graph* original, struct ShallowGraph* biconnectedComponents, struct GraphPool* gp) {
-	struct Graph* spanningTree = emptyGraph(original, gp);
-	struct ShallowGraph* idx;
-	for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
-		if (idx->m == 1) {
-			addEdgeBetweenVertices(idx->edges->startPoint->number, idx->edges->endPoint->number, idx->edges->label, spanningTree, gp);
-		} else {
-			int removalEdgeId = rand() % idx->m;
-			struct VertexList* e;
-			int i = 0;
-			for (e=idx->edges; e!=NULL; e=e->next) {
-				if (i != removalEdgeId) {
-					addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, spanningTree, gp);
-				}
-				++i;
-			}
-		}
-	}
-	return spanningTree;
-}
-
-
-/**
-Take k random spanning trees of g using Wilsons algorithm and return them as a list.
-*/
-struct ShallowGraph* sampleSpanningTreesUsingWilson(struct Graph* g, int k, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* spanningTrees = NULL;
-	int j;
-	for (j=0; j<k; ++j) {
-		struct ShallowGraph* spanningTree = randomSpanningTreeAsShallowGraph(g, sgp);
-		spanningTree->next = spanningTrees;
-		spanningTrees = spanningTree;
-	}
-	return spanningTrees;
-}
-
-
-/** from http://stackoverflow.com/questions/6127503/shuffle-array-in-c, 
-but replaced their use of drand48 by rand
-make sure you randomize properly using srand()! */
-static void shuffle(struct VertexList** array, size_t n) {    
-    // struct timeval tv;
-    // gettimeofday(&tv, NULL);
-    // int usec = tv.tv_usec;
-    // srand48(usec);
-
-    if (n > 1) {
-        size_t i;
-        for (i = n - 1; i > 0; i--) {
-            size_t j = (unsigned int) (rand() % i);
-            struct VertexList* t = array[j];
-            array[j] = array[i];
-            array[i] = t;
-        }
-    }
-}
-
-
-static struct ShallowGraph* sampleSpanningTreesUsingKruskalOnce(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* spanningTree = NULL;
-	int i;
-
-	// create and shuffle array of edges of g
-	struct ShallowGraph* edges = getGraphEdges(g, sgp);
-	struct VertexList** edgeArray = malloc(g->m * sizeof(struct VertexList*));
-	if (edges->m != 0) {
-		edgeArray[0] = edges->edges;
-	}
-	for (i=1; i < g->m; ++i) {
-		edgeArray[i] = edgeArray[i-1]->next;
-	}
-	shuffle(edgeArray, g->m);
-
-	// do the kruskal
-	spanningTree = kruskalMST(g, edgeArray, gp, sgp);
-
-	// garbage collection
-	dumpShallowGraphCycle(sgp, edges);
-	free(edgeArray);
-
-	return spanningTree;
-}
-
-
-struct ShallowGraph* sampleSpanningTreesUsingKruskal(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* spanningTrees = NULL;
-	int i;
-
-	for (i=0; i<k; ++i) {
-		struct ShallowGraph* tmp = sampleSpanningTreesUsingKruskalOnce(g, gp, sgp);
-		tmp->next = spanningTrees;
-		spanningTrees = tmp;
-	}
-	return spanningTrees;
-}
-
-
-/**
-List all spanning trees of g and draw k of them uniformly at random, return these k spanning trees as a list. 
-*/
-struct ShallowGraph* sampleSpanningTreesUsingListing(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* spanningTrees = NULL;
-	struct ShallowGraph* trees = listSpanningTrees(g, sgp, gp);
-	struct ShallowGraph** array;
-	
-	struct ShallowGraph* idx;
-	int j;
-	int nTrees = 0;
-
-	/* find number of listed trees, put them in array */
-	for (idx=trees; idx; idx=idx->next) ++nTrees;
-
-	array = malloc(nTrees * sizeof(struct ShallowGraph*));
-	j = 0;
-	for (idx=trees; idx; idx=idx->next) {	
-		array[j] = idx;
-		++j;
-	}
-
-	/* sample k trees uniformly at random */
-	for (j=0; j<k; ++j) {
-		int rnd = rand() % nTrees;
-		// can't just use the listed tree itself, as it might get selected more than once
-		struct ShallowGraph* tree = cloneShallowGraph(array[rnd], sgp);
-		tree->next = spanningTrees;
-		spanningTrees = tree;
-	}
-	dumpShallowGraphCycle(sgp, trees);
-	free(array);
-	return spanningTrees;
-}
-
-
-/**
-If there are expected to be less than threshold spanning trees, sample spanning trees using explicit listing, 
-otherwise use wilsons algorithm.
-*/
-struct ShallowGraph* sampleSpanningTreesUsingMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	long upperBound = getGoodEstimate(g, sgp, gp);
-	if ((upperBound < threshold) && (upperBound != -1)) {
-		return sampleSpanningTreesUsingListing(g, k, gp, sgp);
-	} else {
-		return sampleSpanningTreesUsingWilson(g, k, sgp);
-	}
-}
-
-
-/**
-If g is a cactus graph, use a specialized method to sample spanning trees, 
-otherwise use sampleSpanningTreesUsingMix.
-*/
-struct ShallowGraph* sampleSpanningTreesUsingCactusMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* spanningTrees = NULL;
-	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
-	int blockCount = 0;
-	struct ShallowGraph* idx;
-	for (idx=biconnectedComponents; idx!=NULL; idx=idx->next) {
-		if (idx->m > 1) {
-			++blockCount;
-		}
-	}
-	/* if g is a cactus graph */
-	if (g->n - 1 + blockCount == g->m) {
-		int j;
-		for (j=0; j<k; ++j) {	
-			struct ShallowGraph* spanningTree = sampleSpanningTreeEdgesFromCactus(biconnectedComponents, sgp);
-			spanningTree->next = spanningTrees;
-			spanningTrees = spanningTree;
-		}
-	} else {
-		// for speedup. this is sampleSpanningTreesUsingMix
-		long upperBound = getGoodEstimatePrecomputedBlocks(g, biconnectedComponents, sgp, gp);
-		if ((upperBound < threshold) && (upperBound != -1)) {
-			spanningTrees = sampleSpanningTreesUsingListing(g, k, gp, sgp);
-		} else {
-			spanningTrees = sampleSpanningTreesUsingWilson(g, k, sgp);
-		}
-	}
-	dumpShallowGraphCycle(sgp, biconnectedComponents);
-	return spanningTrees;
-}
-
-
-/**
-Return the list of trees in the bridge forest of g.
-*/
-struct ShallowGraph* listBridgeForest(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	/* find biconnected Components */
-	struct ShallowGraph* h = listBiconnectedComponents(g, sgp);
-	// TODO replace this by a method that just creates the forest without listing cycles
-	struct Graph* forest = partitionIntoForestAndCycles(h, g, gp, sgp);
-	struct ShallowGraph* bridgeTrees = getConnectedComponents(forest, sgp);
-	struct ShallowGraph* tmp;
-	// the resulting trees need to reference the original graph g
-	for (tmp=bridgeTrees; tmp!=NULL; tmp=tmp->next) {
-		rebaseShallowGraph(tmp, g);
-	}
-	/* garbage collection */
-	dumpGraphList(gp, forest);
-	return bridgeTrees;
-}
-
-
-/**
-If there are expected to be less than threshold spanning trees, return a list containing all of them. 
-Otherwise, sample k spanning trees using Wilsons algorithm. 
-*/
-struct ShallowGraph* listOrSampleSpanningTrees(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* spanningTrees = NULL; 
-	long upperBound = getGoodEstimate(g, sgp, gp);
-	if ((upperBound < threshold) && (upperBound != -1)) {
-		spanningTrees = listSpanningTrees(g, sgp, gp);	
-	} else {
-		spanningTrees = sampleSpanningTreesUsingWilson(g, k, sgp);
-	}
-	return spanningTrees;
 }
 
 static int compare (const void * a, const void * b)
@@ -379,6 +111,7 @@ int main(int argc, char** argv) {
 	SamplingMethod samplingMethod = wilson;
 	char unsafe = 0;
 	char verbosity = 0;
+	char processDisconnectedGraphs = 0;
 	OutputMethod outputMethod = cs;
 
 	/* i counts the number of graphs read */
@@ -395,7 +128,7 @@ int main(int argc, char** argv) {
 	/* parse command line arguments */
 	int arg;
 	int seed;
-	const char* validArgs = "hs:k:t:o:ur:v";
+	const char* validArgs = "hs:k:t:o:ur:vd";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -409,6 +142,10 @@ int main(int argc, char** argv) {
 			}
 			break;
 		case 'u':
+			unsafe = 1;
+			break;
+		case 'd':
+			processDisconnectedGraphs = 1;
 			unsafe = 1;
 			break;
 		case 't':
@@ -437,6 +174,10 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "mix") == 0) {
 				samplingMethod = mix;
+				break;
+			}
+			if (strcmp(optarg, "partialListing") == 0) {
+				samplingMethod = partialListing;
 				break;
 			}
 			if (strcmp(optarg, "cactus") == 0) {
@@ -471,8 +212,12 @@ int main(int argc, char** argv) {
 				outputMethod = cs;
 				break;
 			}
-			if (strcmp(optarg, "graph") == 0) {
-				outputMethod = gr;
+			if ((strcmp(optarg, "forest") == 0) || (strcmp(optarg, "graph") == 0)) {
+				outputMethod = fo;
+				break;
+			}
+			if (strcmp(optarg, "tree") == 0) {
+				outputMethod = tr;
 				break;
 			}
 			fprintf(stderr, "Unknown output method: %s\n", optarg);
@@ -494,7 +239,7 @@ int main(int argc, char** argv) {
 
 	if (samplingMethod == wl) {
 		wlLabels = getVertex(vp);
-		outputMethod = gr;
+		outputMethod = tr;
 	}
 
 	/* initialize the stream to read graphs from 
@@ -522,91 +267,188 @@ int main(int argc, char** argv) {
 				struct ShallowGraph* sample = NULL;
 				struct ShallowGraph* tree;
 
-				switch (samplingMethod) {
-				case wilson:
-					sample = sampleSpanningTreesUsingWilson(g, k, sgp);
-					break;
-				case kruskal:
-					sample = sampleSpanningTreesUsingKruskal(g, k, gp, sgp);
-					break;
-				case listing:
-					sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
-					break;
-				case mix:
-					sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
-					break;
-				case cactus:
-					sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
-					break;
-				case bridgeForest:
-					sample = listBridgeForest(g, gp, sgp);
-					break;
-				case listOrSample:
-					sample = listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
-					break;
-				}
-
-				// nasty handling of weisfeiler lehman labeling
-				if (samplingMethod == wl) {
-					struct Graph* h = weisfeilerLehmanRelabel(g, wlLabels, gp, sgp);
-					printGraphAidsFormat(h, stdout);					
-					dumpGraph(gp, h);
+				if (!processDisconnectedGraphs) {
+					switch (samplingMethod) {
+					case wilson:
+						sample = sampleSpanningTreesUsingWilson(g, k, sgp);
+						break;
+					case kruskal:
+						sample = sampleSpanningTreesUsingKruskal(g, k, gp, sgp);
+						break;
+					case listing:
+						sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
+						break;
+					case mix:
+						sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
+						break;
+					case partialListing:
+						sample = sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
+					case cactus:
+						sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
+						break;
+					case bridgeForest:
+						sample = listBridgeForest(g, gp, sgp);
+						break;
+					case listOrSample:
+						sample = listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
+						break;
+					}
 				} else {
-
-					for (tree=sample; tree!=NULL; tree=tree->next) {
-						if (tree->m != 0) {
-							struct Graph* tmp = shallowGraphToGraph(tree, gp);
-							struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
-							addToSearchTree(searchTree, cString, gp, sgp);
-							/* garbage collection */
-							dumpGraph(gp, tmp);
-						} else {
-							// in the case of bridge forests or singleton graphs, we might get a tree without an edge.
-							// sinlgeton graphs are not supported, yet.
-							if (samplingMethod == bridgeForest) {
-								struct ShallowGraph* cString = getShallowGraph(sgp);
-								struct VertexList* e = getVertexList(sgp->listPool);
-								e->label = g->vertices[tree->data]->label;
-								appendEdge(cString, e);
-								addToSearchTree(searchTree, cString, gp, sgp);
-							}
-						}
-					}
-
-					switch (outputMethod) {
-					struct ShallowGraph* strings;
-					struct ShallowGraph* string;
-					struct Graph* trees;
-					case cs:
-						/* output tree patterns represented as canonical strings */
-						printf("# %i %i\n", g->number, searchTree->d);
-						printStringsInSearchTree(searchTree, stdout, sgp);
-						fflush(stdout);
+					switch (samplingMethod) {
+					case wilson:
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson,
+							g, k, threshold, gp, sgp);
 						break;
-					case gr:
-						/* output tree patterns as forest un standard format */
-						trees = NULL;
-						strings = listStringsInSearchTree(searchTree, sgp);
-						for (string=strings; string!=NULL; string=string->next) {
-							struct Graph* tmp;
-							tmp = treeCanonicalString2Graph(string, gp);
-							tmp->next = trees;
-							trees = tmp;
-						}
-						trees = mergeGraphs(trees, gp);
-						trees->number = g->number;
-						trees->activity = g->activity;
-						printGraphAidsFormat(trees, stdout);
-						dumpGraph(gp, trees);
-						dumpShallowGraphCycle(sgp, strings);
+					case kruskal:
+						// sample = sampleSpanningTreesUsingKruskal(g, k, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingKruskal,
+							g, k, threshold, gp, sgp);
+						break;
+					case listing:
+						// sample = sampleSpanningTreesUsingListing(g, k, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingListing,
+							g, k, threshold, gp, sgp);
+						break;
+					case mix:
+						// sample = sampleSpanningTreesUsingMix(g, k, threshold, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingMix,
+							g, k, threshold, gp, sgp);
+						break;
+					case partialListing:
+						// sample = sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingPartialListingMix,
+							g, k, threshold, gp, sgp);
+					case cactus:
+						// sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
+						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingCactusMix,
+							g, k, threshold, gp, sgp);
+						break;
+					case bridgeForest:
+						// sample = listBridgeForest(g, gp, sgp);
+						sample = runForEachConnectedComponent(&xlistBridgeForest,
+							g, k, threshold, gp, sgp);
+						break;
+					case listOrSample:
+						// sample = listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
+						sample = runForEachConnectedComponent(&xlistOrSampleSpanningTrees,
+							g, k, threshold, gp, sgp);
 						break;
 					}
-
-					avgTrees += searchTree->number;
-					dumpShallowGraphCycle(sgp, sample);
-					dumpSearchTree(gp, searchTree);
-
 				}
+
+				for (tree=sample; tree!=NULL; tree=tree->next) {
+					if (tree->m != 0) {
+						struct Graph* tmp = shallowGraphToGraph(tree, gp);
+						struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
+						addToSearchTree(searchTree, cString, gp, sgp);
+						/* garbage collection */
+						dumpGraph(gp, tmp);
+					} else {
+						// in the case of bridge forests or singleton graphs, we might get a tree without an edge.
+						// sinlgeton graphs are not supported, yet.
+						if (samplingMethod == bridgeForest) {
+							struct ShallowGraph* cString = getShallowGraph(sgp);
+							struct VertexList* e = getVertexList(sgp->listPool);
+							e->label = g->vertices[tree->data]->label;
+							appendEdge(cString, e);
+							addToSearchTree(searchTree, cString, gp, sgp);
+						}
+					}
+				}
+
+// // nasty handling of weisfeiler lehman labeling
+//				if (samplingMethod == wl) {
+//					struct Graph* h = weisfeilerLehmanRelabel(g, wlLabels, gp, sgp);
+//					printGraphAidsFormat(h, stdout);					
+//					dumpGraph(gp, h);
+//				} else {
+//
+					//for (tree=sample; tree!=NULL; tree=tree->next) {
+					//	if (tree->m != 0) {
+					//		struct Graph* tmp = shallowGraphToGraph(tree, gp);
+					//		struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
+					//		addToSearchTree(searchTree, cString, gp, sgp);
+					//		/* garbage collection */
+					//		dumpGraph(gp, tmp);
+					//	} else {
+					//		// in the case of bridge forests or singleton graphs, we might get a tree without an edge.
+					//		// sinlgeton graphs are not supported, yet.
+					//		if (samplingMethod == bridgeForest) {
+					//			struct ShallowGraph* cString = getShallowGraph(sgp);
+					//			struct VertexList* e = getVertexList(sgp->listPool);
+					//			e->label = g->vertices[tree->data]->label;
+					//			appendEdge(cString, e);
+					//			addToSearchTree(searchTree, cString, gp, sgp);
+					//		}
+					//	}
+					//}
+
+switch (outputMethod) {
+				struct ShallowGraph* strings;
+				struct ShallowGraph* string;
+				struct Graph* forest;
+				struct Vertex* rootNode;
+				struct Graph* rootGraph;
+				case cs:
+					/* output tree patterns represented as canonical strings */
+					printf("# %i %i\n", g->number, searchTree->d);
+					printStringsInSearchTree(searchTree, stdout, sgp);
+					fflush(stdout);
+					break;
+				case fo:
+					/* output tree patterns as forest un standard format */
+					forest = NULL;
+					strings = listStringsInSearchTree(searchTree, sgp);
+					for (string=strings; string!=NULL; string=string->next) {
+						struct Graph* tmp;
+						tmp = treeCanonicalString2Graph(string, gp);
+						tmp->next = forest;
+						forest = tmp;
+					}
+					forest = mergeGraphs(forest, gp);
+					forest->number = g->number;
+					forest->activity = g->activity;
+					printGraphAidsFormat(forest, stdout);
+					dumpGraph(gp, forest);
+					dumpShallowGraphCycle(sgp, strings);
+					break;
+				case tr:
+					/* output tree patterns as single tree in standard format by adding a new vertex with unique label */
+					forest = createGraph(1, gp);
+					rootGraph = forest;
+					rootNode = forest->vertices[0];
+					rootNode->label = intLabel(g->number);
+					rootNode->isStringMaster = 1;
+
+					strings = listStringsInSearchTree(searchTree, sgp);
+					for (string=strings; string!=NULL; string=string->next) {
+						struct VertexList* e = getVertexList(gp->listPool);
+						struct Graph* tmp;
+						tmp = treeCanonicalString2Graph(string, gp);
+
+						/* evil: add edge between vertices that do not belong to the same graph, yet. */
+						rootGraph->m += 1;
+						e->startPoint = rootNode;
+						e->endPoint = tmp->vertices[0];
+						e->label = rootNode->label;
+						addEdge(rootNode, e);
+						addEdge(tmp->vertices[0], inverseEdge(e, gp->listPool));
+
+						tmp->next = forest;
+						forest = tmp;
+					}
+					forest = mergeGraphs(forest, gp);
+					forest->number = g->number;
+					forest->activity = g->activity;
+					printGraphAidsFormat(forest, stdout);
+					dumpGraph(gp, forest);
+					dumpShallowGraphCycle(sgp, strings);
+					break;
+				}
+
+				avgTrees += searchTree->number;
+				dumpShallowGraphCycle(sgp, sample);
+				dumpSearchTree(gp, searchTree);
 
 				++processedGraphs;
 			}		
@@ -624,7 +466,7 @@ int main(int argc, char** argv) {
 	}
 
 	/* if output is standard graph db, terminate it with dollar sign */
-	if (outputMethod == gr) {
+	if ((outputMethod == tr)  || (outputMethod == fo)) {
 		fprintf(stdout, "$\n");
 	}
 

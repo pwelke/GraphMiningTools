@@ -219,6 +219,117 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 }
 
 
+
+/** TODO: nasty! merge with above */
+struct ShallowGraph* __recK(int d, int* k, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+
+	struct VertexList* e;
+	struct ShallowGraph* result1;
+	struct ShallowGraph* result2;
+	struct ShallowGraph* B;
+	struct ShallowGraph* bridges;
+	struct ShallowGraph* graphEdges = __getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
+	struct ShallowGraph* rest = graphEdges->next;
+
+	if (rest->m == 0) {
+		struct ShallowGraph* tree = getGraphEdges(partialTree, sgp);
+		tree->next = tree->prev = tree;
+
+		/* garbage collection */
+		dumpShallowGraphCycle(sgp, graphEdges);
+
+		/* count this spanning tree */
+		*k -= 1;
+
+		return tree;
+	}
+	/* get edge that will be included and excluded in this recursive step */
+	e = popEdge(rest);
+
+	/* add e to partialTree (already contained in graph) to find spanning trees containing e */
+	addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, partialTree, gp);
+
+	/* S1 */
+	/* let B be the set of all edges (in graph) joining edges already connected in partialTree */
+	B = __selectB(partialTree, rest, components, n, sgp);
+
+	/* ensures, that adding an edge of graph to partialTree results in a tree in the recursive call */
+	deleteEdges(graph, B, gp);
+
+	result1 = __recK(d+1, k, graph, partialTree, components, n, sgp, gp);
+
+	/* add edges to graph again */
+	addEdges(graph, B, gp);
+
+	/* preliminary garbage collection */
+	dumpShallowGraphCycle(sgp, B);
+
+	/* if we did find enough spanning trees, skip second part */
+	if (*k <= 0) {
+		return result1;
+	}
+
+	/* delete e from partialTree and graph to find spanning trees not containing e */
+	deleteEdgeBetweenVertices(graph, e, gp);
+	deleteEdgeBetweenVertices(partialTree, e, gp);
+
+	/* S2 */
+	bridges = __getNonTreeBridges(graph, partialTree, sgp);
+
+	addEdges(partialTree, bridges, gp);
+	result2 = __recK(d+1, k, graph, partialTree, components, n, sgp, gp);
+
+	deleteEdges(partialTree, bridges, gp);
+
+	/* At the end, spanningTree and graph need to be same as in the beginning. */
+	addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, graph, gp);
+
+	/* garbage collection */
+	dumpVertexList(sgp->listPool, e);
+	dumpShallowGraphCycle(sgp, bridges);
+	dumpShallowGraphCycle(sgp, graphEdges);
+
+	return addComponent(result1, result2);
+}
+
+
+/** return the first k spanning trees of original as a CYCLE OF SHALLOW GRAPHS ! */
+struct ShallowGraph* listKSpanningTrees(struct Graph* original, int* k, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
+	
+	struct Graph* graph = cloneGraph(original, gp);
+	struct Graph* partialTree = emptyGraph(original, gp);
+	struct ShallowGraph* result = NULL;
+	int* components = malloc(sizeof(int) * original->n);
+	struct ShallowGraph* idx;
+
+	/* add all bridges to partialTree */
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(original, sgp);
+	for (idx=biconnectedComponents; idx; idx=idx->next) {
+		struct VertexList* e = idx->edges;
+		if (idx->m == 1) {
+			addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, partialTree, gp);
+		}
+	}
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	
+	/* do the backtrack, baby */
+	result = __recK(0, k, graph, partialTree, components, graph->n, sgp, gp);
+	// do not disconnect the cycle for easy access to last element
+	// result->prev->next = NULL;
+	// result->prev = NULL;
+
+	/* edges in result point to vertices in partialTree this has to be changed */
+	rebaseShallowGraph(result, original);
+
+	/* garbage collection */
+	free(components);
+	dumpGraph(gp, graph);
+	dumpGraph(gp, partialTree);
+
+	return result;
+}
+
+
 long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
 	struct VertexList* e;
 	struct ShallowGraph* B;

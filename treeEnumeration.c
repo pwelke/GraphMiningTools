@@ -193,10 +193,103 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 }
 
 
-char isPath(struct graph* tree) {
+/**
+for each graph g in extension (that is the list starting at extension and continuing at extension->next), 
+two tests are run: g itself must not be contained in currentLevel and any subtree of g with n-1 vertices must be contained
+in lowerLevel (this ensures the apriori property that all subtrees are frequent). 
+if g fulfills both conditions, it is added to the output and to currentLevel.
+
+In contrast to the above filterExtension, this methos does not use any hashing.
+*/ 
+struct Graph* aprioriFilterExtension(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int v;
+	struct Graph* idx = extension; 
+	struct Graph* filteredExtension = NULL;
+
+	// create graph that will hold subgraphs of size n-1 (this assumes that all extension trees have the same size)
+	struct Graph* subgraph = getGraph(gp);
+	setVertexNumber(subgraph, extension->n - 1);
+	subgraph->m = subgraph->n - 1;
+
+	while (idx != NULL) {
+		int notEnumeratedYet;
+
+		struct Graph* current = idx;
+		struct ShallowGraph* string;
+		idx = idx->next;
+		current->next = NULL;
+
+		/* filter out patterns that were already enumerated as the extension of some other pattern
+		and are in the search tree */
+		string = canonicalStringOfTree(current, sgp);
+		notEnumeratedYet = containsString(currentLevel, string);
+		
+		if (notEnumeratedYet) {
+			dumpShallowGraph(sgp, string);
+ 			dumpGraph(gp, current);
+ 			continue; // with next refinement
+		} else {
+			char aprioriProperty = 1;
+			struct ShallowGraph* subString;
+			
+			for (v=0; v<current->n; ++v) {
+				// if the removed vertex is a leaf, we test if the resulting subtree is contained in the lower level
+				if (isLeaf(current->vertices[v]) == 1) {
+					// we invalidate current by removing the edge to v from its neighbor, which makes subgraph a valid tree
+					struct VertexList* edge = snatchEdge(current->vertices[v]->neighborhood->endPoint, current->vertices[v]);
+					
+					int i = 0;
+					int j = 0;
+					for (i=0; i<current->n; ++i) {
+						if (i == v) {
+							continue;
+						} else {
+							subgraph->vertices[j] = current->vertices[i];
+							subgraph->vertices[j]->number = j;
+							++j;
+						}
+					}
+					subString = canonicalStringOfTree(subgraph, sgp);
+					// restore law and order in current
+					addEdge(edge->startPoint, edge);
+					// test apriori property
+					aprioriProperty = containsString(lowerLevel, subString);
+					dumpShallowGraph(sgp, subString);
+					if (!aprioriProperty) {
+			 			break; // looping through the vertices of current and continue with next refinement
+					}
+				}
+			}
+
+			// clean up and garbage collection
+			for (v=0; v<current->n; ++v) {
+				current->vertices[v]->number = v;
+			}
+
+			if (aprioriProperty) {
+				// add current to filtered extension
+				current->next = filteredExtension;
+				filteredExtension = current;
+				addToSearchTree(currentLevel, string, gp, sgp);
+			} else {
+				dumpGraph(gp, current);
+			}
+		}
+	}
+
+	// garbage collection
+	for (v=0; v<subgraph->n; ++v) {
+		subgraph->vertices[v] = 0;
+	}
+	dumpGraph(gp, subgraph);
+	// fprintf(stderr, "return\n");
+	return filteredExtension;
+}
+
+char isPath(struct 	Graph* tree) {
 	int v;
 	for (v=0; v<tree->n; ++v) {
-		if (degree(g->vertices[v]) > 2) {
+		if (degree(tree->vertices[v]) > 2) {
 			return 0;
 		}
 	}
@@ -268,15 +361,17 @@ struct Graph* filterExtensionForPaths(struct Graph* extension, struct Vertex* lo
 }
 
 
-static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Vertex* root, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* currentLevel, struct ShallowGraph* frequentEdges, struct Graph* (*filter)(struct Graph*, struct Vertex*, struct Vertex*, struct GraphPool*, struct ShallowGraphPool*), struct Vertex* root, struct ShallowGraph* prefix, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
 	if ((root->visited != 0) && (root != lowerLevel)) {
 		/* at this point, we have found a pattern, we want to make a tree from it, get the refinements,
 		filter interesting candidates and then scan the db of patterns  */
+		// fprintf(stderr, "pattern to extend: ");
+		// printCanonicalString(prefix, stderr);
 		struct Graph* pattern = treeCanonicalString2Graph(prefix, gp);
 		struct Graph* refinements = extendPattern(pattern, frequentEdges, gp);
-		refinements = filterExtension(refinements, lowerLevel, currentLevel, gp, sgp);
+		refinements = filter(refinements, lowerLevel, currentLevel, gp, sgp);
 
 		/* to just generate the search tree of candidates, we do not need the graphs any more */
 		dumpGraph(gp, pattern);
@@ -295,7 +390,7 @@ static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* cu
 		struct VertexList* lastEdge = prefix->lastEdge;
 		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
 
-		generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, e->endPoint, prefix, gp, sgp);
+		generateCandidateSetRec(lowerLevel, currentLevel, frequentEdges, filter, e->endPoint, prefix, gp, sgp);
 
 		dumpVertexList(sgp->listPool, prefix->lastEdge);
 		prefix->lastEdge = lastEdge;
@@ -310,12 +405,35 @@ static void generateCandidateSetRec(struct Vertex* lowerLevel, struct Vertex* cu
 }
 
 
-struct Vertex* generateCandidateSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct Vertex* generateCandidateTreeSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Vertex* currentLevel = getVertex(gp->vertexPool);
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
 	/* set smallest id of pattern in current level to be largest id of any pattern in lower level plus 1 */
 	currentLevel->lowPoint = lowerLevel->lowPoint;
-	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, lowerLevel, prefix, gp, sgp);
+	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, &filterExtension, lowerLevel, prefix, gp, sgp);
 	dumpShallowGraph(sgp, prefix);
 	return currentLevel;
 }
+
+
+struct Vertex* generateCandidateAprioriTreeSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Vertex* currentLevel = getVertex(gp->vertexPool);
+	struct ShallowGraph* prefix = getShallowGraph(sgp);
+	/* set smallest id of pattern in current level to be largest id of any pattern in lower level plus 1 */
+	currentLevel->lowPoint = lowerLevel->lowPoint;
+	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, &aprioriFilterExtension, lowerLevel, prefix, gp, sgp);
+	dumpShallowGraph(sgp, prefix);
+	return currentLevel;
+}
+
+
+struct Vertex* generateCandidatePathSet(struct Vertex* lowerLevel, struct ShallowGraph* extensionEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Vertex* currentLevel = getVertex(gp->vertexPool);
+	struct ShallowGraph* prefix = getShallowGraph(sgp);
+	/* set smallest id of pattern in current level to be largest id of any pattern in lower level plus 1 */
+	currentLevel->lowPoint = lowerLevel->lowPoint;
+	generateCandidateSetRec(lowerLevel, currentLevel, extensionEdges, &filterExtensionForPaths, lowerLevel, prefix, gp, sgp);
+	dumpShallowGraph(sgp, prefix);
+	return currentLevel;
+}
+

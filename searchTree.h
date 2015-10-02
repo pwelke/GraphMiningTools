@@ -1,6 +1,8 @@
 #ifndef SEARCH_TREE_H_
 #define SEARCH_TREE_H_
 
+#include <stdio.h>
+
 /**
  * Used to store results of mergeSearchTree
  */

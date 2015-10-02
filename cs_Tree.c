@@ -282,7 +282,7 @@ struct ShallowGraph* getTreePatterns(struct Graph* forest, struct ShallowGraphPo
 	for (i=0; i<forest->n; ++i) {
 		if (forest->vertices[i]->visited == 0) {
 			++components;
-			markConnectedComponents(forest->vertices[i], components);
+			markConnectedComponent(forest->vertices[i], components);
 		}
 	}
 

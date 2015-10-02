@@ -75,8 +75,11 @@ void al_free(struct ArrayList* al) {
 }
 
 
-
-struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct ShallowGraphPool* sgp) {
+/**
+Return a random spanning tree of g as a list of its edges. 
+Assumes a connected graph g with g->m > 0.
+*/
+static struct ShallowGraph* _randomSpanningTreeAsShallowGraph(struct Graph* g, struct ShallowGraphPool* sgp) {
 	int i, start;
 	struct VertexList** previous = malloc(g->n * sizeof(struct VertexList*)); // current random walk
 	char* used = malloc(g->n * sizeof(char));
@@ -89,9 +92,6 @@ struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct Sh
 	}
 	ias_shuffleArray(remaining);
 
-	// //debug
-	// fprintf(stderr, "\n\n\nentering wilson\n");
-
 	// Add a random cell.
 	start = ias_pop(remaining);
 	used[start] = 1;
@@ -100,15 +100,23 @@ struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct Sh
 	// add a loop-erased random walk to the maze.
 	while (!loopErasedRandomWalk(g, remaining, previous, used, tree, sgp->listPool));
 
-	// treeEdges = tree->stackData;
-	
-	// tree->stackData = NULL;
-	// al_free(tree);
 	ias_free(remaining);
 	free(previous);
 	free(used);
 
 	return tree;
+}
+
+
+/**
+Return a spanning tree of g as a list of edges. Assumes that g is connected.
+*/
+struct ShallowGraph* randomSpanningTreeAsShallowGraph(struct Graph* g, struct ShallowGraphPool* sgp) {
+	if (g->m == 0) {
+		return getShallowGraph(sgp);
+	} else {
+		return _randomSpanningTreeAsShallowGraph(g, sgp);
+	}
 }
 
 void eraseWalk(int index0, int index1, struct VertexList** previous) {
@@ -146,6 +154,7 @@ char loopErasedRandomWalk(struct Graph* g, struct IntegerArrayStack* remaining, 
 		struct VertexList* e;
 		int neighborIndex = rand() % degree(g->vertices[index0]);
 		int i = 0;
+
 		for (e=g->vertices[index0]->neighborhood; e!=NULL; e=e->next) {
 			if (i == neighborIndex) {
 				index1 = e->endPoint->number;
