@@ -38,6 +38,11 @@ static int compare (const void * a, const void * b)
     return strcmp (*(char **) a, *(char **) b);
 }
 
+/**
+Return a WL-label for vertex v.
+
+trie should hold all WL-label strings that were computed for the current iteration so far and stores the new int labels
+for compression. */
 char* getWLLabel(struct Vertex* v, struct Vertex* trie, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	char* resultingLabel;
 	struct Vertex* local = getVertex(gp->vertexPool);
@@ -77,6 +82,12 @@ char* getWLLabel(struct Vertex* v, struct Vertex* trie, struct GraphPool* gp, st
 	return resultingLabel;
 }
 
+/**
+Do a single iteration of Weisfeiler-Lehman relabeling. Return a new graph with new labels.
+
+I.e., the new label of each vertex will represent the label of the vertex and the label of each
+neighbor of the vertex. These labels are compressed to integers for performance reasons.
+*/
 struct Graph* weisfeilerLehmanRelabel(struct Graph* g, struct Vertex* wlLabels, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* h = cloneGraph(g, gp);
 	int v;
