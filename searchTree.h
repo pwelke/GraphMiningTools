@@ -2,6 +2,7 @@
 #define SEARCH_TREE_H_
 
 #include <stdio.h>
+#include "graph.h"
 
 /**
  * Used to store results of mergeSearchTree

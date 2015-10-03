@@ -1,6 +1,7 @@
 #ifndef LOADING_H
 #define LOADING_H
 
+#include "stdio.h"
 #include "graph.h"
 
 struct Graph* readSimpleFormat(char* filename, int undirected, struct GraphPool *p, int strspace);
