@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
 	char unsafe = 0;
 	char verbosity = 0;
 	char processDisconnectedGraphs = 0;
+	char weisfeilerLehmanLabeling = 0;
 	OutputMethod outputMethod = cs;
 
 	/* i counts the number of graphs read */
@@ -72,7 +73,7 @@ int main(int argc, char** argv) {
 	/* parse command line arguments */
 	int arg;
 	int seed;
-	const char* validArgs = "hs:k:t:o:ur:vd";
+	const char* validArgs = "hs:k:t:o:ur:vdw";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -102,6 +103,9 @@ int main(int argc, char** argv) {
 					threshold = LONG_MAX / 2;
 				}
 			}
+			break;
+		case 'w':
+			weisfeilerLehmanLabeling = 1;
 			break;
 		case 's':
 			if (strcmp(optarg, "wilson") == 0) {
@@ -134,10 +138,6 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "listOrSample") == 0) {
 				samplingMethod = listOrSample;
-				break;
-			}
-			if (strcmp(optarg, "weisfeilerlehman") == 0) {
-				samplingMethod = wl;
 				break;
 			}
 			fprintf(stderr, "Unknown sampling method: %s\n", optarg);
@@ -181,9 +181,8 @@ int main(int argc, char** argv) {
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
 
-	if (samplingMethod == wl) {
+	if (weisfeilerLehmanLabeling) {
 		wlLabels = getVertex(vp);
-		outputMethod = tr;
 	}
 
 	/* initialize the stream to read graphs from 
@@ -210,6 +209,12 @@ int main(int argc, char** argv) {
 				struct Vertex* searchTree = getVertex(gp->vertexPool);
 				struct ShallowGraph* sample = NULL;
 				struct ShallowGraph* tree;
+				struct Graph* h = g;
+
+				// if we use weisfeiler lehman labels, replace g by its newly labeled copy
+				if (weisfeilerLehmanLabeling) {
+					g = weisfeilerLehmanRelabel(g, wlLabels, gp, sgp);
+				}
 
 				if (!processDisconnectedGraphs) {
 					switch (samplingMethod) {
@@ -300,34 +305,7 @@ int main(int argc, char** argv) {
 					}
 				}
 
-// // nasty handling of weisfeiler lehman labeling
-//				if (samplingMethod == wl) {
-//					struct Graph* h = weisfeilerLehmanRelabel(g, wlLabels, gp, sgp);
-//					printGraphAidsFormat(h, stdout);					
-//					dumpGraph(gp, h);
-//				} else {
-//
-					//for (tree=sample; tree!=NULL; tree=tree->next) {
-					//	if (tree->m != 0) {
-					//		struct Graph* tmp = shallowGraphToGraph(tree, gp);
-					//		struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
-					//		addToSearchTree(searchTree, cString, gp, sgp);
-					//		/* garbage collection */
-					//		dumpGraph(gp, tmp);
-					//	} else {
-					//		// in the case of bridge forests or singleton graphs, we might get a tree without an edge.
-					//		// sinlgeton graphs are not supported, yet.
-					//		if (samplingMethod == bridgeForest) {
-					//			struct ShallowGraph* cString = getShallowGraph(sgp);
-					//			struct VertexList* e = getVertexList(sgp->listPool);
-					//			e->label = g->vertices[tree->data]->label;
-					//			appendEdge(cString, e);
-					//			addToSearchTree(searchTree, cString, gp, sgp);
-					//		}
-					//	}
-					//}
-
-switch (outputMethod) {
+				switch (outputMethod) {
 				struct ShallowGraph* strings;
 				struct ShallowGraph* string;
 				struct Graph* forest;
@@ -394,6 +372,13 @@ switch (outputMethod) {
 				dumpShallowGraphCycle(sgp, sample);
 				dumpSearchTree(gp, searchTree);
 
+				// if we have used weisfeiler lehman labels, dump the newly labeled and reset g to the original graph
+				if (weisfeilerLehmanLabeling) {
+					dumpGraph(gp, g);
+					g = h;
+					h = NULL;
+				}
+
 				++processedGraphs;
 			}		
 
@@ -419,7 +404,7 @@ switch (outputMethod) {
 	}
 
 	/* global garbage collection */
-	if (samplingMethod == wl) {
+	if (weisfeilerLehmanLabeling) {
 		dumpSearchTree(gp, wlLabels);
 	}
 	destroyFileIterator();

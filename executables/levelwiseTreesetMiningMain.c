@@ -35,9 +35,6 @@ int printHelp() {
 }
 
 
-/**
-I DON'T KNOW WHAT THIS FUNCTION DOES
-*/
 static void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
 	struct VertexList* e;
 	if (current != root) {
@@ -52,6 +49,10 @@ static void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
 	}
 }
 
+
+/**
+this method compresses the feature labels after filtering for frequency
+*/
 void setLowPoints(struct Vertex* root) {
 	setLowPointsRec(root, root);
 }

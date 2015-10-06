@@ -12,7 +12,6 @@ typedef enum {
 		cactus,
 		bridgeForest,
 		listOrSample,
-		wl
 	} SamplingMethod;	
 
 typedef enum {
