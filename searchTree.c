@@ -693,13 +693,12 @@ struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* g
 }
 
 
-static void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct ShallowGraph* prefix, FILE* stream, struct ShallowGraphPool* sgp) {
+static void recPrint(struct Vertex* root, struct Vertex* trueRoot, int offset, struct ShallowGraph* prefix, FILE* stream, struct ShallowGraphPool* sgp) {
 	struct VertexList* e;
 
 	if (root != trueRoot) {
 		if (root->visited != 0) {
-			// fprintf(stream, "%i\t", root->visited);
-			fprintf(stream, "%i\t%i\t", root->visited, root->lowPoint);
+			fprintf(stream, "%i\t%i\t", root->visited + offset, root->lowPoint);
 			printCanonicalString(prefix, stream);
 		}
 	}																																																																								
@@ -711,7 +710,7 @@ static void recPrint(struct Vertex* root, struct Vertex* trueRoot, struct Shallo
 		struct VertexList* lastEdge = prefix->lastEdge;
 		appendEdge(prefix, shallowCopyEdge(e, sgp->listPool));
 
-		recPrint(e->endPoint, root, prefix, stream, sgp);
+		recPrint(e->endPoint, root, offset, prefix, stream, sgp);
 
 		dumpVertexList(sgp->listPool, prefix->lastEdge);
 		prefix->lastEdge = lastEdge;
@@ -773,9 +772,24 @@ struct ShallowGraph* listStringsInSearchTree(struct Vertex* root, struct Shallow
 }
 
 
+/**
+print one line for each tree in the search tree to stream.
+each line has the format
+<VISITED>\t<LOWPOINT>\t<STRING>
+*/
 void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* prefix = getShallowGraph(sgp);
-	recPrint(root, root, prefix, stream, sgp);
+	recPrint(root, root, 0, prefix, stream, sgp);
+	dumpShallowGraph(sgp, prefix);
+}
+
+
+/**
+Same as printStringsInSearchTree but add offset to <VISITED>
+*/
+void printStringsInSearchTreeWithOffset(struct Vertex* root, int offset, FILE* stream, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* prefix = getShallowGraph(sgp);
+	recPrint(root, root, offset, prefix, stream, sgp);
 	dumpShallowGraph(sgp, prefix);
 }
 
