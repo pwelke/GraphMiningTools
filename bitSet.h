@@ -12,6 +12,9 @@ void setBit(char* bitset, int n, char value);
 
 char getBit(char* bitset, int n);
 
+void bitsetUnion(char* a, char* b, int n);
+void bitsetIntersection(char* a, char* b, int n);
+
 void printBitset(char* bitset, int size, FILE* out);
 
 #endif

@@ -51,15 +51,42 @@ void printBitset(char* bitset, int size, FILE* out) {
 	fprintf(out, "]\n");
 }
 
+void bitsetUnion(char* a, char* b, int n) {
+	int i = (n % 8) ? n / 8 : n / 8 - 1;
+	for ( ; i>=0; --i) {
+		a[i] |= b[i];
+	}
+}
+
+void bitsetIntersection(char* a, char* b, int n) {
+	int i = (n % 8) ? n / 8 : n / 8 - 1;
+	for ( ; i>=0; --i) {
+		a[i] &= b[i];
+	}
+}
+
 // int main(int argc, char** argv) {
-// 	char* bitset = createBitset(10);
-// 	printBitset(bitset, 10, stdout);
+// 	char* bitset = createBitset(16);
+// 	char* b = createBitset(16);
+// 	char* c = createBitset(16);
+// 	printBitset(bitset, 16, stdout);
 // 	// printStrange(bitset, 2);
 // 	setBitTrue(bitset, 5);
 // 	setBitTrue(bitset, 8);
-// 	printBitset(bitset, 10, stdout);
+// 	printBitset(bitset, 16, stdout);
+// 	bitsetUnion(b, bitset, 16);
+// 	printBitset(b, 16, stdout);
+	
 // 	setBitFalse(bitset, 5);
-// 	printBitset(bitset, 10, stdout);
+// 	printBitset(bitset, 16, stdout);
+// 	bitsetUnion(c, bitset, 16);
+
+// 	printBitset(c, 16, stdout);
+
+// 	bitsetUnion(c, b, 16);
+// 	printBitset(c, 16, stdout);
 
 // 	destroyBitset(bitset);
+// 	destroyBitset(b);
+// 	destroyBitset(c);
 // }
