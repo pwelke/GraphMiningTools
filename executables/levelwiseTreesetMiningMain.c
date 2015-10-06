@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
 		filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
 
 		fprintf(patternFile, "patterns size %i\n", patternSize);
-		printStringsInSearchTree(candidateSet, patternFile, sgp); 
+		printStringsInSearchTreeWithOffset(candidateSet, -1, patternFile, sgp); 
 
 		if (debugInfo) { fprintf(stderr, "Computation of level %i done\n", patternSize); }
 
