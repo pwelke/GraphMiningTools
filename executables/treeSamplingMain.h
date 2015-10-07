@@ -11,7 +11,7 @@ typedef enum {
 		partialListing,
 		cactus,
 		bridgeForest,
-		listOrSample
+		listOrSample,
 	} SamplingMethod;	
 
 typedef enum {

@@ -2,6 +2,7 @@
 #define SEARCH_TREE_H_
 
 #include <stdio.h>
+#include "graph.h"
 
 /**
  * Used to store results of mergeSearchTree
@@ -20,6 +21,7 @@ char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int
 void dumpSearchTree(struct GraphPool* p, struct Vertex* root);
 void printSearchTree(struct Vertex* root, int level);
 void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp);
+void printStringsInSearchTreeWithOffset(struct Vertex* root, int offset, FILE* stream, struct ShallowGraphPool* sgp);
 int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 int containsString(struct Vertex* root, struct ShallowGraph* string);
 int getID(struct Vertex* root, struct ShallowGraph* string);

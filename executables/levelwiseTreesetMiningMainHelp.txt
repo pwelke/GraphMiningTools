@@ -24,17 +24,23 @@ usage: lwm [ARGS] FILE
                         is at least one tree H in the set representing G 
                         such that T is subgraph isomorphic to H. (default)
             importance: A subtree T matches a transaction graph G if T is
-                        subgraph isomorphic to at least a FRACTION-fraction 
-                        of all trees representing G.
+                        subgraph isomorphic to more than a FRACTION-fraction 
+                        of all trees representing G. FRACTION is specified by
+                        flag -i and defaults to 0.3.
+                        FRACTION = 0.0 is equivalent to existence and 
+                        FRACTION = 1.0 will be treated specially such that T
+                        must be subgraph isomorphic to all spanning trees 
+                        representing G.
 
     -l OPERATOR: listing operator used for frequent substructure mining
-            trees: list frequent subtrees (default)
-            paths: list frequent subpaths
+            trees:        list frequent subtrees (default)
+            aprioriTrees: same as above, but use standard apriori pruning
+            paths:        list frequent subpaths
         
     -i FRACTION: relative fraction of spanning trees of a graph s.t.
                  a subtree S is considered a match. I.e. S is subgraph 
                  of at least F*X trees given X trees for a graph. Must
-                 be a float between 0 and 1.
+                 be a float between 0 and 1. (default 0.3)
          
     -p SIZE:  maximum number of edges in frequent patterns (default 20). 
               I.e. mining will stop after P levels.

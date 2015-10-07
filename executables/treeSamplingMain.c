@@ -12,6 +12,7 @@
 #include "../graphPrinting.h"
 #include "../connectedComponents.h"
 #include "../sampleSubtrees.h"
+#include "../weisfeilerLehman.h"
 #include "treeSamplingMain.h"
 
 /**
@@ -55,6 +56,7 @@ int main(int argc, char** argv) {
 	char unsafe = 0;
 	char verbosity = 0;
 	char processDisconnectedGraphs = 0;
+	char weisfeilerLehmanLabeling = 0;
 	OutputMethod outputMethod = cs;
 
 	/* i counts the number of graphs read */
@@ -65,10 +67,13 @@ int main(int argc, char** argv) {
 	/* set random seed */
 	srand(time(NULL));
 
+	/* TODO refactor Weisfeiler Lehman Label store */
+	struct Vertex* wlLabels = NULL;
+
 	/* parse command line arguments */
 	int arg;
 	int seed;
-	const char* validArgs = "hs:k:t:o:ur:vd";
+	const char* validArgs = "hs:k:t:o:ur:vdw";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -98,6 +103,9 @@ int main(int argc, char** argv) {
 					threshold = LONG_MAX / 2;
 				}
 			}
+			break;
+		case 'w':
+			weisfeilerLehmanLabeling = 1;
 			break;
 		case 's':
 			if (strcmp(optarg, "wilson") == 0) {
@@ -173,6 +181,10 @@ int main(int argc, char** argv) {
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
 
+	if (weisfeilerLehmanLabeling) {
+		wlLabels = getVertex(vp);
+	}
+
 	/* initialize the stream to read graphs from 
    check if there is a filename present in the command line arguments 
    if so, open the file, if not, read from stdin */
@@ -197,6 +209,12 @@ int main(int argc, char** argv) {
 				struct Vertex* searchTree = getVertex(gp->vertexPool);
 				struct ShallowGraph* sample = NULL;
 				struct ShallowGraph* tree;
+				struct Graph* h = g;
+
+				// if we use weisfeiler lehman labels, replace g by its newly labeled copy
+				if (weisfeilerLehmanLabeling) {
+					g = weisfeilerLehmanRelabel(g, wlLabels, gp, sgp);
+				}
 
 				if (!processDisconnectedGraphs) {
 					switch (samplingMethod) {
@@ -354,6 +372,13 @@ int main(int argc, char** argv) {
 				dumpShallowGraphCycle(sgp, sample);
 				dumpSearchTree(gp, searchTree);
 
+				// if we have used weisfeiler lehman labels, dump the newly labeled and reset g to the original graph
+				if (weisfeilerLehmanLabeling) {
+					dumpGraph(gp, g);
+					g = h;
+					h = NULL;
+				}
+
 				++processedGraphs;
 			}		
 
@@ -379,6 +404,9 @@ int main(int argc, char** argv) {
 	}
 
 	/* global garbage collection */
+	if (weisfeilerLehmanLabeling) {
+		dumpSearchTree(gp, wlLabels);
+	}
 	destroyFileIterator();
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);

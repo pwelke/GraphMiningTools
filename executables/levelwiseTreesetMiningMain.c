@@ -35,9 +35,6 @@ int printHelp() {
 }
 
 
-/**
-I DON'T KNOW WHAT THIS FUNCTION DOES
-*/
 static void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
 	struct VertexList* e;
 	if (current != root) {
@@ -52,6 +49,10 @@ static void setLowPointsRec(struct Vertex* root, struct Vertex* current) {
 	}
 }
 
+
+/**
+this method compresses the feature labels after filtering for frequency
+*/
 void setLowPoints(struct Vertex* root) {
 	setLowPointsRec(root, root);
 }
@@ -151,6 +152,10 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "paths") == 0) {
 				listingOperator = &generateCandidatePathSet;
+				break;
+			}
+			if (strcmp(optarg, "aprioriTrees") == 0) {
+				listingOperator = &generateCandidateAprioriTreeSet;
 				break;
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
@@ -258,7 +263,7 @@ int main(int argc, char** argv) {
 		filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
 
 		fprintf(patternFile, "patterns size %i\n", patternSize);
-		printStringsInSearchTree(candidateSet, patternFile, sgp); 
+		printStringsInSearchTreeWithOffset(candidateSet, -1, patternFile, sgp); 
 
 		if (debugInfo) { fprintf(stderr, "Computation of level %i done\n", patternSize); }
 
