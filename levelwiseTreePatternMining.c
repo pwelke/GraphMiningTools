@@ -12,6 +12,48 @@
 #include "bloomFilter.h"
 #include "levelwiseTreePatternMining.h"
 
+static struct VertexList* getCanonicalStringOfEdge(struct VertexList* e, struct ListPool* lp) {
+	struct VertexList* cString;
+	if (strcmp(e->startPoint->label, e->endPoint->label) < 0) {
+		/* cString = v e (w) */
+		struct VertexList* tmp = getVertexList(lp);
+		tmp->label = e->endPoint->label;
+
+		cString = getTerminatorEdge(lp);
+		tmp->next = cString;
+
+		cString = getVertexList(lp);
+		cString->label = e->label;
+		cString->next = tmp;
+
+		tmp = getInitialisatorEdge(lp);
+		tmp->next = cString;
+
+		cString = getVertexList(lp);
+		cString->label = e->startPoint->label;
+		cString->next = tmp;
+	} else {
+		/* cString = w e (v) */
+		struct VertexList* tmp = getVertexList(lp);
+		tmp->label = e->startPoint->label;
+
+		cString = getTerminatorEdge(lp);
+		tmp->next = cString;
+
+		cString = getVertexList(lp);
+		cString->label = e->label;
+		cString->next = tmp;
+
+		tmp = getInitialisatorEdge(lp);
+		tmp->next = cString;
+
+		cString = getVertexList(lp);
+		cString->label = e->endPoint->label;
+		cString->next = tmp;
+	}
+	return cString;
+}
+
 
 /**
 return the histogram of vertices and edges in a db in a search tree.
@@ -102,44 +144,7 @@ int getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, 
 					if (w > v) {
 						/* as for vertices, I use specialized code to generate 
 						the canonical string of a single edge */
-						struct VertexList* cString;
-						if (strcmp(e->startPoint->label, e->endPoint->label) < 0) {
-							/* cString = v e (w) */
-							struct VertexList* tmp = getVertexList(gp->listPool);
-							tmp->label = e->endPoint->label;
-
-							cString = getTerminatorEdge(gp->listPool);
-							tmp->next = cString;
-
-							cString = getVertexList(gp->listPool);
-							cString->label = e->label;
-							cString->next = tmp;
-
-							tmp = getInitialisatorEdge(gp->listPool);
-							tmp->next = cString;
-
-							cString = getVertexList(gp->listPool);
-							cString->label = e->startPoint->label;
-							cString->next = tmp;
-						} else {
-							/* cString = w e (v) */
-							struct VertexList* tmp = getVertexList(gp->listPool);
-							tmp->label = e->startPoint->label;
-
-							cString = getTerminatorEdge(gp->listPool);
-							tmp->next = cString;
-
-							cString = getVertexList(gp->listPool);
-							cString->label = e->label;
-							cString->next = tmp;
-
-							tmp = getInitialisatorEdge(gp->listPool);
-							tmp->next = cString;
-
-							cString = getVertexList(gp->listPool);
-							cString->label = e->endPoint->label;
-							cString->next = tmp;
-						}
+						struct VertexList* cString = getCanonicalStringOfEdge(e, gp->listPool);
 						/* add the string to the search tree */
 						containedEdges->d += addStringToSearchTree(containedEdges, cString, gp);
 						containedEdges->number += 1;
