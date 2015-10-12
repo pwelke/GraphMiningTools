@@ -2,7 +2,7 @@ This is a Levelwise Mining Algorithm for TreePatterns
 implemented by Pascal Welke 2013, 2015
 
 The algorithm expects a file in the format produced by the tree sampler
-ts and ouotputs three files with different suffixes:
+ts and outputs three files with different suffixes:
     FILE.patterns: contains canonical string representations of the 
                    frequent tree patterns found by the algorithm
     FILE.counts:   contains pairs of values: a pattern id and its
@@ -39,8 +39,8 @@ usage: lwm [ARGS] FILE
         
     -i FRACTION: relative fraction of spanning trees of a graph s.t.
                  a subtree S is considered a match. I.e. S is subgraph 
-                 of at least F*X trees given X trees for a graph. Must
-                 be a float between 0 and 1. (default 0.3)
+                 of more than F*X trees given X trees for a graph. Must
+                 be a float between 0 and 1. (default 0.0, aka. existence)
          
     -p SIZE:  maximum number of edges in frequent patterns (default 20). 
               I.e. mining will stop after P levels.

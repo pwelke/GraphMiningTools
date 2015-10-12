@@ -137,6 +137,8 @@ int main(int argc, char** argv) {
 		case 'e':
 			if (strcmp(optarg, "existence") == 0) {
 				embeddingOperator = &checkIfSubIsoCompatible;
+				// set importance parameter t0 0.0, as getVertexAndEdgeHistograms requires it like this.
+				importance = 0.0;
 				break;
 			}
 			if (strcmp(optarg, "importance") == 0) {
