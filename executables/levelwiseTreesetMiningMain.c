@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
 	/* init params to default values*/
 	char debugInfo = 0;
 	char onlyCountClasses = 0;
-	double fraction = 0.3;
+	double importance = 0.0;
 	int threshold = 1000;
 	int maxPatternSize = 20;
 	char* inputFileName = NULL; // mandatory argument
@@ -117,8 +117,8 @@ int main(int argc, char** argv) {
 			}
 			break;
 		case 'i':
-			if (sscanf(optarg, "%lf", &fraction) != 1) {
-				fprintf(stderr, "fraction must be a float, is: %s\n", optarg);
+			if (sscanf(optarg, "%lf", &importance) != 1) {
+				fprintf(stderr, "importance must be a float, is: %s\n", optarg);
 				return EXIT_FAILURE;
 			}
 			break;
@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
 	frequentVertices = getVertex(vp);
 	frequentEdges = getVertex(vp);
 	frequentEdges->lowPoint = minEdgeID;
-	nGraphs = getVertexAndEdgeHistograms(inputFileName, frequentVertices, frequentEdges, countFile, gp, sgp);
+	nGraphs = getVertexAndEdgeHistograms(inputFileName, importance, frequentVertices, frequentEdges, countFile, gp, sgp);
 	filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureFile, gp);
 	filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureFile, gp);
 
@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
 		refinements = malloc(refinementSize * sizeof(struct Graph*));
 
 		makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-		scanDBNoCache(inputFileName, candidateSet, refinements, pointers, refinementSize, threshold, nGraphs, fraction, countFile, gp, sgp, embeddingOperator);
+		scanDBNoCache(inputFileName, candidateSet, refinements, pointers, refinementSize, threshold, nGraphs, importance, countFile, gp, sgp, embeddingOperator);
 
 		/* threshold + 1 as candidateSet contains each candidate once, already */
 		filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureFile, gp);
