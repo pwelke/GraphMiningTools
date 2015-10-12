@@ -505,6 +505,69 @@ char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root
 /**
 Remove all strings from search tree that occur less than threshold times.
 (this is indicated by the ->visited field of the last vertex).
+*/
+char filterSearchTreeLEQ(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp) {
+	struct VertexList* e;
+	struct VertexList* dump = NULL;
+	struct VertexList* good = NULL;
+
+	for (e=current->neighborhood; e!=NULL; e=e->next) {
+		e->used = filterSearchTreeLEQ(e->endPoint, threshold, root, gp);
+	}
+
+	for (e=current->neighborhood; e!=NULL; ) {
+		struct VertexList* next = e->next;
+		if (e->used) {
+			e->next = good;
+			good = e;
+		} else {
+			e->next = dump;
+			dump = e;
+		}
+		e = next;
+	}
+
+	for (e=good, current->neighborhood=NULL; e!=NULL; ) {
+		struct VertexList* next = e->next;
+		e->next = current->neighborhood;
+		current->neighborhood = e;
+		e = next;
+	}
+	dumpVertexListRecursively(gp->listPool, dump);
+
+	/* if all children of current were deleted and current is not end of frequent
+	string, delete current and notify caller that we can delete the edge */
+	if (current->visited <= threshold) {
+		if (current->visited > 0) {
+			/* "remove" string from search tree */ 
+			root->number -= current->visited;
+			--root->d;
+		}
+
+		/* if current is not an internal vertex, we dump it and tell the caller
+		that the edge is unused. otherwise, the vertex stays and the edge is marked
+		as used */
+		if (current->neighborhood == NULL) {
+			/* an empty search tree still consists of the root */
+			if (current != root) {
+				dumpVertex(gp->vertexPool, current);
+			}
+			return 0;
+		} else {
+			return 1;
+		}
+
+	} else {
+		/* string is frequent. */
+		return 1;
+	}
+}
+
+
+
+/**
+Remove all strings from search tree that occur less than threshold times.
+(this is indicated by the ->visited field of the last vertex).
 
 Additionally, write the ids of the strings that occur more than threshold times to the lowPoints stream.
 */
