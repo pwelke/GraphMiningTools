@@ -68,7 +68,7 @@ It uses a resultSet struct speed up some stuff and fills up the pruning data str
 The method expects that initPruning was called with a positive argument before and returns 
 the number of graphs in the database.
 */
-int getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int getVertexAndEdgeHistograms(char* fileName, double importance, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int bufferSize = 100;
 	int i = 0;
 	FILE* stream = fopen(fileName, "r");
@@ -82,6 +82,7 @@ int getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, 
 
 		struct ShallowGraph* pattern = patterns;
 		struct Graph* patternGraph;
+		int numberOfPatterns = 0;
 		int v;
 
 		/* frequency of an edge increases by one if there exists a pattern for the current graph (a spanning tree) 
@@ -133,6 +134,7 @@ int getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, 
 		/* get frequent Edges */
 		resultPos = 0;
 		for ( ; pattern!=NULL; pattern=pattern->next) {
+			++numberOfPatterns;
 			if (patternGraph == NULL) {
 				patternGraph = treeCanonicalString2Graph(pattern, gp);
 			}
@@ -154,11 +156,19 @@ int getVertexAndEdgeHistograms(char* fileName, struct Vertex* frequentVertices, 
 			dumpGraph(gp, patternGraph);
 			patternGraph = NULL;
 		}
+		// TODO filtering of patterns
+		if (importance < 1) {
+			int threshold = (int)(importance * numberOfPatterns);
+			filterSearchTreeLEQ(frequentEdges, threshold, frequentEdges, gp);
+		} else {
+			filterSearchTree(frequentEdges, numberOfPatterns, frequentEdges, gp);
+		}
+		
 		/* set multiplicity of patterns to 1 and add to global edge pattern set */
 		resetToUnique(containedEdges);
 		mergeSearchTrees(frequentEdges, containedEdges, 1, results, &resultPos, frequentEdges, 0, gp);
 		dumpSearchTree(gp, containedEdges);
-		
+
 		/* write (graph->number, pattern id) pairs to stream, add the patterns to the bloom
 		filter of the graph (i) for pruning */
 		for (v=0; v<resultPos; ++v) {
