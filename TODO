@@ -8,6 +8,13 @@ TODO
 - extract weisfeiler lehman from treesampling into new executable
 - make optimized vertex and edge counting methods work with importance embedding operator
 
+- a unified levelwise mining executable that does 
+	- tree -> tree
+	- tree -> forest
+	- tree -> cactus (with bounded cycle degree)
+	- tree -> k-easy block graph (with bounded cycle degree)
+	(also only for paths)
+
 THEORY
 
 - is it useful to choose particular roots for subgraph iso checks, e.g. canonical roots?
