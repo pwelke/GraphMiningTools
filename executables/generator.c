@@ -102,11 +102,12 @@ int main(int argc, char** argv) {
 	int nVertexLabels = 5;
 	int nEdgeLabels = 1;
 	double edgeProbability = 0.5;
+	double edgeMultiplicity = -1;
 	int randomSeed = 100;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hp:s:a:b:c:d:N:";
+	const char* validArgs = "hp:s:a:b:c:d:N:m:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -154,6 +155,12 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 			break;
+		case 'm':
+			if (sscanf(optarg, "%lf", &edgeMultiplicity) != 1) {
+				fprintf(stderr, "value must be double, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} 
+			break;
 		case '?':
 			return EXIT_FAILURE;
 			break;
@@ -163,6 +170,7 @@ int main(int argc, char** argv) {
 	/* set initial random seed */
 	srand(randomSeed);
 
+
 	/* init object pools */
 	lp = createListPool(10000);
 	vp = createVertexPool(10000);
@@ -171,8 +179,13 @@ int main(int argc, char** argv) {
 
 	/* iterate over all graphs in the database */
 	for (i=0; i<numberOfGeneratedGraphs; ++i) {
+		struct Graph* g;
 		int n = rand() % (upperBoundVertices - lowerBoundVertices) + lowerBoundVertices;
-		struct Graph* g = erdosRenyiWithLabels(n, edgeProbability, nVertexLabels, nEdgeLabels, gp);
+		/* calculate p, if m option was given */
+		if ((edgeMultiplicity > 0) && (n > 1)) {
+			edgeProbability = ( 2.0 * edgeMultiplicity ) / (n - 1.0);
+		}
+		g = erdosRenyiWithLabels(n, edgeProbability, nVertexLabels, nEdgeLabels, gp);
 		g->number = i+1;
 		printGraphAidsFormat(g, out);
 	}
