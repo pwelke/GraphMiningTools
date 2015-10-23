@@ -1,0 +1,5 @@
+Weisfeiler lehman graph vertex labeling. 
+
+One iteration.
+
+TODO: more docs
