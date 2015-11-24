@@ -4,45 +4,45 @@
 #include "graph.h"
 #include "cachedGraph.h"
 
-/**
- * Allocates an array of n pointers to vertices and sets the number of vertices of
- * g to n. The array is initialized to NULL.
- */
-struct Vertex** __setVertexNumber(struct Graph* g, int n, struct GraphPool* gp) {
-	int i;
+// /**
+//  * Allocates an array of n pointers to vertices and sets the number of vertices of
+//  * g to n. The array is initialized to NULL.
+//  */
+// static struct Vertex** __setVertexNumber(struct Graph* g, int n, struct GraphPool* gp) {
+// 	int i;
 	
-	if (n<0) {
-		printf("Error allocating memory for array of negative size %i\n", n);
-		return NULL;
-	}
+// 	if (n<0) {
+// 		printf("Error allocating memory for array of negative size %i\n", n);
+// 		return NULL;
+// 	}
 	
-	g->n = n;
-	g->vertices = malloc(n * sizeof(struct Vertex*));
+// 	g->n = n;
+// 	g->vertices = malloc(n * sizeof(struct Vertex*));
 
-	for (i=0; i<n; ++i) {
-		g->vertices[i] = getVertex(gp->vertexPool);
-	}
+// 	for (i=0; i<n; ++i) {
+// 		g->vertices[i] = getVertex(gp->vertexPool);
+// 	}
 
-	return g->vertices;
-}
+// 	return g->vertices;
+// }
 
-void __free(struct Vertex** vertices, int maxCap, struct GraphPool* gp) {
-	int i;
+// static void __free(struct Vertex** vertices, int maxCap, struct GraphPool* gp) {
+// 	int i;
 
-	for (i=0; i<maxCap; ++i) {
-		dumpVertex(gp->vertexPool, vertices[i]);
-		vertices[i] = NULL;
-	}
-	free(vertices);
-}
+// 	for (i=0; i<maxCap; ++i) {
+// 		dumpVertex(gp->vertexPool, vertices[i]);
+// 		vertices[i] = NULL;
+// 	}
+// 	free(vertices);
+// }
 
 struct CachedGraph* initCachedGraph(struct GraphPool* gp, int size) {
 	struct CachedGraph* cache;
 	if ((cache = malloc(sizeof(struct CachedGraph)))) {
 		cache->gp = gp;
 		cache->inUse = 0;
-		cache->g = getGraph(gp);
-		__setVertexNumber(cache->g, size, gp);
+		cache->g = createGraph(size, gp);
+		// __setVertexNumber(cache->g, size, gp);
 		cache->maxCap = size;
 		cache->next = NULL;
 	}
@@ -54,8 +54,10 @@ struct Graph* getCachedGraph(int size, struct CachedGraph* cache) {
 	 if (!cache->inUse) {
 	 	cache->inUse = 1;
 		if (cache->maxCap < size) {
-			__free(cache->g->vertices, cache->maxCap, cache->gp);
-			__setVertexNumber(cache->g, size, cache->gp);
+			dumpGraph(cache->gp, cache->g);
+			// __free(cache->g->vertices, cache->maxCap, cache->gp);
+			// __setVertexNumber(cache->g, size, cache->gp);
+			cache->g = createGraph(size, cache->gp);
 			cache->maxCap = size;
 		} else {
 			cache->g->n = size;	

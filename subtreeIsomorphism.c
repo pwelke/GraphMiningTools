@@ -844,6 +844,7 @@ char subtreeCheckF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 							free(matchings);
 							freeCube(S, g->n, h->n);
 							dumpGraph(gp, B);
+							free(cacheB);
 							return 1;
 						} else {
 							matchings[0] = degU + 1;
