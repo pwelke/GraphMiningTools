@@ -584,13 +584,17 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 /**
 Find all vertices reachable by augmenting paths that start with a non-matching edge
 */
-static void markReachable(struct Vertex* a) {
+static void markReachable(struct Vertex* a, int num) {
 	struct VertexList* e;
 
 	a->visited = 1;
+	// if (a->number < num)
+	// printf("Mark %i visited\n", a->lowPoint);
+
 	for (e=a->neighborhood; e!=NULL; e=e->next) {
+		// printf("check edge (%i %i) flag %i\n", e->startPoint->lowPoint, e->endPoint->lowPoint, e->flag);
 		if ((e->flag == 0) && (e->endPoint->visited == 0)) {
-			markReachable(e->endPoint);
+			markReachable(e->endPoint, num);
 		}
 	}
 }
@@ -614,9 +618,9 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 	struct Vertex* r = g->vertices[0];
 	int*** S = createCube(g->n, h->n);
 	int* postorder = getPostorder(g, r->number);
-	printf("Postorder:");
-	for (v=0; v<g->n; ++v) printf(" %i", postorder[v]);
-	printf("\n");
+	// printf("Postorder:");
+	// for (v=0; v<g->n; ++v) printf(" %i", postorder[v]);
+	// printf("\n");
 
 
 	/* init the S(v,u) for v and u leaves */
@@ -658,11 +662,16 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
 						matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
-						printf("for vertex current = %i and u = %i\n", current->number, u);
-						printShallowGraph(getMatching(B, sgp));
+						// printf("for vertex current = %i and u = %i\n", current->number, u);
+						// struct ShallowGraph* m = getMatching(B, sgp);
+						// struct VertexList* e;
+						// for (e=m->edges; e!=NULL; e=e->next) {
+						// 	printf("matching edge (%i %i) flag %i\n", e->startPoint->lowPoint, e->endPoint->lowPoint, e->flag);
+						// }
 
 						// have we found a subgraph isomorphism?
 						if (matchings[0] == degU) {
+							// printf("yay. found a subtree iso.\n");
 							free(postorder);
 							free(matchings);
 							freeCube(S, g->n, h->n);
@@ -677,9 +686,14 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 							that uncovered neighbor without decreasing the cardinality of the matching
 							these are exactly the non-critical vertices.
 
-							a vertex is critical <=> 1.) AND 2.)
+							a vertex is critical <=> 1.) AND NOT 2.)
+							hence
+							a vertex is non-critical <=> NOT 1.) OR 2.)
+							where
 							1.) matched in the matching above
-							2.) not reachable by augmenting path from the single unmatched vertex. */
+							2.) reachable by augmenting path from the single unmatched vertex. 
+							This means, all vertices reachable from the single uncovered neighbor of u (including that neighbor are non-critical.
+							*/
 							struct Vertex* uncoveredNeighbor = NULL;
 							
 							// find the single uncovered neighbor of u
@@ -691,21 +705,28 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 							}
 
 							// mark all vertices reachable from uncoveredNeighbor by an augmenting path
-							markReachable(uncoveredNeighbor);
-							// unmark the uncovered neighbor itself, as it is not critical
-							uncoveredNeighbor->visited = 0; 
+							// for (i=0; i<B->n; ++i) {
+							// 	B->vertices[i]->visited = 0;
+							// }
+							markReachable(uncoveredNeighbor, B->number);
 
 							// add non-critical vertices to output
 							matchings[0] = degU + 1;
 							for (i=0; i<B->number; ++i) {
 								if (B->vertices[i]->visited == 1) {
-									// vertex critical
-									matchings[i+1] = -1;
-								} else {
 									// vertex is not critical
 									matchings[i+1] = B->vertices[i]->lowPoint;
+								} else {
+									// vertex critical
+									matchings[i+1] = -1;
 								}
 							}
+
+							// printf("Checked Matchings. Result:\n  ");
+							// for (i=0;i<B->number;++i) printf(" %i", B->vertices[i]->lowPoint);
+							// printf("\n");
+							// for (i=0;i<matchings[0];++i) printf(" %i", matchings[i]);
+							// printf("\n");
 
 						} else {
 							// makes no sense to look for critical vertices as there cannot be a matching covering all but one neighbor of u
@@ -713,6 +734,10 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 							for (i=1; i<degU + 1; ++i) {
 								matchings[i] = -1;
 							}
+							// printf("Did not check Matchings:");
+							// for (i=0;i<matchings[0];++i) printf(" %i", matchings[i]);
+							// printf("\n");
+
 						}
 
 						// store information for further steps of the algorithm
