@@ -10,4 +10,7 @@ char augment(struct Vertex* s, struct Vertex* t);
 void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct GraphPool* gp);
 void setFlag(struct VertexList* e, int flag);
 
+struct Vertex* getMatchedVertex(struct Vertex* a);
+char isMatched(struct Vertex* a);
+
 #endif /* BIPARTITE_MATCHING_H_ */

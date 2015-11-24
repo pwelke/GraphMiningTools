@@ -39,6 +39,28 @@ char augment(struct Vertex* s, struct Vertex* t) {
 }
 
 
+/** 
+Return the matched vertex of a, or NULL, if a is not
+matched. a needs to be in the set A of the bipartition.
+*/
+struct Vertex* getMatchedVertex(struct Vertex* a) {
+	struct VertexList* e;
+	for (e=a->neighborhood; e!=NULL; e=e->next) {
+		if (e->flag == 1) {
+			return e->endPoint;
+		}
+	}
+	return NULL;
+}
+
+/**
+Return true if a in A is covered by the current matching in B or 0 otherwise.
+*/
+char isMatched(struct Vertex* a) {
+	return (getMatchedVertex(a) != NULL);
+}
+
+
 /**
 Method for constructing the residual graph. 
 Creates an edge e between v and w and its residual edge f
@@ -212,7 +234,7 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 
 
 /**
-Returns ShallowGraph containing a copy of each edge that has ->flag == 1.
+Returns ShallowGraph containing a copy of each edge from A to B that has ->flag == 1.
 These edges form a matching, if bipartiteMatchingFastAndDirty was invoked on g
 */
 struct ShallowGraph* getMatching(struct Graph* g, struct ShallowGraphPool* sgp) {
