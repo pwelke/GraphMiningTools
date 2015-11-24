@@ -15,5 +15,6 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 char subtreeCheckF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 char subtreeCheckFF(struct Graph* g, struct Graph* h, struct GraphPool* gp);
 char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct CachedGraph* cacheB);
+char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 #endif /* SUBTREE_ISOMORPHISM_H_ */
