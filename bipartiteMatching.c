@@ -169,10 +169,16 @@ Return a maximum matching of the bipartite graph g.
 
 Input is a bipartite graph g. That is: V(g) = A \dot{\cup} B,
 g->number = |A| and vertices 0 to |A|-1 belong to A.
-Furthermore, there are only edges (a, b) with a \in A and 
-b \in B which are undirected.
-Furthermore, the ->label of edge (a,b) points to the edge (b,a).
-That is, the cast ((struct VertexList*)e->label) is valid
+
+Furthermore, there are only edges {a, b} with a \in A and 
+b \in B which are undirected (hence, (a,b) and (b,a) are present in B). 
+The ->label of edge (a,b) points to the edge (b,a).
+That is, the cast ((struct VertexList*)e->label) is valid.
+
+The residual capacity of those edges is expected to be 
+0 for (a,b) and
+1 for (b,a)
+and needs to be encoded in the ->flag member of each edge.
 
 The algorithm changes the ->flag values of edges in g
 */
