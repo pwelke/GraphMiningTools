@@ -120,13 +120,13 @@ int main(int argc, char **argv){
     g = iterateFile();
     i = 0;
     while(g){
-        printf("Testing graph %i\n",g->number);
+        // printf("Testing graph %i\n",g->number);
         if((g->m != g->n -1) || !isConnected(g)){
             dumpGraph(gPool,g);
             g=iterateFile();
             continue;
         }
-        printf("is a tree\n");
+        // printf("is a tree\n");
             time1 = clock();
             // cResult = cactusTreeSubIso(g,h,gPool,sgPool);
             cResult = subtreeCheck3(g,h,gPool,sgPool);
