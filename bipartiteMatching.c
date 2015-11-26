@@ -125,62 +125,25 @@ void initBipartite(struct Graph* B) {
 
 
 /**
-Removes the vertices s and t that were added to B by bipartiteMatchingFastAndDirty()
+Removes the vertices s and t that were added to B by bipartiteMatchingFastAndDirty().
+
+This method should run in O(|V(B)|), as the residual edge from each vertex v in B to s or t
+should be the first edge in the neighborhood of v, as it was added last.
 */
-void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct GraphPool* gp) {
-	struct VertexList* temp = NULL;
-	struct VertexList* e;
-	struct VertexList* f;
-	struct VertexList* g;	
+void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct GraphPool* gp) {	
 	int w;
 
-	/* mark edges that will be removed */
-	for (e=s->neighborhood; e!=NULL; e=e->next) {
-		e->used = 1;
-		((struct VertexList*)e->label)->used = 1;
-	}
-	for (e=t->neighborhood; e!=NULL; e=e->next) {
-		e->used = 1;
-		((struct VertexList*)e->label)->used = 1;
+	for (w=0; w<B->number; ++w) {
+		removeEdge(B->vertices[w], s, gp->listPool);
 	}
 
-	/* remove edges from s and t */
-	for (e=s->neighborhood; e!=NULL; e=f) {
-		f = e->next;
-		e->next = temp;
-		temp = e;
-	}
-	for (e=t->neighborhood; e!=NULL; e=f) {
-		f = e->next;
-		e->next = temp;
-		temp = e;
+	for (w=B->number; w<B->n; ++w) {
+		removeEdge(B->vertices[w], t, gp->listPool);
 	}
 
-	/* remove residual edges */
-	for (w=0; w<B->n; ++w) {
-		f = NULL;
-		g = NULL;
-		/* partition edges */
-		for (e=B->vertices[w]->neighborhood; e!=NULL; e=B->vertices[w]->neighborhood) {
-			B->vertices[w]->neighborhood = e->next;
-			if (e->used == 1) {
-				e->next = f;
-				f = e;
-			} else {
-				e->next = g;
-				g = e;
-			}
-		}
-		/* set neighborhood to unused, append used to temp */
-		B->vertices[w]->neighborhood = g;
-		while (f!=NULL) {
-			e = f;
-			f = f->next;
-			e->next = temp;
-			temp = e;
-		}
-	}
-	dumpVertexListRecursively(gp->listPool, temp);
+	dumpVertexListRecursively(gp->listPool, s->neighborhood);
+	dumpVertexListRecursively(gp->listPool, t->neighborhood);
+
 	dumpVertex(gp->vertexPool, s);
 	dumpVertex(gp->vertexPool, t);
 }
