@@ -12,7 +12,7 @@
 #include "../intMath.h"
 
 int main(int argc, char **argv){
-    if(argc<5 || (argv[3][0]=='t' && argc <6)){
+    if(argc<5 || (argv[3][0] == 't' && argc <6)){
         printf("use as perf <input file> <output file> <pattern class> <pattern size> \n");
         printf("\twhere <pattern class is one of:\n");
         printf("\t\t- t for full trees, followed by <pattern size> = <depth> <num childs>\n");
@@ -28,18 +28,18 @@ int main(int argc, char **argv){
     struct VertexList *hlp;
     int i,j,k,l,size1,size2;
     char cResult, tResult;
-    double seconds, ratio;
+    double firstTime, secondTime;
     clock_t time1, time2;
     FILE *outFile;
     
-    lPool=createListPool(2000);
-    if(lPool==NULL){
+    lPool = createListPool(2000);
+    if(lPool == NULL){
         printf("couldn't allocate listPool\n");
         return EXIT_FAILURE;
     }
-    gPool= createGraphPool(50, createVertexPool(500), lPool);
-    sgPool=createShallowGraphPool(50000,lPool);
-    if(gPool==NULL || sgPool==NULL){
+    gPool = createGraphPool(50, createVertexPool(500), lPool);
+    sgPool = createShallowGraphPool(50000,lPool);
+    if(gPool == NULL || sgPool == NULL){
         printf("couldn't allocate graph pools");
         freeListPool(lPool);
         freeAllPools(gPool, sgPool);
@@ -48,14 +48,14 @@ int main(int argc, char **argv){
     size1=atoi(argv[4]);
     switch (argv[3][0]){
         case 't':
-            size2=atoi(argv[5]);
-            printf("Tree with %i levels, %i childs ==> %i vertices\n",size1, size2, (ipow(size2,size1+1)-1)/(size2-1));
-            h=createGraph((ipow(size2,size1+1)-1)/(size2-1),gPool);
-            h->m=h->n -1;
-            for(i=0;i<size1;++i){
-                l=(ipow(size2,i+1)-1)/(size2-1);
-                for(j=(ipow(size2,i)-1)/(size2-1);j<l;++j){
-                    for(k=1;k<=size2;++k){
+            size2 = atoi(argv[5]);
+            printf("Tree with %i levels, %i childs  == > %i vertices\n",size1, size2, (ipow(size2,size1+1)-1)/(size2-1));
+            h = createGraph((ipow(size2,size1+1)-1)/(size2-1),gPool);
+            h->m = h->n -1;
+            for(i = 0;i<size1;++i){
+                l = (ipow(size2,i+1)-1)/(size2-1);
+                for(j = (ipow(size2,i)-1)/(size2-1);j<l;++j){
+                    for(k = 1; k<=size2; ++k){
                         printf("%i %i\n",j,j*size2+k);
                         addEdgeBetweenVertices(j,j*size2+k, NULL ,h, gPool);
                     }
@@ -63,37 +63,37 @@ int main(int argc, char **argv){
             }
             break;
         case 'p':
-            h=createGraph(size1,gPool);
-            for(j=0;j<size1-1;++j){
+            h = createGraph(size1,gPool);
+            for(j = 0;j<size1-1;++j){
                     addEdgeBetweenVertices(j,j+1,NULL,h,gPool);
             }
             break;
         case 'r':
-            h=createGraph(size1,gPool);
+            h = createGraph(size1,gPool);
             printf("allocated %i vertices\n",h->n);
             srand(time(NULL));
-            for(i=0;i<size1;++i)h->vertices[i]->d=i;
+            for(i = 0;i<size1;++i) h->vertices[i]->d = i;
             do{
-                j=rand() % size1;
-                k=rand() % size1;
+                j = rand() % size1;
+                k = rand() % size1;
                 printf("\n");
-                if(j!=k && h->vertices[j]->d != h->vertices[k]->d){
+                if(j != k && h->vertices[j]->d != h->vertices[k]->d){
                     addEdgeBetweenVertices(j,k,NULL,h, gPool);
                     printf("%i %i\n",j,k);
                         // could be done with union-find but no b/c of reasons...
                     if(h->vertices[j]->d < h->vertices[k]->d){
-                        l=h->vertices[k]->d;
-                        for(i=0;i<size1;++i) {
-                            if (h->vertices[i]->d==l){
+                        l = h->vertices[k]->d;
+                        for(i = 0;i<size1;++i) {
+                            if (h->vertices[i]->d == l){
                                 h->vertices[i]->d=h->vertices[j]->d;
                             }
                         }
                     }
                     else{
-                        l=h->vertices[j]->d;
-                        for(i=0;i<size1;++i){
-                            if(h->vertices[i]->d==l){
-                                h->vertices[i]->d=h->vertices[k]->d;
+                        l = h->vertices[j]->d;
+                        for(i = 0;i<size1;++i){
+                            if(h->vertices[i]->d == l){
+                                h->vertices[i]->d = h->vertices[k]->d;
                             }
                         }
                     }
@@ -117,8 +117,8 @@ int main(int argc, char **argv){
     outFile=fopen(argv[2], "w+");
 
     createFileIterator(argv[1],gPool);
-    g=iterateFile();
-    i=0;
+    g = iterateFile();
+    i = 0;
     while(g){
         printf("Testing graph %i\n",g->number);
         if((g->m != g->n -1) || !isConnected(g)){
@@ -127,15 +127,16 @@ int main(int argc, char **argv){
             continue;
         }
         printf("is a tree\n");
-            time1=clock();
-            cResult=cactusTreeSubIso(g,h,gPool,sgPool);
-            time2=clock();
-            seconds=((double) (time2-time1))/CLOCKS_PER_SEC;
-            time1=clock();
-            tResult=subtreeCheckF(g,h,gPool,sgPool);
-            time2=clock();
-            ratio=((double) (time2-time1))/CLOCKS_PER_SEC;
-            fprintf(outFile,"%c %.10f %.10f %.20f\n", tResult + 42 + 3*(1-tResult), seconds , ratio , seconds/ratio);
+            time1 = clock();
+            // cResult = cactusTreeSubIso(g,h,gPool,sgPool);
+            cResult = subtreeCheck3(g,h,gPool,sgPool);
+            time2 = clock();
+            firstTime = ((double) (time2-time1))/CLOCKS_PER_SEC;
+            time1 = clock();
+            tResult = subtreeCheckF(g,h,gPool,sgPool);
+            time2 = clock();
+            secondTime = ((double) (time2-time1))/CLOCKS_PER_SEC;
+            fprintf(outFile,"%c %.10f %.10f %.20f\n", tResult + 42 + 3*(1-tResult), firstTime , secondTime , firstTime/secondTime);
             if(cResult != tResult){
                 printf("\ndifferent results %i %i for graph %i (Tree? %i)and graph of size %i.\n",cResult, tResult, g->number, isTree(g),h->n);
                 for(k=0;k<g->n;++k){
@@ -158,12 +159,11 @@ int main(int argc, char **argv){
             }
         if(cResult) ++i;       
         dumpGraph(gPool,g);
-        g=iterateFile();
+        g = iterateFile();
     }
     printf("There were %i matches\n", i);
     destroyFileIterator();
     fclose(outFile);
-    dumpCube();
     dumpGraph(gPool,h);
     freeVertexPool(gPool->vertexPool);
     freeListPool(gPool->listPool);
