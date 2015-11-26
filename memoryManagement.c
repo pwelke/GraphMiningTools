@@ -69,15 +69,26 @@ struct VertexList* getVertexList(struct ListPool* p){
 	}
 	
 	/* The malloc worked or we had an element left. So we initialize the struct */
-	p->tmp->label = NULL;
-	p->tmp->next = NULL;
-	p->tmp->endPoint = NULL;
-	p->tmp->used = 0;
-	p->tmp->isStringMaster = 0;
-	p->tmp->flag = 0;
-	
+	wipeVertexList(p->tmp);
+
 	return p->tmp;
 		
+}
+
+
+/** 
+Set all variables in the struct to 0 or NULL
+*/
+void wipeVertexList(struct VertexList* e) {
+	e->startPoint = NULL;
+	e->endPoint = NULL;
+	e->label = NULL;
+
+	e->next = NULL;
+
+	e->used = 0;
+	e->isStringMaster = 0;
+	e->flag = 0;
 }
 
 
@@ -182,16 +193,24 @@ struct Vertex* getVertex(struct VertexPool* p){
 	}
 	
 	/* The malloc worked or we had an element left. So we initialize the struct */
-	p->tmp->label = NULL;
-	p->tmp->next = NULL;
-	p->tmp->neighborhood = NULL;
-	p->tmp->number = 0;
-	p->tmp->visited = 0;
-	p->tmp->isStringMaster = 0;
-	p->tmp->lowPoint = 0;
-	p->tmp->d = 0;
+	wipeVertex(p->tmp);
 	
 	return p->tmp;
+}
+
+
+/** 
+Set all variables in the struct to 0 or NULL
+*/
+void wipeVertex(struct Vertex* v) {
+	v->label = NULL;
+	v->next = NULL;
+	v->neighborhood = NULL;
+	v->number = 0;
+	v->visited = 0;
+	v->isStringMaster = 0;
+	v->lowPoint = 0;
+	v->d = 0;
 }
 
 
@@ -287,11 +306,22 @@ struct Graph* getGraph(struct GraphPool* p) {
 	}
 	
 	/* malloc worked or there was an unused element left, initialize stuff */
-	p->tmp->n = p->tmp->m = p->tmp->number = p->tmp->activity = 0;
-	p->tmp->vertices = NULL;
-	p->tmp->next = NULL;
+	wipeGraph(p->tmp);
 	
 	return p->tmp;
+}
+
+
+/** 
+Set all variables in the struct to 0 or NULL
+*/
+void wipeGraph(struct Graph* g) {
+	g->n = 0;
+	g->m = 0;
+	g->number = 0;
+	g->activity = 0;
+	g->vertices = NULL;
+	g->next = NULL;
 }
 
 
@@ -407,13 +437,22 @@ struct ShallowGraph* getShallowGraph(struct ShallowGraphPool *p) {
 	}
 	
 	/* The malloc worked or we had an element left. So we initialize the struct */
-	p->tmp->next = NULL;
-	p->tmp->prev = NULL;
-	p->tmp->m = 0;
-	p->tmp->edges = NULL;
-	p->tmp->lastEdge = NULL;
+	wipeShallowGraph(p->tmp);
 	
 	return p->tmp;
+}
+
+
+/** 
+Set all variables in the struct to 0 or NULL
+*/
+void wipeShallowGraph(struct ShallowGraph* g) {
+	g->next = NULL;
+	g->prev = NULL;
+	g->m = 0;
+	g->edges = NULL;
+	g->lastEdge = NULL;
+	g->data = 0;
 }
 
 
