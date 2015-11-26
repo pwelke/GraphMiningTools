@@ -611,7 +611,7 @@ Section 2 and Section 3 in the labeled version.
 It differs from the other subtreeCheck versions by just computing a single matching and then computing
 critical vertices by a simple augmenting path property check.
 */
-char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 	/* iterators */
 	int u, v;
 
