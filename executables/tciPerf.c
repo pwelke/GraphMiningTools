@@ -129,7 +129,7 @@ int main(int argc, char **argv){
         // printf("is a tree\n");
             time1 = clock();
             // cResult = cactusTreeSubIso(g,h,gPool,sgPool);
-            cResult = subtreeCheck3(g,h,gPool,sgPool);
+            cResult = subtreeCheck3(g,h,gPool);
             time2 = clock();
             firstTime = ((double) (time2-time1))/CLOCKS_PER_SEC;
             time1 = clock();
