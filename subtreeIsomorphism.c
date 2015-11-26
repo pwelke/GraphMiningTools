@@ -611,17 +611,13 @@ Section 2 and Section 3 in the labeled version.
 It differs from the other subtreeCheck versions by just computing a single matching and then computing
 critical vertices by a simple augmenting path property check.
 */
-char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 	/* iterators */
 	int u, v;
 
 	struct Vertex* r = g->vertices[0];
 	int*** S = createCube(g->n, h->n);
 	int* postorder = getPostorder(g, r->number);
-	// printf("Postorder:");
-	// for (v=0; v<g->n; ++v) printf(" %i", postorder[v]);
-	// printf("\n");
-
 
 	/* init the S(v,u) for v and u leaves */
 	int* gLeaves = findLeaves(g, 0);
@@ -662,16 +658,9 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
 						matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
-						// printf("for vertex current = %i and u = %i\n", current->number, u);
-						// struct ShallowGraph* m = getMatching(B, sgp);
-						// struct VertexList* e;
-						// for (e=m->edges; e!=NULL; e=e->next) {
-						// 	printf("matching edge (%i %i) flag %i\n", e->startPoint->lowPoint, e->endPoint->lowPoint, e->flag);
-						// }
 
 						// have we found a subgraph isomorphism?
 						if (matchings[0] == degU) {
-							// printf("yay. found a subtree iso.\n");
 							free(postorder);
 							free(matchings);
 							freeCube(S, g->n, h->n);
@@ -705,9 +694,6 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 							}
 
 							// mark all vertices reachable from uncoveredNeighbor by an augmenting path
-							// for (i=0; i<B->n; ++i) {
-							// 	B->vertices[i]->visited = 0;
-							// }
 							markReachable(uncoveredNeighbor, B->number);
 
 							// add non-critical vertices to output
@@ -722,22 +708,12 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 								}
 							}
 
-							// printf("Checked Matchings. Result:\n  ");
-							// for (i=0;i<B->number;++i) printf(" %i", B->vertices[i]->lowPoint);
-							// printf("\n");
-							// for (i=0;i<matchings[0];++i) printf(" %i", matchings[i]);
-							// printf("\n");
-
 						} else {
 							// makes no sense to look for critical vertices as there cannot be a matching covering all but one neighbor of u
 							matchings[0] = degU + 1;
 							for (i=1; i<degU + 1; ++i) {
 								matchings[i] = -1;
 							}
-							// printf("Did not check Matchings:");
-							// for (i=0;i<matchings[0];++i) printf(" %i", matchings[i]);
-							// printf("\n");
-
 						}
 
 						// store information for further steps of the algorithm
