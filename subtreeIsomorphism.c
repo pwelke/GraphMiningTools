@@ -843,8 +843,11 @@ char subtreeCheckF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struc
 							free(postorder);
 							free(matchings);
 							freeCube(S, g->n, h->n);
-							dumpGraph(gp, B);
-							free(cacheB);
+							dumpVertexListRecursively(gp->listPool, s->neighborhood);
+							dumpVertexListRecursively(gp->listPool, t->neighborhood);
+							dumpVertex(gp->vertexPool, s);
+							dumpVertex(gp->vertexPool, t);
+							dumpCachedGraph(cacheB);
 							return 1;
 						} else {
 							matchings[0] = degU + 1;
