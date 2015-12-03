@@ -21,3 +21,4 @@ stt
 trees.txt
 data
 /doc/output/*
+*.pid
