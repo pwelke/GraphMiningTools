@@ -3,7 +3,6 @@ Date: 2015-12-01
 Modified: 2015-12-01
 Category: Documentation
 Tags: pelican, publishing
-Slug: Home
 Authors: Pascal Welke
 Summary: Landing Page of the Documentation
 

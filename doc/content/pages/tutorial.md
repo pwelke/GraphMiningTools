@@ -3,7 +3,6 @@ Date: 2015-12-01
 Modified: 2015-12-01
 Category: Documentation
 Tags: pelican, publishing
-Slug: Tutorial
 Authors: Pascal Welke
 Summary: This page shows how to write and build an executable using the smallgraph library.
 
@@ -23,10 +22,12 @@ The smallgraph executables try to follow the unix way of doing things, where pos
 That means, command line arguments and input handling should behave as similar as possible to the usual stuff in the gnu coreutils package.
 Hence, the graph database can be piped to the executable via stdin or via a file given as the last parameter of the executable.
 
-To follow the structure of the smallgraphs project, the source of executables (those modules containing main() functions) should be saved in the /executables/ folder.
+To follow the structure of the smallgraphs project, the source of executables (those modules containing ```main()``` functions) should be saved in the ```/executables/``` folder.
 
 	#!C
 	#include <stdio.h>
+	#include <string.h>
+	#include <stdlib.h>
 	#include <getopt.h>
 
 	#include "../graph.h"
@@ -42,8 +43,6 @@ To follow the structure of the smallgraphs project, the source of executables (t
 
 		/* pointer to the current graph which is returned by the input iterator  */
 		struct Graph* g = NULL;
-		/* stores number of graphs that were read */
-		int i = 0;
 
 		/* parse command line arguments */
 		int arg;
@@ -106,7 +105,7 @@ Parsing of command line arguments (Line 20-32) is done by the functionality prov
 At the moment, the above code accepts a single command line argument, namely -h which should, by convention, print some help information about the program. 
 We will implement this functionality below.
 
-The smallgraph library has its own memory management system provided by memoryManagement.h.
+The smallgraph library has its own memory management system provided by ```memoryManagement.h```.
 Graphs, vertices, edges and "ShallowGraphs" (lists of edges) are held in object pools to avoid a huge amount of malloc and frees, which provide methods to get zero initialised objects and to dump them afterwards.
 These pools need to be initialized before any graph is parsed or created by the program (Line 34-38) and properly destructed at the end of our program (Line 69-72).
 
@@ -125,8 +124,8 @@ It just parses each graph in a given database once and dumps it afterwards.
 We now want to add some functionality.
 
 Lets check if the graphs in the database are trees (a connected graph that contains no cycles).
-outerplanar.h contains a method called isTree(struct Graph* g) that does exactly this.
-To use it, we need to include outerplanar.h
+```outerplanar.h``` contains a method called ```isTree(struct Graph* g)``` that does exactly this.
+To use it, we need to include ```outerplanar.h```.
 
 	#!C
 	#include "../outerplanar.h"
@@ -141,30 +140,90 @@ and add something sensible instead of Line 60 to output the result, like:
 	}
 
 And voila, we have a program that tests which graph is a tree, and which is not a tree.
-This, among many other tests, is already implemented in the gf executable whose source can be found in executables/filter.c.
+This, among many other tests, is already implemented in the gf executable whose source can be found in ```executables/filter.c```.
+
+As an alternative, if we want to return the degree of the first vertex in ```g```, we might replace Line 60 by
+	
+	#!C
+	int degree = 0;
+	struct VertexList* e;
+
+	for (e=g->vertices[0]->neighborhood; e!=NULL; e=e->next) {
+		++degree;
+	}
+
+	printf("Vertex 0 of graph %i has degree %i\n", g->number, degree);
+
+A little bit about the details here:
+```g``` is of type ```struct Graph*``` (a pointer to a Graph struct).
+Pointers to the vertices of g are stored in the array ```g->vertices```.
+Each Vertex struct has a member called neighborhood that points to the head of a list of VertexList structs.
+Above, we just count the number of elements in the list of edges that start in the first vertex of g.
 
 
 # Documenting the Interface of your Program
-	
+
+If you tried to compile the above piece of code, you will have noticed that it does not compile because of a missing ```printHelp()``` function, among other things. 
+Lets add one.
+Lets assume that we stored the code above in a file named ```simpleTreeTest.c```.
+
+We add the snippet 
+
 	#!C
 	/**
 	 * Print --help message
 	 */
 	int printHelp() {
-		FILE* helpFile = fopen("mainHelp.txt", "r");
-		if (helpFile != NULL) {
-			int c = EOF;
-			while ((c = fgetc(helpFile)) != EOF) {
-				fputc(c, stdout);
+	#include "simpleTreeTestHelp.help"
+		unsigned char* help = executables_simpleTreeTestHelp_txt;
+		int len = executables_simpleTreeTestHelp_txt_len;
+		if (help != NULL) {
+			int i=0;
+			for (i=0; i<len; ++i) {
+				fputc(help[i], stdout);
 			}
-			fclose(helpFile);
 			return EXIT_SUCCESS;
 		} else {
-			fprintf(stderr, "Could not read helpfile\n");
+			fprintf(stderr, "Could not read help file\n");
 			return EXIT_FAILURE;
 		}
 	}
 
+above of ```main()``` to ```simpleTreeTest.c``` and create a file called ```simpleTreeTestHelp.txt``` with the following content
+
+	This is the Tutorial program of the smallgraphs library.
+	Usage: ./simpleTreeTest [FILE]
+	If no FILE argument is given or FILE is - the program reads from stdin.
+	It always prints to stdout.
+
+	It accepts a database of graphs and checks whether the graphs are trees or 
+	returns the degree of the first vertex in the graph.
+
+
+Next, we will see how to use make to glue all of this together.
 
 # Adding a Make Target for Your Program
 
+At this point, we have created two files:
+
+- ```/executables/simpleTreeTest.c```
+- ```/executables/simpleTreeTestHelp.txt```
+
+To compile an executable for this, we add
+
+	#!Makefile
+	SIMPLETREETESTNAME = simpleTreeTest
+	SIMPLETREETESTOBJECTS = $(OBJECTS) ./executables/simpleTreeTest.o
+	SIMPLETREETESTHELP = ./executables/simpleTreeTestHelp.help
+
+	$(SIMPLETREETESTNAME): $(SIMPLETREETESTHELP) $(SIMPLETREETESTOBJECTS)
+		@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+
+to the Makefile in the root of the project.
+Note that the variable ``` $(SIMPLETREETESTOBJECTS) ``` depends on ``` $(OBJECTS) ``` and hence needs to be defined after ``` $(OBJECTS) ``` in the Makefile.
+Make sure that the last line is indented with a tab, not with spaces.
+
+We can now compile our executable by writing
+
+	$!bash
+	make simpleTreeTest
