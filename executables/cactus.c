@@ -4,6 +4,7 @@
 
 #include "../loading.h"
 #include "../cactustree.h"
+#include "../subtreeIsomorphism.h"
 
 
 int main(int argc, char **argv){
@@ -56,19 +57,12 @@ int main(int argc, char **argv){
         freeAllPools(gPool,sgPool);
         return EXIT_FAILURE;
     }
-    cactusTreeSubIso(graph, pattern, gPool, sgPool);
-
-
-
+    // cactusTreeSubIso(graph, pattern, gPool, sgPool);
+    char check = subtreeCheck(graph, pattern, gPool, sgPool);
+    printf("Return value: %i\n", check);
 
     dumpGraph(gPool,graph);
     dumpGraph(gPool,pattern);
-
-
-
-    
-
-
 
     freeAllPools(gPool, sgPool);
 }
