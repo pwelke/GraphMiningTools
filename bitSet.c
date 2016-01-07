@@ -1,4 +1,5 @@
 #include <malloc.h>
+#include <string.h>
 #include "bitSet.h"
 
 char* createBitset(int n) {
@@ -16,6 +17,13 @@ char* createBitset(int n) {
 		}
 	} 
 	return bitset;
+}
+
+char* copyBitset(char* bitset, int n) {
+	char* copy = createBitset(n);
+	size_t nBytes = (n % 8 == 0) ? (n / 8) : (n / 8 + 1);
+	memcpy(copy, bitset, nBytes);
+	return copy;
 }
 
 void destroyBitset(char* bitset) {
@@ -69,6 +77,7 @@ void bitsetIntersection(char* a, char* b, int n) {
 // 	char* bitset = createBitset(16);
 // 	char* b = createBitset(16);
 // 	char* c = createBitset(16);
+// 	char* d;
 // 	printBitset(bitset, 16, stdout);
 // 	// printStrange(bitset, 2);
 // 	setBitTrue(bitset, 5);
@@ -80,9 +89,11 @@ void bitsetIntersection(char* a, char* b, int n) {
 // 	setBitFalse(bitset, 5);
 // 	printBitset(bitset, 16, stdout);
 // 	bitsetUnion(c, bitset, 16);
+// 	d = copyBitset(c, 16);
 
 // 	printBitset(c, 16, stdout);
-
+// 	printBitset(d, 16, stdout);
+	
 // 	bitsetUnion(c, b, 16);
 // 	printBitset(c, 16, stdout);
 

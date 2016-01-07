@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 char* createBitset(int n);
+char* copyBitset(char* bitset, int n);
 void destroyBitset(char* bitset);
 
 void setBitTrue(char* bitset, int n);
