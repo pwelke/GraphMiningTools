@@ -219,8 +219,12 @@ void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSetSize, s
 		filter of the graph (i) for pruning */
 		for (v=0; v<resultPos; ++v) {
 			fprintf(keyValueStream, "%i %i\n", g->number, results[v].id);
-			initialAddToPruningSet(results[v].id, i);
+			// initialAddToPruningSet(results[v].id, i);
 		}
+	}
+
+	if (results) { 
+		free(results);
 	}
 }
 
