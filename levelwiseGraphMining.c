@@ -395,9 +395,16 @@ int main(int argc, char** argv) {
 		}
 
 		// garbage collection
-		freePruning();
-		dumpSearchTree(gp, frequentVertices);
+		// freePruning();
+		dumpShallowGraphCycle(sgp, extensionEdges);
 		dumpSearchTree(gp, frequentEdges);
+		dumpSearchTree(gp, frequentVertices);
+		fclose(kvStream);
+		free(kvStream);
+		fclose(featureStream);
+		free(featureStream);
+		// fclose(patternStream);
+		// free(patternStream);
 
 		for (i=0; i<nGraphs; ++i) {
 			dumpGraph(gp, db[i]);
