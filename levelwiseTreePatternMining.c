@@ -189,14 +189,29 @@ int getVertexAndEdgeHistograms(char* fileName, double importance, struct Vertex*
 }
 
 
-struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+/**
+Create a list of single-edge ShallowGraphs from a search tree containing single edge canonical strings.
+Note that this method creates a hardcopy of the edges, strings and vertices. 
+Hence, it requires a pointer to a struct Graph* newVertices variable where it stores a newly created graph that holds all the new vertices. 
+To avoid memory leaks, this graph needs to be dumbed together with the struct ShallowGraph* result of this method.
+*/
+struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct Graph** newVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* result = getShallowGraph(sgp);
 	struct VertexList* e;
+	struct Vertex* createdVertices = NULL;
+	int nVertices = 0;
+	int i;
+	struct Vertex* tmp;
 
 	for (e=frequentEdges->neighborhood; e!=NULL; e=e->next) {
 		struct Vertex* v = getVertex(gp->vertexPool);
 		struct VertexList* f;
 		v->label = e->label;
+		/* store newly created vertex in a list */
+		v->next = createdVertices;
+		createdVertices = v;
+		++nVertices;
+
 		for (f=e->endPoint->neighborhood->endPoint->neighborhood; f!=NULL; f=f->next) {
 			struct VertexList* g;
 			for (g=f->endPoint->neighborhood; g!=NULL; g=g->next) {
@@ -211,6 +226,10 @@ struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, s
 				if (strcmp(v->label, new->endPoint->label) != 0) {
 					pushEdge(result, inverseEdge(new, sgp->listPool));
 				}
+				/* store newly created vertex in a list */
+				new->endPoint->next = createdVertices;
+				createdVertices = new->endPoint;
+				++nVertices;
 			}
 		}
 	}
@@ -230,6 +249,14 @@ struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, s
 			e->endPoint->label = copyString(e->endPoint->label);
 		}
 	}
+
+	/* to avoid memory leaks, make a graph containing all newly created vertices and return it*/
+	*newVertices = getGraph(gp);
+	setVertexNumber(*newVertices, nVertices);
+	for (i=0, tmp=createdVertices; i<nVertices; ++i, tmp=tmp->next) {
+		(*newVertices)->vertices[i] = tmp;
+	}
+
 	return result;
 }
 
