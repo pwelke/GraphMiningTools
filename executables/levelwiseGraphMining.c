@@ -338,102 +338,111 @@ int main(int argc, char** argv) {
 		// refactor
 		// fopen("/dev/null", "w");
 		FILE* kvStream = fopen("/dev/null", "w");
-		FILE* featureStream = fopen("/dev/null", "w");
+		FILE* featureStream = kvStream;
 		FILE* patternStream = stdout;
 
 		int debugInfo = 1;
 		int i;
 
-		struct Vertex* frequentPatterns;
-		struct ShallowGraph* extensionEdges;
-		int patternSize;
+		struct Vertex* frequentPatterns = NULL;
+		struct ShallowGraph* extensionEdges = NULL;
+		struct Graph* extensionEdgesVertexStore = NULL;
+		int patternSize = 0;
 
 		struct Vertex* frequentVertices = getVertex(vp);
 		struct Vertex* frequentEdges = getVertex(vp);
 		struct Graph** db = NULL;
 		int nGraphs = 128;
-		int tmpResultSetSize;
+		int tmpResultSetSize = 0;
 
 		/* init data structures */
 		// initPruning(nGraphs);
 		nGraphs = getDB(&db);
 		destroyFileIterator(); // graphs are in memory now
 
-		/* get frequent vertices */
-		tmpResultSetSize = getFrequentVertices(db, nGraphs, frequentVertices, kvStream, gp);
-		filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureStream, gp);
-		
-		/* output frequent vertices */
-		fprintf(patternStream, "patterns size 0\n");
-		printStringsInSearchTree(frequentVertices, patternStream, sgp);
-
-		/* get frequent edges: first edge id is given by number of frequent vertices */
-		offsetSearchTreeIds(frequentEdges, frequentVertices->lowPoint);
-		getFrequentEdges(db, nGraphs, tmpResultSetSize, frequentEdges, kvStream, gp);
-		filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureStream, gp);
-		
-		/* output frequent edges */
-		fprintf(patternStream, "patterns size 1\n");
-		printStringsInSearchTree(frequentEdges, patternStream, sgp);
-
-		/* convert frequentEdges to ShallowGraph */
-		extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, gp, sgp);	
-
-		// /* start with patterns containing two edges */
-		// for (frequentPatterns = frequentEdges, patternSize = 2; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
-		// 	struct ShallowGraph* prefix = getShallowGraph(sgp);
-		// 	struct Vertex* candidateSet;
-		// 	struct Vertex** pointers;
-		// 	struct Graph** refinements;
-		// 	int refinementSize;
-
-		// 	if (debugInfo) { fprintf(stderr, "starting level %i\n", patternSize); fflush(stderr); }
+		if (maxPatternSize > 0) {
+			/* get frequent vertices */
+			tmpResultSetSize = getFrequentVertices(db, nGraphs, frequentVertices, kvStream, gp);
+			filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureStream, gp);
 			
-		// 	candidateSet = generateCandidateTreeSet(frequentPatterns, extensionEdges, gp, sgp);
-		// 	// candidateSet = generateCandidateAprioriTreeSet(frequentPatterns, extensionEdges, gp, sgp);
+			/* output frequent vertices */
+			fprintf(patternStream, "patterns size 0\n");
+			printStringsInSearchTree(frequentVertices, patternStream, sgp);
+			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 1: %i\n", frequentVertices->d); fflush(stderr); }
+		}
 
-		// 	if (debugInfo) { fprintf(stderr, "Candidates for level %i: %i\n", patternSize, candidateSet->d); fflush(stderr); }
+		if (maxPatternSize > 1) {
+			/* get frequent edges: first edge id is given by number of frequent vertices */
+			offsetSearchTreeIds(frequentEdges, frequentVertices->lowPoint);
+			getFrequentEdges(db, nGraphs, tmpResultSetSize, frequentEdges, kvStream, gp);
+			filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureStream, gp);
 			
-		// 	refinementSize = candidateSet->d;
-		// 	pointers = malloc(refinementSize * sizeof(struct Vertex*));
-		// 	refinements = malloc(refinementSize * sizeof(struct Graph*));
+			/* output frequent edges */
+			fprintf(patternStream, "patterns size 1\n");
+			printStringsInSearchTree(frequentEdges, patternStream, sgp);
 
-		// 	makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-		// 	stupidPatternEvaluation(db, nGraphs, refinements, refinementSize, pointers, gp, sgp);
+			/* convert frequentEdges to ShallowGraph */
+			extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);	
+			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 2: %i\n", frequentEdges->d); fflush(stderr); }
+		}
 
-		// 	/* threshold + 1 as candidateSet contains each candidate once, already */
-		// 	filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureStream, gp);
+		/* start with patterns containing two edges */
+		for (frequentPatterns = frequentEdges, patternSize = 3; (frequentPatterns->d > 0) && (patternSize <= maxPatternSize); ++patternSize) {
+			struct ShallowGraph* prefix = getShallowGraph(sgp);
+			struct Vertex* candidateSet;
+			struct Vertex** pointers;
+			struct Graph** refinements;
+			int refinementSize;
 
-		// 	/* output patterns of current level */
-		// 	fprintf(patternStream, "patterns size %i\n", patternSize);
-		// 	printStringsInSearchTreeWithOffset(candidateSet, -1, patternStream, sgp); 
-		// 	if (debugInfo) { fprintf(stderr, "Frequent patterns in level %i: %i\n", patternSize, candidateSet->d); fflush(stderr); }
+			if (debugInfo) { fprintf(stderr, "starting level %i\n", patternSize); fflush(stderr); }
+			
+			candidateSet = generateCandidateTreeSet(frequentPatterns, extensionEdges, gp, sgp);
+			// candidateSet = generateCandidateAprioriTreeSet(frequentPatterns, extensionEdges, gp, sgp);
 
-		// 	/* garbage collection */
-		// 	dumpSearchTree(gp, frequentPatterns);
-		// 	dumpShallowGraph(sgp, prefix);
-		// 	free(pointers);
-		// 	for (i=0; i<refinementSize; ++i) {
-		// 		dumpGraph(gp, refinements[i]);
-		// 	}
-		// 	free(refinements);
-		// 	frequentPatterns = candidateSet;
+			if (debugInfo) { fprintf(stderr, "Candidates for level %i: %i\n", patternSize, candidateSet->d); fflush(stderr); }
+			
+			refinementSize = candidateSet->d;
+			pointers = malloc(refinementSize * sizeof(struct Vertex*));
+			refinements = malloc(refinementSize * sizeof(struct Graph*));
 
-		// 	/* flush the output, close the streams	 */
-		// 	fflush(featureStream);
-		// 	fflush(kvStream);
-		// 	fflush(patternStream);
-		// }	
+			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
+			stupidPatternEvaluation(db, nGraphs, refinements, refinementSize, pointers, gp, sgp);
+
+			/* threshold + 1 as candidateSet contains each candidate once, already */
+			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureStream, gp);
+
+			/* output patterns of current level */
+			fprintf(patternStream, "patterns size %i\n", patternSize);
+			printStringsInSearchTreeWithOffset(candidateSet, -1, patternStream, sgp); 
+			if (debugInfo) { fprintf(stderr, "Frequent patterns in level %i: %i\n", patternSize, candidateSet->d); fflush(stderr); }
+
+			/* garbage collection */
+			dumpSearchTree(gp, frequentPatterns);
+			dumpShallowGraph(sgp, prefix);
+			free(pointers);
+			for (i=0; i<refinementSize; ++i) {
+				dumpGraph(gp, refinements[i]);
+			}
+			free(refinements);
+			frequentPatterns = candidateSet;
+
+			/* flush the output, close the streams	 */
+			fflush(featureStream);
+			fflush(kvStream);
+			fflush(patternStream);
+		}	
 
 		// garbage collection
 		// freePruning();
 		dumpShallowGraphCycle(sgp, extensionEdges);
-		dumpSearchTree(gp, frequentEdges);
+		dumpGraph(gp, extensionEdgesVertexStore);
+		dumpSearchTree(gp, frequentPatterns);
 		dumpSearchTree(gp, frequentVertices);
 		fclose(kvStream);
-		free(kvStream);
-		fclose(featureStream);
-		free(featureStream);
+		dumpCube();
+		// free(kvStream);
+		// fclose(featureStream);
+		// free(featureStream);
 		// fclose(patternStream);
 		// free(patternStream);
 
