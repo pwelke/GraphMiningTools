@@ -16,7 +16,8 @@ WLNAME = wl
 
 ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME)
 
-CPPFLAGS = -g -Wall -pedantic -W -ggdb -O3 -std=gnu99 -lm
+CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
+# CPPFLAGS = -g -Wall -pedantic -W -ggdb -std=gnu99 -lm -O3
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 HELPFILES = $(patsubst ./executables/%.txt, ./executables/%.help, $(wildcard ./executables/*.txt))
