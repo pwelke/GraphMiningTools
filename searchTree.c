@@ -816,8 +816,7 @@ static void recListString(struct ShallowGraph* stringList, struct Vertex* root, 
 			prefix->edges = NULL;
 		} else {
 			lastEdge->next = NULL;
-		}
-		
+		}	
 	}
 }
 
@@ -834,6 +833,64 @@ struct ShallowGraph* listStringsInSearchTree(struct Vertex* root, struct Shallow
 	return listHead;
 }
 
+
+// struct ShallowGraph* iterateSearchTree(struct SearchTreeIterator iter) {
+
+// 	if (!iter.currentWasOutput) {
+// 		if ((iter.current)->visited != 0) {
+// 			iter.currentWasOutput = 1;
+// 			return cloneShallowGraph(iter.prefix, sgp);
+// 		}
+// 	} else {
+// 		iter.currentWasOutput = 0;
+// 		for (struct VertexList* e=(iter.current)->neighborhood; e!=NULL; e=e->next) {
+			
+// 			/* after finishing this block, we want prefix to be as before, thus we have
+// 			   to do some list magic */																																																								
+// 			struct VertexList* lastEdge = (iter.prefix)->lastEdge;
+// 			appendEdge(iter.prefix, shallowCopyEdge(e, sgp->listPool));
+
+// 			return iterateSearchTree(iter);
+
+// 			dumpVertexList(sgp->listPool, (iter.prefix)->lastEdge);
+// 			(iter.prefix)->lastEdge = lastEdge;
+// 			(iter.prefix)->m -= 1;
+
+// 			if ((iter.prefix)->m == 0) {
+// 				(iter.prefix)->edges = NULL;
+// 			} else {
+// 				lastEdge->next = NULL;
+// 			}	
+// 		}
+// }
+
+// struct ShallowGraph* iterateSearchTree(struct SearchTreeIterator iter) {
+// 	iter.current = (iter.stack)->edges->startPoint;
+
+// 	// output string, if not yet outputted 
+// 	if (iter.current != iter.lastOutput) {
+// 		if ((iter.current)->visited != 0) {
+// 			iter.lastOutput = iter.current;
+// 			return cloneShallowGraph(iter.stack, sgp);
+// 		}
+// 	}
+// 	// if no output happens, either process children or backtrack
+// 	for (struct VertexList* e=(iter.current)->neighborhood; e!=NULL; e=e->next) {
+// 		pushEdge(iter.stack, shallowCopyEdge(e, (iter.sgp)->listPool));
+
+// 	}
+
+// }
+
+
+// struct SearchTreeIterator initSearchTreeIterator(struct Vertex* searchTree, struct ShallowGraphPool* sgp) {
+// 	struct SearchTreeIterator iter;
+// 	iter.current = searchTree;
+// 	iter.root = searchTree;
+// 	iter.prefix = getShallowGraph(sgp);
+// 	iter.sgp = sgp;
+// 	return iter;
+// }
 
 /**
 print one line for each tree in the search tree to stream.
