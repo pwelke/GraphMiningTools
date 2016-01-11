@@ -10,23 +10,15 @@
 #include "../outerplanar.h"
 // #include "../bloomFilter.h"
 #include "../cs_Parsing.h"
+#include "../cs_Tree.h"
 #include "../treeEnumeration.h"
 #include "../levelwiseTreePatternMining.h"
 #include "../subtreeIsomorphism.h"
 #include "../bitSet.h"
+#include "../graphPrinting.h"
+#include "../intSet.h"
 
 char DEBUG_INFO = 1;
-
-typedef enum {
-		wilson,
-		listing,
-		mix,
-		cactus,
-		bridgeForest,
-		listOrSample
-	} SamplingMethod;	
-
-
 
 /**
  * Print --help message
@@ -242,28 +234,57 @@ void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patt
 	}
 }
 
-/*
-Assumptions: patterns[i]->prev contains a pointer to a bitSet storing which graphs in the db contain all of its children
-*/
-void lessStupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patterns, int nPatterns, struct Vertex** pointers, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	int i;
-	for (i=0; i<nGraphs; ++i) {
-		int j;
-		for (j=0; j<nPatterns; ++j) {
-			// if (getBit(patterns[j]->prev, i)) {
-				if (subtreeCheck(db[i], patterns[j], gp, sgp)) {
-					++pointers[j]->visited;
-				}
-			// }
+
+void DFS(struct Graph** db, struct IntSet* candidateSupport, struct Graph* candidate, size_t threshold, int maxPatternSize, struct ShallowGraph* frequentEdges, struct Vertex* processedPatterns, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	// test if candidate is frequent
+	struct IntSet* actualSupport = getIntSet();
+	for (struct IntElement* i=candidateSupport->first; i!=NULL; i=i->next) {
+		struct Graph* g = db[i->value];
+		if (subtreeCheck(g, candidate, gp, sgp)) {
+			appendInt(actualSupport, i->value);
 		}
 	}
+	struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
+
+	// if so, print results and generate refinements
+	struct Graph* refinements = NULL;
+	if (actualSupport->size >= threshold) {
+		fprintf(stdout, "============\nNEW PATTERN:\n");
+		printCanonicalString(cString, stdout);
+		printIntSet(actualSupport, stdout);
+
+		if (candidate->n < maxPatternSize) {
+			// crazy ineffective
+			refinements = extendPattern(candidate, frequentEdges, gp);
+			refinements = basicFilter(refinements, processedPatterns, gp, sgp);
+		}
+	}
+
+	// add canonical string of pattern to the set of processed patterns for filtering out candidates that were already tested.
+	addToSearchTree(processedPatterns, cString, gp, sgp);
+
+	// for each refinement recursively call DFS
+	for (struct Graph* refinement=refinements; refinement!=NULL; refinement=refinement->next) {
+		DFS(db, actualSupport, refinement, threshold, maxPatternSize, frequentEdges, processedPatterns, gp, sgp);
+	}
+
+	// garbage collection
+	dumpIntSet(actualSupport);
+	struct Graph* refinement = refinements;
+	while (refinement!=NULL) {
+		struct Graph* tmp = refinement->next;
+		refinement->next = NULL;
+		dumpGraph(gp, refinement);
+		refinement = tmp;
+	}
+
 }
 
 
 /**
  * Input handling, parsing of database and call of opk feature extraction method.
  */
-int main(int argc, char** argv) {
+int mainDFS(int argc, char** argv) {
 
 	/* object pools */
 	struct ListPool *lp;
@@ -272,15 +293,10 @@ int main(int argc, char** argv) {
 	struct GraphPool *gp;
 
 	/* pointer to the current graph which is returned by the input iterator */
-	//struct Graph* g = NULL;
 
 	/* user input handling variables */
 	int threshold = 1000;
 	int maxPatternSize = 20;
-	//char unsafe = 0;
-
-	/* i counts the number of graphs read */
-	//int i = 0;
 
 	/* parse command line arguments */
 	int arg;
@@ -291,9 +307,173 @@ int main(int argc, char** argv) {
 			printHelp();
 			return EXIT_SUCCESS;
 			break;
-		// case 'u':
-		// 	unsafe = 1;
-		// 	break;
+		case 't':
+			if (sscanf(optarg, "%i", &threshold) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} 
+			break;
+		case 'p':
+			if (sscanf(optarg, "%i", &maxPatternSize) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} 
+			break;
+		case '?':
+			return EXIT_FAILURE;
+			break;
+		}
+	}
+
+	/* init object pools */
+	lp = createListPool(10000);
+	vp = createVertexPool(10000);
+	sgp = createShallowGraphPool(1000, lp);
+	gp = createGraphPool(100, vp, lp);
+
+	/* initialize the stream to read graphs from 
+   check if there is a filename present in the command line arguments 
+   if so, open the file, if not, read from stdin */
+	if (optind < argc) {
+		char* filename = argv[optind];
+		/* if the present filename is not '-' then init a file iterator for that file name */
+		if (strcmp(filename, "-") != 0) {
+			createFileIterator(filename, gp);
+		} else {
+			createStdinIterator(gp);
+		}
+	} else {
+		createStdinIterator(gp);
+	}
+
+	// start frequent subgraph mining
+	{
+		// // refactor
+		// // fopen("/dev/null", "w");
+		FILE* kvStream = fopen("/dev/null", "w");
+		FILE* featureStream = kvStream;
+		FILE* patternStream = stdout;
+
+		int debugInfo = 1;
+
+		struct ShallowGraph* extensionEdges = NULL;
+		struct Graph* extensionEdgesVertexStore = NULL;
+
+		struct Vertex* frequentVertices = getVertex(vp);
+		struct Vertex* frequentEdges = getVertex(vp);
+		struct Graph** db = NULL;
+		int nGraphs = 128;
+		int tmpResultSetSize = 0;
+
+		/* init data structures */
+		nGraphs = getDB(&db);
+		destroyFileIterator(); // graphs are in memory now
+
+
+		if (maxPatternSize > 0) {
+			/* get frequent vertices */
+			tmpResultSetSize = getFrequentVertices(db, nGraphs, frequentVertices, kvStream, gp);
+			filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureStream, gp);
+			
+			/* output frequent vertices */
+			fprintf(patternStream, "patterns size 0\n");
+			printStringsInSearchTree(frequentVertices, patternStream, sgp);
+			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 1: %i\n", frequentVertices->d); fflush(stderr); }
+		}
+
+		if (maxPatternSize > 1) {
+			/* get frequent edges: first edge id is given by number of frequent vertices */
+			offsetSearchTreeIds(frequentEdges, frequentVertices->lowPoint);
+			getFrequentEdges(db, nGraphs, tmpResultSetSize, frequentEdges, kvStream, gp);
+			filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureStream, gp);
+			
+			/* output frequent edges */
+			fprintf(patternStream, "patterns size 1\n");
+			printStringsInSearchTree(frequentEdges, patternStream, sgp);
+
+			/* convert frequentEdges to ShallowGraph */
+			extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);	
+			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 2: %i\n", frequentEdges->d); fflush(stderr); }
+
+		}
+
+		// DFS
+		struct Vertex* processedPatterns = getVertex(gp->vertexPool);
+
+		struct IntSet* fullDataBase = getIntSet();
+		for (int j=0; j<nGraphs; ++j) {
+			appendInt(fullDataBase, j);
+		}
+
+		struct Graph* candidate = createGraph(2, gp);
+		addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
+	
+		for (struct VertexList* e=extensionEdges->edges; e!=NULL; e=e->next) {
+			candidate->vertices[0]->label = e->startPoint->label;
+			candidate->vertices[1]->label = e->endPoint->label;
+			candidate->vertices[0]->neighborhood->label = e->label;
+			candidate->vertices[1]->neighborhood->label = e->label;
+
+			fprintf(stdout, "==\n==\nPROCESSING NEXT EDGE:\n");
+			struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
+			printCanonicalString(cString, stdout);
+			if (!containsString(processedPatterns, cString)) {
+				addToSearchTree(processedPatterns, cString, gp, sgp);
+				DFS(db, fullDataBase, candidate, threshold, maxPatternSize, extensionEdges, processedPatterns, gp, sgp);
+			} else {
+				dumpShallowGraph(sgp, cString);
+			}
+		}
+		dumpGraph(gp, candidate);
+		dumpIntSet(fullDataBase);
+
+		dumpShallowGraphCycle(sgp, extensionEdges);
+		dumpGraph(gp, extensionEdgesVertexStore);
+		dumpSearchTree(gp, frequentEdges);
+		dumpSearchTree(gp, frequentVertices);
+		fclose(kvStream);
+		dumpCube();
+
+		for (int i=0; i<nGraphs; ++i) {
+			dumpGraph(gp, db[i]);
+		}
+		free(db);
+	}
+
+	/* global garbage collection */
+	freeGraphPool(gp);
+	freeShallowGraphPool(sgp);
+	freeListPool(lp);
+	freeVertexPool(vp);
+
+	return EXIT_SUCCESS;
+}
+
+
+/**
+ * Input handling, parsing of database and call of opk feature extraction method.
+ */
+int mainBFS(int argc, char** argv) {
+
+	/* object pools */
+	struct ListPool *lp;
+	struct VertexPool *vp;
+	struct ShallowGraphPool *sgp;
+	struct GraphPool *gp;
+
+	/* user input handling variables */
+	int threshold = 1000;
+	int maxPatternSize = 20;
+
+	/* parse command line arguments */
+	int arg;
+	const char* validArgs = "ht:p:u";
+	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
+		switch (arg) {
+		case 'h':
+			printHelp();
+			return EXIT_SUCCESS;
+			break;
 		case 't':
 			if (sscanf(optarg, "%i", &threshold) != 1) {
 				fprintf(stderr, "value must be integer, is: %s\n", optarg);
@@ -342,7 +522,6 @@ int main(int argc, char** argv) {
 		FILE* patternStream = stdout;
 
 		int debugInfo = 1;
-		int i;
 
 		struct Vertex* frequentPatterns = NULL;
 		struct ShallowGraph* extensionEdges = NULL;
@@ -356,9 +535,9 @@ int main(int argc, char** argv) {
 		int tmpResultSetSize = 0;
 
 		/* init data structures */
-		// initPruning(nGraphs);
 		nGraphs = getDB(&db);
 		destroyFileIterator(); // graphs are in memory now
+
 
 		if (maxPatternSize > 0) {
 			/* get frequent vertices */
@@ -386,6 +565,7 @@ int main(int argc, char** argv) {
 			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 2: %i\n", frequentEdges->d); fflush(stderr); }
 		}
 
+		// BFS
 		/* start with patterns containing two edges */
 		for (frequentPatterns = frequentEdges, patternSize = 3; (frequentPatterns->d > 0) && (patternSize <= maxPatternSize); ++patternSize) {
 			struct ShallowGraph* prefix = getShallowGraph(sgp);
@@ -396,8 +576,8 @@ int main(int argc, char** argv) {
 
 			if (debugInfo) { fprintf(stderr, "starting level %i\n", patternSize); fflush(stderr); }
 			
-			candidateSet = generateCandidateTreeSet(frequentPatterns, extensionEdges, gp, sgp);
-			// candidateSet = generateCandidateAprioriTreeSet(frequentPatterns, extensionEdges, gp, sgp);
+			// candidateSet = generateCandidateTreeSet(frequentPatterns, extensionEdges, gp, sgp);
+			candidateSet = generateCandidateAprioriTreeSet(frequentPatterns, extensionEdges, gp, sgp);
 
 			if (debugInfo) { fprintf(stderr, "Candidates for level %i: %i\n", patternSize, candidateSet->d); fflush(stderr); }
 			
@@ -420,7 +600,7 @@ int main(int argc, char** argv) {
 			dumpSearchTree(gp, frequentPatterns);
 			dumpShallowGraph(sgp, prefix);
 			free(pointers);
-			for (i=0; i<refinementSize; ++i) {
+			for (int i=0; i<refinementSize; ++i) {
 				dumpGraph(gp, refinements[i]);
 			}
 			free(refinements);
@@ -433,20 +613,14 @@ int main(int argc, char** argv) {
 		}	
 
 		// garbage collection
-		// freePruning();
 		dumpShallowGraphCycle(sgp, extensionEdges);
 		dumpGraph(gp, extensionEdgesVertexStore);
 		dumpSearchTree(gp, frequentPatterns);
 		dumpSearchTree(gp, frequentVertices);
 		fclose(kvStream);
 		dumpCube();
-		// free(kvStream);
-		// fclose(featureStream);
-		// free(featureStream);
-		// fclose(patternStream);
-		// free(patternStream);
 
-		for (i=0; i<nGraphs; ++i) {
+		for (int i=0; i<nGraphs; ++i) {
 			dumpGraph(gp, db[i]);
 		}
 		free(db);
@@ -456,8 +630,12 @@ int main(int argc, char** argv) {
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);
 	freeListPool(lp);
-		if (1) { fprintf(stderr, "finishing level %i\n", 0); fflush(stderr); }
+	if (1) { fprintf(stderr, "finishing level %i\n", 0); fflush(stderr); }
 	freeVertexPool(vp);
 
 	return EXIT_SUCCESS;
+}
+
+int main(int argc, char** argv) {
+	return mainDFS(argc, argv);
 }
