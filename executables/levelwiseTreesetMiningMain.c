@@ -242,7 +242,8 @@ int main(int argc, char** argv) {
 	if (debugInfo) { fprintf(stderr, "Computation of level 0 and 1 done\n"); }
 
 	/* convert frequentEdges to ShallowGraph */
-	extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, gp, sgp);	
+	struct Graph* extensionEdgesVertexStore;
+	extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
 
 	for (frequentPatterns = frequentEdges, patternSize = 2; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
 		int i;
@@ -289,6 +290,7 @@ int main(int argc, char** argv) {
 	dumpCube();
 	freePruning();
 	freeFrequentEdgeShallowGraph(gp, sgp, extensionEdges);
+	dumpGraph(gp, extensionEdgesVertexStore);
 	dumpSearchTree(gp, frequentVertices);
 	dumpSearchTree(gp, frequentPatterns);
 	fclose(featureFile);
