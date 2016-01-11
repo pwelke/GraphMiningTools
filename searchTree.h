@@ -27,15 +27,6 @@ int containsString(struct Vertex* root, struct ShallowGraph* string);
 int getID(struct Vertex* root, struct ShallowGraph* string);
 
 
-// struct SearchTreeIterator{
-// 	struct Vertex* current;
-// 	struct Vertex* lastOutput;
-// 	struct Vertex* root;
-// 	struct ShallowGraph* prefix;
-// 	struct ShallowGraphPool* sgp;
-// };
-// struct ShallowGraph* iterateSearchTree(struct SearchTreeIterator iter);
-// struct SearchTreeIterator initSearchTreeIterator(struct Vertex* searchTree, struct ShallowGraphPool* sgp);
 struct ShallowGraph* listStringsInSearchTree(struct Vertex* root, struct ShallowGraphPool* sgp);
 
 struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* number, struct ShallowGraphPool* sgp);
