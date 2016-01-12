@@ -260,39 +260,6 @@ struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, s
 	return result;
 }
 
-/**
-frequentEdgeShallowGraph is a list of VertexLists that point to Vertices
-that are only accessible from there. These vertices have to be dumped, 
-but there may be more than one vertexlist referencing a Vertex.
-thus the algorithm has to find and store the first occurrence of each Vertex, 
-dump them and just then dump the shallowgraph.
-*/
-void freeFrequentEdgeShallowGraph(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct ShallowGraph* edges) {
-	struct VertexList* e = edges->edges;
-	struct Vertex* list = NULL;
-
-	for (e=edges->edges; e!=NULL; e=e->next) {
-		e->startPoint->d = e->endPoint->d = 1;
-	}
-	for (e=edges->edges; e!=NULL; e=e->next) {
-		if (e->startPoint->d == 1) {
-			e->startPoint->d = 0;
-			e->startPoint->next = list;
-			list = e->startPoint;
-		}
-		if (e->endPoint->d == 1) {
-			e->endPoint->d = 0;
-			e->endPoint->next = list;
-			list = e->endPoint;
-		}
-	}
-	while (list != NULL) {
-		struct Vertex* next = list->next;
-		dumpVertex(gp->vertexPool, list);
-		list = next;
-	}
-	dumpShallowGraph(sgp, edges);
-}
 
 /** Check for each pattern tree in patternTrees if there is at least one tree in transactionTrees such that 
 the pattern is subgraph isomorphic to the transaction tree */
