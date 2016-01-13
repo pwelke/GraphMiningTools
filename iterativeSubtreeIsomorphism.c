@@ -4,12 +4,116 @@
 #include "graph.h"
 #include "bipartiteMatching.h"
 #include "subtreeIsomorphism.h"
-#include "iterativeSubtreeIsomorphism.h"
+// #include "iterativeSubtreeIsomorphism.h"
 
-void initIterativeSubtreeCheck(struct Graph* g) {
+// void initIterativeSubtreeCheck(struct Graph* g) {
 	
+// }
+
+/* vertices of g have their ->visited values set to the postorder. Thus, 
+children of v are vertices u that are neighbors of v and have u->visited < v->visited */
+struct Graph* makeBipartiteInstanceFromVertices(int*** S, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+	struct Graph* B;
+
+	int sizeofX = degree(u);
+	int sizeofY = degree(v);
+
+	// if one of the neighbors of u is removed from this instance to see if there is a matching covering all neighbors but it, 
+	// the bipartite graph must be smaller
+	if (removalVertex->number != u->number) {
+		--sizeofX;
+	}
+
+ 	/* construct bipartite graph B(v,u) */ 
+	B = createGraph(sizeofX + sizeofY, gp);
+	/* store size of first partitioning set */
+	B->number = sizeofX;
+
+	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B 
+	and add edge labels to vertex labels to compare edges easily */
+	int i = 0;
+	for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint->number != removalVertex->number) {
+			B->vertices[i]->lowPoint = e->endPoint->number;
+			B->vertices[i]->label = e->label;
+			++i;
+		}
+	}
+	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+		B->vertices[i]->lowPoint = e->endPoint->number;
+		B->vertices[i]->label = e->label;
+		++i;
+	}
+
+	/* add edge (x,y) if u in S(y,x) */
+	for (i=0; i<sizeofX; ++i) {
+		for (int j=sizeofX; j<B->n; ++j) {	
+			int x = B->vertices[i]->lowPoint;
+			int y = B->vertices[j]->lowPoint;
+
+			/* y has to be a child of v */
+			if (g->vertices[y]->visited < v->visited) {
+				/* vertex labels have to match */
+				if (labelCmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
+					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h 
+					these values were stored in B->vertices[i,j]->label */
+					if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+						if (S[y][x] != NULL) {
+							for (int k=1; k<=S[y][x][0]; ++k) {
+								if (S[y][x][k] == u->number) {
+									addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+									++B->m;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	} 
+
+	return B;
 }
 
+/* Return an array holding the indices of the parents of each vertex in g with root root.
+the parent of root does not exist, which is indicated by index -1 */
+int* getParents(struct Graph* g, int root) {
+	int* postorder = getPostorder(g, root);
+	int* parents = malloc(g->n * sizeof(int));
+	for (int i=0; i<g->n; ++i) {
+		int v = postorder[i];
+		parents[v] = g->vertices[v]->lowPoint;
+	}
+	free(postorder);
+	return parents;
+}
+
+// TODO can be made constant time
+int containsCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+	int uvNumberOfCharacteristics = S[v->number][u->number][0];
+	for (int i=1; i<=uvNumberOfCharacteristics; ++i) {
+		if (y->number == S[v->number][u->number][i]) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+// assumes that 
+void addCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+	S[v->number][u->number][0] += 1;
+	int newPos = S[v->number][u->number][0];
+	S[v->number][u->number][newPos] = y->number;
+} 
+
+
+int computeCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+	// TODO speedup by handling leaf case separately
+	struct Graph* B = makeBipartiteInstanceFromVertices(S, y, u, v, g, h, gp);
+	int sizeofMatching = bipartiteMatchingFastAndDirty(B, gp);
+	dumpGraph(gp, B);
+	return (sizeofMatching == B->number) ? 1 : 0;
+}
 
 /**
 Iterative Labeled Subtree Isomorphism Check. 
@@ -28,180 +132,60 @@ Output:
 	the cube for h and g
 
 */
-char subtreeCheck(struct Graph* g, int* gPostorder, struct Graph* h, struct Vertex* newVertex, int*** oldS, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	/* iterators */
-	// int u, v;
+char iterativeSubtreeCheck(struct Graph* g, struct Graph* h, struct Vertex* newVertex, int*** oldS, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* supressWarning = getShallowGraph(sgp);
+	if (supressWarning) {}
 
 	// newVertex is a leaf, hence there is only one incident edge, which is the newly added one.
 	struct VertexList* newEdge = newVertex->neighborhood;
 	struct Vertex* a = newEdge->endPoint;
-	struct Vertex* b = newEdge->startPoit;
+	struct Vertex* b = newEdge->startPoint;
 
 	struct Vertex* r = g->vertices[0];
-	int*** newS = createCube(g->n, h->n); // rewrite
-	int* postorder = getPostorder(g, r->number); // refactor out
-
-	// /* init the S(v,u) for v and u leaves */
-	// int* gLeaves = findLeaves(g, 0); // refactor out
-	// /* h is not rooted, thus every vertex with one neighbor is a leaf */
-	// int* hLeaves = findLeaves(h, -1);
-	// for (v=1; v<gLeaves[0]; ++v) {
-	// 	for (u=1; u<hLeaves[0]; ++u) {
-	// 		/* check compatibility of leaf labels */
-	// 		if (labelCmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
-	// 			/* check for compatibility of edges */
-	// 			if (labelCmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
-	// 				S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
-	// 				/* 'header' of array stores its length */
-	// 				S[gLeaves[v]][hLeaves[u]][0] = 2;
-	// 				/* the number of the unique neighbor of u in h*/
-	// 				S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// /* garbage collection for init */
-	// free(gLeaves);
-	// free(hLeaves);
-	// gLeaves = NULL;
-	// hLeaves = NULL;
+	int*** newS = createCube(g->n, h->n); // rewrite?
+	int* postorder = getPostorder(g, r->number); // move out
+	int* parentsHa = getParents(h, a->number); // move out / rewrite
 
 	char foundIso = 0;
 	for (int vi=0; vi<g->n; ++vi) {
 		struct Vertex* v = g->vertices[postorder[vi]];
 		for (int ui=0; ui<h->n; ++ui) {
 			struct Vertex* u = h->vertices[ui];
-			int degU = degree(u); 
+
+			// add new characteristics
 			addCharacteristic(newS, a, b, v);
 			if (containsCharacteristic(oldS, a, a, v)) {
 				addCharacteristic(newS, b, a, v);
 			}
-			struct Graph* B = makeBipartiteInstance(g, v->number, h, u->number, newS, gp);
-			int bbCharacteristic = bipartiteMatchingFastAndDirty(B, gp);
-			if (bbCharacteristic = degU) {
+			int bbCharacteristic = computeCharacteristic(newS, b, b, v, g, h, gp);
+			if (bbCharacteristic) {
 				addCharacteristic(newS, b, b, v);
+				foundIso = 1;
 			}
-			foundIso = containsCharacteristic(newS, b, b, v);
-			for (int i=1; i<degU+1; ++i) {
-				if (oldS[v->number][u->number][i] == 1) {
-					computeCharacteristics()
+
+			// filter existing characteristics
+			if (containsCharacteristic(oldS, u, u, v)) {
+				int uuCharacteristic = computeCharacteristic(newS, u, u, v, g, h, gp);
+				if (uuCharacteristic) {
+					addCharacteristic(newS, u, u, v);
+					foundIso = 1;
 				}
 			}
-		}
-	}
-
-
-	for (v=0; v<g->n; ++v) {
-		struct Vertex* current = g->vertices[postorder[v]];
-		int currentDegree = degree(current);
-		// if ((currentDegree != 1) || (current->number == r->number)) {
-			for (u=0; u<h->n; ++u) {
-				int i;
-				int degU = degree(h->vertices[u]);
-				if (degU <= currentDegree + 1) {
-					/* if vertex labels match */
-					if (labelCmp(h->vertices[u]->label, current->label) == 0) {
-						struct Graph* B = makeBipartiteInstance(g, postorder[v], h, u, S, gp);
-						int* matchings = malloc((degU + 1) * sizeof(int));
-
-						matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
-
-						if (matchings[0] == degU) {
-							free(postorder);
-							free(matchings);
-							freeCube(S, g->n, h->n);
-							dumpGraph(gp, B);
-							return 1;
-						} else {
-							matchings[0] = degU + 1;
+			for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
+				if (containsCharacteristic(oldS, e->endPoint, u, v)) {
+					if (e->endPoint->number == parentsHa[u->number]) {
+						addCharacteristic(newS, e->endPoint, u, v);
+					} else {
+						int yuCharacteristic = computeCharacteristic(newS, e->endPoint, u, v, g, h, gp);
+						if (yuCharacteristic) {
+							addCharacteristic(newS, e->endPoint, u, v);
 						}
-
-						for (i=0; i<B->number; ++i) {
-							/* if the label of ith child of u is compatible to the label of the parent of v */
-							if ((current->lowPoint != -1) 
-								&& (labelCmp(h->vertices[B->vertices[i]->lowPoint]->label, g->vertices[current->lowPoint]->label) == 0)) {
-								struct ShallowGraph* storage = removeVertexFromBipartiteInstance(B, i, sgp);
-								initBipartite(B);
-								matchings[i+1] = bipartiteMatchingFastAndDirty(B, gp);
-
-								if (matchings[i+1] == degU - 1) {
-									matchings[i+1] = B->vertices[i]->lowPoint;
-								} else {
-									matchings[i+1] = -1;
-								}
-
-								addVertexToBipartiteInstance(storage);
-								dumpShallowGraph(sgp, storage);
-							} else {
-								matchings[i+1] = -1;
-							}
-						}
-						S[current->number][u] = matchings;
-
-						dumpGraph(gp, B);
 					}
 				}
-			}		
-		// }
-	}
-
-	/* garbage collection */
-	free(postorder);
-	freeCube(S, g->n, h->n);
-
-	return 0;
-}
-
-void computeCharacteristics() {
-	
-	matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
-
-	// check if it makes sense to search for critical vertices
-	if (matchings[0] >= degU - 1) {
-		/* the maximum matching computed above covers all but one neighbor of u
-		we need to identify those covered neighbors that can be swapped with 
-		that uncovered neighbor without decreasing the cardinality of the matching
-		these are exactly the non-critical vertices.
-
-		a vertex is critical <=> 1.) AND NOT 2.)
-		hence
-		a vertex is non-critical <=> NOT 1.) OR 2.)
-		where
-		1.) matched in the matching above
-		2.) reachable by augmenting path from the single unmatched vertex. 
-		This means, all vertices reachable from the single uncovered neighbor of u (including that neighbor are non-critical.
-		*/
-		struct Vertex* uncoveredNeighbor = NULL;
-		
-		// find the single uncovered neighbor of u
-		for (i=0; i<B->number; ++i) {
-			if (!isMatched(B->vertices[i])) {
-				uncoveredNeighbor = B->vertices[i];
-				break;
-			}			
-		}
-
-		// mark all vertices reachable from uncoveredNeighbor by an augmenting path
-		markReachable(uncoveredNeighbor, B->number);
-
-		// add non-critical vertices to output
-		matchings[0] = degU + 1;
-		for (i=0; i<B->number; ++i) {
-			if (B->vertices[i]->visited == 1) {
-				// vertex is not critical
-				matchings[i+1] = B->vertices[i]->lowPoint;
-			} else {
-				// vertex critical
-				matchings[i+1] = -1;
 			}
 		}
-
-	} else {
-		// makes no sense to look for critical vertices as there cannot be a matching covering all but one neighbor of u
-		matchings[0] = degU + 1;
-		for (i=1; i<degU + 1; ++i) {
-			matchings[i] = -1;
-		}
 	}
-	return matchings;
+
+	free(parentsHa);
+	return foundIso;
 }
