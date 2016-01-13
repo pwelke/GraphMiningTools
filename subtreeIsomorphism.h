@@ -11,6 +11,10 @@ void dumpCube();
 // struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, struct ShallowGraphPool* sgp);
 // void addVertexToBipartiteInstance(struct ShallowGraph* temp);
 
+int labelCmp(const char* l1, const char* l2);
+int* getPostorder(struct Graph* g, int root);
+int*** createCube(int x, int y);
+
 char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 char subtreeCheckF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 char subtreeCheckFF(struct Graph* g, struct Graph* h, struct GraphPool* gp);
