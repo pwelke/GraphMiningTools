@@ -6,9 +6,39 @@
 #include "subtreeIsomorphism.h"
 // #include "iterativeSubtreeIsomorphism.h"
 
-// void initIterativeSubtreeCheck(struct Graph* g) {
-	
-// }
+struct SubtreeIsoDataStore {
+	int* postorder;
+	struct Graph* g;
+	struct Graph* h;
+	int*** S;
+	int foundIso;
+};
+
+struct SubtreeIsoDataStore initG(struct Graph* g) {
+	struct SubtreeIsoDataStore info = {0};
+	info.postorder = getPostorder(g, 0);
+	info.g = g;
+	return info;
+}
+
+/** create the set of characteristics for s single edge pattern graph */
+struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* e, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct SubtreeIsoDataStore info = {0};
+	// copy stuff from below
+	info.g = base.g;
+	info.postorder = base.postorder;
+
+	// create graph from edge
+	info.h = createGraph(2, gp);
+	(info.h)->vertices[0]->label = e->startPoint->label;
+	(info.h)->vertices[1]->label = e->endPoint->label;
+	addEdgeBetweenVertices(0, 1, e->label, info.h, gp);
+
+	// compute characteristics
+	info.S = createCube((info.g)->n, 2);
+
+	return info;
+}	
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
