@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 	struct Vertex* frequentEdges = NULL;
 	struct ShallowGraph* extensionEdges = NULL;
 	// counter
-	int patternSize = NULL;
+	int patternSize = 0;
 
 	/* parse command line arguments */
 	int arg;
@@ -235,17 +235,16 @@ int main(int argc, char** argv) {
 	filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureFile, gp);
 
 	/* print first two levels to patternfile */
-	fprintf(patternFile, "patterns size 0\n");
-	printStringsInSearchTree(frequentVertices, patternFile, sgp); 
 	fprintf(patternFile, "patterns size 1\n");
+	printStringsInSearchTree(frequentVertices, patternFile, sgp); 
+	fprintf(patternFile, "patterns size 2\n");
 	printStringsInSearchTree(frequentEdges, patternFile, sgp); 
-	if (debugInfo) { fprintf(stderr, "Computation of level 0 and 1 done\n"); }
 
 	/* convert frequentEdges to ShallowGraph */
 	struct Graph* extensionEdgesVertexStore;
 	extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
 
-	for (frequentPatterns = frequentEdges, patternSize = 2; (frequentPatterns->d > 0) && (patternSize < maxPatternSize); ++patternSize) {
+	for (frequentPatterns = frequentEdges, patternSize = 3; (frequentPatterns->d > 0) && (patternSize <= maxPatternSize); ++patternSize) {
 		int i;
 		struct ShallowGraph* prefix = getShallowGraph(sgp);
 		struct Vertex* candidateSet;
@@ -289,7 +288,7 @@ int main(int argc, char** argv) {
 	/* garbage collection */
 	dumpCube();
 	freePruning();
-	freeFrequentEdgeShallowGraph(gp, sgp, extensionEdges);
+	dumpShallowGraph(sgp, extensionEdges);
 	dumpGraph(gp, extensionEdgesVertexStore);
 	dumpSearchTree(gp, frequentVertices);
 	dumpSearchTree(gp, frequentPatterns);

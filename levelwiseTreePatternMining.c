@@ -267,7 +267,7 @@ int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternT
 					int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp) {
 	struct ShallowGraph* spanningTreeString;
 	int currentLevelNumber = 0;
-	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
+	// struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
 	
 	/* if there is no frequent pattern from lower level contained in i, dont even start searching */
 	if (!isEmpty(i)) {
@@ -285,7 +285,8 @@ int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternT
 					/* if pattern is not already found to be subtree of current graph */
 					if (!features[i][pattern]) {
 						/* if pattern is contained in spanning tree */
-						if (subtreeCheckCached(spanningTree, patternTrees[pattern], gp, subtreeCache)) {
+						// if (subtreeCheckCached(spanningTree, patternTrees[pattern], gp, subtreeCache)) {
+						if (subtreeCheck3(spanningTree, patternTrees[pattern], gp)) {
 							/* currentLevel patternstring visited +1 and continue with next pattern */
 							features[i][pattern] = 1;
 							++pointers[pattern]->visited;
@@ -299,7 +300,7 @@ int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternT
 			dumpGraph(gp, spanningTree);
 		}
 	}
-	dumpCachedGraph(subtreeCache);
+	// dumpCachedGraph(subtreeCache);
 	return currentLevelNumber;
 }
 
@@ -321,7 +322,7 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 							int i, int n, int** features, struct Vertex** pointers, struct GraphPool* gp) {
 	struct ShallowGraph* spanningTreeString;
 	int currentLevelNumber = 0;
-	struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
+	// struct CachedGraph* subtreeCache = initCachedGraph(gp, 200);
 
 	
 	/* if there is no frequent pattern from lower level contained in i, dont even start searching */
@@ -346,7 +347,8 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 				if (isSubset(pointers[pattern]->d, i)) {
 					/* if pattern is contained in spanning tree */
 					// if (subtreeCheckLF(spanningTree, patternTrees[pattern], gp, sgp)) {
-					if (subtreeCheckCached(spanningTree, patternTrees[pattern], gp, subtreeCache)) {
+					// if (subtreeCheckCached(spanningTree, patternTrees[pattern], gp, subtreeCache)) {
+					if (subtreeCheck3(spanningTree, patternTrees[pattern], gp)) {
 						/* weight the found match with the multiplicity 
 						of the (spanning) tree in the original graph */
 						if (spanningTree->number == 0) {
@@ -371,7 +373,7 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 		}
 		dumpGraphList(gp, spanningTrees);
 	} 
-	dumpCachedGraph(subtreeCache);
+	// dumpCachedGraph(subtreeCache);
 	return currentLevelNumber;
 }
 

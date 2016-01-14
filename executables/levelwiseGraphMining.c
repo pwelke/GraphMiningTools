@@ -226,7 +226,7 @@ void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patt
 	for (i=0; i<nGraphs; ++i) {
 		int j;
 		for (j=0; j<nPatterns; ++j) {
-			if (subtreeCheck(db[i], patterns[j], gp, sgp)) {
+			if (subtreeCheck3(db[i], patterns[j], gp)) {
 				++pointers[j]->visited;
 			}
 		}
@@ -239,7 +239,7 @@ void DFS(struct Graph** db, struct IntSet* candidateSupport, struct Graph* candi
 	struct IntSet* actualSupport = getIntSet();
 	for (struct IntElement* i=candidateSupport->first; i!=NULL; i=i->next) {
 		struct Graph* g = db[i->value];
-		if (subtreeCheck(g, candidate, gp, sgp)) {
+		if (subtreeCheck3(g, candidate, gp)) {
 			appendInt(actualSupport, i->value);
 		}
 	}

@@ -42,7 +42,7 @@ usage: lwm [ARGS] FILE
                  of more than F*X trees given X trees for a graph. Must
                  be a float between 0 and 1. (default 0.0, aka. existence)
          
-    -p SIZE:  maximum number of edges in frequent patterns (default 20). 
+    -p SIZE:  maximum number of vertices in frequent patterns (default 20). 
               I.e. mining will stop after P levels.
 
     -o PREFIX: Specify a common prefix for the output files of the program.
