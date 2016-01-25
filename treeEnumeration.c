@@ -9,10 +9,12 @@
 
 
 /**
- Creates a hard copy of g that has a new vertex that is a copy of newEdge->endPoint
- and a new edge from the vertex v in g to the new vertex. with label newEdge->label.
+ Creates a hard copy of g with g->n + 1 vertices and g->m + 1 edges that has a new vertex that is a
+ copy of newEdge->endPoint and a new edge from the vertex v in g to the new vertex. with label newEdge->label.
 
  Does not check if newEdge->startPoint->label == g->vertices[v]->label!
+
+ The newly added vertex v has v->number = g->n, the vertex numbers of the vertices of g do not change.
  */
 struct Graph* refinementGraph(struct Graph* g, int v, struct VertexList* newEdge, struct GraphPool* gp) {
 	struct Graph* copy = getGraph(gp);
