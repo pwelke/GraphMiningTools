@@ -13,8 +13,9 @@ LWGNAME = lwg
 GENNAME = ggen
 NGENNAME = ngen
 WLNAME = wl
+TESTNAME = test 
 
-ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME)
+ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME)
 
 CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
 # CPPFLAGS = -g -Wall -pedantic -W -ggdb -std=gnu99 -lm -O3
@@ -52,6 +53,7 @@ NGENOBJECTS = $(OBJECTS) ./executables/neighborhoodGenerator.o
 NGENHELP = ./executables/neighborhoodGeneratorHelp.help
 WLOBJECTS = $(OBJECTS) ./executables/weisfeilerLehmanMain.o
 WLHELP = ./executables/weisfeilerLehmanMainHelp.help
+TESTOBJECTS = $(OBJECTS) ./executables/iterativeSubtreeTest.o
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
@@ -112,6 +114,9 @@ $(NGENNAME): $(NGENHELP) $(NGENOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(WLNAME): $(WLHELP) $(WLOBJECTS)
+	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+
+$(TESTNAME): $(TESTOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 %.o : %.c %.h
