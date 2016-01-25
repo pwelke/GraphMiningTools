@@ -1,44 +1,93 @@
 #include <malloc.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "graph.h"
 #include "bipartiteMatching.h"
 #include "subtreeIsomorphism.h"
-// #include "iterativeSubtreeIsomorphism.h"
+#include "iterativeSubtreeIsomorphism.h"
 
-struct SubtreeIsoDataStore {
-	int* postorder;
-	struct Graph* g;
-	struct Graph* h;
-	int*** S;
-	int foundIso;
-};
+// CHARACTERISTICS TOOLING
 
-struct SubtreeIsoDataStore initG(struct Graph* g) {
-	struct SubtreeIsoDataStore info = {0};
-	info.postorder = getPostorder(g, 0);
-	info.g = g;
-	return info;
+// TODO can be made constant time
+/** Utility data structure creator.
+Cube will store, what is called S in the paper. */
+int*** createNewCube(int x, int y) {
+	int*** cube;
+	if ((cube = malloc(x * sizeof(int**)))) {
+		for (int i=0; i<x; ++i) {
+			cube[i] = malloc(y * sizeof(int*));
+			if (cube[i] != NULL) {
+				for (int j=0; j<y; ++j) {
+					cube[i][j] = NULL;
+				}
+			} else {
+				for (int j=0; j<i; ++j) {
+					free(cube[i]);
+				}
+				free(cube);
+				return NULL;
+			}
+		}
+	} else {
+		return NULL;
+	}
+	return cube;
 }
 
-/** create the set of characteristics for s single edge pattern graph */
-struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* e, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct SubtreeIsoDataStore info = {0};
-	// copy stuff from below
-	info.g = base.g;
-	info.postorder = base.postorder;
 
-	// create graph from edge
-	info.h = createGraph(2, gp);
-	(info.h)->vertices[0]->label = e->startPoint->label;
-	(info.h)->vertices[1]->label = e->endPoint->label;
-	addEdgeBetweenVertices(0, 1, e->label, info.h, gp);
+int containsCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+	int uvNumberOfCharacteristics = S[v->number][u->number][0];
+	for (int i=1; i<=uvNumberOfCharacteristics; ++i) {
+		if (y->number == S[v->number][u->number][i]) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
-	// compute characteristics
-	info.S = createCube((info.g)->n, 2);
+// assumes that 
+void addCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+	S[v->number][u->number][0] += 1;
+	int newPos = S[v->number][u->number][0];
+	S[v->number][u->number][newPos] = y->number;
+} 
 
-	return info;
-}	
+
+int computeCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+	// TODO speedup by handling leaf case separately
+	struct Graph* B = makeBipartiteInstanceFromVertices(S, y, u, v, g, h, gp);
+	int sizeofMatching = bipartiteMatchingFastAndDirty(B, gp);
+	dumpGraph(gp, B);
+	return (sizeofMatching == B->number) ? 1 : 0;
+}
+
+/** Print a single entry in the cube */
+void printNewS(int*** S, int v, int u) {
+	int i;
+	printf("S(%i, %i)={", v, u);
+	if (S[v][u][0] > 0) {
+		for (i=1; i<S[v][u][0]; ++i) {
+			printf("%i, ", S[v][u][i]);
+		}
+		printf("%i}\n", S[v][u][S[v][u][0]]);
+	} else {
+		printf("}\n");
+	}
+	fflush(stdout);
+}
+
+void printNewCube(int*** S, int gn, int hn) {
+	for (int i=0; i<gn; ++i) {
+		for (int j=0; j<hn; ++j) {
+			printNewS(S, i, j);
+		}
+	}
+}
+
+
+
+// MISC TOOLING
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
@@ -105,45 +154,27 @@ struct Graph* makeBipartiteInstanceFromVertices(int*** S, struct Vertex* removal
 	return B;
 }
 
-/* Return an array holding the indices of the parents of each vertex in g with root root.
-the parent of root does not exist, which is indicated by index -1 */
-int* getParents(struct Graph* g, int root) {
-	int* postorder = getPostorder(g, root);
+
+int* getParentsFromPostorder(struct Graph* g, int* postorder) {
 	int* parents = malloc(g->n * sizeof(int));
 	for (int i=0; i<g->n; ++i) {
 		int v = postorder[i];
 		parents[v] = g->vertices[v]->lowPoint;
 	}
+	return parents;
+}
+
+/* Return an array holding the indices of the parents of each vertex in g with root root.
+the parent of root does not exist, which is indicated by index -1 */
+int* getParents(struct Graph* g, int root) {
+	int* postorder = getPostorder(g, root);
+	int* parents = getParentsFromPostorder(g, postorder);
 	free(postorder);
 	return parents;
 }
 
-// TODO can be made constant time
-int containsCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
-	int uvNumberOfCharacteristics = S[v->number][u->number][0];
-	for (int i=1; i<=uvNumberOfCharacteristics; ++i) {
-		if (y->number == S[v->number][u->number][i]) {
-			return 1;
-		}
-	}
-	return 0;
-}
 
-// assumes that 
-void addCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
-	S[v->number][u->number][0] += 1;
-	int newPos = S[v->number][u->number][0];
-	S[v->number][u->number][newPos] = y->number;
-} 
-
-
-int computeCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp) {
-	// TODO speedup by handling leaf case separately
-	struct Graph* B = makeBipartiteInstanceFromVertices(S, y, u, v, g, h, gp);
-	int sizeofMatching = bipartiteMatchingFastAndDirty(B, gp);
-	dumpGraph(gp, B);
-	return (sizeofMatching == B->number) ? 1 : 0;
-}
+// SUBTREE ISOMORPHISM
 
 /**
 Iterative Labeled Subtree Isomorphism Check. 
@@ -162,53 +193,57 @@ Output:
 	the cube for h and g
 
 */
-char iterativeSubtreeCheck(struct Graph* g, struct Graph* h, struct Vertex* newVertex, int*** oldS, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* supressWarning = getShallowGraph(sgp);
-	if (supressWarning) {}
+int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore current, struct GraphPool* gp) {
 
-	// newVertex is a leaf, hence there is only one incident edge, which is the newly added one.
-	struct VertexList* newEdge = newVertex->neighborhood;
-	struct Vertex* a = newEdge->endPoint;
-	struct Vertex* b = newEdge->startPoint;
+	struct Graph* g = current.g;
+	struct Graph* h = current.h;
 
-	struct Vertex* r = g->vertices[0];
-	int*** newS = createCube(g->n, h->n); // rewrite?
-	int* postorder = getPostorder(g, r->number); // move out
+	// new vertex and adjacent one
+	struct Vertex* b = h->vertices[h->n - 1];
+	struct Vertex* a = b->neighborhood->endPoint;
+
+	// // newVertex is a leaf, hence there is only one incident edge, which is the newly added one.
+	// struct VertexList* newEdge = newVertex->neighborhood;
+	// struct Vertex* a = newEdge->endPoint;
+	// struct Vertex* b = newEdge->startPoint;
+
+	// int*** newS = createNewCube(g->n, h->n); // rewrite?
+	// int* postorder = getPostorder(g, r->number); // move out
 	int* parentsHa = getParents(h, a->number); // move out / rewrite
 
-	char foundIso = 0;
+	int foundIso = 0;
 	for (int vi=0; vi<g->n; ++vi) {
-		struct Vertex* v = g->vertices[postorder[vi]];
+		struct Vertex* v = g->vertices[current.postorder[vi]];
 		for (int ui=0; ui<h->n; ++ui) {
 			struct Vertex* u = h->vertices[ui];
 
-			// add new characteristics
-			addCharacteristic(newS, a, b, v);
-			if (containsCharacteristic(oldS, a, a, v)) {
-				addCharacteristic(newS, b, a, v);
+			// add new characteristics TODO check labels
+			addCharacteristic(current.S, a, b, v);
+			if (containsCharacteristic(base.S, a, a, v)) {
+				addCharacteristic(current.S, b, a, v);
 			}
-			int bbCharacteristic = computeCharacteristic(newS, b, b, v, g, h, gp);
+			int bbCharacteristic = computeCharacteristic(current.S, b, b, v, g, h, gp);
 			if (bbCharacteristic) {
-				addCharacteristic(newS, b, b, v);
+				addCharacteristic(current.S, b, b, v);
 				foundIso = 1;
 			}
 
 			// filter existing characteristics
-			if (containsCharacteristic(oldS, u, u, v)) {
-				int uuCharacteristic = computeCharacteristic(newS, u, u, v, g, h, gp);
+			if (containsCharacteristic(base.S, u, u, v)) {
+				int uuCharacteristic = computeCharacteristic(current.S, u, u, v, g, h, gp);
 				if (uuCharacteristic) {
-					addCharacteristic(newS, u, u, v);
+					addCharacteristic(current.S, u, u, v);
 					foundIso = 1;
 				}
 			}
 			for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
-				if (containsCharacteristic(oldS, e->endPoint, u, v)) {
+				if (containsCharacteristic(base.S, e->endPoint, u, v)) {
 					if (e->endPoint->number == parentsHa[u->number]) {
-						addCharacteristic(newS, e->endPoint, u, v);
+						addCharacteristic(current.S, e->endPoint, u, v);
 					} else {
-						int yuCharacteristic = computeCharacteristic(newS, e->endPoint, u, v, g, h, gp);
+						int yuCharacteristic = computeCharacteristic(current.S, e->endPoint, u, v, g, h, gp);
 						if (yuCharacteristic) {
-							addCharacteristic(newS, e->endPoint, u, v);
+							addCharacteristic(current.S, e->endPoint, u, v);
 						}
 					}
 				}
@@ -219,3 +254,83 @@ char iterativeSubtreeCheck(struct Graph* g, struct Graph* h, struct Vertex* newV
 	free(parentsHa);
 	return foundIso;
 }
+
+struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore info = {0};
+	info.g = base.g;
+	info.h = h;
+	info.postorder = base.postorder;
+	info.S = createNewCube((info.g)->n, (info.h)->n);
+	info.foundIso = iterativeSubtreeCheck_intern(base, info, gp);
+	return info;
+}
+
+
+// INITIALIZATORS
+
+struct SubtreeIsoDataStore initG(struct Graph* g) {
+	struct SubtreeIsoDataStore info = {0};
+	info.postorder = getPostorder(g, 0);
+	info.g = g;
+	return info;
+}
+
+/** create the set of characteristics for a single edge pattern graph */
+struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore info = {0};
+	// copy stuff from below
+	info.g = base.g;
+	info.postorder = base.postorder;
+
+	// create graph from edge
+	info.h = createGraph(2, gp);
+	(info.h)->vertices[0]->label = patternEdge->startPoint->label;
+	(info.h)->vertices[1]->label = patternEdge->endPoint->label;
+	addEdgeBetweenVertices(0, 1, patternEdge->label, info.h, gp);
+
+	// create cube
+	info.S = createNewCube((info.g)->n, 2);
+	for (int v=0; v<(info.g)->n; ++v) {
+		for (int u=0; u<2; ++u) {
+			(info.S)[v][u] = calloc(3, sizeof(int));
+		}
+	}
+
+	int* parents = getParentsFromPostorder(info.g, info.postorder);
+
+	for (int vi=0; vi<(info.g)->n; ++vi) {
+		struct Vertex* v = (info.g)->vertices[info.postorder[vi]];
+		for (int ui=0; ui<2; ++ui) {
+			struct Vertex* u = (info.h)->vertices[ui];
+			struct Vertex* y = (info.h)->vertices[(ui + 1) % 2];
+			if (labelCmp(v->label, u->label) == 0) {
+				char foundIso = 0;
+				char foundCha = 0;
+				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+					// check if edge labels match
+					if (labelCmp(e->label, patternEdge->label) == 0) {
+						// check if vertex labels of endpoint match
+						if (labelCmp(e->endPoint->label, y->label) == 0) {
+							// if edge leads to parent and matches, there is a characteristic (H^y_u, v)
+							// if edge does not lead to parent, there is a characteristic (H^u_u, v)
+							if (parents[v->number] == e->endPoint->number) {
+								foundCha = 1;
+							} else {
+								foundIso = 1;
+							}
+						}
+					}
+				}
+				if (foundIso) {
+					addCharacteristic(info.S, u, u, v);
+				} 
+				if (foundCha) {
+					addCharacteristic(info.S, y, u, v);
+				}
+			}
+		}
+	}
+
+	return info;
+}	
+
