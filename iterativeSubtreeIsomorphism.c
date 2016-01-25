@@ -36,6 +36,33 @@ int*** createNewCube(int x, int y) {
 }
 
 
+int*** createNewCubeFromBase(struct SubtreeIsoDataStore base) {
+	int*** S = createNewCube(base.g->n, base.h->n + 1);
+	// create cube large enough for filtered characteristics plus new for old vertices of h
+	// TODO I assume two things: 
+	// 1. we only need to add space for one more characteristic
+	// 2. I think, we only need this additional space somewhere, not everywhere. Probably only for the neoghbor of the new vertex
+	// 3. the new vertex can have only two characteristics. A complete and an incomplete for the unique parent.
+	for (int i=0; i<base.g->n; ++i) {
+		for (int j=0; j<base.h->n; ++j) {
+			S[i][j] = calloc(base.S[i][j][0] + 2, sizeof(int));
+		}
+		S[i][base.h->n] = calloc(3, sizeof(int));
+	}
+	return S;
+}
+
+void dumpNewCube(int*** S, int x, int y) {
+	for (int i=0; i<x; ++i) {
+		for (int j=0; j<y; ++j) {
+			free(S[i][j]);
+		}
+		free(S[i]);
+	}
+	free(S);
+}
+
+
 int containsCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
 	int uvNumberOfCharacteristics = S[v->number][u->number][0];
 	for (int i=1; i<=uvNumberOfCharacteristics; ++i) {
@@ -48,9 +75,10 @@ int containsCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct 
 
 // assumes that 
 void addCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
-	S[v->number][u->number][0] += 1;
-	int newPos = S[v->number][u->number][0];
-	S[v->number][u->number][newPos] = y->number;
+	int* current = S[v->number][u->number];
+	current[0] += 1;
+	int newPos = current[0];
+	current[newPos] = y->number;
 } 
 
 
@@ -202,33 +230,27 @@ int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtree
 	struct Vertex* b = h->vertices[h->n - 1];
 	struct Vertex* a = b->neighborhood->endPoint;
 
-	// // newVertex is a leaf, hence there is only one incident edge, which is the newly added one.
-	// struct VertexList* newEdge = newVertex->neighborhood;
-	// struct Vertex* a = newEdge->endPoint;
-	// struct Vertex* b = newEdge->startPoint;
-
 	// int*** newS = createNewCube(g->n, h->n); // rewrite?
-	// int* postorder = getPostorder(g, r->number); // move out
 	int* parentsHa = getParents(h, a->number); // move out / rewrite
 
 	int foundIso = 0;
 	for (int vi=0; vi<g->n; ++vi) {
 		struct Vertex* v = g->vertices[current.postorder[vi]];
-		for (int ui=0; ui<h->n; ++ui) {
+		
+		// add new characteristics TODO check labels
+		addCharacteristic(current.S, a, b, v);
+		if (containsCharacteristic(base.S, a, a, v)) {
+			addCharacteristic(current.S, b, a, v);
+		}
+		int bbCharacteristic = computeCharacteristic(current.S, b, b, v, g, h, gp);
+		if (bbCharacteristic) {
+			addCharacteristic(current.S, b, b, v);
+			foundIso = 1;
+		}
+		// filter existing characteristics
+		for (int ui=0; ui<h->n-1; ++ui) {
 			struct Vertex* u = h->vertices[ui];
 
-			// add new characteristics TODO check labels
-			addCharacteristic(current.S, a, b, v);
-			if (containsCharacteristic(base.S, a, a, v)) {
-				addCharacteristic(current.S, b, a, v);
-			}
-			int bbCharacteristic = computeCharacteristic(current.S, b, b, v, g, h, gp);
-			if (bbCharacteristic) {
-				addCharacteristic(current.S, b, b, v);
-				foundIso = 1;
-			}
-
-			// filter existing characteristics
 			if (containsCharacteristic(base.S, u, u, v)) {
 				int uuCharacteristic = computeCharacteristic(current.S, u, u, v, g, h, gp);
 				if (uuCharacteristic) {
@@ -255,12 +277,13 @@ int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtree
 	return foundIso;
 }
 
+
 struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp) {
 	struct SubtreeIsoDataStore info = {0};
 	info.g = base.g;
 	info.h = h;
 	info.postorder = base.postorder;
-	info.S = createNewCube((info.g)->n, (info.h)->n);
+	info.S = createNewCubeFromBase(base);
 	info.foundIso = iterativeSubtreeCheck_intern(base, info, gp);
 	return info;
 }
@@ -317,6 +340,7 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 								foundCha = 1;
 							} else {
 								foundIso = 1;
+								info.foundIso = 1;
 							}
 						}
 					}
@@ -330,7 +354,7 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 			}
 		}
 	}
-
+	free(parents);
 	return info;
 }	
 
