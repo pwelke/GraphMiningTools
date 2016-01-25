@@ -7,6 +7,7 @@
 #include "../loading.h"
 #include "../iterativeSubtreeIsomorphism.h"
 #include "../subtreeIsomorphism.h"
+#include "../treeEnumeration.h"
 
 
 
@@ -78,9 +79,34 @@
 				edge->endPoint->isStringMaster = 1;
 
 				struct SubtreeIsoDataStore base = initG(g);
-				struct SubtreeIsoDataStore current = initIterativeSubtreeCheck(base, edge, gp);
+				struct SubtreeIsoDataStore one = initIterativeSubtreeCheck(base, edge, gp);
 
-				printNewCube(current.S, current.g->n, current.h->n);
+				printf("lenght 2, Found Iso: %i\n", one.foundIso);
+
+				struct SubtreeIsoDataStore prev = one;
+				for (int i=3; i<7; ++i) {
+					struct SubtreeIsoDataStore current = iterativeSubtreeCheck(prev, refinementGraph(prev.h, 1, edge, gp), gp);
+					printf("lenght %i, Found Iso: %i\n", i, current.foundIso);
+					
+					dumpNewCube(prev.S, prev.g->n, prev.h->n);
+					dumpGraph(gp, prev.h);
+
+					prev = current;
+				}
+
+
+				dumpNewCube(prev.S, prev.g->n, prev.h->n);
+				dumpGraph(gp, prev.h);
+				
+				// printNewCube(next.S, next.g->n, next.h->n);
+
+				// garbage collection
+				// dumpNewCube(next.S, next.g->n, next.h->n);
+				// dumpGraph(gp, next.h);				
+
+				// dumpNewCube(one.S, one.g->n, one.h->n);
+				// dumpGraph(gp, one.h);
+				free(base.postorder);
 
 				dumpVertex(vp, edge->startPoint);
 				dumpVertex(vp, edge->endPoint);
