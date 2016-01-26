@@ -21,7 +21,7 @@ struct Graph* refinementGraph(struct Graph* g, int v, struct VertexList* newEdge
 	int i;
 
 	copy->activity = g->activity;
-	copy->m = g->m + 1;
+	copy->m = g->m; // addEdgebetweenVertices adds plus 1 itself
 	copy->n = g->n + 1;
 	copy->number = g->number;
 
