@@ -238,7 +238,9 @@ int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtree
 		struct Vertex* v = g->vertices[current.postorder[vi]];
 		
 		// add new characteristics TODO check labels
-		addCharacteristic(current.S, a, b, v);
+		if (labelCmp(v->label, b->label) == 0) {
+			addCharacteristic(current.S, a, b, v);
+		}
 		if (containsCharacteristic(base.S, a, a, v)) {
 			addCharacteristic(current.S, b, a, v);
 		}
@@ -327,30 +329,26 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 			struct Vertex* u = (info.h)->vertices[ui];
 			struct Vertex* y = (info.h)->vertices[(ui + 1) % 2];
 			if (labelCmp(v->label, u->label) == 0) {
+				// if vertex labels match, there is a characteristic (H^y_u, v)
+				addCharacteristic(info.S, y, u, v);
 				char foundIso = 0;
-				char foundCha = 0;
+				// if there is at least one edge that matches and does not lead to the parent, then there is a characteristic (H^u_u, v)
+				// we add this characteristic only once below
 				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
-					// check if edge labels match
-					if (labelCmp(e->label, patternEdge->label) == 0) {
-						// check if vertex labels of endpoint match
-						if (labelCmp(e->endPoint->label, y->label) == 0) {
-							// if edge leads to parent and matches, there is a characteristic (H^y_u, v)
-							// if edge does not lead to parent, there is a characteristic (H^u_u, v)
-							if (parents[v->number] == e->endPoint->number) {
-								foundCha = 1;
-							} else {
+					if (parents[v->number] != e->endPoint->number) {
+						// check if edge labels match
+						if (labelCmp(e->label, patternEdge->label) == 0) {
+							// if edge does not lead to parent, there is a characteristic (H^u_u, v) if vertex labels of endpoint match
+							if (labelCmp(e->endPoint->label, y->label) == 0) {
 								foundIso = 1;
-								info.foundIso = 1;
 							}
 						}
 					}
 				}
 				if (foundIso) {
 					addCharacteristic(info.S, u, u, v);
+					info.foundIso = 1;
 				} 
-				if (foundCha) {
-					addCharacteristic(info.S, y, u, v);
-				}
 			}
 		}
 	}
