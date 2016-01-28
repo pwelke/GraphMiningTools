@@ -318,16 +318,38 @@ struct SubtreeIsoDataStoreList* getSubtreeIsoDataStoreList() {
 	return calloc(1, sizeof(struct SubtreeIsoDataStoreList));
 }
 
-void dumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e) {
+void dumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e, struct GraphPool* gp) {
 	if (e->next != NULL) {
-		dumpSubtreeIsoDataStoreElements(e->next);
+		dumpSubtreeIsoDataStoreElements(e->next, gp);
 	}
+
+	dumpNewCube(e->data.S, e->data.g->n, e->data.h->n);
+//	dumpGraph(gp, e->data.h);
 	free(e);
 }
 
-void dumpSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* s) {
+void dumpSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* s, struct GraphPool* gp) {
 	if (s->size > 0) {
-		dumpSubtreeIsoDataStoreElements(s->first);
+		dumpSubtreeIsoDataStoreElements(s->first, gp);
+	}
+	free(s);
+}
+
+
+void dumpSubtreeIsoDataStoreElementsWithPostorder(struct SubtreeIsoDataStoreElement* e, struct GraphPool* gp) {
+	if (e->next != NULL) {
+		dumpSubtreeIsoDataStoreElementsWithPostorder(e->next, gp);
+	}
+
+	dumpNewCube(e->data.S, e->data.g->n, e->data.h->n);
+	dumpGraph(gp, e->data.h);
+	free(e->data.postorder);
+	free(e);
+}
+
+void dumpSubtreeIsoDataStoreListWithPostorder(struct SubtreeIsoDataStoreList* s, struct GraphPool* gp) {
+	if (s->size > 0) {
+		dumpSubtreeIsoDataStoreElementsWithPostorder(s->first, gp);
 	}
 	free(s);
 }
@@ -366,10 +388,12 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t thres
 		struct SubtreeIsoDataStoreList* refinementSupport = getSubtreeIsoDataStoreList();
 		for (struct SubtreeIsoDataStoreElement* i=candidateSupport->first; i!=NULL; i=i->next) {
 			struct SubtreeIsoDataStore result = iterativeSubtreeCheck(i->data, refinement, gp);
-//			printf("xxxxxxxxxxxxxxx\n");
-//			printNewCubeCondensed(result.S, result.g->n, result.h->n);
+			//			printf("xxxxxxxxxxxxxxx\n");
+			//			printNewCubeCondensed(result.S, result.g->n, result.h->n);
 			if (result.foundIso) {
 				appendSubtreeIsoDataStore(refinementSupport, result);
+			} else {
+				dumpNewCube(result.S, result.g->n, result.h->n);
 			}
 		}
 		// if so, print and recurse
@@ -381,7 +405,7 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t thres
 			iterativeDFS(refinementSupport, threshold, maxPatternSize, frequentEdges, processedPatterns, gp, sgp);
 		}
 		// clean up
-		dumpSubtreeIsoDataStoreList(refinementSupport);
+		dumpSubtreeIsoDataStoreList(refinementSupport, gp);
 	}
 
 	// garbage collection
@@ -471,11 +495,8 @@ int mainIterativeDFS(int argc, char** argv) {
 
 		int debugInfo = 1;
 
-		struct ShallowGraph* extensionEdges = NULL;
-		struct Graph* extensionEdgesVertexStore = NULL;
-
 		struct Vertex* frequentVertices = getVertex(vp);
-		struct Vertex* frequentEdges = getVertex(vp);
+
 		struct Graph** db = NULL;
 		int nGraphs = 128;
 		int tmpResultSetSize = 0;
@@ -498,6 +519,7 @@ int mainIterativeDFS(int argc, char** argv) {
 
 		if (maxPatternSize > 1) {
 			/* get frequent edges: first edge id is given by number of frequent vertices */
+			struct Vertex* frequentEdges = getVertex(vp);
 			offsetSearchTreeIds(frequentEdges, frequentVertices->lowPoint);
 			getFrequentEdges(db, nGraphs, tmpResultSetSize, frequentEdges, kvStream, gp);
 			filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureStream, gp);
@@ -507,40 +529,44 @@ int mainIterativeDFS(int argc, char** argv) {
 			printStringsInSearchTree(frequentEdges, patternStream, sgp);
 
 			/* convert frequentEdges to ShallowGraph */
-			extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
+			struct Graph* extensionEdgesVertexStore = NULL;
+			struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
 			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 2: %i\n", frequentEdges->d); fflush(stderr); }
 
-		}
 
-		// DFS
-		struct Vertex* processedPatterns = getVertex(gp->vertexPool);
 
-		struct Graph* candidate = createGraph(2, gp);
-		addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
+			// DFS
+			struct Vertex* processedPatterns = getVertex(gp->vertexPool);
 
-		for (struct VertexList* e=extensionEdges->edges; e!=NULL; e=e->next) {
-			candidate->vertices[0]->label = e->startPoint->label;
-			candidate->vertices[1]->label = e->endPoint->label;
-			candidate->vertices[0]->neighborhood->label = e->label;
-			candidate->vertices[1]->neighborhood->label = e->label;
+			struct Graph* candidate = createGraph(2, gp);
+			addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
 
-			fprintf(stdout, "==\n==\nPROCESSING NEXT EDGE:\n");
-			struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
-			printCanonicalString(cString, stdout);
+			for (struct VertexList* e=extensionEdges->edges; e!=NULL; e=e->next) {
+				candidate->vertices[0]->label = e->startPoint->label;
+				candidate->vertices[1]->label = e->endPoint->label;
+				candidate->vertices[0]->neighborhood->label = e->label;
+				candidate->vertices[1]->neighborhood->label = e->label;
 
-			if (!containsString(processedPatterns, cString)) {
-				struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, gp);
-				addToSearchTree(processedPatterns, cString, gp, sgp);
-				iterativeDFS(edgeSupport, threshold, maxPatternSize, extensionEdges, processedPatterns, gp, sgp);
-			} else {
-				dumpShallowGraph(sgp, cString);
+				fprintf(stdout, "==\n==\nPROCESSING NEXT EDGE:\n");
+				struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
+				printCanonicalString(cString, stdout);
+
+				if (!containsString(processedPatterns, cString)) {
+					struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, gp);
+					addToSearchTree(processedPatterns, cString, gp, sgp);
+					iterativeDFS(edgeSupport, threshold, maxPatternSize, extensionEdges, processedPatterns, gp, sgp);
+					dumpSubtreeIsoDataStoreListWithPostorder(edgeSupport, gp);
+				} else {
+					dumpShallowGraph(sgp, cString);
+				}
 			}
+			dumpGraph(gp, candidate);
+			dumpShallowGraphCycle(sgp, extensionEdges);
+			dumpGraph(gp, extensionEdgesVertexStore);
+			dumpSearchTree(gp, frequentEdges);
+			dumpSearchTree(gp, processedPatterns);
 		}
-		dumpGraph(gp, candidate);
 
-		dumpShallowGraphCycle(sgp, extensionEdges);
-		dumpGraph(gp, extensionEdgesVertexStore);
-		dumpSearchTree(gp, frequentEdges);
 		dumpSearchTree(gp, frequentVertices);
 		fclose(kvStream);
 		dumpCube();
