@@ -81,13 +81,17 @@
 				struct SubtreeIsoDataStore base = initG(g);
 				struct SubtreeIsoDataStore one = initIterativeSubtreeCheck(base, edge, gp);
 
-				printf("lenght 2, Found Iso: %i\n", one.foundIso);
+				printf("lenght 1, Found Iso: %i\n", one.foundIso);
+				printNewCubeCondensed(one.S, one.g->n, one.h->n);
 
 				struct SubtreeIsoDataStore prev = one;
-				for (int i=3; i<7; ++i) {
-					struct SubtreeIsoDataStore current = iterativeSubtreeCheck(prev, refinementGraph(prev.h, 1, edge, gp), gp);
-					printf("lenght %i, Found Iso: %i\n", i, current.foundIso);
-					
+				for (int i=1; i<7; ++i) {
+					struct Graph* ext = refinementGraph(prev.h, prev.h->n-1, edge, gp);
+					struct SubtreeIsoDataStore current = iterativeSubtreeCheck(prev, ext, gp);
+
+					printf("lenght %i, Found Iso: %i\n", current.h->m, current.foundIso);
+					printNewCubeCondensed(current.S, current.g->n, current.h->n);
+
 					dumpNewCube(prev.S, prev.g->n, prev.h->n);
 					dumpGraph(gp, prev.h);
 
