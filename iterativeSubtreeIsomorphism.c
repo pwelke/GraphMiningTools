@@ -247,16 +247,17 @@ int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtree
 		struct Vertex* v = g->vertices[current.postorder[vi]];
 		
 		// add new characteristics TODO check labels
-		if (labelCmp(v->label, b->label) == 0) {
-			addCharacteristic(current.S, a, b, v);
-		}
 		if (containsCharacteristic(base.S, a, a, v)) {
 			addCharacteristic(current.S, b, a, v);
 		}
-		int bbCharacteristic = computeCharacteristic(current.S, b, b, v, g, h, gp);
-		if (bbCharacteristic) {
-			addCharacteristic(current.S, b, b, v);
-			foundIso = 1;
+		if (labelCmp(v->label, b->label) == 0) {
+			addCharacteristic(current.S, a, b, v);
+
+			int bbCharacteristic = computeCharacteristic(current.S, b, b, v, g, h, gp);
+			if (bbCharacteristic) {
+				addCharacteristic(current.S, b, b, v);
+				foundIso = 1;
+			}
 		}
 		// filter existing characteristics
 		for (int ui=0; ui<h->n-1; ++ui) {
