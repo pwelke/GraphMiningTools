@@ -113,6 +113,15 @@ void printNewCube(int*** S, int gn, int hn) {
 	}
 }
 
+void printNewCubeCondensed(int*** S, int gn, int hn) {
+	for (int i=0; i<gn; ++i) {
+		for (int j=0; j<hn; ++j) {
+			if (S[i][j][0] != 0) {
+				printNewS(S, i, j);
+			}
+		}
+	}
+}
 
 
 // MISC TOOLING

@@ -21,6 +21,7 @@ void addCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vert
 int computeCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp);
 void printNewS(int*** S, int v, int u);
 void printNewCube(int*** S, int gn, int hn);
+void printNewCubeCondensed(int*** S, int gn, int hn);
 void dumpNewCube(int*** S, int x, int y);
 // MISC TOOLING
 
