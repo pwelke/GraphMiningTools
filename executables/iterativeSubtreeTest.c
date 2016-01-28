@@ -72,7 +72,7 @@
 				edge->endPoint = getVertex(vp);
 				edge->startPoint->label = intLabel(2);
 				edge->label = intLabel(1);
-				edge->endPoint->label = intLabel(2);
+				edge->endPoint->label = intLabel(1);
 
 				edge->isStringMaster = 1;
 				edge->startPoint->isStringMaster = 1;
@@ -85,8 +85,8 @@
 				printNewCubeCondensed(one.S, one.g->n, one.h->n);
 
 				struct SubtreeIsoDataStore prev = one;
-				for (int i=1; i<7; ++i) {
-					struct Graph* ext = refinementGraph(prev.h, prev.h->n-1, edge, gp);
+				for (int i=1; i<2; ++i) {
+					struct Graph* ext = refinementGraph(prev.h, 0, edge, gp);
 					struct SubtreeIsoDataStore current = iterativeSubtreeCheck(prev, ext, gp);
 
 					printf("lenght %i, Found Iso: %i\n", current.h->m, current.foundIso);
