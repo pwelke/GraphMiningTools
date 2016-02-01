@@ -323,7 +323,7 @@ void dumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e, struc
 		dumpSubtreeIsoDataStoreElements(e->next, gp);
 	}
 
-	dumpNewCube(e->data.S, e->data.g->n, e->data.h->n);
+	dumpNewCubeFast(e->data.S, e->data.g->n, e->data.h->n);
 //	dumpGraph(gp, e->data.h);
 	free(e);
 }
@@ -341,7 +341,8 @@ void dumpSubtreeIsoDataStoreElementsWithPostorder(struct SubtreeIsoDataStoreElem
 		dumpSubtreeIsoDataStoreElementsWithPostorder(e->next, gp);
 	}
 
-	dumpNewCube(e->data.S, e->data.g->n, e->data.h->n);
+//	dumpNewCube(e->data.S, e->data.g->n, e->data.h->n);
+	dumpNewCubeFast(e->data.S, e->data.g->n, e->data.h->n);
 	dumpGraph(gp, e->data.h);
 	free(e->data.postorder);
 	free(e);
@@ -361,6 +362,7 @@ struct SubtreeIsoDataStoreList* initIterativeDFS(struct Graph** db, size_t nGrap
 		base.g = db[i];
 		base.postorder = getPostorder(base.g, 0);
 		struct SubtreeIsoDataStore data = initIterativeSubtreeCheck(base, e, gp);
+//		printNewCubeCondensed(data.S, data.g->n, data.h->n);
 		appendSubtreeIsoDataStore(actualSupport, data);
 	}
 	return actualSupport;
@@ -375,31 +377,29 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t thres
 	if (candidate->n < maxPatternSize) {
 		// crazy ineffective but not bottleneck right now.
 		refinements = extendPattern(candidate, frequentEdges, gp);
-		refinements = basicFilter(refinements, processedPatterns, gp, sgp);
+		refinements = basicFilter(refinements, processedPatterns, gp, sgp); // adds all refinements, valid or not, to processedPatterns
 	}
 
 	// for each refinement recursively call DFS
 	for (struct Graph* refinement=refinements; refinement!=NULL; refinement=refinement->next) {
-		struct ShallowGraph* cString = canonicalStringOfTree(refinement, sgp);
-		// add canonical string of pattern to the set of processed patterns for filtering out candidates that were already tested.
-		addToSearchTree(processedPatterns, cloneShallowGraph(cString, sgp), gp, sgp);
 
 		// test if candidate is frequent
 		struct SubtreeIsoDataStoreList* refinementSupport = getSubtreeIsoDataStoreList();
 		for (struct SubtreeIsoDataStoreElement* i=candidateSupport->first; i!=NULL; i=i->next) {
 			struct SubtreeIsoDataStore result = iterativeSubtreeCheck(i->data, refinement, gp);
-			//			printf("xxxxxxxxxxxxxxx\n");
-			//			printNewCubeCondensed(result.S, result.g->n, result.h->n);
+
 			if (result.foundIso) {
 				appendSubtreeIsoDataStore(refinementSupport, result);
 			} else {
-				dumpNewCube(result.S, result.g->n, result.h->n);
+				dumpNewCubeFast(result.S, result.g->n, result.h->n);
 			}
 		}
 		// if so, print and recurse
 		if (refinementSupport->size >= threshold) {
 			fprintf(stdout, "============\nNEW PATTERN:\n");
+			struct ShallowGraph* cString = canonicalStringOfTree(refinement, sgp);
 			printCanonicalString(cString, stdout);
+			dumpShallowGraph(sgp, cString);
 			printSubtreeIsoDataStoreList(refinementSupport, stdout);
 
 			iterativeDFS(refinementSupport, threshold, maxPatternSize, frequentEdges, processedPatterns, gp, sgp);
@@ -943,7 +943,7 @@ int mainBFS(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
-	return mainIterativeDFS(argc, argv);
-	//	return mainDFS(argc, argv);
+//	return mainIterativeDFS(argc, argv);
+	return mainDFS(argc, argv);
 	//	return mainBFS(argc, argv);
 }
