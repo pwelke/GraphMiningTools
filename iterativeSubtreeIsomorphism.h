@@ -7,6 +7,7 @@ struct SubtreeIsoDataStore {
 
 	struct Graph* h;
 	int*** S;
+	size_t elementsInS;
 	int foundIso;
 };
 
@@ -14,20 +15,21 @@ struct SubtreeIsoDataStore {
 // CHARACTERISTICS TOOLING
 
 // TODO can be made constant time
-int*** createNewCube(int x, int y);
+//int*** createNewCube(int x, int y);
 int*** createNewCubeFromBase(struct SubtreeIsoDataStore base);
-int containsCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v);
-void addCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v);
-int computeCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp);
+int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
+void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
+int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp);
 void printNewS(int*** S, int v, int u);
 void printNewCube(int*** S, int gn, int hn);
 void printNewCubeCondensed(int*** S, int gn, int hn);
 void dumpNewCube(int*** S, int x, int y);
+void dumpNewCubeFast(int*** S, int x, int y);
 // MISC TOOLING
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstanceFromVertices(int*** S, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp);
+struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct GraphPool* gp);
 int* getParentsFromPostorder(struct Graph* g, int* postorder) ;
 /* Return an array holding the indices of the parents of each vertex in g with root root.
 the parent of root does not exist, which is indicated by index -1 */
@@ -53,7 +55,7 @@ Output:
 	the cube for h and g
 
 */
-int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore current, struct GraphPool* gp);
+void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* currentPointer, struct GraphPool* gp);
 struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp);
 
 

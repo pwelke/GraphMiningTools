@@ -36,20 +36,71 @@ int*** createNewCube(int x, int y) {
 }
 
 
-int*** createNewCubeFromBase(struct SubtreeIsoDataStore base) {
-	int*** S = createNewCube(base.g->n, base.h->n + 1);
+void createNewBaseCubeFast(struct SubtreeIsoDataStore* info) {
+	info->S = createNewCube(info->g->n, 2);
+	info->elementsInS = 0;
+	int* array = malloc(3 * 2 * info->g->n * sizeof(int));
+	size_t position = 0;
+	for (int v=0; v<(info->g)->n; ++v) {
+		for (int u=0; u<2; ++u) {
+			int* newPos = array + position;
+			(info->S)[v][u] = newPos; // pointer arithmetic
+			(info->S)[v][u][0] = 0;
+			position += 3;
+		}
+	}
+}
+
+
+
+//int*** createNewCubeFromBase(struct SubtreeIsoDataStore base) {
+//	int*** S = createNewCube(base.g->n, base.h->n + 1);
+//	// create cube large enough for filtered characteristics plus new for old vertices of h
+//	// TODO I assume two things:
+//	// 1. we only need to add space for one more characteristic
+//	// 2. I think, we only need this additional space somewhere, not everywhere. Probably only for the neoghbor of the new vertex
+//	// 3. the new vertex can have only two characteristics. A complete and an incomplete for the unique parent.
+//	for (int i=0; i<base.g->n; ++i) {
+//		for (int j=0; j<base.h->n; ++j) {
+//			S[i][j] = calloc(base.S[i][j][0] + 2, sizeof(int));
+//		}
+//		S[i][base.h->n] = calloc(3, sizeof(int));
+//	}
+//	return S;
+//}
+
+void createNewCubeFromBaseFast(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new) {
+	new->S = createNewCube(base.g->n, base.h->n + 1);
+	new->elementsInS = 0;
 	// create cube large enough for filtered characteristics plus new for old vertices of h
-	// TODO I assume two things: 
+	// TODO I assume two things:
 	// 1. we only need to add space for one more characteristic
 	// 2. I think, we only need this additional space somewhere, not everywhere. Probably only for the neoghbor of the new vertex
 	// 3. the new vertex can have only two characteristics. A complete and an incomplete for the unique parent.
+	size_t maxSize = base.elementsInS; // space for characteristics of subgraph
+	maxSize += base.g->n * (base.h->n + 1); // space for storing size info
+	maxSize += base.g->n * base.h->n; // space for additional characteristic
+	maxSize += 2 * base.g->n; // space for characteristics of new vertex
+	int* array = malloc(maxSize * sizeof(int));
+	size_t position = 0;
 	for (int i=0; i<base.g->n; ++i) {
 		for (int j=0; j<base.h->n; ++j) {
-			S[i][j] = calloc(base.S[i][j][0] + 2, sizeof(int));
+			new->S[i][j] = &(array[position]);
+			new->S[i][j][0] = 0;
+			position += base.S[i][j][0] + 2;
 		}
-		S[i][base.h->n] = calloc(3, sizeof(int));
+		new->S[i][base.h->n] = &(array[position]);
+		new->S[i][base.h->n][0] = 0;
+		position += 3;
 	}
-	return S;
+}
+
+void dumpNewCubeFast(int*** S, int x, int y) {
+	free(S[0][0]);
+	for (int i=0; i<x; ++i) {
+		free(S[i]);
+	}
+	free(S);
 }
 
 void dumpNewCube(int*** S, int x, int y) {
@@ -63,28 +114,68 @@ void dumpNewCube(int*** S, int x, int y) {
 }
 
 
-int containsCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
-	int uvNumberOfCharacteristics = S[v->number][u->number][0];
+int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+	int uvNumberOfCharacteristics = data.S[v->number][u->number][0];
 	for (int i=1; i<=uvNumberOfCharacteristics; ++i) {
-		if (y->number == S[v->number][u->number][i]) {
+		if (y->number == data.S[v->number][u->number][i]) {
 			return 1;
 		}
 	}
 	return 0;
 }
 
-// assumes that 
-void addCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
-	int* current = S[v->number][u->number];
-	current[0] += 1;
-	int newPos = current[0];
-	current[newPos] = y->number;
-} 
+char checkSanityOfWrite(struct SubtreeIsoDataStore* data, struct Vertex* u, struct Vertex* v) {
+	// find next position in cube
+	int nextV;
+	int nextU;
+	if (u->number < data->h->n - 1) {
+		nextV = v->number;
+		nextU = u->number + 1;
+	} else {
+		nextV = v->number + 1;
+		nextU = 0;
+	}
+
+	// last position in cube
+	if (nextV == data->g->n) {
+		// should have two positions
+		int storedElements = data->S[v->number][u->number][0];
+		if (storedElements < 2) {
+			return 1;
+		} else {
+			return 0;
+		}
+
+	} else {
+		int storedElements = data->S[v->number][u->number][0];
+		int space = data->S[nextV][nextU] - data->S[v->number][u->number];
+		if (storedElements < space - 1) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+}
 
 
-int computeCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+// assumes that
+void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+	if (checkSanityOfWrite(data, u, v)) {
+		data->elementsInS += 1;
+		int* current = data->S[v->number][u->number];
+		current[0] += 1;
+		int newPos = current[0];
+		current[newPos] = y->number;
+	} else {
+		fprintf(stderr, "Invalid write to cube: y=%i u=%i v=%i.\nIs: ", y->number, u->number, v->number);
+		printNewS(data->S, v->number, u->number);
+	}
+}
+
+
+int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
 	// TODO speedup by handling leaf case separately
-	struct Graph* B = makeBipartiteInstanceFromVertices(S, y, u, v, g, h, gp);
+	struct Graph* B = makeBipartiteInstanceFromVertices(data, y, u, v, gp);
 	int sizeofMatching = bipartiteMatchingFastAndDirty(B, gp);
 	dumpGraph(gp, B);
 	return (sizeofMatching == B->number) ? 1 : 0;
@@ -94,15 +185,25 @@ int computeCharacteristic(int*** S, struct Vertex* y, struct Vertex* u, struct V
 void printNewS(int*** S, int v, int u) {
 	int i;
 	printf("S(%i, %i)={", v, u);
-	if (S[v][u][0] > 0) {
-		for (i=1; i<S[v][u][0]; ++i) {
-			printf("%i, ", S[v][u][i]);
+	int* row = S[v][u];
+	int count = row[0];
+	if (count > 0) {
+		for (i=1; i<count; ++i) {
+			printf("%i, ", row[i]);
 		}
-		printf("%i}\n", S[v][u][S[v][u][0]]);
+		printf("%i}\n", row[count]);
 	} else {
 		printf("}\n");
 	}
 	fflush(stdout);
+
+}
+
+void printNewSDanger(int* data, size_t length) {
+	for (size_t i=0; i<length; ++i) {
+		printf("%i, ", data[i]);
+	}
+	printf("\n");
 }
 
 void printNewCube(int*** S, int gn, int hn) {
@@ -123,29 +224,43 @@ void printNewCubeCondensed(int*** S, int gn, int hn) {
 	}
 }
 
+void testSizes(int*** S, int gn, int hn) {
+	int size = 0;
+	for (int i=0; i<gn; ++i) {
+		for (int j=0; j<hn; ++j) {
+			size += S[i][j][0];
+		}
+	}
+	printf("has %i entries\n", size);
+}
+
 
 // MISC TOOLING
 
-/* vertices of g have their ->visited values set to the postorder. Thus, 
+/* vertices of g have their ->visited values set to the postorder. Thus,
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstanceFromVertices(int*** S, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
 	struct Graph* B;
+
+//	printf("what we see for v=%i u=%i y=%i:\n", v->number, u->number, removalVertex->number);
+//	testSizes(data.S, data.g->n, data.h->n);
+//	printNewCubeCondensed(data.S, data.g->n, data.h->n);
 
 	int sizeofX = degree(u);
 	int sizeofY = degree(v);
 
-	// if one of the neighbors of u is removed from this instance to see if there is a matching covering all neighbors but it, 
+	// if one of the neighbors of u is removed from this instance to see if there is a matching covering all neighbors but it,
 	// the bipartite graph must be smaller
 	if (removalVertex->number != u->number) {
 		--sizeofX;
 	}
 
- 	/* construct bipartite graph B(v,u) */ 
+	/* construct bipartite graph B(v,u) */
 	B = createGraph(sizeofX + sizeofY, gp);
 	/* store size of first partitioning set */
 	B->number = sizeofX;
 
-	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B 
+	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B
 	and add edge labels to vertex labels to compare edges easily */
 	int i = 0;
 	for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
@@ -163,20 +278,21 @@ struct Graph* makeBipartiteInstanceFromVertices(int*** S, struct Vertex* removal
 
 	/* add edge (x,y) if u in S(y,x) */
 	for (i=0; i<sizeofX; ++i) {
-		for (int j=sizeofX; j<B->n; ++j) {	
+		for (int j=sizeofX; j<B->n; ++j) {
 			int x = B->vertices[i]->lowPoint;
 			int y = B->vertices[j]->lowPoint;
 
 			/* y has to be a child of v */
-			if (g->vertices[y]->visited < v->visited) {
+			if (data.g->vertices[y]->visited < v->visited) {
 				/* vertex labels have to match */
-				if (labelCmp(g->vertices[y]->label, h->vertices[x]->label) == 0) {
-					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h 
+				if (labelCmp(data.g->vertices[y]->label, data.h->vertices[x]->label) == 0) {
+					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
 					these values were stored in B->vertices[i,j]->label */
 					if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
-						if (S[y][x] != NULL) {
-							for (int k=1; k<=S[y][x][0]; ++k) {
-								if (S[y][x][k] == u->number) {
+						if (data.S[y][x] != NULL) {
+//							printf("at v=%i u=%i y=%i checking %i %i\n",v->number, u->number, removalVertex->number,  y, x);
+							for (int k=1; k<=data.S[y][x][0]; ++k) {
+								if (data.S[y][x][k] == u->number) {
 									addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
 									++B->m;
 								}
@@ -186,7 +302,7 @@ struct Graph* makeBipartiteInstanceFromVertices(int*** S, struct Vertex* removal
 				}
 			}
 		}
-	} 
+	}
 
 	return B;
 }
@@ -229,11 +345,11 @@ Output:
 	yes, if h is subgraph isomorphic to g, no otherwise
 	the cube for h and g
 
-*/
-int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore current, struct GraphPool* gp) {
+ */
+void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* current, struct GraphPool* gp) {
 
-	struct Graph* g = current.g;
-	struct Graph* h = current.h;
+	struct Graph* g = current->g;
+	struct Graph* h = current->h;
 
 	// new vertex and adjacent one
 	struct Vertex* b = h->vertices[h->n - 1];
@@ -242,42 +358,54 @@ int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtree
 	// int*** newS = createNewCube(g->n, h->n); // rewrite?
 	int* parentsHa = getParents(h, a->number); // move out / rewrite
 
-	int foundIso = 0;
+	current->foundIso = 0;
 	for (int vi=0; vi<g->n; ++vi) {
-		struct Vertex* v = g->vertices[current.postorder[vi]];
-		
+		struct Vertex* v = g->vertices[current->postorder[vi]];
+
 		// add new characteristics TODO check labels
-		if (containsCharacteristic(base.S, a, a, v)) {
-			addCharacteristic(current.S, b, a, v);
+		if (containsCharacteristic(base, a, a, v)) {
+			addCharacteristic(current, b, a, v);
 		}
 		if (labelCmp(v->label, b->label) == 0) {
-			addCharacteristic(current.S, a, b, v);
+			addCharacteristic(current, a, b, v);
 
-			int bbCharacteristic = computeCharacteristic(current.S, b, b, v, g, h, gp);
-			if (bbCharacteristic) {
-				addCharacteristic(current.S, b, b, v);
-				foundIso = 1;
+			//						int bbCharacteristic = computeCharacteristic(*current, b, b, v, gp);
+			//						if (bbCharacteristic) {
+			//							addCharacteristic(current, b, b, v);
+			//							current->foundIso = 1;
+			//						}
+			for (struct VertexList* e=v->neighborhood; e!= NULL; e=e->next) {
+				if (labelCmp(e->label, b->neighborhood->label) == 0) {
+					// check if e->endPoint is not the parent of v
+					if (e->endPoint->number != v->lowPoint) {
+						if (containsCharacteristic(*current, b, a, e->endPoint)) {
+							addCharacteristic(current, b, b, v);
+							current->foundIso = 1;
+							break;
+						}
+					}
+				}
 			}
 		}
 		// filter existing characteristics
 		for (int ui=0; ui<h->n-1; ++ui) {
 			struct Vertex* u = h->vertices[ui];
 
-			if (containsCharacteristic(base.S, u, u, v)) {
-				int uuCharacteristic = computeCharacteristic(current.S, u, u, v, g, h, gp);
+			if (containsCharacteristic(base, u, u, v)) {
+				int uuCharacteristic = computeCharacteristic(*current, u, u, v, gp);
 				if (uuCharacteristic) {
-					addCharacteristic(current.S, u, u, v);
-					foundIso = 1;
+					addCharacteristic(current, u, u, v);
+					current->foundIso = 1;
 				}
 			}
 			for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
-				if (containsCharacteristic(base.S, e->endPoint, u, v)) {
+				if (containsCharacteristic(base, e->endPoint, u, v)) {
 					if (e->endPoint->number == parentsHa[u->number]) {
-						addCharacteristic(current.S, e->endPoint, u, v);
+						addCharacteristic(current, e->endPoint, u, v);
 					} else {
-						int yuCharacteristic = computeCharacteristic(current.S, e->endPoint, u, v, g, h, gp);
+						int yuCharacteristic = computeCharacteristic(*current, e->endPoint, u, v, gp);
 						if (yuCharacteristic) {
-							addCharacteristic(current.S, e->endPoint, u, v);
+							addCharacteristic(current, e->endPoint, u, v);
 						}
 					}
 				}
@@ -286,7 +414,6 @@ int iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtree
 	}
 
 	free(parentsHa);
-	return foundIso;
 }
 
 
@@ -295,8 +422,10 @@ struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base
 	info.g = base.g;
 	info.h = h;
 	info.postorder = base.postorder;
-	info.S = createNewCubeFromBase(base);
-	info.foundIso = iterativeSubtreeCheck_intern(base, info, gp);
+
+	createNewCubeFromBaseFast(base, &info);
+	iterativeSubtreeCheck_intern(base, &info, gp);
+
 	return info;
 }
 
@@ -324,12 +453,7 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 	addEdgeBetweenVertices(0, 1, patternEdge->label, info.h, gp);
 
 	// create cube
-	info.S = createNewCube((info.g)->n, 2);
-	for (int v=0; v<(info.g)->n; ++v) {
-		for (int u=0; u<2; ++u) {
-			(info.S)[v][u] = calloc(3, sizeof(int));
-		}
-	}
+	createNewBaseCubeFast(&info);
 
 	int* parents = getParentsFromPostorder(info.g, info.postorder);
 
@@ -340,7 +464,7 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 			struct Vertex* y = (info.h)->vertices[(ui + 1) % 2];
 			if (labelCmp(v->label, u->label) == 0) {
 				// if vertex labels match, there is a characteristic (H^y_u, v)
-				addCharacteristic(info.S, y, u, v);
+				addCharacteristic(&info, y, u, v);
 				char foundIso = 0;
 				// if there is at least one edge that matches and does not lead to the parent, then there is a characteristic (H^u_u, v)
 				// we add this characteristic only once below
@@ -356,13 +480,13 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 					}
 				}
 				if (foundIso) {
-					addCharacteristic(info.S, u, u, v);
+					addCharacteristic(&info, u, u, v);
 					info.foundIso = 1;
-				} 
+				}
 			}
 		}
 	}
 	free(parents);
 	return info;
-}	
+}
 
