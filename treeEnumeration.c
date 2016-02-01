@@ -98,7 +98,7 @@ char alreadyEnumerated(struct Graph* pattern, struct Vertex* searchTree, struct 
 
 /**
 Return the list of all graphs in extension that are not contained in listOfGraphs (given as searchTree).
-extension is consumed. listofgraphs is not altered. */
+extension is consumed. after the call, canonical strings of all elements in extension will be added to listOfGraphs */
 struct Graph* basicFilter(struct Graph* extension, struct Vertex* listOfGraphs, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* result = NULL;
 	struct Graph* g = extension;
