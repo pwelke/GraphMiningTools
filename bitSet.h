@@ -3,19 +3,19 @@
 
 #include <stdio.h>
 
-char* createBitset(int n);
-char* copyBitset(char* bitset, int n);
+char* createBitset(size_t n);
+char* copyBitset(char* bitset, size_t n);
 void destroyBitset(char* bitset);
 
-void setBitTrue(char* bitset, int n);
-void setBitFalse(char* bitset, int n);
-void setBit(char* bitset, int n, char value);
+void setBitTrue(char* bitset, size_t i);
+void setBitFalse(char* bitset, size_t i);
+void setBit(char* bitset, size_t i, char value);
 
-char getBit(char* bitset, int n);
+char getBit(char* bitset, size_t i);
 
-void bitsetUnion(char* a, char* b, int n);
-void bitsetIntersection(char* a, char* b, int n);
+void bitsetUnion(char* a, char* b, size_t n);
+void bitsetIntersection(char* a, char* b, size_t n);
 
-void printBitset(char* bitset, int size, FILE* out);
+void printBitset(char* bitset, size_t n, FILE* out);
 
 #endif
