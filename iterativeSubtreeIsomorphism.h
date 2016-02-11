@@ -1,31 +1,9 @@
+#ifndef ITERATIVE_SUBTREEISO_H_
+#define ITERATIVE_SUBTREEISO_H_
 
+#include "newCube.h"
 
-struct SubtreeIsoDataStore {
-	// TODO can be moved out to save 128bit per graph.
-	int* postorder;
-	struct Graph* g;
-
-	struct Graph* h;
-	int*** S;
-	size_t elementsInS;
-	int foundIso;
-};
-
-
-// CHARACTERISTICS TOOLING
-
-// TODO can be made constant time
-//int*** createNewCube(int x, int y);
-int*** createNewCubeFromBase(struct SubtreeIsoDataStore base);
-int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
-void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
 int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp);
-void printNewS(int*** S, int v, int u);
-void printNewCube(int*** S, int gn, int hn);
-void printNewCubeCondensed(int*** S, int gn, int hn);
-void dumpNewCube(int*** S, int x, int y);
-void dumpNewCubeFast(int*** S, int x, int y);
-// MISC TOOLING
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
@@ -64,3 +42,5 @@ struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base
 struct SubtreeIsoDataStore initG(struct Graph* g);
 /** create the set of characteristics for a single edge pattern graph */
 struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp);
+
+#endif
