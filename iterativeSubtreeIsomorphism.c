@@ -13,7 +13,6 @@
 
 
 // MISC TOOLING
-
 int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
 	// TODO speedup by handling leaf case separately
 	struct Graph* B = makeBipartiteInstanceFromVertices(data, y, u, v, gp);
@@ -27,10 +26,6 @@ int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, str
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
 struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
 	struct Graph* B;
-
-	//	printf("what we see for v=%i u=%i y=%i:\n", v->number, u->number, removalVertex->number);
-	//	testSizes(data.S, data.g->n, data.h->n);
-	//	printNewCubeCondensed(data.S, data.g->n, data.h->n);
 
 	int sizeofX = degree(u);
 	int sizeofY = degree(v);
@@ -75,16 +70,10 @@ struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data,
 					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
 					these values were stored in B->vertices[i,j]->label */
 					if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
-//						if (data.S[y][x] != NULL) {
-//							for (int k=1; k<=data.S[y][x][0]; ++k) {
 						if (containsCharacteristic(data, u, data.h->vertices[x], data.g->vertices[y])) {
-//								if (data.S[y][x][k] == u->number) {
 							addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
 							++B->m;
 						}
-//								}
-//							}
-//						}
 					}
 				}
 			}
@@ -143,25 +132,20 @@ void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtre
 	struct Vertex* b = h->vertices[h->n - 1];
 	struct Vertex* a = b->neighborhood->endPoint;
 
-	// int*** newS = createNewCube(g->n, h->n); // rewrite?
 	int* parentsHa = getParents(h, a->number); // move out / rewrite
 
 	current->foundIso = 0;
 	for (int vi=0; vi<g->n; ++vi) {
 		struct Vertex* v = g->vertices[current->postorder[vi]];
 
-		// add new characteristics TODO check labels
+		// add new characteristics
 		if (containsCharacteristic(base, a, a, v)) {
 			addCharacteristic(current, b, a, v);
 		}
 		if (labelCmp(v->label, b->label) == 0) {
 			addCharacteristic(current, a, b, v);
 
-			//						int bbCharacteristic = computeCharacteristic(*current, b, b, v, gp);
-			//						if (bbCharacteristic) {
-			//							addCharacteristic(current, b, b, v);
-			//							current->foundIso = 1;
-			//						}
+			// optimized version of computeCharacteristic(*current, b, b, v, gp);
 			for (struct VertexList* e=v->neighborhood; e!= NULL; e=e->next) {
 				if (labelCmp(e->label, b->neighborhood->label) == 0) {
 					// check if e->endPoint is not the parent of v
@@ -175,6 +159,7 @@ void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtre
 				}
 			}
 		}
+
 		// filter existing characteristics
 		for (int ui=0; ui<h->n-1; ++ui) {
 			struct Vertex* u = h->vertices[ui];
