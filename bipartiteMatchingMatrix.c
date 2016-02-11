@@ -71,32 +71,32 @@ int maxBPM(char** bpGraph, size_t N, size_t M)
 	return result;
 }
 
-// Driver program to test above functions
-int main()
-{
-	const size_t N = 6;
-	const size_t M = 7;
-	// Let us create a bpGraph shown in the above example
-	char a[] = {0, 1, 1, 0, 0, 0};
-	char b[] = {1, 0, 0, 1, 0, 0};
-	char c[] = {0, 0, 1, 0, 0, 0};
-	char d[] = {0, 0, 1, 1, 0, 0};
-	char e[] = {0, 0, 0, 0, 0, 0};
-	char f[] = {0, 0, 0, 0, 0, 1};
-	char g[] = {1, 1, 0, 0, 1, 1};
-
-	char* bpGraph[M];
-	bpGraph[0] = a;
-	bpGraph[1] = b;
-	bpGraph[2] = c;
-	bpGraph[3] = d;
-	bpGraph[4] = e;
-	bpGraph[5] = f;
-	bpGraph[6] = g;
-
-	printf("Maximum number of applicants that can get job is %i\n", maxBPM(bpGraph, N, M));
-
-
-	return 0;
-}
+//// Driver program to test above functions
+//int main()
+//{
+//	const size_t N = 6;
+//	const size_t M = 7;
+//	// Let us create a bpGraph shown in the above example
+//	char a[] = {0, 1, 1, 0, 0, 0};
+//	char b[] = {1, 0, 0, 1, 0, 0};
+//	char c[] = {0, 0, 1, 0, 0, 0};
+//	char d[] = {0, 0, 1, 1, 0, 0};
+//	char e[] = {0, 0, 0, 0, 0, 0};
+//	char f[] = {0, 0, 0, 0, 0, 1};
+//	char g[] = {1, 1, 0, 0, 1, 1};
+//
+//	char* bpGraph[M];
+//	bpGraph[0] = a;
+//	bpGraph[1] = b;
+//	bpGraph[2] = c;
+//	bpGraph[3] = d;
+//	bpGraph[4] = e;
+//	bpGraph[5] = f;
+//	bpGraph[6] = g;
+//
+//	printf("Maximum number of applicants that can get job is %i\n", maxBPM(bpGraph, N, M));
+//
+//
+//	return 0;
+//}
 
