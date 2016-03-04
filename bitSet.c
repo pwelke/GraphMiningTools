@@ -44,9 +44,8 @@ char getBit(char* bitset, size_t i) {
 }
 
 void printBitset(char* bitset, size_t n, FILE* out) {
-	int i;
 	fprintf(out, "[");
-	for (i=0; i<n; ++i) {
+	for (size_t i=0; i<n; ++i) {
 		fprintf(out, "%i", getBit(bitset, i));
 	}
 	fprintf(out, "]\n");
