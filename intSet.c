@@ -86,13 +86,13 @@ void addIntSortedWithDuplicates(struct IntSet* s, int i) {
  * if you want duplicates, use addIntSortedWithDuplicates
  */
 void addIntSortedNoDuplicates(struct IntSet* s, int i) {
-	struct IntElement* newElement = getIntElement();
-	newElement->value = i;
 	if (s->last != NULL) {
 		if (s->last->value == i) {
 			return;
 		}
 		if (s->last->value < i) {
+			struct IntElement* newElement = getIntElement();
+			newElement->value = i;
 			s->last->next = newElement;
 			s->last = newElement;
 		} else {
@@ -100,6 +100,8 @@ void addIntSortedNoDuplicates(struct IntSet* s, int i) {
 				return;
 			}
 			if (s->first->value > i) {
+				struct IntElement* newElement = getIntElement();
+				newElement->value = i;
 				newElement->next = s->first;
 				s->first = newElement;
 			} else {
@@ -108,6 +110,8 @@ void addIntSortedNoDuplicates(struct IntSet* s, int i) {
 						return;
 					}
 					if (e->next->value > i) {
+						struct IntElement* newElement = getIntElement();
+						newElement->value = i;
 						newElement->next = e->next;
 						e->next = newElement;
 						break;
@@ -116,6 +120,8 @@ void addIntSortedNoDuplicates(struct IntSet* s, int i) {
 			}
 		}
 	} else {
+		struct IntElement* newElement = getIntElement();
+		newElement->value = i;
 		s->first = s->last = newElement;
 	}
 	s->size += 1;
