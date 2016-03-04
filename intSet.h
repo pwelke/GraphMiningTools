@@ -1,3 +1,6 @@
+#ifndef _INTSET_H_
+#define _INTSET_H_
+
 struct IntElement{
 	int value;
 	struct IntElement* next;
@@ -6,6 +9,7 @@ struct IntElement{
 struct IntSet{
 	struct IntElement* first;
 	struct IntElement* last;
+	struct IntSet* next;
 	size_t size;
 };
 
@@ -15,6 +19,10 @@ void dumpIntElements(struct IntElement* e);
 void printIntSet(struct IntSet* s, FILE*out);
 void dumpIntSet(struct IntSet* s);
 void appendInt(struct IntSet* s, int i);
+void addIntSortedNoDuplicates(struct IntSet* s, int i);
+void addIntSortedWithDuplicates(struct IntSet* s, int i);
 void appendIntElement(struct IntSet* s, struct IntElement* e);
 struct IntElement* popIntElement(struct IntSet* s);
 struct IntSet* intersectIntSet(const struct IntSet* setA, const struct IntSet* setB);
+
+#endif

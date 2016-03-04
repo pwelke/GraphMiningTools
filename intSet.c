@@ -50,6 +50,77 @@ void appendInt(struct IntSet* s, int i) {
 	s->size += 1;
 }
 
+/**
+ * Add int value to list of ints. creates duplicates, if you add an element that is already contained in the list.
+ * if you want no duplicates, use addIntSortedNoDuplicates
+ */
+void addIntSortedWithDuplicates(struct IntSet* s, int i) {
+	struct IntElement* newElement = getIntElement();
+	newElement->value = i;
+	if (s->last != NULL) {
+		if (s->last->value <= i) {
+			s->last->next = newElement;
+			s->last = newElement;
+		} else {
+			if (s->first->value > i) {
+				newElement->next = s->first;
+				s->first = newElement;
+			} else {
+				for (struct IntElement* e=s->first; e!=NULL; e=e->next) {
+					if (e->next->value > i) {
+						newElement->next = e->next;
+						e->next = newElement;
+						break;
+					}
+				}
+			}
+		}
+	} else {
+		s->first = s->last = newElement;
+	}
+	s->size += 1;
+}
+
+/**
+ * Add int value to list of ints. creates no duplicates: if you try to add an element that is already contained in the list the list size does not increase.
+ * if you want duplicates, use addIntSortedWithDuplicates
+ */
+void addIntSortedNoDuplicates(struct IntSet* s, int i) {
+	struct IntElement* newElement = getIntElement();
+	newElement->value = i;
+	if (s->last != NULL) {
+		if (s->last->value == i) {
+			return;
+		}
+		if (s->last->value < i) {
+			s->last->next = newElement;
+			s->last = newElement;
+		} else {
+			if (s->first->value == i) {
+				return;
+			}
+			if (s->first->value > i) {
+				newElement->next = s->first;
+				s->first = newElement;
+			} else {
+				for (struct IntElement* e=s->first; e!=NULL; e=e->next) {
+					if (e->next->value == i) {
+						return;
+					}
+					if (e->next->value > i) {
+						newElement->next = e->next;
+						e->next = newElement;
+						break;
+					}
+				}
+			}
+		}
+	} else {
+		s->first = s->last = newElement;
+	}
+	s->size += 1;
+}
+
 void appendIntElement(struct IntSet* s, struct IntElement* e) {
 	if (s->last != NULL) {
 		s->last->next = e;
@@ -96,3 +167,24 @@ struct IntSet* intersectIntSet(const struct IntSet* setA, const struct IntSet* s
   }
   return intersection;
 }
+
+//int main(int argc, char* argv) {
+//	struct IntSet* s = getIntSet();
+//
+//	printIntSet(s, stdout);
+//	addIntSortedNoDuplicates(s, 5);
+//	printIntSet(s, stdout);
+//	addIntSortedNoDuplicates(s, 5);
+//	printIntSet(s, stdout);
+//	addIntSortedNoDuplicates(s, 2);
+//	printIntSet(s, stdout);
+//	addIntSortedNoDuplicates(s, 3);
+//	printIntSet(s, stdout);
+//	addIntSortedNoDuplicates(s, 2);
+//	printIntSet(s, stdout);
+//	addIntSortedNoDuplicates(s, 3);
+//	printIntSet(s, stdout);
+//
+//	dumpIntSet(s);
+//
+//}
