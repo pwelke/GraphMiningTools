@@ -82,7 +82,7 @@
 				struct SubtreeIsoDataStore one = initIterativeSubtreeCheck(base, edge, gp);
 
 				printf("lenght 1, Found Iso: %i\n", one.foundIso);
-				printNewCubeCondensed(one.S, one.g->n, one.h->n);
+//				printNewCubeCondensed(one.S, one.g->n, one.h->n);
 
 				struct SubtreeIsoDataStore prev = one;
 				for (int i=1; i<2; ++i) {
@@ -90,16 +90,16 @@
 					struct SubtreeIsoDataStore current = iterativeSubtreeCheck(prev, ext, gp);
 
 					printf("lenght %i, Found Iso: %i\n", current.h->m, current.foundIso);
-					printNewCubeCondensed(current.S, current.g->n, current.h->n);
+//					printNewCubeCondensed(current.S, current.g->n, current.h->n);
 
-					dumpNewCube(prev.S, prev.g->n, prev.h->n);
+					dumpNewCubeFast(prev.S, prev.g->n, prev.h->n);
 					dumpGraph(gp, prev.h);
 
 					prev = current;
 				}
 
 
-				dumpNewCube(prev.S, prev.g->n, prev.h->n);
+				dumpNewCubeFast(prev.S, prev.g->n, prev.h->n);
 				dumpGraph(gp, prev.h);
 				
 				// printNewCube(next.S, next.g->n, next.h->n);
