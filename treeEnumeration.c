@@ -6,6 +6,7 @@
 #include "searchTree.h"
 #include "bloomFilter.h"
 #include "treeEnumeration.h"
+#include "intSet.h"
 
 
 /**
@@ -302,6 +303,115 @@ struct Graph* aprioriFilterExtension(struct Graph* extension, struct Vertex* low
 				current->next = filteredExtension;
 				filteredExtension = current;
 				addToSearchTree(currentLevel, string, gp, sgp);
+			} else {
+				dumpGraph(gp, current);
+			}
+		}
+	}
+
+	// garbage collection
+	for (v=0; v<subgraph->n; ++v) {
+		subgraph->vertices[v] = 0;
+	}
+	dumpGraph(gp, subgraph);
+	// fprintf(stderr, "return\n");
+	return filteredExtension;
+}
+
+
+/**
+for each graph g in extension (that is the list starting at extension and continuing at extension->next),
+two tests are run: g itself must not be contained in currentLevel and any subtree of g with n-1 vertices must be contained
+in lowerLevel (this ensures the apriori property that all subtrees are frequent).
+if g fulfills both conditions, it is added to the output and to currentLevel.
+
+In contrast to the above filterExtension, this method does not use any hashing.
+
+In contrast to aprioriFilterExtension, this method also returns a list of IntSets, that contain the ids of
+the relevant (n-1)-vertex subtrees and sets h->number to its id (obtained by getID(currentLevel, cString(h)).
+*/
+struct Graph* aprioriFilterExtensionReturnLists(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct IntSet** resultSetStore, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int v;
+	struct Graph* idx = extension;
+	struct Graph* filteredExtension = NULL;
+
+	*resultSetStore = NULL;
+
+	// create graph that will hold subgraphs of size n-1 (this assumes that all extension trees have the same size)
+	struct Graph* subgraph = getGraph(gp);
+	setVertexNumber(subgraph, extension->n - 1);
+	subgraph->m = subgraph->n - 1;
+
+	while (idx != NULL) {
+
+		struct Graph* current = idx;
+		idx = idx->next;
+		current->next = NULL;
+
+		/* filter out patterns that were already enumerated as the extension of some other pattern
+		and are in the search tree */
+		struct ShallowGraph* string = canonicalStringOfTree(current, sgp);
+		char alreadyEnumerated = containsString(currentLevel, string);
+
+		if (alreadyEnumerated) {
+			dumpShallowGraph(sgp, string);
+ 			dumpGraph(gp, current);
+ 			continue; // with next refinement
+		} else {
+//			char aprioriProperty = 1;
+			struct ShallowGraph* subString;
+			struct IntSet* aprioriTreesOfExtension = getIntSet();
+
+			for (v=0; v<current->n; ++v) {
+				// if the removed vertex is a leaf, we test if the resulting subtree is contained in the lower level
+				if (isLeaf(current->vertices[v]) == 1) {
+					// we invalidate current by removing the edge to v from its neighbor, which makes subgraph a valid tree
+					struct VertexList* edge = snatchEdge(current->vertices[v]->neighborhood->endPoint, current->vertices[v]);
+
+					int i = 0;
+					int j = 0;
+					for (i=0; i<current->n; ++i) {
+						if (i == v) {
+							continue;
+						} else {
+							subgraph->vertices[j] = current->vertices[i];
+							subgraph->vertices[j]->number = j;
+							++j;
+						}
+					}
+					subString = canonicalStringOfTree(subgraph, sgp);
+					// restore law and order in current
+					addEdge(edge->startPoint, edge);
+					// test apriori property
+					int aprioriTreeID = getID(lowerLevel, subString);
+					dumpShallowGraph(sgp, subString);
+
+					if (aprioriTreeID == -1) {
+						dumpIntSet(aprioriTreesOfExtension);
+						aprioriTreesOfExtension = NULL;
+			 			break; // looping through the vertices of current and continue with next refinement
+					} else {
+						addIntSortedNoDuplicates(aprioriTreesOfExtension, aprioriTreeID);
+					}
+				}
+			}
+
+			// clean up and garbage collection
+			for (v=0; v<current->n; ++v) {
+				current->vertices[v]->number = v;
+			}
+
+			if (aprioriTreesOfExtension != NULL) {
+				// add current to filtered extension
+				current->next = filteredExtension;
+				filteredExtension = current;
+				// add current to search tree of current candidates
+				addToSearchTree(currentLevel, string, gp, sgp);
+				current->number = currentLevel->lowPoint;
+				// add list of ids of apriori trees to resultSetStore
+				aprioriTreesOfExtension->next = *resultSetStore;
+				*resultSetStore = aprioriTreesOfExtension;
+
 			} else {
 				dumpGraph(gp, current);
 			}
