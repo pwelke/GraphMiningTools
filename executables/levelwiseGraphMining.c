@@ -3,6 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include <getopt.h>
+#include <assert.h>
 
 #include "../graph.h"
 #include "../searchTree.h"
@@ -287,22 +288,32 @@ struct SubtreeIsoDataStoreElement {
 
 struct SubtreeIsoDataStoreList {
 	struct SubtreeIsoDataStoreElement* first;
+	struct SubtreeIsoDataStoreElement* last;
+	struct SubtreeIsoDataStoreList* next;
 	size_t size;
+	int patternId;
 };
 
-void appendSubtreeIsoDataStoreElement(struct SubtreeIsoDataStoreList* l, struct SubtreeIsoDataStoreElement* e) {
-	l->size++;
-	e->next = l->first;
-	l->first = e;
+//void appendSubtreeIsoDataStoreElement(struct SubtreeIsoDataStoreList* l, struct SubtreeIsoDataStoreElement* e) {
+//	l->size++;
+//	e->next = l->first;
+//	l->first = e;
+//}
+
+void appendSubtreeIsoDataStoreElement(struct SubtreeIsoDataStoreList* s, struct SubtreeIsoDataStoreElement* e) {
+	if (s->last != NULL) {
+		s->last->next = e;
+		s->last = e;
+	} else {
+		s->first = s->last = e;
+	}
+	s->size += 1;
 }
 
 void appendSubtreeIsoDataStore(struct SubtreeIsoDataStoreList* l, struct SubtreeIsoDataStore data) {
 	struct SubtreeIsoDataStoreElement* e = calloc(1, sizeof(struct SubtreeIsoDataStoreElement));
 	e->data = data;
-	e->next = l->first;
-
-	l->first = e;
-	l->size++;
+	appendSubtreeIsoDataStoreElement(l, e);
 }
 
 void printSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* l, FILE* out) {
@@ -318,19 +329,48 @@ struct SubtreeIsoDataStoreList* getSubtreeIsoDataStoreList() {
 	return calloc(1, sizeof(struct SubtreeIsoDataStoreList));
 }
 
-void dumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e, struct GraphPool* gp) {
+void shallowdumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e) {
 	if (e->next != NULL) {
-		dumpSubtreeIsoDataStoreElements(e->next, gp);
+		shallowdumpSubtreeIsoDataStoreElements(e->next);
 	}
-
-	dumpNewCubeFast(e->data.S, e->data.g->n, e->data.h->n);
-//	dumpGraph(gp, e->data.h);
 	free(e);
 }
 
-void dumpSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* s, struct GraphPool* gp) {
+void dumpSubtreeIsoDataStoreListCopy(struct SubtreeIsoDataStoreList* s) {
 	if (s->size > 0) {
-		dumpSubtreeIsoDataStoreElements(s->first, gp);
+		shallowdumpSubtreeIsoDataStoreElements(s->first);
+	}
+	free(s);
+}
+
+void dumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e) {
+	if (e->next != NULL) {
+		dumpSubtreeIsoDataStoreElements(e->next);
+	}
+
+	dumpNewCubeFast(e->data.S, e->data.g->n, e->data.h->n);
+	free(e);
+}
+
+void dumpSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* s) {
+	if (s->size > 0) {
+		dumpSubtreeIsoDataStoreElements(s->first);
+	}
+	free(s);
+}
+
+void dumpSubtreeIsoDataStoreElementsWithH(struct SubtreeIsoDataStoreElement* e, struct GraphPool* gp) {
+	if (e->next != NULL) {
+		dumpSubtreeIsoDataStoreElementsWithH(e->next, gp);
+	}
+	dumpNewCubeFast(e->data.S, e->data.g->n, e->data.h->n);
+	dumpGraph(gp, e->data.h);
+	free(e);
+}
+
+void dumpSubtreeIsoDataStoreListWithH(struct SubtreeIsoDataStoreList* s, struct GraphPool* gp) {
+	if (s->size > 0) {
+		dumpSubtreeIsoDataStoreElementsWithH(s->first, gp);
 	}
 	free(s);
 }
@@ -341,7 +381,7 @@ void dumpSubtreeIsoDataStoreElementsWithPostorder(struct SubtreeIsoDataStoreElem
 		dumpSubtreeIsoDataStoreElementsWithPostorder(e->next, gp);
 	}
 
-//	dumpNewCube(e->data.S, e->data.g->n, e->data.h->n);
+	//	dumpNewCube(e->data.S, e->data.g->n, e->data.h->n);
 	dumpNewCubeFast(e->data.S, e->data.g->n, e->data.h->n);
 	dumpGraph(gp, e->data.h);
 	free(e->data.postorder);
@@ -355,14 +395,15 @@ void dumpSubtreeIsoDataStoreListWithPostorder(struct SubtreeIsoDataStoreList* s,
 	free(s);
 }
 
-struct SubtreeIsoDataStoreList* initIterativeDFS(struct Graph** db, size_t nGraphs, struct VertexList* e, struct GraphPool* gp) {
+struct SubtreeIsoDataStoreList* initIterativeDFS(struct Graph** db, size_t nGraphs, struct VertexList* e, int edgeId, struct GraphPool* gp) {
 	struct SubtreeIsoDataStoreList* actualSupport = getSubtreeIsoDataStoreList();
 	for (size_t i=0; i<nGraphs; ++i) {
 		struct SubtreeIsoDataStore base = {0};
 		base.g = db[i];
 		base.postorder = getPostorder(base.g, 0);
 		struct SubtreeIsoDataStore data = initIterativeSubtreeCheck(base, e, gp);
-//		printNewCubeCondensed(data.S, data.g->n, data.h->n);
+		data.h->number = edgeId;
+		//		printNewCubeCondensed(data.S, data.g->n, data.h->n);
 		appendSubtreeIsoDataStore(actualSupport, data);
 	}
 	return actualSupport;
@@ -405,7 +446,7 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t thres
 			iterativeDFS(refinementSupport, threshold, maxPatternSize, frequentEdges, processedPatterns, gp, sgp);
 		}
 		// clean up
-		dumpSubtreeIsoDataStoreList(refinementSupport, gp);
+		dumpSubtreeIsoDataStoreList(refinementSupport);
 	}
 
 	// garbage collection
@@ -552,7 +593,7 @@ int mainIterativeDFS(int argc, char** argv) {
 				printCanonicalString(cString, stdout);
 
 				if (!containsString(processedPatterns, cString)) {
-					struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, gp);
+					struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, -1, gp);
 					addToSearchTree(processedPatterns, cString, gp, sgp);
 					iterativeDFS(edgeSupport, threshold, maxPatternSize, extensionEdges, processedPatterns, gp, sgp);
 					dumpSubtreeIsoDataStoreListWithPostorder(edgeSupport, gp);
@@ -942,8 +983,595 @@ int mainBFS(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
+
+struct SubtreeIsoDataStoreList* shallowCopySubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* a) {
+	struct SubtreeIsoDataStoreList* copy = getSubtreeIsoDataStoreList();
+	copy->first = a->first;
+	copy->last = a->last;
+	copy->patternId = a->patternId;
+	copy->size = a->size;
+	return copy;
+}
+
+
+/**
+ *
+ * input: a list of support sets allSupportSets, a list of pattern ids patternIds
+ * output: a list of support sets which is a sublist of allSupportSets, such that each support set corresponds to an id in patternIds
+ * (comparison for intersection takes place on allSupportSet->first->data.h->number and patternId->value
+ *
+ * Basically a sorted list intersection with different type lists, hence assumes sorted lists.
+ */
+struct SubtreeIsoDataStoreList* getSupportSetsOfPatterns(struct SubtreeIsoDataStoreList* allSupportSets, struct IntSet* patternIds) {
+	struct SubtreeIsoDataStoreList* selectedSupportSets = NULL;
+
+	struct SubtreeIsoDataStoreList* a = allSupportSets;
+	struct IntElement* b = patternIds->first;
+
+	/* Once one or the other list runs out -- we're done */
+	while (a != NULL && b != NULL)
+	{
+		if (a->first->data.h->number == b->value) {
+			struct SubtreeIsoDataStoreList* supportSet = shallowCopySubtreeIsoDataStoreList(a);
+			supportSet->next = selectedSupportSets;
+			selectedSupportSets = supportSet;
+
+			a = a->next;
+			b = b->next;
+		}
+		else if (a->first->data.h->number < b->value) /* advance the smaller list */
+			a = a->next;
+		else
+			b = b->next;
+	}
+	return selectedSupportSets;
+
+}
+
+struct SubtreeIsoDataStoreList* intersectTwoSupportSets(struct SubtreeIsoDataStoreList* l1, struct SubtreeIsoDataStoreList* l2) {
+	struct SubtreeIsoDataStoreList* supportList = getSubtreeIsoDataStoreList();
+
+	struct SubtreeIsoDataStoreElement* a = l1->first;
+	struct SubtreeIsoDataStoreElement* b = l2->first;
+
+	/* Once one or the other list runs out -- we're done */
+	while (a != NULL && b != NULL)
+	{
+		if (a->data.g->number == b->data.g->number)
+		{
+			appendSubtreeIsoDataStore(supportList, a->data);
+			a = a->next;
+			b = b->next;
+		}
+		else if (a->data.h->number < b->data.g->number) /* advance the smaller list */
+			a = a->next;
+		else
+			b = b->next;
+	}
+	return supportList;
+
+}
+
+
+/**
+ * Return the intersection of the sets in aprioriList.
+ * The function returns a new list, iff aprioriList != NULL
+ */
+struct SubtreeIsoDataStoreList* intersectSupportSets(struct SubtreeIsoDataStoreList* aprioriList) {
+	if (aprioriList == NULL) {
+		return NULL;
+	}
+	if (aprioriList->next == NULL) {
+		return intersectTwoSupportSets(aprioriList, aprioriList); // copy
+	}
+
+	struct SubtreeIsoDataStoreList* intersection = intersectTwoSupportSets(aprioriList, aprioriList->next);
+	for (struct SubtreeIsoDataStoreList* support=aprioriList->next->next; support!=NULL; support=support->next) {
+		struct SubtreeIsoDataStoreList* tmp = intersectTwoSupportSets(intersection, support);
+		dumpSubtreeIsoDataStoreList(intersection);
+		intersection = tmp;
+	}
+
+	return intersection;
+}
+
+
+
+void filterInfrequentCandidates(// input
+		struct Graph* extensions,
+		struct SubtreeIsoDataStoreList* supports,
+		size_t threshold,
+		// output
+		struct Graph** filteredExtensions,
+		struct SubtreeIsoDataStoreList** filteredSupports,
+		// memory management
+		struct GraphPool* gp) {
+
+	*filteredExtensions = NULL;
+	*filteredSupports = NULL;
+
+	assert(extensions != NULL);
+	assert(supports != NULL);
+
+	// filter out those elements that have support less than threshold.
+	struct Graph* extension=extensions;
+	struct SubtreeIsoDataStoreList* candidateSupport=supports;
+	while (extension!=NULL) {
+		struct Graph* nextExt = extension->next;
+		struct SubtreeIsoDataStoreList* nextSup = candidateSupport->next;
+		if (candidateSupport->size >= threshold) {
+			// add to output
+			extension->next = *filteredExtensions;
+			candidateSupport->next = *filteredSupports;
+			*filteredExtensions = extension;
+			*filteredSupports = candidateSupport;
+		} else {
+			// dump
+			extension->next = NULL;
+			dumpGraph(gp, extension);
+			dumpSubtreeIsoDataStoreList(candidateSupport);
+		}
+		extension = nextExt;
+		candidateSupport = nextSup;
+	}
+}
+
+
+/**
+ * Get a SubtreeIsoDataStoreList for each IntSet in the input.
+ *
+ * This method intersects all support sets of the parent patterns of a pattern p and
+ * returns a list of data structures that the iterative subtree iso algorithm can use
+ * to compute the support set of p.
+ *
+ * This implementation returns the data structures (cubes and pointers to the parent)
+ * of the first parent in the list.
+ */
+void getCandidateSupportSets(// input
+		struct IntSet* allParentIdSets,
+		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+		// output
+		struct SubtreeIsoDataStoreList** candidateSupportLists) {
+	assert(allParentIdSets != NULL);
+	assert(previousLevelSupportLists != NULL);
+
+	// for each extension, compute a candidate support set,
+	// that is the intersection of the support sets of the apriori parents of the extension
+	*candidateSupportLists = NULL;
+	struct SubtreeIsoDataStoreList* candidateSupportListsTail = NULL;
+	for (struct IntSet* parentIds=allParentIdSets; parentIds!=NULL; parentIds=parentIds->next) {
+		// obtain support sets and intersect them
+		struct SubtreeIsoDataStoreList* subgraphSupportLists = getSupportSetsOfPatterns(previousLevelSupportLists, parentIds);
+		struct SubtreeIsoDataStoreList* extensionCandidateSupportList;
+		// TODO should nont be necessary once lists are sorted?
+		if (subgraphSupportLists) {
+			extensionCandidateSupportList = intersectSupportSets(subgraphSupportLists);
+		} else {
+			extensionCandidateSupportList = getSubtreeIsoDataStoreList();
+		}
+
+		// garbage collection
+		while (subgraphSupportLists) {
+			struct SubtreeIsoDataStoreList* tmp = subgraphSupportLists->next;
+			free(subgraphSupportLists);
+			subgraphSupportLists = tmp;
+		}
+
+		// append list of candidate support of current extension to list
+		// add to tail of list, to maintain order
+		if (candidateSupportListsTail != NULL) {
+			candidateSupportListsTail->next = extensionCandidateSupportList;
+			candidateSupportListsTail = extensionCandidateSupportList;
+		} else {
+			*candidateSupportLists = extensionCandidateSupportList;
+			candidateSupportListsTail = extensionCandidateSupportList;
+		}
+	}
+}
+
+
+void extendPatternsAndFilterApriori(// input
+		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+		struct Vertex* previousLevelSearchTree,
+		struct ShallowGraph* extensionEdges,
+		// output
+		struct Graph** allExtensions,
+		struct IntSet** allParentIdSets,
+		// memory management
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
+	assert(previousLevelSupportLists != NULL);
+	assert(previousLevelSearchTree != NULL);
+	assert(extensionEdges != NULL);
+
+	struct Vertex* currentLevelCandidateSearchTree = getVertex(gp->vertexPool);
+
+	int nAllExtensionsPreApriori = 0;
+	int nAllExtensionsPostApriori = 0;
+
+	// generate a list of extensions of all frequent patterns
+	// filter these extensions using an apriori property
+	// for each extension, compute a list of ids of their apriori parents
+	*allExtensions = NULL;
+	*allParentIdSets = NULL;
+	for (struct SubtreeIsoDataStoreList* frequentPatternSupportList=previousLevelSupportLists; frequentPatternSupportList!=NULL; frequentPatternSupportList=frequentPatternSupportList->next) {
+		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
+
+		// extend frequent pattern
+		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
+		for (struct Graph* idx=listOfExtensions; idx!=NULL; idx=idx->next) { ++nAllExtensionsPreApriori; } // count to test effectiveness of pruning
+
+		// filter out extensions that do not comply to apriori property,
+		// for each surviving extension, return a set of ids of their apriori parents, whose support set intersection will be candidate support set of extension
+		struct IntSet* listOfParentIdSets = NULL;
+		listOfExtensions = aprioriFilterExtensionReturnLists(listOfExtensions, previousLevelSearchTree, currentLevelCandidateSearchTree, &listOfParentIdSets, gp, sgp);
+		for (struct Graph* idx=listOfExtensions; idx!=NULL; idx=idx->next) { ++nAllExtensionsPostApriori; } // count to test effectiveness of pruning
+
+		// append extensions and their apriori subtree lists to global lists
+		if (listOfExtensions != NULL) {
+			struct Graph* idx;
+			for (idx=listOfExtensions; idx->next!=NULL; idx=idx->next); // go to tail
+			idx->next = *allExtensions;
+			*allExtensions = listOfExtensions;
+
+			struct IntSet* idx2;
+			for (idx2=listOfParentIdSets; idx2->next!=NULL; idx2=idx2->next); // go to tail
+			idx2->next = *allParentIdSets;
+			*allParentIdSets = listOfParentIdSets;
+		}
+	}
+
+	dumpSearchTree(gp, currentLevelCandidateSearchTree);
+
+	fprintf(stderr, "generated extensions: %i\napriori filtered extensions: %i\n", nAllExtensionsPreApriori, nAllExtensionsPostApriori);
+}
+
+
+void extendPreviousLevel(// input
+		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+		struct Vertex* previousLevelSearchTree,
+		struct ShallowGraph* extensionEdges,
+		int threshold,
+		// output
+		struct SubtreeIsoDataStoreList** currentLevelCandidateSupportSets,
+		struct Graph** currentLevelCandidates,
+		// memory management
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
+	assert(previousLevelSupportLists != NULL);
+	assert(previousLevelSearchTree != NULL);
+	assert(extensionEdges != NULL);
+
+
+	struct IntSet* allParentIdSets;
+	struct Graph* allExtensions;
+	extendPatternsAndFilterApriori(previousLevelSupportLists, previousLevelSearchTree, extensionEdges, &allExtensions, &allParentIdSets, gp, sgp);
+
+	struct SubtreeIsoDataStoreList* candidateSupportLists = NULL;
+	getCandidateSupportSets(allParentIdSets, previousLevelSupportLists, &candidateSupportLists);
+
+	// garbage collection
+	while (allParentIdSets) {
+		struct IntSet* tmp = allParentIdSets->next;
+		dumpIntSet(allParentIdSets);
+		allParentIdSets = tmp;
+	}
+
+	filterInfrequentCandidates(allExtensions, candidateSupportLists, threshold, currentLevelCandidates, currentLevelCandidateSupportSets, gp);
+
+	int nAllExtensionsPostIntersectionFilter = 0;
+	for (struct Graph* idx=*currentLevelCandidates; idx!=NULL; idx=idx->next) { ++nAllExtensionsPostIntersectionFilter; } // count to test effectiveness of intersection on number of candidates
+	fprintf(stderr, "intersection filtered extensions: %i\n", nAllExtensionsPostIntersectionFilter);
+
+}
+
+
+struct SubtreeIsoDataStoreList* iterativeBFS(// input
+		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+		struct Vertex* previousLevelSearchTree,
+		size_t threshold,
+		struct ShallowGraph* frequentEdges,
+		// output
+		struct Vertex** currentLevelSearchTree,
+		// memory management
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
+	assert(previousLevelSupportLists != NULL);
+	assert(previousLevelSearchTree != NULL);
+	assert(frequentEdges != NULL);
+
+	struct SubtreeIsoDataStoreList* currentLevelCandidateSupportSets;
+	struct Graph* currentLevelCandidates;
+
+	extendPreviousLevel(previousLevelSupportLists, previousLevelSearchTree, frequentEdges, threshold,
+			&currentLevelCandidateSupportSets, &currentLevelCandidates,
+			gp, sgp);
+
+	//iterate over all patterns in candidateSupports
+	struct SubtreeIsoDataStoreList* actualSupportLists = NULL;
+	struct SubtreeIsoDataStoreList* actualSupportListsTail = NULL;
+	struct SubtreeIsoDataStoreList* candidateSupport = NULL;
+	struct Graph* candidate = NULL;
+	for (candidateSupport=currentLevelCandidateSupportSets, candidate=currentLevelCandidates; candidateSupport!=NULL; candidateSupport=candidateSupport->next, candidate=candidate->next) {
+		struct SubtreeIsoDataStoreList* currentActualSupport = getSubtreeIsoDataStoreList();
+		//iterate over all graphs in the support
+		for (struct SubtreeIsoDataStoreElement* e=candidateSupport->first; e!=NULL; e=e->next) {
+			// create actual support list for candidate pattern
+			struct SubtreeIsoDataStore result = iterativeSubtreeCheck(e->data, candidate, gp);
+
+			if (result.foundIso) {
+				//TODO store result id somehow
+				appendSubtreeIsoDataStore(currentActualSupport, result);
+			} else {
+				dumpNewCubeFast(result.S, result.g->n, result.h->n);
+			}
+		}
+		// filter out candidates with support < threshold
+		if (currentActualSupport->size < threshold) {
+			// mark h as infrequent
+			candidate->activity = 0;
+			dumpSubtreeIsoDataStoreList(currentActualSupport);
+		} else {
+			// mark h as frequent
+			candidate->activity = 1;
+			// add to output list, maintaining order. (necessary)
+			if (actualSupportListsTail) {
+				actualSupportListsTail->next = currentActualSupport;
+				actualSupportListsTail = currentActualSupport;
+			} else {
+				actualSupportLists = currentActualSupport;
+				actualSupportListsTail = currentActualSupport;
+			}
+		}
+	}
+
+	// garbage collection
+	candidateSupport = currentLevelCandidateSupportSets;
+	while (candidateSupport) {
+		struct SubtreeIsoDataStoreList* tmp = candidateSupport->next;
+		dumpSubtreeIsoDataStoreListCopy(candidateSupport);
+		candidateSupport = tmp;
+	}
+
+	// add frequent extensions to current level search tree output, set their numbers correctly
+	// dump those candidates that are not frequent
+	int nAllFrequentExtensions = 0;
+	candidate = currentLevelCandidates;
+	while (candidate) {
+		struct Graph* tmp = candidate->next;
+		candidate->next = NULL;
+		if (candidate->activity == 0) {
+			dumpGraph(gp, candidate);
+		} else {
+			++nAllFrequentExtensions;
+			struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
+			addToSearchTree(*currentLevelSearchTree, cString, gp, sgp);
+			candidate->number = (*currentLevelSearchTree)->lowPoint;
+		}
+		candidate = tmp;
+	}
+	fprintf(stderr, "frequent extensions: %i\n", nAllFrequentExtensions);
+
+	return actualSupportLists;
+}
+
+
+
+/**
+ * Input handling, parsing of database and call of opk feature extraction method.
+ */
+int mainIterativeBFS(int argc, char** argv) {
+
+	/* object pools */
+	struct ListPool *lp;
+	struct VertexPool *vp;
+	struct ShallowGraphPool *sgp;
+	struct GraphPool *gp;
+
+	/* pointer to the current graph which is returned by the input iterator */
+
+	/* user input handling variables */
+	int threshold = 1000;
+	unsigned int maxPatternSize = 20;
+
+	/* parse command line arguments */
+	int arg;
+	const char* validArgs = "ht:p:u";
+	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
+		switch (arg) {
+		case 'h':
+			printHelp();
+			return EXIT_SUCCESS;
+			break;
+		case 't':
+			if (sscanf(optarg, "%i", &threshold) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
+		case 'p':
+			if (sscanf(optarg, "%u", &maxPatternSize) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
+		case '?':
+			return EXIT_FAILURE;
+			break;
+		}
+	}
+
+	/* init object pools */
+	lp = createListPool(10000);
+	vp = createVertexPool(10000);
+	sgp = createShallowGraphPool(1000, lp);
+	gp = createGraphPool(100, vp, lp);
+
+	/* initialize the stream to read graphs from
+   check if there is a filename present in the command line arguments
+   if so, open the file, if not, read from stdin */
+	if (optind < argc) {
+		char* filename = argv[optind];
+		/* if the present filename is not '-' then init a file iterator for that file name */
+		if (strcmp(filename, "-") != 0) {
+			createFileIterator(filename, gp);
+		} else {
+			createStdinIterator(gp);
+		}
+	} else {
+		createStdinIterator(gp);
+	}
+
+	// start frequent subgraph mining
+	{
+		// // refactor
+		// // fopen("/dev/null", "w");
+		FILE* kvStream = fopen("/dev/null", "w");
+		FILE* featureStream = kvStream;
+		FILE* patternStream = stdout;
+
+		int debugInfo = 1;
+
+		struct Vertex* frequentVertices = getVertex(vp);
+
+		struct Graph** db = NULL;
+		int nGraphs = 128;
+		int tmpResultSetSize = 0;
+
+		/* init data structures */
+		nGraphs = getDB(&db);
+		destroyFileIterator(); // graphs are in memory now
+
+
+		if (maxPatternSize > 0) {
+			/* get frequent vertices */
+			tmpResultSetSize = getFrequentVertices(db, nGraphs, frequentVertices, kvStream, gp);
+			filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureStream, gp);
+
+			/* output frequent vertices */
+			fprintf(patternStream, "patterns size 1\n");
+			printStringsInSearchTree(frequentVertices, patternStream, sgp);
+			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 1: %i\n", frequentVertices->d); fflush(stderr); }
+		}
+
+		if (maxPatternSize > 1) {
+			/* get frequent edges: first edge id is given by number of frequent vertices */
+			struct Vertex* frequentEdges = getVertex(vp);
+			offsetSearchTreeIds(frequentEdges, frequentVertices->lowPoint);
+			getFrequentEdges(db, nGraphs, tmpResultSetSize, frequentEdges, kvStream, gp);
+			filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureStream, gp);
+
+			// garbage collection
+			dumpSearchTree(gp, frequentVertices);
+
+			/* output frequent edges */
+			fprintf(patternStream, "patterns size 2\n");
+			printStringsInSearchTree(frequentEdges, patternStream, sgp);
+
+			/* convert frequentEdges to ShallowGraph */
+			struct Graph* extensionEdgesVertexStore = NULL;
+			struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
+			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 2: %i\n", frequentEdges->d); fflush(stderr); }
+
+			struct Graph* candidate = createGraph(2, gp);
+			addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
+
+			struct SubtreeIsoDataStoreList* previousLevelSupportSets = NULL;
+			struct SubtreeIsoDataStoreList* previousLevelSupportSetsTail = NULL;
+			struct Vertex* previousLevelSearchTree = getVertex(gp->vertexPool);
+
+			// TODO this whole mess can be avoided, if edgeSearchTree2ShallowGraph() also returns a list of unique edges,
+			// or if we get them from somewhere else. then we can avoid building another search tree and conversion etc.
+			for (struct VertexList* e=extensionEdges->edges; e!=NULL; e=e->next) {
+				candidate->vertices[0]->label = e->startPoint->label;
+				candidate->vertices[1]->label = e->endPoint->label;
+				candidate->vertices[0]->neighborhood->label = e->label;
+				candidate->vertices[1]->neighborhood->label = e->label;
+
+				struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
+
+				if (!containsString(previousLevelSearchTree, cString)) {
+					int id = getID(frequentEdges, cString);
+					struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, id, gp);
+					addToSearchTree(previousLevelSearchTree, cString, gp, sgp);
+
+					if (previousLevelSupportSetsTail != NULL) {
+						previousLevelSupportSetsTail->next = edgeSupport;
+						previousLevelSupportSetsTail = edgeSupport;
+					} else {
+						previousLevelSupportSets = edgeSupport;
+						previousLevelSupportSetsTail = edgeSupport;
+					}
+
+				} else {
+					dumpShallowGraph(sgp, cString);
+				}
+			}
+			dumpSearchTree(gp, previousLevelSearchTree);
+			previousLevelSearchTree = frequentEdges;
+
+			struct Vertex* currentLevelSearchTree = NULL;
+			struct SubtreeIsoDataStoreList* currentLevelSupportSets = NULL;
+
+			for (size_t p=3; p<=maxPatternSize; ++p) {
+				currentLevelSearchTree = getVertex(gp->vertexPool);
+				offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
+
+				currentLevelSupportSets = iterativeBFS(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, &currentLevelSearchTree, gp, sgp);
+
+				// printing TODO
+				fprintf(stdout, "patterns size %zu\n", p);
+				printStringsInSearchTree(currentLevelSearchTree, stdout, sgp);
+
+				// garbage collection:
+				// what is now all previousLevel... data structures will not be used at all in the next iteration
+				dumpSearchTree(gp, previousLevelSearchTree);
+				while (previousLevelSupportSets) {
+					struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
+					// ...hence, we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
+					dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
+					previousLevelSupportSets = tmp;
+				}
+
+				// previous level = current level
+				previousLevelSearchTree = currentLevelSearchTree;
+				previousLevelSupportSets = currentLevelSupportSets;
+			}
+
+			dumpGraph(gp, candidate);
+			dumpShallowGraphCycle(sgp, extensionEdges);
+			dumpGraph(gp, extensionEdgesVertexStore);
+			if (maxPatternSize > 2) {
+				dumpSearchTree(gp, previousLevelSearchTree);
+				while (previousLevelSupportSets) {
+					struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
+					// we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
+					dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
+					previousLevelSupportSets = tmp;
+				}
+			}
+		}
+
+		fclose(kvStream);
+
+		for (int i=0; i<nGraphs; ++i) {
+			dumpGraph(gp, db[i]);
+		}
+		free(db);
+	}
+
+	/* global garbage collection */
+	freeGraphPool(gp);
+	freeShallowGraphPool(sgp);
+	freeListPool(lp);
+	freeVertexPool(vp);
+
+	return EXIT_SUCCESS;
+}
+
 int main(int argc, char** argv) {
-//	return mainIterativeDFS(argc, argv);
-	return mainDFS(argc, argv);
+	//	return mainIterativeDFS(argc, argv);
+	//	return mainDFS(argc, argv);
 	//	return mainBFS(argc, argv);
+	return mainIterativeBFS(argc, argv);
 }
