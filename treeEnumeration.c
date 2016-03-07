@@ -358,19 +358,16 @@ struct Graph* aprioriFilterExtensionReturnLists(struct Graph* extension, struct 
  			dumpGraph(gp, current);
  			continue; // with next refinement
 		} else {
-//			char aprioriProperty = 1;
-			struct ShallowGraph* subString;
-			struct IntSet* aprioriTreesOfExtension = getIntSet();
+			struct IntSet* aprioriTreesOfExtension = getIntSet(); // NULL will indicate that apriori property does not hold for current
 
 			for (v=0; v<current->n; ++v) {
 				// if the removed vertex is a leaf, we test if the resulting subtree is contained in the lower level
 				if (isLeaf(current->vertices[v]) == 1) {
 					// we invalidate current by removing the edge to v from its neighbor, which makes subgraph a valid tree
 					struct VertexList* edge = snatchEdge(current->vertices[v]->neighborhood->endPoint, current->vertices[v]);
-
-					int i = 0;
+					// now copy pointers of all vertices \neq v to subgraph, this results in a tree of size current->n - 1
 					int j = 0;
-					for (i=0; i<current->n; ++i) {
+					for (int i=0; i<current->n; ++i) {
 						if (i == v) {
 							continue;
 						} else {
@@ -379,12 +376,14 @@ struct Graph* aprioriFilterExtensionReturnLists(struct Graph* extension, struct 
 							++j;
 						}
 					}
-					subString = canonicalStringOfTree(subgraph, sgp);
-					// restore law and order in current
-					addEdge(edge->startPoint, edge);
+
 					// test apriori property
+					struct ShallowGraph* subString = canonicalStringOfTree(subgraph, sgp);
 					int aprioriTreeID = getID(lowerLevel, subString);
 					dumpShallowGraph(sgp, subString);
+
+					// restore law and order in current (and invalidate subgraph)
+					addEdge(edge->startPoint, edge);
 
 					if (aprioriTreeID == -1) {
 						dumpIntSet(aprioriTreesOfExtension);
