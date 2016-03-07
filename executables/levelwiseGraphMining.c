@@ -1170,13 +1170,14 @@ void getCandidateSupportSets(// input
 }
 
 
-void extendPatternsAndFilterApriori(// input
+void extendPreviousLevel(// input
 		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		struct ShallowGraph* extensionEdges,
+		int threshold,
 		// output
-		struct Graph** allExtensions,
-		struct IntSet** allParentIdSets,
+		struct SubtreeIsoDataStoreList** resultCandidateSupportSuperSets,
+		struct Graph** resultCandidates,
 		// memory management
 		struct GraphPool* gp,
 		struct ShallowGraphPool* sgp) {
@@ -1184,16 +1185,20 @@ void extendPatternsAndFilterApriori(// input
 	assert(previousLevelSearchTree != NULL);
 	assert(extensionEdges != NULL);
 
+
+	*resultCandidateSupportSuperSets = NULL;
+	*resultCandidates = NULL;
+
 	struct Vertex* currentLevelCandidateSearchTree = getVertex(gp->vertexPool);
 
 	int nAllExtensionsPreApriori = 0;
 	int nAllExtensionsPostApriori = 0;
+	int nAllExtensionsPostIntersectionFilter = 0;
 
 	// generate a list of extensions of all frequent patterns
 	// filter these extensions using an apriori property
 	// for each extension, compute a list of ids of their apriori parents
-	*allExtensions = NULL;
-	*allParentIdSets = NULL;
+
 	for (struct SubtreeIsoDataStoreList* frequentPatternSupportList=previousLevelSupportLists; frequentPatternSupportList!=NULL; frequentPatternSupportList=frequentPatternSupportList->next) {
 		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
 
@@ -1202,66 +1207,46 @@ void extendPatternsAndFilterApriori(// input
 		for (struct Graph* idx=listOfExtensions; idx!=NULL; idx=idx->next) { ++nAllExtensionsPreApriori; } // count to test effectiveness of pruning
 
 		// filter out extensions that do not comply to apriori property,
-		// for each surviving extension, return a set of ids of their apriori parents, whose support set intersection will be candidate support set of extension
-		struct IntSet* listOfParentIdSets = NULL;
-		listOfExtensions = aprioriFilterExtensionReturnLists(listOfExtensions, previousLevelSearchTree, currentLevelCandidateSearchTree, &listOfParentIdSets, gp, sgp);
-		for (struct Graph* idx=listOfExtensions; idx!=NULL; idx=idx->next) { ++nAllExtensionsPostApriori; } // count to test effectiveness of pruning
+		// for each surviving extension, return a set of ids of its apriori parents, whose support set intersection will be candidate support set of extension
+		struct IntSet* aprioriParentIdSets = NULL;
+		struct Graph* aprioriFilteredExtensions = NULL;
+		aprioriFilteredExtensions = aprioriFilterExtensionReturnLists(listOfExtensions, previousLevelSearchTree, currentLevelCandidateSearchTree, &aprioriParentIdSets, gp, sgp);
+		for (struct Graph* idx=aprioriFilteredExtensions; idx!=NULL; idx=idx->next) { ++nAllExtensionsPostApriori; } // count to test effectiveness of pruning
+
+		// get (hopefully small) supersets of the support sets for each extension that survived the apriori filter
+		struct SubtreeIsoDataStoreList* aprioriParentsSupportIntersections = NULL;
+		getCandidateSupportSets(aprioriParentIdSets, previousLevelSupportLists, &aprioriParentsSupportIntersections);
+
+		// garbage collection
+		while (aprioriParentIdSets) {
+			struct IntSet* tmp = aprioriParentIdSets->next;
+			dumpIntSet(aprioriParentIdSets);
+			aprioriParentIdSets = tmp;
+		}
+
+		// remove those extensions whose support superset is smaller than the threshold
+		struct SubtreeIsoDataStoreList* filteredCandidateSupportSets;
+		struct Graph* filteredCandidates;
+		filterInfrequentCandidates(aprioriFilteredExtensions, aprioriParentsSupportIntersections, threshold, &filteredCandidates, &filteredCandidateSupportSets, gp);
+		for (struct Graph* idx=filteredCandidates; idx!=NULL; idx=idx->next) { ++nAllExtensionsPostIntersectionFilter; } // count to test effectiveness of intersection on number of candidates
 
 		// append extensions and their apriori subtree lists to global lists
-		if (listOfExtensions != NULL) {
+		if (filteredCandidates != NULL) {
 			struct Graph* idx;
-			for (idx=listOfExtensions; idx->next!=NULL; idx=idx->next); // go to tail
-			idx->next = *allExtensions;
-			*allExtensions = listOfExtensions;
+			for (idx=filteredCandidates; idx->next!=NULL; idx=idx->next); // go to tail
+			idx->next = *resultCandidates;
+			*resultCandidates = filteredCandidates;
 
-			struct IntSet* idx2;
-			for (idx2=listOfParentIdSets; idx2->next!=NULL; idx2=idx2->next); // go to tail
-			idx2->next = *allParentIdSets;
-			*allParentIdSets = listOfParentIdSets;
+			struct SubtreeIsoDataStoreList* idx2;
+			for (idx2=filteredCandidateSupportSets; idx2->next!=NULL; idx2=idx2->next); // go to tail
+			idx2->next = *resultCandidateSupportSuperSets;
+			*resultCandidateSupportSuperSets = filteredCandidateSupportSets;
 		}
 	}
 
 	dumpSearchTree(gp, currentLevelCandidateSearchTree);
 
-	fprintf(stderr, "generated extensions: %i\napriori filtered extensions: %i\n", nAllExtensionsPreApriori, nAllExtensionsPostApriori);
-}
-
-
-void extendPreviousLevel(// input
-		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
-		struct Vertex* previousLevelSearchTree,
-		struct ShallowGraph* extensionEdges,
-		int threshold,
-		// output
-		struct SubtreeIsoDataStoreList** currentLevelCandidateSupportSets,
-		struct Graph** currentLevelCandidates,
-		// memory management
-		struct GraphPool* gp,
-		struct ShallowGraphPool* sgp) {
-	assert(previousLevelSupportLists != NULL);
-	assert(previousLevelSearchTree != NULL);
-	assert(extensionEdges != NULL);
-
-
-	struct IntSet* allParentIdSets;
-	struct Graph* allExtensions;
-	extendPatternsAndFilterApriori(previousLevelSupportLists, previousLevelSearchTree, extensionEdges, &allExtensions, &allParentIdSets, gp, sgp);
-
-	struct SubtreeIsoDataStoreList* candidateSupportLists = NULL;
-	getCandidateSupportSets(allParentIdSets, previousLevelSupportLists, &candidateSupportLists);
-
-	// garbage collection
-	while (allParentIdSets) {
-		struct IntSet* tmp = allParentIdSets->next;
-		dumpIntSet(allParentIdSets);
-		allParentIdSets = tmp;
-	}
-
-	filterInfrequentCandidates(allExtensions, candidateSupportLists, threshold, currentLevelCandidates, currentLevelCandidateSupportSets, gp);
-
-	int nAllExtensionsPostIntersectionFilter = 0;
-	for (struct Graph* idx=*currentLevelCandidates; idx!=NULL; idx=idx->next) { ++nAllExtensionsPostIntersectionFilter; } // count to test effectiveness of intersection on number of candidates
-	fprintf(stderr, "intersection filtered extensions: %i\n", nAllExtensionsPostIntersectionFilter);
+	fprintf(stderr, "generated extensions: %i\napriori filtered extensions: %i\nintersection filtered extensions: %i\n", nAllExtensionsPreApriori, nAllExtensionsPostApriori, nAllExtensionsPostIntersectionFilter);
 
 }
 
@@ -1314,7 +1299,7 @@ struct SubtreeIsoDataStoreList* iterativeBFS(// input
 		} else {
 			// mark h as frequent
 			candidate->activity = 1;
-			// add to output list, maintaining order. (necessary)
+			// add to output list, maintaining order. necessary
 			if (actualSupportListsTail) {
 				actualSupportListsTail->next = currentActualSupport;
 				actualSupportListsTail = currentActualSupport;
