@@ -72,7 +72,7 @@ static char addStringToSearchTreeRec(struct Vertex* root, struct VertexList* edg
 			edge->label = copyString(edge->label);
 			edge->isStringMaster = 1;
 		}
-		addStringToSearchTree(edge->endPoint, idx, p);
+		addStringToSearchTreeRec(edge->endPoint, idx, id, p);
 		return 1;
 	}
 }
