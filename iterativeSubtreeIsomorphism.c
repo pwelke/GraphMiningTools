@@ -17,8 +17,9 @@ int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, str
 	// TODO speedup by handling leaf case separately
 	struct Graph* B = makeBipartiteInstanceFromVertices(data, y, u, v, gp);
 	int sizeofMatching = bipartiteMatchingFastAndDirty(B, gp);
+	int nNeighbors = B->number;
 	dumpGraph(gp, B);
-	return (sizeofMatching == B->number) ? 1 : 0;
+	return (sizeofMatching == nNeighbors) ? 1 : 0;
 }
 
 
@@ -196,8 +197,20 @@ struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base
 	info.h = h;
 	info.postorder = base.postorder;
 
+//	fprintf(stdout, "previous pattern:\n");
+//	printGraphAidsFormat(base.h, stdout);
+//	fprintf(stdout, "previous cube:\n");
+//	printNewCubeCondensed(base.S, base.g->n, base.h->n);
+
+//	fprintf(stdout, "new edge %s %s %s\n", info.h->vertices[info.h->n - 1]->label, info.h->vertices[info.h->n - 1]->neighborhood->label, info.h->vertices[info.h->n - 2]->label);
+//	fprintf(stdout, "current pattern:\n");
+//	printGraphAidsFormat(info.h, stdout);
+
 	createNewCubeFromBaseFast(base, &info);
 	iterativeSubtreeCheck_intern(base, &info, gp);
+
+//	fprintf(stdout, "current cube:\n");
+//	printNewCubeCondensed(info.S, info.g->n, info.h->n);
 
 	return info;
 }
