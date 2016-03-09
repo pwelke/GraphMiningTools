@@ -1,7 +1,7 @@
 #include <malloc.h>
 #include "graph.h"
 
-int MEM_DEBUG = 0;
+int MEM_DEBUG = 1;
 
 /**
 Object pool creation method. One can specify a number of elements that will be allocated as array.
@@ -43,7 +43,9 @@ void freeListPool(struct ListPool *p) {
 		}
 		p->unused = p->tmp;
 	}
-	free(p->poolPointer);
+	if (!MEM_DEBUG) {
+		free(p->poolPointer);
+	}
 	free(p);
 }
 	
@@ -169,7 +171,9 @@ void freeVertexPool(struct VertexPool *p) {
 		}
 		p->unused = p->tmp;
 	}
-	free(p->poolPointer);
+	if (!MEM_DEBUG) {
+		free(p->poolPointer);
+	}
 	free(p);
 }
 
@@ -283,7 +287,9 @@ void freeGraphPool(struct GraphPool *p) {
 		}
 		p->unused = p->tmp;
 	}
-	free(p->poolPointer);
+	if (!MEM_DEBUG) {
+		free(p->poolPointer);
+	}
 	free(p);
 }
 
@@ -413,7 +419,9 @@ void freeShallowGraphPool(struct ShallowGraphPool *p) {
 		}
 		p->unused = p->tmp;
 	}
-	free(p->poolPointer);
+	if (!MEM_DEBUG) {
+		free(p->poolPointer);
+	}
 	free(p);
 }
 

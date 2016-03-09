@@ -370,16 +370,11 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 						++j;
 					}
 				}
-//				fprintf(stderr, "subgraph for v=%i\n", v);
-//				printGraphAidsFormat(subgraph, stderr);
 
 				// test apriori property
 				struct ShallowGraph* subString = canonicalStringOfTree(subgraph, sgp);
 				int aprioriTreeID = getID(lowerLevel, subString);
 				dumpShallowGraph(sgp, subString);
-
-//				fprintf(stderr, "edge: ");
-//				printVertexList(edge);
 
 				// restore law and order in current (and invalidate subgraph)
 				addEdge(edge->startPoint, edge);
@@ -412,6 +407,7 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 			extension->number = currentLevel->lowPoint;
 			return aprioriTreesOfExtension;
 		} else {
+			dumpShallowGraph(sgp, string);
 			return NULL;
 		}
 	}
