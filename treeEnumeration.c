@@ -67,7 +67,7 @@ The label of startPoint determines, which vertex can be used for appending the e
 the label of the endpoint defines the label of the ne vertex added
 
 TODO there is speedup to gain here. The appending at the moment runs in o(#candidates * n).
-*/
+ */
 struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
 	struct Graph* rho = NULL;
 	struct VertexList* e;
@@ -88,7 +88,7 @@ struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges
 
 /**
 check if the canonicalStringOfTree of pattern is already contained in search tree
-*/
+ */
 char alreadyEnumerated(struct Graph* pattern, struct Vertex* searchTree, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* string = canonicalStringOfTree(pattern, sgp);
 	char alreadyFound = containsString(searchTree, string);
@@ -129,7 +129,7 @@ struct Graph* basicFilter(struct Graph* extension, struct Vertex* listOfGraphs, 
 /**
 return the fingerprint of pattern (being the bitwise or of the hashes of the subgraphs)
 OR 0 if there exists a subgraph of pattern that is not frequent.
-*/
+ */
 int getPatternFingerPrint(struct Graph* pattern, struct Vertex* searchTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int v;
 	int fingerPrint = 0;
@@ -178,11 +178,11 @@ for each graph g in extension (that is the list starting at extension and contin
 two tests are run: g itself must not be contained in currentLevel and any subtree of g must be contained
 in lowerLevel. 
 if g fulfills both conditions, it is added to the output and to currentLevel.
-*/ 
+ */
 struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* idx = extension; 
 	struct Graph* filteredExtension = NULL;
-	
+
 	while (idx != NULL) {
 		struct Graph* current = idx;
 		struct ShallowGraph* string;
@@ -194,7 +194,7 @@ struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel
 		string = canonicalStringOfTree(current, sgp);
 		if (containsString(currentLevel, string)) {
 			dumpShallowGraph(sgp, string);
- 			dumpGraph(gp, current);
+			dumpGraph(gp, current);
 		} else {
 			/* filter out patterns where a subtree is not frequent */
 			int fingerPrint = getPatternFingerPrint(current, lowerLevel, gp, sgp);
@@ -232,7 +232,7 @@ in lowerLevel (this ensures the apriori property that all subtrees are frequent)
 if g fulfills both conditions, it is added to the output and to currentLevel.
 
 In contrast to the above filterExtension, this methos does not use any hashing.
-*/ 
+ */
 struct Graph* aprioriFilterExtension(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int v;
 	struct Graph* idx = extension; 
@@ -255,21 +255,21 @@ struct Graph* aprioriFilterExtension(struct Graph* extension, struct Vertex* low
 		and are in the search tree */
 		string = canonicalStringOfTree(current, sgp);
 		notEnumeratedYet = containsString(currentLevel, string);
-		
+
 		if (notEnumeratedYet) {
 			dumpShallowGraph(sgp, string);
- 			dumpGraph(gp, current);
- 			continue; // with next refinement
+			dumpGraph(gp, current);
+			continue; // with next refinement
 		} else {
 			char aprioriProperty = 1;
 			struct ShallowGraph* subString;
-			
+
 			for (v=0; v<current->n; ++v) {
 				// if the removed vertex is a leaf, we test if the resulting subtree is contained in the lower level
 				if (isLeaf(current->vertices[v]) == 1) {
 					// we invalidate current by removing the edge to v from its neighbor, which makes subgraph a valid tree
 					struct VertexList* edge = snatchEdge(current->vertices[v]->neighborhood->endPoint, current->vertices[v]);
-					
+
 					int i = 0;
 					int j = 0;
 					for (i=0; i<current->n; ++i) {
@@ -288,7 +288,7 @@ struct Graph* aprioriFilterExtension(struct Graph* extension, struct Vertex* low
 					aprioriProperty = containsString(lowerLevel, subString);
 					dumpShallowGraph(sgp, subString);
 					if (!aprioriProperty) {
-			 			break; // looping through the vertices of current and continue with next refinement
+						break; // looping through the vertices of current and continue with next refinement
 					}
 				}
 			}
@@ -320,111 +320,103 @@ struct Graph* aprioriFilterExtension(struct Graph* extension, struct Vertex* low
 
 
 /**
-for each graph g in extension (that is the list starting at extension and continuing at extension->next),
-two tests are run: g itself must not be contained in currentLevel and any subtree of g with n-1 vertices must be contained
-in lowerLevel (this ensures the apriori property that all subtrees are frequent).
-if g fulfills both conditions, it is added to the output and to currentLevel.
+for a given extension graph g two tests are run:
 
+- g itself must not be contained in currentLevel and
+- any subtree of g with n-1 vertices (called an apriori parent) must be contained in lowerLevel
+  (this ensures the apriori property that all subtrees are frequent).
+
+if g fulfills both conditions, the method returns a list of the ids of the apriori parents in resultSetStore.
+if g does not, NULL is returned.
+
+Differences to other extension filter methods in this module:
+This method only processes a single extension graph at a time. It does not do anything to it.
 In contrast to the above filterExtension, this method does not use any hashing.
-
 In contrast to aprioriFilterExtension, this method also returns a list of IntSets, that contain the ids of
 the relevant (n-1)-vertex subtrees and sets h->number to its id (obtained by getID(currentLevel, cString(h)).
-*/
-struct Graph* aprioriFilterExtensionReturnLists(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct IntSet** resultSetStore, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	int v;
-	struct Graph* idx = extension;
-	struct Graph* filteredExtension = NULL;
+ */
+struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel,	struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
-	*resultSetStore = NULL;
-
-	// create graph that will hold subgraphs of size n-1 (this assumes that all extension trees have the same size)
-	struct Graph* subgraph = getGraph(gp);
-	setVertexNumber(subgraph, extension->n - 1);
-	subgraph->m = subgraph->n - 1;
-
-	while (idx != NULL) {
-
-		struct Graph* current = idx;
-		idx = idx->next;
-		current->next = NULL;
-
-		/* filter out patterns that were already enumerated as the extension of some other pattern
+	/* filter out patterns that were already enumerated as the extension of some other pattern
 		and are in the search tree */
-		struct ShallowGraph* string = canonicalStringOfTree(current, sgp);
-		char alreadyEnumerated = containsString(currentLevel, string);
+	struct ShallowGraph* string = canonicalStringOfTree(extension, sgp);
+	char alreadyEnumerated = containsString(currentLevel, string);
 
-		if (alreadyEnumerated) {
-			dumpShallowGraph(sgp, string);
- 			dumpGraph(gp, current);
- 			continue; // with next refinement
-		} else {
-			struct IntSet* aprioriTreesOfExtension = getIntSet(); // NULL will indicate that apriori property does not hold for current
+	if (alreadyEnumerated) {
+		dumpShallowGraph(sgp, string);
+		return NULL;
 
-			for (v=0; v<current->n; ++v) {
-				// if the removed vertex is a leaf, we test if the resulting subtree is contained in the lower level
-				if (isLeaf(current->vertices[v]) == 1) {
-					// we invalidate current by removing the edge to v from its neighbor, which makes subgraph a valid tree
-					struct VertexList* edge = snatchEdge(current->vertices[v]->neighborhood->endPoint, current->vertices[v]);
-					// now copy pointers of all vertices \neq v to subgraph, this results in a tree of size current->n - 1
-					int j = 0;
-					for (int i=0; i<current->n; ++i) {
-						if (i == v) {
-							continue;
-						} else {
-							subgraph->vertices[j] = current->vertices[i];
-							subgraph->vertices[j]->number = j;
-							++j;
-						}
-					}
+	} else {
+		struct IntSet* aprioriTreesOfExtension = getIntSet(); // NULL will indicate that apriori property does not hold for current
 
-					// test apriori property
-					struct ShallowGraph* subString = canonicalStringOfTree(subgraph, sgp);
-					int aprioriTreeID = getID(lowerLevel, subString);
-					dumpShallowGraph(sgp, subString);
+		// create graph that will hold subgraphs of size n-1 (this assumes that all extension trees have the same size)
+		struct Graph* subgraph = getGraph(gp);
+		setVertexNumber(subgraph, extension->n - 1);
+		subgraph->m = subgraph->n - 1;
 
-					// restore law and order in current (and invalidate subgraph)
-					addEdge(edge->startPoint, edge);
-
-					if (aprioriTreeID == -1) {
-						dumpIntSet(aprioriTreesOfExtension);
-						aprioriTreesOfExtension = NULL;
-			 			break; // looping through the vertices of current and continue with next refinement
+		for (int v=0; v<extension->n; ++v) {
+			// if the removed vertex is a leaf, we test if the resulting subtree is contained in the lower level
+			if (isLeaf(extension->vertices[v]) == 1) {
+				// we invalidate current by removing the edge to v from its neighbor, which makes subgraph a valid tree
+				struct VertexList* edge = snatchEdge(extension->vertices[v]->neighborhood->endPoint, extension->vertices[v]);
+				// now copy pointers of all vertices \neq v to subgraph, this results in a tree of size current->n - 1
+				int j = 0;
+				for (int i=0; i<extension->n; ++i) {
+					if (i == v) {
+						continue; // ...with next vertex vertices
 					} else {
-						addIntSortedNoDuplicates(aprioriTreesOfExtension, aprioriTreeID);
+						subgraph->vertices[j] = extension->vertices[i];
+						subgraph->vertices[j]->number = j;
+						++j;
 					}
 				}
-			}
+//				fprintf(stderr, "subgraph for v=%i\n", v);
+//				printGraphAidsFormat(subgraph, stderr);
 
-			// clean up and garbage collection
-			for (v=0; v<current->n; ++v) {
-				current->vertices[v]->number = v;
-			}
+				// test apriori property
+				struct ShallowGraph* subString = canonicalStringOfTree(subgraph, sgp);
+				int aprioriTreeID = getID(lowerLevel, subString);
+				dumpShallowGraph(sgp, subString);
 
-			if (aprioriTreesOfExtension != NULL) {
-				// add current to filtered extension
-				current->next = filteredExtension;
-				filteredExtension = current;
-				// add current to search tree of current candidates
-				addToSearchTree(currentLevel, string, gp, sgp);
-				current->number = currentLevel->lowPoint;
-				// add list of ids of apriori trees to resultSetStore
-				aprioriTreesOfExtension->next = *resultSetStore;
-				*resultSetStore = aprioriTreesOfExtension;
+//				fprintf(stderr, "edge: ");
+//				printVertexList(edge);
 
-			} else {
-				dumpGraph(gp, current);
+				// restore law and order in current (and invalidate subgraph)
+				addEdge(edge->startPoint, edge);
+
+				if (aprioriTreeID == -1) {
+					dumpIntSet(aprioriTreesOfExtension);
+					aprioriTreesOfExtension = NULL;
+					break; // looping through the vertices of current and continue with next refinement
+				} else {
+					addIntSortedNoDuplicates(aprioriTreesOfExtension, aprioriTreeID);
+				}
 			}
 		}
-	}
 
-	// garbage collection
-	for (v=0; v<subgraph->n; ++v) {
-		subgraph->vertices[v] = 0;
+
+		// clean up
+		for (int v=0; v<extension->n; ++v) {
+			extension->vertices[v]->number = v;
+		}
+
+		// garbage collection
+		for (int v=0; v<subgraph->n; ++v) {
+			subgraph->vertices[v] = NULL;
+		}
+		dumpGraph(gp, subgraph);
+
+		if (aprioriTreesOfExtension != NULL) {
+			// add current to search tree of current candidates
+			addToSearchTree(currentLevel, string, gp, sgp);
+			extension->number = currentLevel->lowPoint;
+			return aprioriTreesOfExtension;
+		} else {
+			return NULL;
+		}
 	}
-	dumpGraph(gp, subgraph);
-	// fprintf(stderr, "return\n");
-	return filteredExtension;
 }
+
 
 char isPath(struct 	Graph* tree) {
 	int v;
@@ -442,11 +434,11 @@ for each graph g in extension (that is the list starting at extension and contin
 two tests are run: g itself must not be contained in currentLevel and any subtree of g must be contained
 in lowerLevel. 
 if g fulfills both conditions, it is added to the output and to currentLevel.
-*/ 
+ */
 struct Graph* filterExtensionForPaths(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* idx = extension; 
 	struct Graph* filteredExtension = NULL;
-	
+
 	while (idx != NULL) {
 		struct VertexList* e;
 		int fingerPrint;
@@ -461,14 +453,14 @@ struct Graph* filterExtensionForPaths(struct Graph* extension, struct Vertex* lo
 			dumpGraph(gp, current);
 			continue;
 		}
-		
+
 		/* filter out patterns that were already enumerated as the extension of some other pattern
 		and are in the search tree */
 		string = canonicalStringOfTree(current, sgp);
 		if (containsString(currentLevel, string)) {
 			dumpShallowGraph(sgp, string);
- 			dumpGraph(gp, current);
- 			continue;
+			dumpGraph(gp, current);
+			continue;
 		} 
 
 		/* filter out patterns where a subtree is not frequent */
