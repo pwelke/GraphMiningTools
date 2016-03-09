@@ -1215,6 +1215,8 @@ void extendPreviousLevel(// input
 	int nAllExtensionsPreApriori = 0;
 	int nAllExtensionsPostApriori = 0;
 	int nAllExtensionsPostIntersectionFilter = 0;
+	int nAddedToOutput = 0;
+	int nDumped = 0;
 
 	// generate a list of extensions of all frequent patterns
 	// filter these extensions using an apriori property
@@ -1253,11 +1255,19 @@ void extendPreviousLevel(// input
 					*resultCandidates = extension;
 					extensionSupportSuperSet->next = *resultCandidateSupportSuperSets;
 					*resultCandidateSupportSuperSets = extensionSupportSuperSet;
+
+					++nAddedToOutput;
 				} else {
 					// dump extension and support superset
 					dumpGraph(gp, extension);
 					dumpSubtreeIsoDataStoreListCopy(extensionSupportSuperSet);
+
+					++nDumped;
 				}
+			} else {
+				// dump extension that does not fulfill apriori property
+				dumpGraph(gp, extension);
+				++nDumped;
 			}
 		}
 	}
@@ -1265,6 +1275,7 @@ void extendPreviousLevel(// input
 	dumpSearchTree(gp, currentLevelCandidateSearchTree);
 	fprintf(stderr, "generated extensions: %i\napriori filtered extensions: %i\nintersection filtered extensions: %i\n", nAllExtensionsPreApriori, nAllExtensionsPostApriori, nAllExtensionsPostIntersectionFilter);
 
+	assert(nAddedToOutput + nDumped == nAllExtensionsPreApriori);
 }
 
 
