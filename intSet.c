@@ -38,6 +38,15 @@ void dumpIntSet(struct IntSet* s) {
 	free(s);
 }
 
+char containsInt(struct IntSet* s, int i) {
+	for (struct IntElement* e=s->first; e!=NULL; e=e->next) {
+		if (e->value == i) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void appendInt(struct IntSet* s, int i) {
 	struct IntElement* e = getIntElement();
 	e->value = i;

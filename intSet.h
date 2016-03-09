@@ -22,6 +22,7 @@ void appendInt(struct IntSet* s, int i);
 void addIntSortedNoDuplicates(struct IntSet* s, int i);
 void addIntSortedWithDuplicates(struct IntSet* s, int i);
 void appendIntElement(struct IntSet* s, struct IntElement* e);
+char containsInt(struct IntSet* s, int i);
 struct IntElement* popIntElement(struct IntSet* s);
 struct IntSet* intersectIntSet(const struct IntSet* setA, const struct IntSet* setB);
 
