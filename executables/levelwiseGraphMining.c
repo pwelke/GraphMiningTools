@@ -1068,7 +1068,7 @@ struct SubtreeIsoDataStoreList* intersectSupportSets(struct SubtreeIsoDataStoreL
 	struct SubtreeIsoDataStoreList* intersection = intersectTwoSupportSets(aprioriList, aprioriList->next);
 	for (struct SubtreeIsoDataStoreList* support=aprioriList->next->next; support!=NULL; support=support->next) {
 		struct SubtreeIsoDataStoreList* tmp = intersectTwoSupportSets(intersection, support);
-		dumpSubtreeIsoDataStoreList(intersection);
+		dumpSubtreeIsoDataStoreListCopy(intersection);
 		intersection = tmp;
 	}
 
@@ -1116,6 +1116,37 @@ void filterInfrequentCandidates(// input
 	}
 }
 
+/**
+ * Changes the order of the elements in parentSupportSets such that the element that matches parentIdToKeep
+ * with element->data->h->number is at the head of the list.
+ *
+ * expects parentIdToKeep to be in parentSupportSets. (hence also expects  that parentsupportsets->size > 0)
+ */
+struct SubtreeIsoDataStoreList* subtreeIsoDataStoreChangeHead(struct SubtreeIsoDataStoreList* parentSupportSets, int parentIdToKeep) {
+	assert(parentSupportSets != NULL);
+
+	// don't change anything and return fast if list head is already correct
+	if (parentSupportSets->first->data.h->number == parentIdToKeep) {
+		return parentSupportSets;
+	}
+	for (struct SubtreeIsoDataStoreList* e=parentSupportSets; e->next!=NULL; e=e->next) {
+		if (e->next->first->data.h->number == parentIdToKeep) {
+			// remove matching element from its position in the list
+			struct SubtreeIsoDataStoreList* match = e->next;
+			e->next = e->next->next;
+			// push matching element to head of list
+			match->next = parentSupportSets;
+			parentSupportSets = match;
+			break; // stop searching for the list
+		}
+	}
+
+	// first element is now correct
+	assert(parentSupportSets->first->data.h->number == parentIdToKeep);
+
+	return parentSupportSets;
+}
+
 
 /**
  * Get a SubtreeIsoDataStoreList for each IntSet in the input.
@@ -1125,48 +1156,38 @@ void filterInfrequentCandidates(// input
  * to compute the support set of p.
  *
  * This implementation returns the data structures (cubes and pointers to the parent)
- * of the first parent in the list.
+ * of the parent that has id parentIdToKeep.
  */
-void getCandidateSupportSets(// input
-		struct IntSet* allParentIdSets,
-		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
-		// output
-		struct SubtreeIsoDataStoreList** candidateSupportLists) {
-	assert(allParentIdSets != NULL);
+struct SubtreeIsoDataStoreList* getCandidateSupportSuperSet(struct IntSet* parentIds, struct SubtreeIsoDataStoreList* previousLevelSupportLists, int parentIdToKeep) {
+	assert(parentIds != NULL);
 	assert(previousLevelSupportLists != NULL);
+	assert(containsInt(parentIds, parentIdToKeep));
 
-	// for each extension, compute a candidate support set,
-	// that is the intersection of the support sets of the apriori parents of the extension
-	*candidateSupportLists = NULL;
-	struct SubtreeIsoDataStoreList* candidateSupportListsTail = NULL;
-	for (struct IntSet* parentIds=allParentIdSets; parentIds!=NULL; parentIds=parentIds->next) {
-		// obtain support sets and intersect them
-		struct SubtreeIsoDataStoreList* subgraphSupportLists = getSupportSetsOfPatterns(previousLevelSupportLists, parentIds);
-		struct SubtreeIsoDataStoreList* extensionCandidateSupportList;
-		// TODO should nont be necessary once lists are sorted?
-		if (subgraphSupportLists) {
-			extensionCandidateSupportList = intersectSupportSets(subgraphSupportLists);
-		} else {
-			extensionCandidateSupportList = getSubtreeIsoDataStoreList();
-		}
+	// obtain support sets of parents
+	struct SubtreeIsoDataStoreList* parentSupportSets = getSupportSetsOfPatterns(previousLevelSupportLists, parentIds);
+	// move desired parent support set to head of list to keep the correct subtreeIsoDataStores
+	parentSupportSets = subtreeIsoDataStoreChangeHead(parentSupportSets, parentIdToKeep);
 
-		// garbage collection
-		while (subgraphSupportLists) {
-			struct SubtreeIsoDataStoreList* tmp = subgraphSupportLists->next;
-			free(subgraphSupportLists);
-			subgraphSupportLists = tmp;
-		}
+	// compute a candidate support set that is the intersection of the support sets of the apriori parents of the extension
+	struct SubtreeIsoDataStoreList* candidateSupportSuperSet = intersectSupportSets(parentSupportSets);
 
-		// append list of candidate support of current extension to list
-		// add to tail of list, to maintain order
-		if (candidateSupportListsTail != NULL) {
-			candidateSupportListsTail->next = extensionCandidateSupportList;
-			candidateSupportListsTail = extensionCandidateSupportList;
-		} else {
-			*candidateSupportLists = extensionCandidateSupportList;
-			candidateSupportListsTail = extensionCandidateSupportList;
-		}
+	// garbage collection
+	while (parentSupportSets) {
+		struct SubtreeIsoDataStoreList* tmp = parentSupportSets->next;
+		free(parentSupportSets);
+		parentSupportSets = tmp;
 	}
+
+	return candidateSupportSuperSet;
+}
+
+struct Graph* popGraph(struct Graph** list) {
+	struct Graph* head = *list;
+	if (head != NULL) {
+		*list = head->next;
+		head->next = NULL;
+	}
+	return head;
 }
 
 
@@ -1174,7 +1195,7 @@ void extendPreviousLevel(// input
 		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		struct ShallowGraph* extensionEdges,
-		int threshold,
+		size_t threshold,
 		// output
 		struct SubtreeIsoDataStoreList** resultCandidateSupportSuperSets,
 		struct Graph** resultCandidates,
@@ -1204,48 +1225,44 @@ void extendPreviousLevel(// input
 
 		// extend frequent pattern
 		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
-		for (struct Graph* idx=listOfExtensions; idx!=NULL; idx=idx->next) { ++nAllExtensionsPreApriori; } // count to test effectiveness of pruning
 
-		// filter out extensions that do not comply to apriori property,
-		// for each surviving extension, return a set of ids of its apriori parents, whose support set intersection will be candidate support set of extension
-		struct IntSet* aprioriParentIdSets = NULL;
-		struct Graph* aprioriFilteredExtensions = NULL;
-		aprioriFilteredExtensions = aprioriFilterExtensionReturnLists(listOfExtensions, previousLevelSearchTree, currentLevelCandidateSearchTree, &aprioriParentIdSets, gp, sgp);
-		for (struct Graph* idx=aprioriFilteredExtensions; idx!=NULL; idx=idx->next) { ++nAllExtensionsPostApriori; } // count to test effectiveness of pruning
+//		fprintf(stderr, "extensions of pattern\n");
+//		for (struct Graph* g=listOfExtensions; g!=NULL; g=g->next) { printGraphAidsFormat(g, stderr); }
+//		fprintf(stderr, "after apriori\n");
+		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
+			// count number of generated extensions
+			++nAllExtensionsPreApriori;
 
-		// get (hopefully small) supersets of the support sets for each extension that survived the apriori filter
-		struct SubtreeIsoDataStoreList* aprioriParentsSupportIntersections = NULL;
-		getCandidateSupportSets(aprioriParentIdSets, previousLevelSupportLists, &aprioriParentsSupportIntersections);
+			struct IntSet* aprioriParentIdSet = aprioriCheckExtensionReturnList(extension, previousLevelSearchTree, currentLevelCandidateSearchTree, gp, sgp); //(listOfExtensions, previousLevelSearchTree, currentLevelCandidateSearchTree, &aprioriParentIdSet, gp, sgp);
 
-		// garbage collection
-		while (aprioriParentIdSets) {
-			struct IntSet* tmp = aprioriParentIdSets->next;
-			dumpIntSet(aprioriParentIdSets);
-			aprioriParentIdSets = tmp;
-		}
+			if (aprioriParentIdSet) {
+				// count number of apriori survivors
+				 ++nAllExtensionsPostApriori;
 
-		// remove those extensions whose support superset is smaller than the threshold
-		struct SubtreeIsoDataStoreList* filteredCandidateSupportSets;
-		struct Graph* filteredCandidates;
-		filterInfrequentCandidates(aprioriFilteredExtensions, aprioriParentsSupportIntersections, threshold, &filteredCandidates, &filteredCandidateSupportSets, gp);
-		for (struct Graph* idx=filteredCandidates; idx!=NULL; idx=idx->next) { ++nAllExtensionsPostIntersectionFilter; } // count to test effectiveness of intersection on number of candidates
+				// get (hopefully small) superset of the support set of the extension
+				struct SubtreeIsoDataStoreList* extensionSupportSuperSet = getCandidateSupportSuperSet(aprioriParentIdSet, previousLevelSupportLists, frequentPattern->number);
+				dumpIntSet(aprioriParentIdSet);
 
-		// append extensions and their apriori subtree lists to global lists
-		if (filteredCandidates != NULL) {
-			struct Graph* idx;
-			for (idx=filteredCandidates; idx->next!=NULL; idx=idx->next); // go to tail
-			idx->next = *resultCandidates;
-			*resultCandidates = filteredCandidates;
+				// check if support superset is larger than the threshold
+				if (extensionSupportSuperSet->size >= threshold) {
+					// count number of intersection/threshold survivors
+					++nAllExtensionsPostIntersectionFilter;
 
-			struct SubtreeIsoDataStoreList* idx2;
-			for (idx2=filteredCandidateSupportSets; idx2->next!=NULL; idx2=idx2->next); // go to tail
-			idx2->next = *resultCandidateSupportSuperSets;
-			*resultCandidateSupportSuperSets = filteredCandidateSupportSets;
+					// add extension and support super set to list of candidates for next level
+					extension->next = *resultCandidates;
+					*resultCandidates = extension;
+					extensionSupportSuperSet->next = *resultCandidateSupportSuperSets;
+					*resultCandidateSupportSuperSets = extensionSupportSuperSet;
+				} else {
+					// dump extension and support superset
+					dumpGraph(gp, extension);
+					dumpSubtreeIsoDataStoreListCopy(extensionSupportSuperSet);
+				}
+			}
 		}
 	}
 
 	dumpSearchTree(gp, currentLevelCandidateSearchTree);
-
 	fprintf(stderr, "generated extensions: %i\napriori filtered extensions: %i\nintersection filtered extensions: %i\n", nAllExtensionsPreApriori, nAllExtensionsPostApriori, nAllExtensionsPostIntersectionFilter);
 
 }
