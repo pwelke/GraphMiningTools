@@ -223,7 +223,7 @@ void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSetSize, s
 }
 
 
-void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patterns, int nPatterns, struct Vertex** pointers, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patterns, int nPatterns, struct Vertex** pointers, struct GraphPool* gp) {
 	int i;
 	for (i=0; i<nGraphs; ++i) {
 		int j;
