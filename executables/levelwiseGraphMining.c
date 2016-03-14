@@ -359,22 +359,6 @@ void dumpSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* s) {
 	free(s);
 }
 
-void dumpSubtreeIsoDataStoreElementsWithH(struct SubtreeIsoDataStoreElement* e, struct GraphPool* gp) {
-	if (e->next != NULL) {
-		dumpSubtreeIsoDataStoreElementsWithH(e->next, gp);
-	}
-	dumpNewCubeFast(e->data.S, e->data.g->n, e->data.h->n);
-	dumpGraph(gp, e->data.h);
-	free(e);
-}
-
-void dumpSubtreeIsoDataStoreListWithH(struct SubtreeIsoDataStoreList* s, struct GraphPool* gp) {
-	if (s->size > 0) {
-		dumpSubtreeIsoDataStoreElementsWithH(s->first, gp);
-	}
-	free(s);
-}
-
 
 void dumpSubtreeIsoDataStoreElementsWithPostorder(struct SubtreeIsoDataStoreElement* e, struct GraphPool* gp) {
 	if (e->next != NULL) {
@@ -1001,12 +985,20 @@ struct SubtreeIsoDataStoreList* shallowCopySubtreeIsoDataStoreList(struct Subtre
  * (comparison for intersection takes place on allSupportSet->first->data.h->number and patternId->value
  *
  * Basically a sorted list intersection with different type lists, hence assumes sorted lists.
+ *
+ * Expects both inputs to be not NULL.
+ * Guarantees that the output list has as many elements as parentIds, i.e. that all requested support sets were found
  */
 struct SubtreeIsoDataStoreList* getSupportSetsOfPatterns(struct SubtreeIsoDataStoreList* allSupportSets, struct IntSet* patternIds) {
+	assert(allSupportSets != NULL);
+	assert(patternIds != NULL);
+
 	struct SubtreeIsoDataStoreList* selectedSupportSets = NULL;
 
 	struct SubtreeIsoDataStoreList* a = allSupportSets;
 	struct IntElement* b = patternIds->first;
+
+	size_t assert_Found = 0;
 
 	/* Once one or the other list runs out -- we're done */
 	while (a != NULL && b != NULL)
@@ -1018,12 +1010,16 @@ struct SubtreeIsoDataStoreList* getSupportSetsOfPatterns(struct SubtreeIsoDataSt
 
 			a = a->next;
 			b = b->next;
+
+			++assert_Found;
 		}
 		else if (a->first->data.h->number < b->value) /* advance the smaller list */
 			a = a->next;
 		else
 			b = b->next;
 	}
+
+	assert(assert_Found == patternIds->size);
 	return selectedSupportSets;
 
 }
@@ -1369,6 +1365,32 @@ struct SubtreeIsoDataStoreList* iterativeBFS(// input
 }
 
 
+/**
+ * Assumes that each support set in the list supportSets corresponds to the same pattern but to different base graphs.
+ * To correctly free the cubes (iterative subtree iso data structures), we need h->n. Hence, we need to dump h after
+ * we dumped the support sets.
+ */
+void dumpSubtreeIsoDataStoreListWithH(struct SubtreeIsoDataStoreList* supportSets, struct GraphPool* gp) {
+	struct Graph* h = supportSets->first->data.h;
+	dumpSubtreeIsoDataStoreList(supportSets);
+	dumpGraph(gp, h);
+}
+
+
+struct SubtreeIsoDataStoreList* initIterativeBFS(struct Graph** db, size_t nGraphs, struct Graph* h, int edgeId) {
+	struct SubtreeIsoDataStoreList* actualSupport = getSubtreeIsoDataStoreList();
+	for (size_t i=0; i<nGraphs; ++i) {
+		struct SubtreeIsoDataStore base = {0};
+		base.g = db[i];
+		base.postorder = getPostorder(base.g, 0);
+		struct SubtreeIsoDataStore data = initIterativeSubtreeCheckForGraph(base, h);
+		data.h->number = edgeId;
+		//		printNewCubeCondensed(data.S, data.g->n, data.h->n);
+		appendSubtreeIsoDataStore(actualSupport, data);
+	}
+	return actualSupport;
+}
+
 
 /**
  * Input handling, parsing of database and call of opk feature extraction method.
@@ -1445,7 +1467,7 @@ int mainIterativeBFS(int argc, char** argv) {
 
 		int debugInfo = 1;
 
-		struct Vertex* frequentVertices = getVertex(vp);
+
 
 		struct Graph** db = NULL;
 		int nGraphs = 128;
@@ -1455,7 +1477,7 @@ int mainIterativeBFS(int argc, char** argv) {
 		nGraphs = getDB(&db);
 		destroyFileIterator(); // graphs are in memory now
 
-
+		struct Vertex* frequentVertices = getVertex(vp);
 		if (maxPatternSize > 0) {
 			/* get frequent vertices */
 			tmpResultSetSize = getFrequentVertices(db, nGraphs, frequentVertices, kvStream, gp);
@@ -1467,9 +1489,9 @@ int mainIterativeBFS(int argc, char** argv) {
 			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 1: %i\n", frequentVertices->d); fflush(stderr); }
 		}
 
+		struct Vertex* frequentEdges = getVertex(vp);
 		if (maxPatternSize > 1) {
 			/* get frequent edges: first edge id is given by number of frequent vertices */
-			struct Vertex* frequentEdges = getVertex(vp);
 			offsetSearchTreeIds(frequentEdges, frequentVertices->lowPoint);
 			getFrequentEdges(db, nGraphs, tmpResultSetSize, frequentEdges, kvStream, gp);
 			filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureStream, gp);
@@ -1481,21 +1503,33 @@ int mainIterativeBFS(int argc, char** argv) {
 			fprintf(patternStream, "patterns size 2\n");
 			printStringsInSearchTree(frequentEdges, patternStream, sgp);
 
+		} else {
+			dumpSearchTree(gp, frequentVertices);
+		}
+
+		if (maxPatternSize > 2) {
+
+			// init levelwise search data structures for patterns with two vertices
+
 			/* convert frequentEdges to ShallowGraph */
 			struct Graph* extensionEdgesVertexStore = NULL;
 			struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
 			if (debugInfo) { fprintf(stderr, "Frequent patterns in level 2: %i\n", frequentEdges->d); fflush(stderr); }
+			dumpSearchTree(gp, frequentEdges);
 
-			struct Graph* candidate = createGraph(2, gp);
-			addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
 
+
+			// data structures for iterative levelwise search
 			struct SubtreeIsoDataStoreList* previousLevelSupportSets = NULL;
 			struct SubtreeIsoDataStoreList* previousLevelSupportSetsTail = NULL;
+			// recreate search tree for level 2, but with (possibly) different ids.
 			struct Vertex* previousLevelSearchTree = getVertex(gp->vertexPool);
 
 			// TODO this whole mess can be avoided, if edgeSearchTree2ShallowGraph() also returns a list of unique edges,
 			// or if we get them from somewhere else. then we can avoid building another search tree and conversion etc.
 			for (struct VertexList* e=extensionEdges->edges; e!=NULL; e=e->next) {
+				struct Graph* candidate = createGraph(2, gp);
+				addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
 				candidate->vertices[0]->label = e->startPoint->label;
 				candidate->vertices[1]->label = e->endPoint->label;
 				candidate->vertices[0]->neighborhood->label = e->label;
@@ -1504,9 +1538,11 @@ int mainIterativeBFS(int argc, char** argv) {
 				struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
 
 				if (!containsString(previousLevelSearchTree, cString)) {
-					int id = getID(frequentEdges, cString);
-					struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, id, gp);
+
 					addToSearchTree(previousLevelSearchTree, cString, gp, sgp);
+					int id = previousLevelSearchTree->lowPoint;
+
+					struct SubtreeIsoDataStoreList* edgeSupport = initIterativeBFS(db, nGraphs, candidate, id);
 
 					if (previousLevelSupportSetsTail != NULL) {
 						previousLevelSupportSetsTail->next = edgeSupport;
@@ -1518,11 +1554,15 @@ int mainIterativeBFS(int argc, char** argv) {
 
 				} else {
 					dumpShallowGraph(sgp, cString);
+					dumpGraph(gp, candidate);
 				}
 			}
-			dumpSearchTree(gp, previousLevelSearchTree);
-			previousLevelSearchTree = frequentEdges;
 
+			// intermediate garbage collection and cleanup
+			previousLevelSupportSetsTail = NULL;
+
+
+			// levelwise search for patterns with more than two vertices
 			struct Vertex* currentLevelSearchTree = NULL;
 			struct SubtreeIsoDataStoreList* currentLevelSupportSets = NULL;
 
@@ -1551,18 +1591,19 @@ int mainIterativeBFS(int argc, char** argv) {
 				previousLevelSupportSets = currentLevelSupportSets;
 			}
 
-			dumpGraph(gp, candidate);
 			dumpShallowGraphCycle(sgp, extensionEdges);
 			dumpGraph(gp, extensionEdgesVertexStore);
-			if (maxPatternSize > 2) {
-				dumpSearchTree(gp, previousLevelSearchTree);
-				while (previousLevelSupportSets) {
-					struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
-					// we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
-					dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
-					previousLevelSupportSets = tmp;
-				}
+			dumpSearchTree(gp, previousLevelSearchTree);
+
+			while (previousLevelSupportSets) {
+				struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
+				// we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
+				dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
+				previousLevelSupportSets = tmp;
 			}
+
+		} else {
+			dumpSearchTree(gp, frequentEdges);
 		}
 
 		fclose(kvStream);
@@ -1583,7 +1624,7 @@ int mainIterativeBFS(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
-	//	return mainIterativeDFS(argc, argv);
+//		return mainIterativeDFS(argc, argv);
 	//	return mainDFS(argc, argv);
 	//	return mainBFS(argc, argv);
 	return mainIterativeBFS(argc, argv);
