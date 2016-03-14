@@ -340,13 +340,14 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 	/* filter out patterns that were already enumerated as the extension of some other pattern
 		and are in the search tree */
 	struct ShallowGraph* string = canonicalStringOfTree(extension, sgp);
-	char alreadyEnumerated = containsString(currentLevel, string);
+//	char alreadyEnumerated = containsString(currentLevel, string);
+	int previousNumberOfDistinctPatterns = currentLevel->d;
+	addToSearchTree(currentLevel, string, gp, sgp);
 
-	if (alreadyEnumerated) {
-		dumpShallowGraph(sgp, string);
+	if (previousNumberOfDistinctPatterns == currentLevel->d) {
 		return NULL;
-
 	} else {
+
 		struct IntSet* aprioriTreesOfExtension = getIntSet(); // NULL will indicate that apriori property does not hold for current
 
 		// create graph that will hold subgraphs of size n-1 (this assumes that all extension trees have the same size)
@@ -403,11 +404,11 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 
 		if (aprioriTreesOfExtension != NULL) {
 			// add current to search tree of current candidates
-			addToSearchTree(currentLevel, string, gp, sgp);
-			extension->number = currentLevel->lowPoint;
+//			addToSearchTree(currentLevel, string, gp, sgp);
+//			extension->number = stringID;
 			return aprioriTreesOfExtension;
 		} else {
-			dumpShallowGraph(sgp, string);
+//			dumpShallowGraph(sgp, string);
 			return NULL;
 		}
 	}
