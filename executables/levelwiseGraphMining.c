@@ -1377,18 +1377,26 @@ void dumpSubtreeIsoDataStoreListWithH(struct SubtreeIsoDataStoreList* supportSet
 }
 
 
-struct SubtreeIsoDataStoreList* initIterativeBFS(struct Graph** db, size_t nGraphs, struct Graph* h, int edgeId) {
+struct SubtreeIsoDataStoreList* initIterativeBFS(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int edgeId) {
 	struct SubtreeIsoDataStoreList* actualSupport = getSubtreeIsoDataStoreList();
 	for (size_t i=0; i<nGraphs; ++i) {
 		struct SubtreeIsoDataStore base = {0};
 		base.g = db[i];
-		base.postorder = getPostorder(base.g, 0);
+		base.postorder = postoderDB[i];
 		struct SubtreeIsoDataStore data = initIterativeSubtreeCheckForGraph(base, h);
 		data.h->number = edgeId;
 		//		printNewCubeCondensed(data.S, data.g->n, data.h->n);
 		appendSubtreeIsoDataStore(actualSupport, data);
 	}
 	return actualSupport;
+}
+
+int** getPostorders(struct Graph** db, int nGraphs) {
+	int** postorderDB = malloc(nGraphs * sizeof(int**));
+	for (int g=0; g<nGraphs; ++g) {
+		postorderDB[g] = getPostorder(db[g], 0);
+	}
+	return postorderDB;
 }
 
 
@@ -1475,6 +1483,8 @@ int mainIterativeBFS(int argc, char** argv) {
 
 		/* init data structures */
 		nGraphs = getDB(&db);
+		int** postorders = getPostorders(db, nGraphs);
+
 		destroyFileIterator(); // graphs are in memory now
 
 		struct Vertex* frequentVertices = getVertex(vp);
@@ -1528,6 +1538,7 @@ int mainIterativeBFS(int argc, char** argv) {
 			// TODO this whole mess can be avoided, if edgeSearchTree2ShallowGraph() also returns a list of unique edges,
 			// or if we get them from somewhere else. then we can avoid building another search tree and conversion etc.
 			for (struct VertexList* e=extensionEdges->edges; e!=NULL; e=e->next) {
+
 				struct Graph* candidate = createGraph(2, gp);
 				addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
 				candidate->vertices[0]->label = e->startPoint->label;
@@ -1542,7 +1553,7 @@ int mainIterativeBFS(int argc, char** argv) {
 					addToSearchTree(previousLevelSearchTree, cString, gp, sgp);
 					int id = previousLevelSearchTree->lowPoint;
 
-					struct SubtreeIsoDataStoreList* edgeSupport = initIterativeBFS(db, nGraphs, candidate, id);
+					struct SubtreeIsoDataStoreList* edgeSupport = initIterativeBFS(db, postorders, nGraphs, candidate, id);
 
 					if (previousLevelSupportSetsTail != NULL) {
 						previousLevelSupportSetsTail->next = edgeSupport;
@@ -1566,7 +1577,7 @@ int mainIterativeBFS(int argc, char** argv) {
 			struct Vertex* currentLevelSearchTree = NULL;
 			struct SubtreeIsoDataStoreList* currentLevelSupportSets = NULL;
 
-			for (size_t p=3; p<=maxPatternSize; ++p) {
+			for (size_t p=3; (p<=maxPatternSize) && (previousLevelSearchTree->number>0); ++p) {
 				currentLevelSearchTree = getVertex(gp->vertexPool);
 				offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
 
@@ -1610,8 +1621,10 @@ int mainIterativeBFS(int argc, char** argv) {
 
 		for (int i=0; i<nGraphs; ++i) {
 			dumpGraph(gp, db[i]);
+			free(postorders[i]);
 		}
 		free(db);
+		free(postorders);
 	}
 
 	/* global garbage collection */
