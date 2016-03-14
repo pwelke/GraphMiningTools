@@ -1,7 +1,7 @@
 #include <malloc.h>
 #include "graph.h"
 
-int MEM_DEBUG = 1;
+const int MEM_DEBUG = 1;
 
 /**
 Object pool creation method. One can specify a number of elements that will be allocated as array.
@@ -10,6 +10,12 @@ to allocate memory blocks later on
 */
 struct ListPool* createListPool(unsigned int initNumberOfElements){
 	struct ListPool* newPool;
+
+	if (MEM_DEBUG) {
+		// this allows the dump methods to free everything that is dumped
+		initNumberOfElements = 1;
+	}
+
 	if ((newPool = malloc(sizeof(struct ListPool)))) {
 		if ((newPool->unused = malloc(initNumberOfElements * sizeof(struct VertexList)))) {
 			unsigned int i;
@@ -137,6 +143,12 @@ to allocate memory blocks later on
 */
 struct VertexPool* createVertexPool(unsigned int initNumberOfElements){
 	struct VertexPool* newPool;
+
+	if (MEM_DEBUG) {
+		// this allows the dump methods to free everything that is dumped
+		initNumberOfElements = 1;
+	}
+
 	if ((newPool = malloc(sizeof(struct VertexPool)))) {
 		if ((newPool->unused = malloc(initNumberOfElements * sizeof(struct Vertex)))) {
 			unsigned int i;
@@ -249,6 +261,11 @@ to allocate memory blocks later on
 */
 struct GraphPool* createGraphPool(unsigned int initNumberOfElements, struct VertexPool* vp, struct ListPool* lp) {
 	struct GraphPool* newPool;
+
+	if (MEM_DEBUG) {
+		// this allows the dump methods to free everything that is dumped
+		initNumberOfElements = 1;
+	}
 
 	if ((newPool = malloc(sizeof(struct GraphPool)))) {
 		/* set the listpool and vertexpool of the graphpool according to the input. good for dumping actions */
@@ -383,6 +400,11 @@ to allocate memory blocks later on
 struct ShallowGraphPool* createShallowGraphPool(unsigned int initNumberOfElements, struct ListPool* lp){
 	struct ShallowGraphPool* newPool;
 	
+	if (MEM_DEBUG) {
+		// this allows the dump methods to free everything that is dumped
+		initNumberOfElements = 1;
+	}
+
 	if ((newPool = malloc(sizeof(struct ShallowGraphPool)))) {
 		/* set the listpool of the graphpool according to the input. good for dumping actions */
 		newPool->listPool = lp;
