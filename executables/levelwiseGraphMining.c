@@ -917,7 +917,7 @@ int mainBFS(int argc, char** argv) {
 			refinements = malloc(refinementSize * sizeof(struct Graph*));
 
 			makeGraphsAndPointers(candidateSet, candidateSet, refinements, pointers, 0, prefix, gp, sgp); 
-			stupidPatternEvaluation(db, nGraphs, refinements, refinementSize, pointers, gp, sgp);
+			stupidPatternEvaluation(db, nGraphs, refinements, refinementSize, pointers, gp);
 
 			/* threshold + 1 as candidateSet contains each candidate once, already */
 			filterSearchTreeP(candidateSet, threshold + 1, candidateSet, featureStream, gp);
