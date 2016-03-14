@@ -225,18 +225,69 @@ struct SubtreeIsoDataStore initG(struct Graph* g) {
 	return info;
 }
 
+
+///** create the set of characteristics for a single edge pattern graph */
+//struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp) {
+//	struct SubtreeIsoDataStore info = {0};
+//	// copy stuff from below
+//	info.g = base.g;
+//	info.postorder = base.postorder;
+//
+//	// create graph from edge
+//	info.h = createGraph(2, gp);
+//	(info.h)->vertices[0]->label = patternEdge->startPoint->label;
+//	(info.h)->vertices[1]->label = patternEdge->endPoint->label;
+//	addEdgeBetweenVertices(0, 1, patternEdge->label, info.h, gp);
+//
+//	// create cube
+//	createNewBaseCubeFast(&info);
+//
+//	int* parents = getParentsFromPostorder(info.g, info.postorder);
+//
+//	for (int vi=0; vi<(info.g)->n; ++vi) {
+//		struct Vertex* v = (info.g)->vertices[info.postorder[vi]];
+//		for (int ui=0; ui<2; ++ui) {
+//			struct Vertex* u = (info.h)->vertices[ui];
+//			struct Vertex* y = (info.h)->vertices[(ui + 1) % 2];
+//			if (labelCmp(v->label, u->label) == 0) {
+//				// if vertex labels match, there is a characteristic (H^y_u, v)
+//				addCharacteristic(&info, y, u, v);
+//				char foundIso = 0;
+//				// if there is at least one edge that matches and does not lead to the parent, then there is a characteristic (H^u_u, v)
+//				// we add this characteristic only once below
+//				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+//					if (parents[v->number] != e->endPoint->number) {
+//						// check if edge labels match
+//						if (labelCmp(e->label, patternEdge->label) == 0) {
+//							// if edge does not lead to parent, there is a characteristic (H^u_u, v) if vertex labels of endpoint match
+//							if (labelCmp(e->endPoint->label, y->label) == 0) {
+//								foundIso = 1;
+//							}
+//						}
+//					}
+//				}
+//				if (foundIso) {
+//					addCharacteristic(&info, u, u, v);
+//					info.foundIso = 1;
+//				}
+//			}
+//		}
+//	}
+//	free(parents);
+//	return info;
+//}
+
+
 /** create the set of characteristics for a single edge pattern graph */
-struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp) {
+struct SubtreeIsoDataStore initIterativeSubtreeCheckForGraph(struct SubtreeIsoDataStore base, struct Graph* h) {
 	struct SubtreeIsoDataStore info = {0};
 	// copy stuff from below
 	info.g = base.g;
 	info.postorder = base.postorder;
 
 	// create graph from edge
-	info.h = createGraph(2, gp);
-	(info.h)->vertices[0]->label = patternEdge->startPoint->label;
-	(info.h)->vertices[1]->label = patternEdge->endPoint->label;
-	addEdgeBetweenVertices(0, 1, patternEdge->label, info.h, gp);
+	info.h = h;
+	char* edgeLabel = h->vertices[0]->neighborhood->label;
 
 	// create cube
 	createNewBaseCubeFast(&info);
@@ -257,7 +308,7 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
 					if (parents[v->number] != e->endPoint->number) {
 						// check if edge labels match
-						if (labelCmp(e->label, patternEdge->label) == 0) {
+						if (labelCmp(e->label, edgeLabel) == 0) {
 							// if edge does not lead to parent, there is a characteristic (H^u_u, v) if vertex labels of endpoint match
 							if (labelCmp(e->endPoint->label, y->label) == 0) {
 								foundIso = 1;
@@ -274,5 +325,17 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 	}
 	free(parents);
 	return info;
+}
+
+/** create the set of characteristics for a single edge pattern graph, given as VertexList. A new graph is created. */
+struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp) {
+		// create graph from edge
+		struct Graph* h = createGraph(2, gp);
+		(h)->vertices[0]->label = patternEdge->startPoint->label;
+		(h)->vertices[1]->label = patternEdge->endPoint->label;
+		addEdgeBetweenVertices(0, 1, patternEdge->label, h, gp);
+
+		return initIterativeSubtreeCheckForGraph(base, h);
+
 }
 
