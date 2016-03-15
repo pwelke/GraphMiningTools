@@ -17,8 +17,8 @@ TESTNAME = test
 
 ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME)
 
-CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
-# CPPFLAGS = -g -Wall -Wextra -pedantic -W -std=gnu99 -lm -O2
+#CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
+CPPFLAGS = -g -Wall -Wextra -pedantic -W -std=gnu99 -lm -O2
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 HELPFILES = $(patsubst ./executables/%.txt, ./executables/%.help, $(wildcard ./executables/*.txt))

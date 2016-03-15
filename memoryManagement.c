@@ -1,7 +1,7 @@
 #include <malloc.h>
 #include "graph.h"
 
-const int MEM_DEBUG = 1;
+const int MEM_DEBUG = 0;
 
 /**
 Object pool creation method. One can specify a number of elements that will be allocated as array.
