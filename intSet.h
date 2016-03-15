@@ -25,5 +25,7 @@ void appendIntElement(struct IntSet* s, struct IntElement* e);
 char containsInt(struct IntSet* s, int i);
 struct IntElement* popIntElement(struct IntSet* s);
 struct IntSet* intersectIntSet(const struct IntSet* setA, const struct IntSet* setB);
+char isSortedUniqueIntSet(struct IntSet* s);
+char isSortedIntSet(struct IntSet* s);
 
 #endif

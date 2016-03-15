@@ -183,6 +183,30 @@ struct IntSet* intersectIntSet(const struct IntSet* setA, const struct IntSet* s
   return intersection;
 }
 
+char isSortedIntSet(struct IntSet* s) {
+	if (s->size < 2) {
+		return 1;
+	}
+	for (struct IntElement* e=s->first; e->next!=NULL; e=e->next) {
+		if (e->value > e->next->value) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+char isSortedUniqueIntSet(struct IntSet* s) {
+	if (s->size < 2) {
+		return 1;
+	}
+	for (struct IntElement* e=s->first; e->next!=NULL; e=e->next) {
+		if (e->value >= e->next->value) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 //int main(int argc, char* argv) {
 //	struct IntSet* s = getIntSet();
 //
