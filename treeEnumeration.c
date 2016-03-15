@@ -1,5 +1,6 @@
 #include <malloc.h>
 #include <string.h>
+#include <assert.h>
 
 #include "graph.h"
 #include "cs_Tree.h"
@@ -340,7 +341,6 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 	/* filter out patterns that were already enumerated as the extension of some other pattern
 		and are in the search tree */
 	struct ShallowGraph* string = canonicalStringOfTree(extension, sgp);
-//	char alreadyEnumerated = containsString(currentLevel, string);
 	int previousNumberOfDistinctPatterns = currentLevel->d;
 	addToSearchTree(currentLevel, string, gp, sgp);
 
@@ -348,7 +348,8 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 		return NULL;
 	} else {
 
-		struct IntSet* aprioriTreesOfExtension = getIntSet(); // NULL will indicate that apriori property does not hold for current
+		// returning NULL will indicate that apriori property does not hold for current
+		struct IntSet* aprioriTreesOfExtension = getIntSet();
 
 		// create graph that will hold subgraphs of size n-1 (this assumes that all extension trees have the same size)
 		struct Graph* subgraph = getGraph(gp);
@@ -375,6 +376,10 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 				// test apriori property
 				struct ShallowGraph* subString = canonicalStringOfTree(subgraph, sgp);
 				int aprioriTreeID = getID(lowerLevel, subString);
+//				if (aprioriTreeID == -1) {
+//					fprintf(stderr, "parent id: %i ", aprioriTreeID);
+//					printCanonicalString(subString, stderr);
+//				}
 				dumpShallowGraph(sgp, subString);
 
 				// restore law and order in current (and invalidate subgraph)
@@ -390,12 +395,10 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 			}
 		}
 
-
 		// clean up
 		for (int v=0; v<extension->n; ++v) {
 			extension->vertices[v]->number = v;
 		}
-
 		// garbage collection
 		for (int v=0; v<subgraph->n; ++v) {
 			subgraph->vertices[v] = NULL;
@@ -403,12 +406,9 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 		dumpGraph(gp, subgraph);
 
 		if (aprioriTreesOfExtension != NULL) {
-			// add current to search tree of current candidates
-//			addToSearchTree(currentLevel, string, gp, sgp);
-//			extension->number = stringID;
+			assert(isSortedUniqueIntSet(aprioriTreesOfExtension));
 			return aprioriTreesOfExtension;
 		} else {
-//			dumpShallowGraph(sgp, string);
 			return NULL;
 		}
 	}
