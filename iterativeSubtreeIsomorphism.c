@@ -107,6 +107,7 @@ int* getParents(struct Graph* g, int root) {
 
 // SUBTREE ISOMORPHISM
 
+
 /**
 Iterative Labeled Subtree Isomorphism Check. 
 
@@ -165,21 +166,19 @@ void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtre
 		for (int ui=0; ui<h->n-1; ++ui) {
 			struct Vertex* u = h->vertices[ui];
 
-			if (containsCharacteristic(base, u, u, v)) {
-				int uuCharacteristic = computeCharacteristic(*current, u, u, v, gp);
-				if (uuCharacteristic) {
-					addCharacteristic(current, u, u, v);
-					current->foundIso = 1;
-				}
-			}
-			for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
-				if (containsCharacteristic(base, e->endPoint, u, v)) {
-					if (e->endPoint->number == parentsHa[u->number]) {
-						addCharacteristic(current, e->endPoint, u, v);
-					} else {
-						int yuCharacteristic = computeCharacteristic(*current, e->endPoint, u, v, gp);
-						if (yuCharacteristic) {
-							addCharacteristic(current, e->endPoint, u, v);
+			int* oldCharacteristics = rawCharacteristics(base, u, v);
+
+			for (int yi=1; yi<=oldCharacteristics[0]; ++yi) {
+				struct Vertex* y = h->vertices[oldCharacteristics[yi]];
+
+				if (y->number == parentsHa[u->number]) { // might be a problem for y == a ?
+					addCharacteristic(current, y, u, v);
+				} else {
+					int yuCharacteristic = computeCharacteristic(*current, y, u, v, gp);
+					if (yuCharacteristic) {
+						addCharacteristic(current, y, u, v);
+						if (y == u) {
+							current->foundIso = 1;
 						}
 					}
 				}
@@ -197,20 +196,8 @@ struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base
 	info.h = h;
 	info.postorder = base.postorder;
 
-//	fprintf(stdout, "previous pattern:\n");
-//	printGraphAidsFormat(base.h, stdout);
-//	fprintf(stdout, "previous cube:\n");
-//	printNewCubeCondensed(base.S, base.g->n, base.h->n);
-
-//	fprintf(stdout, "new edge %s %s %s\n", info.h->vertices[info.h->n - 1]->label, info.h->vertices[info.h->n - 1]->neighborhood->label, info.h->vertices[info.h->n - 2]->label);
-//	fprintf(stdout, "current pattern:\n");
-//	printGraphAidsFormat(info.h, stdout);
-
 	createNewCubeFromBaseFast(base, &info);
 	iterativeSubtreeCheck_intern(base, &info, gp);
-
-//	fprintf(stdout, "current cube:\n");
-//	printNewCubeCondensed(info.S, info.g->n, info.h->n);
 
 	return info;
 }
@@ -224,58 +211,6 @@ struct SubtreeIsoDataStore initG(struct Graph* g) {
 	info.g = g;
 	return info;
 }
-
-
-///** create the set of characteristics for a single edge pattern graph */
-//struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp) {
-//	struct SubtreeIsoDataStore info = {0};
-//	// copy stuff from below
-//	info.g = base.g;
-//	info.postorder = base.postorder;
-//
-//	// create graph from edge
-//	info.h = createGraph(2, gp);
-//	(info.h)->vertices[0]->label = patternEdge->startPoint->label;
-//	(info.h)->vertices[1]->label = patternEdge->endPoint->label;
-//	addEdgeBetweenVertices(0, 1, patternEdge->label, info.h, gp);
-//
-//	// create cube
-//	createNewBaseCubeFast(&info);
-//
-//	int* parents = getParentsFromPostorder(info.g, info.postorder);
-//
-//	for (int vi=0; vi<(info.g)->n; ++vi) {
-//		struct Vertex* v = (info.g)->vertices[info.postorder[vi]];
-//		for (int ui=0; ui<2; ++ui) {
-//			struct Vertex* u = (info.h)->vertices[ui];
-//			struct Vertex* y = (info.h)->vertices[(ui + 1) % 2];
-//			if (labelCmp(v->label, u->label) == 0) {
-//				// if vertex labels match, there is a characteristic (H^y_u, v)
-//				addCharacteristic(&info, y, u, v);
-//				char foundIso = 0;
-//				// if there is at least one edge that matches and does not lead to the parent, then there is a characteristic (H^u_u, v)
-//				// we add this characteristic only once below
-//				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
-//					if (parents[v->number] != e->endPoint->number) {
-//						// check if edge labels match
-//						if (labelCmp(e->label, patternEdge->label) == 0) {
-//							// if edge does not lead to parent, there is a characteristic (H^u_u, v) if vertex labels of endpoint match
-//							if (labelCmp(e->endPoint->label, y->label) == 0) {
-//								foundIso = 1;
-//							}
-//						}
-//					}
-//				}
-//				if (foundIso) {
-//					addCharacteristic(&info, u, u, v);
-//					info.foundIso = 1;
-//				}
-//			}
-//		}
-//	}
-//	free(parents);
-//	return info;
-//}
 
 
 /** create the set of characteristics for a single edge pattern graph */

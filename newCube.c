@@ -185,6 +185,9 @@ void dumpNewCubeFast(int*** S, int x, int y) {
 //	free(S);
 //}
 
+int* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v) {
+	return data.S[v->number][u->number];
+}
 
 int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
 	for (int i=1; i<=data.S[v->number][u->number][0]; ++i) {

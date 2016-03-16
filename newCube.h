@@ -47,6 +47,7 @@ void printNewSDanger(int* data, size_t length);
 void printNewCube(int*** S, int gn, int hn);
 void printNewCubeCondensed(int*** S, int gn, int hn);
 void testSizes(int*** S, int gn, int hn);
+int* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v);
 
 #endif
 
