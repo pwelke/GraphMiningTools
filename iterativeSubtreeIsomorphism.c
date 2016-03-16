@@ -1,7 +1,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
-//#include <assert.h>
+#include <assert.h>
 
 #include "newCube.h"
 #include "graph.h"
@@ -16,7 +16,8 @@
 int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
 	// TODO speedup by handling leaf case separately
 	struct Graph* B = makeBipartiteInstanceFromVertices(data, y, u, v, gp);
-	int sizeofMatching = bipartiteMatchingFastAndDirty(B, gp);
+	int sizeofMatching = bipartiteMatchingEvenMoreDirty(B, gp);
+
 	int nNeighbors = B->number;
 	dumpGraph(gp, B);
 	return (sizeofMatching == nNeighbors) ? 1 : 0;

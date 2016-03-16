@@ -164,6 +164,7 @@ The residual capacity of those edges is expected to be
 0 for (a,b) and
 1 for (b,a)
 and needs to be encoded in the ->flag member of each edge.
+->visited needs to be initialized to 0 for each vertex.
 
 The algorithm changes the ->flag values of edges in g
 */
@@ -191,6 +192,85 @@ int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 	}
 
 	removeSandT(g, s, t, gp);
+
+	return matchingSize;
+}
+
+
+/**
+dfs that searches for a path from s to t and augments it,
+if found.
+returns 1 if there is a path or 0 otherwise.
+*/
+static char augment_B_rec(struct Graph* B, struct Vertex* v) {
+	struct VertexList* e;
+
+	if ((v->number >= B->number) && (v->d == 0)) {
+		v->d = 1;
+		return 1;
+	}
+	v->visited = 1;
+	for (e=v->neighborhood; e!=NULL; e=e->next) {
+		if ((e->flag == 0) && (e->endPoint->visited == 0)) {
+			char found = augment_B_rec(B, e->endPoint);
+			if (found) {
+				setFlag(e, 1);
+				v->visited = 0;
+				return 1;
+			}
+		}
+	}
+	v->visited = 0;
+	return 0;
+}
+
+/**
+dfs that searches for a path from s to t and augments it,
+if found.
+returns 1 if there is a path or 0 otherwise.
+*/
+static char augment_B(struct Graph* B) {
+	for (int v=0; v<B->number; ++v) {
+		if (B->vertices[v]->d == 0) {
+			char found = augment_B_rec(B, B->vertices[v]);
+			if (found) {
+				B->vertices[v]->d = 1;
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+
+/**
+Return a maximum matching of the bipartite graph g.
+
+Input is a bipartite graph g. That is: V(g) = A \dot{\cup} B,
+g->number = |A| and vertices 0 to |A|-1 belong to A.
+
+Furthermore, there are only edges {a, b} with a \in A and
+b \in B which are undirected (hence, (a,b) and (b,a) are present in B).
+The ->label of edge (a,b) points to the edge (b,a).
+That is, the cast ((struct VertexList*)e->label) is valid.
+
+The residual capacity of those edges is expected to be
+0 for (a,b) and
+1 for (b,a)
+and needs to be encoded in the ->flag member of each edge.
+->visited needs to be initialized to 0 for each vertex.
+
+The algorithm changes the ->flag values of edges in g and the ->d values of vertices.
+
+Difference to bipartiteMatchingFastAndDirty() is that this method does not
+explicitly add source and sink vertices but stores coverage of vertices by matching in the ->d flag of vertices.
+*/
+int bipartiteMatchingEvenMoreDirty(struct Graph* g, struct GraphPool* gp) {
+	int matchingSize = 0;
+
+	while (augment_B(g)) {
+		++matchingSize;
+	}
 
 	return matchingSize;
 }
