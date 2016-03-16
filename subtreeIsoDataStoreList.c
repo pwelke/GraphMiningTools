@@ -124,7 +124,7 @@ struct SubtreeIsoDataStoreList* intersectTwoSupportSets(struct SubtreeIsoDataSto
 			a = a->next;
 			b = b->next;
 		}
-		else if (a->data.h->number < b->data.g->number) /* advance the smaller list */
+		else if (a->data.g->number < b->data.g->number) /* advance the smaller list */
 			a = a->next;
 		else
 			b = b->next;
