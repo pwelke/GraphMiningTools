@@ -657,7 +657,8 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 						struct Graph* B = makeBipartiteInstance(g, current->number, h, u, S, gp);
 						int* matchings = malloc((degU + 1) * sizeof(int));
 
-						matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
+						// matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
+						matchings[0] = bipartiteMatchingEvenMoreDirty(B, gp);
 
 						// have we found a subgraph isomorphism?
 						if (matchings[0] == degU) {
