@@ -938,19 +938,12 @@ struct SubtreeIsoDataStoreList* getCandidateSupportSuperSet(struct IntSet* paren
 
 	// obtain support sets of parents
 	struct SubtreeIsoDataStoreList* parentSupportSets = getSupportSetsOfPatterns(previousLevelSupportLists, parentIds);
-	fprintf(stderr, "=====\n");
-	for (struct SubtreeIsoDataStoreList* l = parentSupportSets; l!=NULL; l=l->next) {
-		fprintf(stderr, "support of pattern %i: ", l->first->data.h->number);
-		printSubtreeIsoDataStoreList(l, stderr);
-	}
 
 	// move desired parent support set to head of list to keep the correct subtreeIsoDataStores
 	parentSupportSets = subtreeIsoDataStoreChangeHead(parentSupportSets, parentIdToKeep);
 
 	// compute a candidate support set that is the intersection of the support sets of the apriori parents of the extension
 	struct SubtreeIsoDataStoreList* candidateSupportSuperSet = intersectSupportSets(parentSupportSets);
-	fprintf(stderr, "resulting intersection: ");
-	printSubtreeIsoDataStoreList(candidateSupportSuperSet, stderr);
 
 	// garbage collection
 	while (parentSupportSets) {
@@ -971,147 +964,149 @@ struct Graph* popGraph(struct Graph** list) {
 	return head;
 }
 
-void extendPreviousLevelNoPruning(// input
-		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
-		struct Vertex* previousLevelSearchTree,
-		struct ShallowGraph* extensionEdges,
-		size_t threshold,
-		// output
-		struct SubtreeIsoDataStoreList** resultCandidateSupportSuperSets,
-		struct Graph** resultCandidates,
-		// memory management
-		struct GraphPool* gp,
-		struct ShallowGraphPool* sgp) {
-	assert(previousLevelSupportLists != NULL);
-	assert(previousLevelSearchTree != NULL);
-	assert(extensionEdges != NULL);
 
-
-	*resultCandidateSupportSuperSets = NULL;
-	*resultCandidates = NULL;
-
-	struct Vertex* currentLevelCandidateSearchTree = getVertex(gp->vertexPool);
-
-	int nAllExtensions = 0;
-	int nAddedToOutput = 0;
-	int nDumped = 0;
-
-	// generate a list of extensions of all frequent patterns
-	// filter these extensions using an apriori property
-	// for each extension, compute a list of ids of their apriori parents
-
-	for (struct SubtreeIsoDataStoreList* frequentPatternSupportList=previousLevelSupportLists; frequentPatternSupportList!=NULL; frequentPatternSupportList=frequentPatternSupportList->next) {
-		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
-
-		// extend frequent pattern
-		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
-
-		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
-			++nAllExtensions;
-
-			struct ShallowGraph* string = canonicalStringOfTree(extension, sgp);
-
-			if (!containsString(currentLevelCandidateSearchTree, string)) {
-				// count number of apriori survivors
-				 ++nAddedToOutput;
-
-				 addToSearchTree(currentLevelCandidateSearchTree, string, gp, sgp);
-				 extension->number = currentLevelCandidateSearchTree->lowPoint;
-
-				// get (hopefully small) superset of the support set of the extension
-				struct SubtreeIsoDataStoreList* extensionSupportSuperSet = intersectTwoSupportSets(frequentPatternSupportList, frequentPatternSupportList);
-
-				// add extension and support super set to list of candidates for next level
-				extension->next = *resultCandidates;
-				*resultCandidates = extension;
-				extensionSupportSuperSet->next = *resultCandidateSupportSuperSets;
-				*resultCandidateSupportSuperSets = extensionSupportSuperSet;
-
-			} else {
-				// dump extension that does not fulfill apriori property
-				dumpShallowGraph(sgp, string);
-				dumpGraph(gp, extension);
-				++nDumped;
-			}
-		}
-	}
-
-	dumpSearchTree(gp, currentLevelCandidateSearchTree);
-	fprintf(stderr, "generated extensions: %i\n filtered extensions: %i\n", nAllExtensions, nAddedToOutput);
-
-	assert(nAddedToOutput + nDumped == nAllExtensions);
-}
-
-void extendPreviousLevelOnlyAprioriPruning(// input
-		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
-		struct Vertex* previousLevelSearchTree,
-		struct ShallowGraph* extensionEdges,
-		size_t threshold,
-		// output
-		struct SubtreeIsoDataStoreList** resultCandidateSupportSuperSets,
-		struct Graph** resultCandidates,
-		// memory management
-		struct GraphPool* gp,
-		struct ShallowGraphPool* sgp) {
-	assert(previousLevelSupportLists != NULL);
-	assert(previousLevelSearchTree != NULL);
-	assert(extensionEdges != NULL);
-
-
-	*resultCandidateSupportSuperSets = NULL;
-	*resultCandidates = NULL;
-
-	struct Vertex* currentLevelCandidateSearchTree = getVertex(gp->vertexPool);
-
-	int nAllExtensionsPreApriori = 0;
-	int nAllExtensionsPostApriori = 0;
-	int nAddedToOutput = 0;
-	int nDumped = 0;
-
-	// generate a list of extensions of all frequent patterns
-	// filter these extensions using an apriori property
-	// for each extension, compute a list of ids of their apriori parents
-
-	for (struct SubtreeIsoDataStoreList* frequentPatternSupportList=previousLevelSupportLists; frequentPatternSupportList!=NULL; frequentPatternSupportList=frequentPatternSupportList->next) {
-		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
-
-		// extend frequent pattern
-		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
-
-		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
-			// count number of generated extensions
-			++nAllExtensionsPreApriori;
-
-			struct IntSet* aprioriParentIdSet = aprioriCheckExtensionReturnList(extension, previousLevelSearchTree, currentLevelCandidateSearchTree, gp, sgp);
-
-			if (aprioriParentIdSet) {
-				// count number of apriori survivors
-				 ++nAllExtensionsPostApriori;
-
-				struct SubtreeIsoDataStoreList* extensionSupportSuperSet = intersectTwoSupportSets(frequentPatternSupportList, frequentPatternSupportList);
-				dumpIntSet(aprioriParentIdSet);
-
-				// add extension and support super set to list of candidates for next level
-				extension->next = *resultCandidates;
-				*resultCandidates = extension;
-				extensionSupportSuperSet->next = *resultCandidateSupportSuperSets;
-				*resultCandidateSupportSuperSets = extensionSupportSuperSet;
-
-				++nAddedToOutput;
-
-			} else {
-				// dump extension that does not fulfill apriori property
-				dumpGraph(gp, extension);
-				++nDumped;
-			}
-		}
-	}
-
-	dumpSearchTree(gp, currentLevelCandidateSearchTree);
-	fprintf(stderr, "generated extensions: %i\napriori filtered extensions: %i\n", nAllExtensionsPreApriori, nAllExtensionsPostApriori);
-
-	assert(nAddedToOutput + nDumped == nAllExtensionsPreApriori);
-}
+// TODO IF YOU UNCOMMENT THIS, YOU NEED TO CATER FOR NEW DEFINITION OF APRIORI...RETURNLISTS,
+//void extendPreviousLevelNoPruning(// input
+//		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+//		struct Vertex* previousLevelSearchTree,
+//		struct ShallowGraph* extensionEdges,
+//		size_t threshold,
+//		// output
+//		struct SubtreeIsoDataStoreList** resultCandidateSupportSuperSets,
+//		struct Graph** resultCandidates,
+//		// memory management
+//		struct GraphPool* gp,
+//		struct ShallowGraphPool* sgp) {
+//	assert(previousLevelSupportLists != NULL);
+//	assert(previousLevelSearchTree != NULL);
+//	assert(extensionEdges != NULL);
+//
+//
+//	*resultCandidateSupportSuperSets = NULL;
+//	*resultCandidates = NULL;
+//
+//	struct Vertex* currentLevelCandidateSearchTree = getVertex(gp->vertexPool);
+//
+//	int nAllExtensions = 0;
+//	int nAddedToOutput = 0;
+//	int nDumped = 0;
+//
+//	// generate a list of extensions of all frequent patterns
+//	// filter these extensions using an apriori property
+//	// for each extension, compute a list of ids of their apriori parents
+//
+//	for (struct SubtreeIsoDataStoreList* frequentPatternSupportList=previousLevelSupportLists; frequentPatternSupportList!=NULL; frequentPatternSupportList=frequentPatternSupportList->next) {
+//		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
+//
+//		// extend frequent pattern
+//		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
+//
+//		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
+//			++nAllExtensions;
+//
+//			struct ShallowGraph* string = canonicalStringOfTree(extension, sgp);
+//
+//			if (!containsString(currentLevelCandidateSearchTree, string)) {
+//				// count number of apriori survivors
+//				 ++nAddedToOutput;
+//
+//				 addToSearchTree(currentLevelCandidateSearchTree, string, gp, sgp);
+//				 extension->number = currentLevelCandidateSearchTree->lowPoint;
+//
+//				// get (hopefully small) superset of the support set of the extension
+//				struct SubtreeIsoDataStoreList* extensionSupportSuperSet = intersectTwoSupportSets(frequentPatternSupportList, frequentPatternSupportList);
+//
+//				// add extension and support super set to list of candidates for next level
+//				extension->next = *resultCandidates;
+//				*resultCandidates = extension;
+//				extensionSupportSuperSet->next = *resultCandidateSupportSuperSets;
+//				*resultCandidateSupportSuperSets = extensionSupportSuperSet;
+//
+//			} else {
+//				// dump extension that does not fulfill apriori property
+//				dumpShallowGraph(sgp, string);
+//				dumpGraph(gp, extension);
+//				++nDumped;
+//			}
+//		}
+//	}
+//
+//	dumpSearchTree(gp, currentLevelCandidateSearchTree);
+//	fprintf(stderr, "generated extensions: %i\n filtered extensions: %i\n", nAllExtensions, nAddedToOutput);
+//
+//	assert(nAddedToOutput + nDumped == nAllExtensions);
+//}
+//
+//void extendPreviousLevelOnlyAprioriPruning(// input
+//		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+//		struct Vertex* previousLevelSearchTree,
+//		struct ShallowGraph* extensionEdges,
+//		size_t threshold,
+//		// output
+//		struct SubtreeIsoDataStoreList** resultCandidateSupportSuperSets,
+//		struct Graph** resultCandidates,
+//		// memory management
+//		struct GraphPool* gp,
+//		struct ShallowGraphPool* sgp) {
+//	assert(previousLevelSupportLists != NULL);
+//	assert(previousLevelSearchTree != NULL);
+//	assert(extensionEdges != NULL);
+//
+//
+//	*resultCandidateSupportSuperSets = NULL;
+//	*resultCandidates = NULL;
+//
+//	struct Vertex* currentLevelCandidateSearchTree = getVertex(gp->vertexPool);
+//
+//	int nAllExtensionsPreApriori = 0;
+//	int nAllExtensionsPostApriori = 0;
+//	int nAddedToOutput = 0;
+//	int nDumped = 0;
+//
+//	// generate a list of extensions of all frequent patterns
+//	// filter these extensions using an apriori property
+//	// for each extension, compute a list of ids of their apriori parents
+//
+//	for (struct SubtreeIsoDataStoreList* frequentPatternSupportList=previousLevelSupportLists; frequentPatternSupportList!=NULL; frequentPatternSupportList=frequentPatternSupportList->next) {
+//		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
+//
+//		// extend frequent pattern
+//		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
+//
+//		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
+//			// count number of generated extensions
+//			++nAllExtensionsPreApriori;
+//
+//			struct IntSet* aprioriParentIdSet = aprioriCheckExtensionReturnList(extension, previousLevelSearchTree, currentLevelCandidateSearchTree, gp, sgp);
+//
+//			if (aprioriParentIdSet) {
+//				// count number of apriori survivors
+//				 ++nAllExtensionsPostApriori;
+//
+//				struct SubtreeIsoDataStoreList* extensionSupportSuperSet = intersectTwoSupportSets(frequentPatternSupportList, frequentPatternSupportList);
+//				dumpIntSet(aprioriParentIdSet);
+//
+//				// add extension and support super set to list of candidates for next level
+//				extension->next = *resultCandidates;
+//				*resultCandidates = extension;
+//				extensionSupportSuperSet->next = *resultCandidateSupportSuperSets;
+//				*resultCandidateSupportSuperSets = extensionSupportSuperSet;
+//
+//				++nAddedToOutput;
+//
+//			} else {
+//				// dump extension that does not fulfill apriori property
+//				dumpGraph(gp, extension);
+//				++nDumped;
+//			}
+//		}
+//	}
+//
+//	dumpSearchTree(gp, currentLevelCandidateSearchTree);
+//	fprintf(stderr, "generated extensions: %i\napriori filtered extensions: %i\n", nAllExtensionsPreApriori, nAllExtensionsPostApriori);
+//
+//	assert(nAddedToOutput + nDumped == nAllExtensionsPreApriori);
+//}
 
 void extendPreviousLevel(// input
 		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
@@ -1154,7 +1149,18 @@ void extendPreviousLevel(// input
 			// count number of generated extensions
 			++nAllExtensionsPreApriori;
 
-			struct IntSet* aprioriParentIdSet = aprioriCheckExtensionReturnList(extension, previousLevelSearchTree, currentLevelCandidateSearchTree, gp, sgp);
+			/* filter out patterns that were already enumerated as the extension of some other pattern
+				and are in the search tree */
+			struct ShallowGraph* string = canonicalStringOfTree(extension, sgp);
+			int previousNumberOfDistinctPatterns = currentLevelCandidateSearchTree->d;
+			addToSearchTree(currentLevelCandidateSearchTree, string, gp, sgp);
+
+			struct IntSet* aprioriParentIdSet;
+			if (previousNumberOfDistinctPatterns == currentLevelCandidateSearchTree->d) {
+				aprioriParentIdSet = NULL;
+			} else {
+				aprioriParentIdSet = aprioriCheckExtensionReturnList(extension, previousLevelSearchTree, gp, sgp);
+			}
 
 			if (aprioriParentIdSet) {
 				// count number of apriori survivors
