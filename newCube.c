@@ -8,7 +8,7 @@
 // TODO can be made constant time
 /** Utility data structure creator.
 Cube will store, what is called S in the paper. */
-static int*** createNewCube(int x, int y) {
+static int*** createNewCube_intern(int x, int y) {
 	int*** cube;
 	if ((cube = malloc(x * sizeof(int**)))) {
 		for (int i=0; i<x; ++i) {
@@ -32,8 +32,8 @@ static int*** createNewCube(int x, int y) {
 }
 
 
-void createNewBaseCubeFast(struct SubtreeIsoDataStore* info) {
-	info->S = createNewCube(info->g->n, 2);
+void createNewCubeForEdgePattern(struct SubtreeIsoDataStore* info) {
+	info->S = createNewCube_intern(info->g->n, 2);
 	info->elementsInS = 0;
 	int* array = malloc(3 * 2 * info->g->n * sizeof(int));
 	size_t position = 0;
@@ -48,7 +48,7 @@ void createNewBaseCubeFast(struct SubtreeIsoDataStore* info) {
 }
 
 
-void createNewCubeFromBaseFast(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new) {
+void createNewCubeFromBase(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new) {
 
 	// create cube large enough for filtered characteristics plus new for old vertices of h
 	// TODO I assume two things:
@@ -94,7 +94,7 @@ void createNewCubeFromBaseFast(struct SubtreeIsoDataStore base, struct SubtreeIs
 }
 
 
-void dumpNewCubeFast(int*** S, int x) {
+void dumpNewCube(int*** S, int x) {
 	free(S[0][0]);
 	for (int i=0; i<x; ++i) {
 		free(S[i]);
@@ -168,7 +168,7 @@ void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struc
 
 
 /** Print a single entry in the cube */
-void printNewS(int*** S, int v, int u) {
+void printNewCubeRow(int*** S, int v, int u) {
 	int i;
 	printf("S(%i, %i)={", v, u);
 	int* row = S[v][u];
@@ -197,7 +197,7 @@ void printNewSDanger(int* data, size_t length) {
 void printNewCube(int*** S, int gn, int hn) {
 	for (int i=0; i<gn; ++i) {
 		for (int j=0; j<hn; ++j) {
-			printNewS(S, i, j);
+			printNewCubeRow(S, i, j);
 		}
 	}
 }
@@ -207,14 +207,14 @@ void printNewCubeCondensed(int*** S, int gn, int hn) {
 	for (int i=0; i<gn; ++i) {
 		for (int j=0; j<hn; ++j) {
 			if (S[i][j][0] != 0) {
-				printNewS(S, i, j);
+				printNewCubeRow(S, i, j);
 			}
 		}
 	}
 }
 
 
-void testSizes(int*** S, int gn, int hn) {
+void testNewCubeSizes(int*** S, int gn, int hn) {
 	int size = 0;
 	for (int i=0; i<gn; ++i) {
 		for (int j=0; j<hn; ++j) {

@@ -66,7 +66,7 @@ void dumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e) {
 		dumpSubtreeIsoDataStoreElements(e->next);
 	}
 
-	dumpNewCubeFast(e->data.S, e->data.g->n);
+	dumpNewCube(e->data.S, e->data.g->n);
 	free(e);
 }
 
@@ -83,7 +83,7 @@ void dumpSubtreeIsoDataStoreElementsWithPostorder(struct SubtreeIsoDataStoreElem
 		dumpSubtreeIsoDataStoreElementsWithPostorder(e->next, gp);
 	}
 
-	dumpNewCubeFast(e->data.S, e->data.g->n);
+	dumpNewCube(e->data.S, e->data.g->n);
 	dumpGraph(gp, e->data.h);
 	free(e->data.postorder);
 	free(e);

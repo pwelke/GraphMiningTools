@@ -264,7 +264,7 @@ struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base
 	info.h = h;
 	info.postorder = base.postorder;
 
-	createNewCubeFromBaseFast(base, &info);
+	createNewCubeFromBase(base, &info);
 	iterativeSubtreeCheck_intern(base, &info, gp);
 
 	return info;
@@ -293,7 +293,7 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheckForGraph(struct SubtreeIsoDa
 	char* edgeLabel = h->vertices[0]->neighborhood->label;
 
 	// create cube
-	createNewBaseCubeFast(&info);
+	createNewCubeForEdgePattern(&info);
 
 	int* parents = getParentsFromPostorder(info.g, info.postorder);
 
