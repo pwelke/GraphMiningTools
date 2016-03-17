@@ -9,24 +9,15 @@
 #include "subtreeIsomorphism.h"
 #include "iterativeSubtreeIsomorphism.h"
 #include "bitSet.h"
+#include "cachedGraph.h"
 
 
 
 // MISC TOOLING
-int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
-	// TODO speedup by handling leaf case separately
-	struct Graph* B = makeBipartiteInstanceFromVertices(data, y, u, v, gp);
-	int sizeofMatching = bipartiteMatchingEvenMoreDirty(B, gp);
-
-	int nNeighbors = B->number;
-	dumpGraph(gp, B);
-	return (sizeofMatching == nNeighbors) ? 1 : 0;
-}
-
 
 /* vertices of g have their ->visited values set to the postorder. Thus,
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
+static struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
 	struct Graph* B;
 
 	int sizeofX = degree(u);
@@ -61,21 +52,18 @@ struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data,
 
 	/* add edge (x,y) if u in S(y,x) */
 	for (i=0; i<sizeofX; ++i) {
+		int x = B->vertices[i]->lowPoint;
 		for (int j=sizeofX; j<B->n; ++j) {
-			int x = B->vertices[i]->lowPoint;
 			int y = B->vertices[j]->lowPoint;
 
 			/* y has to be a child of v */
 			if (data.g->vertices[y]->visited < v->visited) {
-				/* vertex labels have to match */
-				if (labelCmp(data.g->vertices[y]->label, data.h->vertices[x]->label) == 0) {
-					/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
-					these values were stored in B->vertices[i,j]->label */
-					if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
-						if (containsCharacteristic(data, u, data.h->vertices[x], data.g->vertices[y])) {
-							addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
-							++B->m;
-						}
+				/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
+				these values were stored in B->vertices[i,j]->label */
+				if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+					if (containsCharacteristic(data, u, data.h->vertices[x], data.g->vertices[y])) {
+						addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+						++B->m;
 					}
 				}
 			}
@@ -85,6 +73,82 @@ struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data,
 	return B;
 }
 
+
+int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
+	// TODO speedup by handling leaf case separately
+	struct Graph* B = makeBipartiteInstanceFromVertices(data, y, u, v, gp);
+	int sizeofMatching = bipartiteMatchingEvenMoreDirty(B);
+
+	int nNeighbors = B->number;
+	dumpGraph(gp, B);
+	return (sizeofMatching == nNeighbors) ? 1 : 0;
+}
+
+/* vertices of g have their ->visited values set to the postorder. Thus,
+children of v are vertices u that are neighbors of v and have u->visited < v->visited */
+static struct Graph* makeBipartiteInstanceFromVerticesCached(struct SubtreeIsoDataStore data, struct CachedGraph* cachedB, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
+
+	int sizeofX = degree(u);
+	int sizeofY = degree(v);
+
+	// if one of the neighbors of u is removed from this instance to see if there is a matching covering all neighbors but it,
+	// the bipartite graph must be smaller
+	if (removalVertex->number != u->number) {
+		--sizeofX;
+	}
+
+	struct Graph* B = getCachedGraph(sizeofX + sizeofY, cachedB);
+
+	/* store size of first partitioning set */
+	B->number = sizeofX;
+
+	/* add vertex numbers of original vertices to ->lowPoint of each vertex in B
+	and add edge labels to vertex labels to compare edges easily */
+	int i = 0;
+	for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint->number != removalVertex->number) {
+			B->vertices[i]->lowPoint = e->endPoint->number;
+			B->vertices[i]->label = e->label;
+			++i;
+		}
+	}
+	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+		B->vertices[i]->lowPoint = e->endPoint->number;
+		B->vertices[i]->label = e->label;
+		++i;
+	}
+
+	/* add edge (x,y) if u in S(y,x) */
+	for (i=0; i<sizeofX; ++i) {
+		int x = B->vertices[i]->lowPoint;
+		for (int j=sizeofX; j<B->n; ++j) {
+			int y = B->vertices[j]->lowPoint;
+
+			/* y has to be a child of v */
+			if (data.g->vertices[y]->visited < v->visited) {
+				/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
+				these values were stored in B->vertices[i,j]->label */
+				if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+					if (containsCharacteristic(data, u, data.h->vertices[x], data.g->vertices[y])) {
+						addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+						++B->m;
+					}
+				}
+			}
+		}
+	}
+	return B;
+}
+
+
+int computeCharacteristicCached(struct SubtreeIsoDataStore data, struct CachedGraph* cachedB, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
+	struct Graph* B = makeBipartiteInstanceFromVerticesCached(data, cachedB, y, u, v, gp);
+	int sizeofMatching = bipartiteMatchingEvenMoreDirty(B);
+
+	int nNeighbors = B->number;
+	returnCachedGraph(cachedB);
+	return (sizeofMatching == nNeighbors) ? 1 : 0;
+}
 
 
 int* getParentsFromPostorder(struct Graph* g, int* postorder) {
@@ -126,7 +190,7 @@ Output:
 	the cube for h and g
 
  */
-void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* current, struct GraphPool* gp) {
+static void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* current, struct GraphPool* gp) {
 
 	struct Graph* g = current->g;
 	struct Graph* h = current->h;
@@ -136,6 +200,8 @@ void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtre
 	struct Vertex* a = b->neighborhood->endPoint;
 
 	int* parentsHa = getParents(h, a->number); // move out / rewrite
+
+	struct CachedGraph* cachedB = initCachedGraph(gp, h->n);
 
 	current->foundIso = 0;
 	for (int vi=0; vi<g->n; ++vi) {
@@ -175,7 +241,7 @@ void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtre
 				if (y->number == parentsHa[u->number]) { // might be a problem for y == a ?
 					addCharacteristic(current, y, u, v);
 				} else {
-					int yuCharacteristic = computeCharacteristic(*current, y, u, v, gp);
+					int yuCharacteristic = computeCharacteristicCached(*current, cachedB, y, u, v, gp);
 					if (yuCharacteristic) {
 						addCharacteristic(current, y, u, v);
 						if (y == u) {
@@ -188,6 +254,7 @@ void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct Subtre
 	}
 
 	free(parentsHa);
+	dumpCachedGraph(cachedB);
 }
 
 

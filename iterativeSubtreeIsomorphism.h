@@ -7,7 +7,7 @@ int computeCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, str
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct GraphPool* gp);
+//struct Graph* makeBipartiteInstanceFromVertices(struct SubtreeIsoDataStore data, struct Vertex* removalVertex, struct Vertex* u, struct Vertex* v, struct GraphPool* gp);
 int* getParentsFromPostorder(struct Graph* g, int* postorder) ;
 /* Return an array holding the indices of the parents of each vertex in g with root root.
 the parent of root does not exist, which is indicated by index -1 */
@@ -33,7 +33,7 @@ Output:
 	the cube for h and g
 
 */
-void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* currentPointer, struct GraphPool* gp);
+//void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* currentPointer, struct GraphPool* gp);
 struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp);
 
 
