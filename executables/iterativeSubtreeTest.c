@@ -92,14 +92,14 @@
 					printf("lenght %i, Found Iso: %i\n", current.h->m, current.foundIso);
 //					printNewCubeCondensed(current.S, current.g->n, current.h->n);
 
-					dumpNewCubeFast(prev.S, prev.g->n, prev.h->n);
+					dumpNewCubeFast(prev.S, prev.g->n);
 					dumpGraph(gp, prev.h);
 
 					prev = current;
 				}
 
 
-				dumpNewCubeFast(prev.S, prev.g->n, prev.h->n);
+				dumpNewCubeFast(prev.S, prev.g->n);
 				dumpGraph(gp, prev.h);
 				
 				// printNewCube(next.S, next.g->n, next.h->n);

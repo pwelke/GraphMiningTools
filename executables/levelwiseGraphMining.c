@@ -315,7 +315,7 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t thres
 			if (result.foundIso) {
 				appendSubtreeIsoDataStore(refinementSupport, result);
 			} else {
-				dumpNewCubeFast(result.S, result.g->n, result.h->n);
+				dumpNewCubeFast(result.S, result.g->n);
 			}
 		}
 		// if so, print and recurse
@@ -1241,7 +1241,7 @@ struct SubtreeIsoDataStoreList* iterativeBFS(// input
 				//TODO store result id somehow
 				appendSubtreeIsoDataStore(currentActualSupport, result);
 			} else {
-				dumpNewCubeFast(result.S, result.g->n, result.h->n);
+				dumpNewCubeFast(result.S, result.g->n);
 			}
 		}
 		// filter out candidates with support < threshold
