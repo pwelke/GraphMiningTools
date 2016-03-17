@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "graph.h"
+#include "bipartiteMatching.h"
 
 
 /**
@@ -230,15 +231,17 @@ if found.
 returns 1 if there is a path or 0 otherwise.
 */
 static char augment_B(struct Graph* B) {
-	for (int v=0; v<B->number; ++v) {
+	for (int v=B->activity; v<B->number; ++v) {
 		if (B->vertices[v]->d == 0) {
 			char found = augment_B_rec(B, B->vertices[v]);
 			if (found) {
+				B->activity = v+1;
 				B->vertices[v]->d = 1;
 				return 1;
 			}
 		}
 	}
+	B->activity = B->number;
 	return 0;
 }
 
@@ -264,14 +267,17 @@ The algorithm changes the ->flag values of edges in g and the ->d values of vert
 
 Difference to bipartiteMatchingFastAndDirty() is that this method does not
 explicitly add source and sink vertices but stores coverage of vertices by matching in the ->d flag of vertices.
-*/
-int bipartiteMatchingEvenMoreDirty(struct Graph* g, struct GraphPool* gp) {
-	int matchingSize = 0;
 
+Furthermore, it uses the claim that the way how the matching is constructed, vertices that one test for an augmenting
+path starting at each vertex is sufficient. As of 2016-03-17 this is still a claim, but I'm working on a proof.
+*/
+int bipartiteMatchingEvenMoreDirty(struct Graph* g) {
+	int matchingSize = 0;
+	int activity = g->activity;
 	while (augment_B(g)) {
 		++matchingSize;
 	}
-
+	g->activity = activity;
 	return matchingSize;
 }
 
