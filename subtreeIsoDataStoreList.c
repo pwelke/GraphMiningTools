@@ -43,6 +43,20 @@ void printSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* l, FILE* out) 
 
 }
 
+void printSubtreeIsoDataStoreListSparse(struct SubtreeIsoDataStoreList* l, FILE* out) {
+	fprintf(out, "%i:", l->first->data.h->number);
+	for (struct SubtreeIsoDataStoreElement* e=l->first; e!=NULL; e=e->next) {
+		fprintf(out, " %i", e->data.g->number);
+	}
+	fprintf(out, "\n");
+}
+
+void printSubtreeIsoDataStoreListsSparse(struct SubtreeIsoDataStoreList* lists, FILE* out) {
+	for (struct SubtreeIsoDataStoreList* l=lists; l!=NULL; l=l->next) {
+		printSubtreeIsoDataStoreListSparse(l, out);
+	}
+}
+
 struct SubtreeIsoDataStoreList* getSubtreeIsoDataStoreList() {
 	return calloc(1, sizeof(struct SubtreeIsoDataStoreList));
 }

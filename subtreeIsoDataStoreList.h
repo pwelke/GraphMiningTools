@@ -29,6 +29,8 @@ void appendSubtreeIsoDataStoreElement(struct SubtreeIsoDataStoreList* s, struct 
 void appendSubtreeIsoDataStore(struct SubtreeIsoDataStoreList* l, struct SubtreeIsoDataStore data);
 
 void printSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* l, FILE* out);
+void printSubtreeIsoDataStoreListSparse(struct SubtreeIsoDataStoreList* l, FILE* out);
+void printSubtreeIsoDataStoreListsSparse(struct SubtreeIsoDataStoreList* lists, FILE* out);
 
 struct SubtreeIsoDataStoreList* getSubtreeIsoDataStoreList();
 
