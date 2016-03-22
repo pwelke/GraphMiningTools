@@ -193,7 +193,7 @@ int getVertexAndEdgeHistograms(char* fileName, double importance, struct Vertex*
 Create a list of single-edge ShallowGraphs from a search tree containing single edge canonical strings.
 Note that this method creates a hardcopy of the edges, strings and vertices. 
 Hence, it requires a pointer to a struct Graph* newVertices variable where it stores a newly created graph that holds all the new vertices. 
-To avoid memory leaks, this graph needs to be dumbed together with the struct ShallowGraph* result of this method.
+To avoid memory leaks, this graph needs to be dumped together with the struct ShallowGraph* result of this method.
 */
 struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct Graph** newVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* result = getShallowGraph(sgp);
