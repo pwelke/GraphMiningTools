@@ -741,6 +741,28 @@ void dumpSearchTree(struct GraphPool* p, struct Vertex* root) {
 
 
 /**
+ * Returns an equivalent search tree that is a copy of the original.
+ * The copy, however does not contain stringMasters -- labels reference the labels in original.
+ */
+struct Vertex* shallowCopySearchTree(struct Vertex* original, struct GraphPool* gp) {
+	struct Vertex* copy = shallowCopyVertex(original, gp->vertexPool);
+	copy->d = original->d;
+	copy->lowPoint = original->lowPoint;
+	copy->visited = original->visited;
+
+	for (struct VertexList* e=original->neighborhood; e!=NULL; e=e->next) {
+		struct VertexList* f = getVertexList(gp->listPool);
+		f->label = e->label;
+		f->startPoint = copy;
+		f->endPoint = shallowCopySearchTree(e->endPoint, gp);
+		addEdge(copy, f);
+	}
+
+	return copy;
+}
+
+
+/**
 This function builds a search tree likeish structure given a NULL terminated
 list of ShallowGraphs. The list is consumed and dumped.
 

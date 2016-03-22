@@ -41,5 +41,6 @@ char filterSearchTree(struct Vertex* current, int threshold, struct Vertex* root
 char filterSearchTreeP(struct Vertex* current, int threshold, struct Vertex* root, FILE* lowPoints, struct GraphPool* gp);
 char filterSearchTreeLEQ(struct Vertex* current, int threshold, struct Vertex* root, struct GraphPool* gp);
 void offsetSearchTreeIds(struct Vertex* root, int offset);
+struct Vertex* shallowCopySearchTree(struct Vertex* original, struct GraphPool* gp);
 
 #endif
