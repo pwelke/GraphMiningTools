@@ -140,6 +140,8 @@ char isNeighbor(struct Graph* g, int v, int w);
 int getMaxDegree(struct Graph* g);
 int getMinDegree(struct Graph* g);
 
+struct Graph* popGraph(struct Graph** list);
+
 struct ShallowGraph* getGraphEdges(struct Graph *g, struct ShallowGraphPool* sgp);
 struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPool* gp);
 

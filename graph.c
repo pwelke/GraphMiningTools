@@ -644,6 +644,20 @@ int getMinDegree(struct Graph* g) {
 }
 
 
+/**
+ * Given a pointer to a list of graphs, return the first graph in that list and change the list head to the next element.
+ * If *list == NULL, this method returns NULL and does not change *list.
+ */
+struct Graph* popGraph(struct Graph** list) {
+	struct Graph* head = *list;
+	if (head != NULL) {
+		*list = head->next;
+		head->next = NULL;
+	}
+	return head;
+}
+
+
 
 /********************************************************************************************************
 ******************************* Methods that deal with ShallowGraphs ********************************

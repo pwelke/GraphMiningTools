@@ -753,16 +753,6 @@ struct SubtreeIsoDataStoreList* getCandidateSupportSuperSet(struct IntSet* paren
 }
 
 
-struct Graph* popGraph(struct Graph** list) {
-	struct Graph* head = *list;
-	if (head != NULL) {
-		*list = head->next;
-		head->next = NULL;
-	}
-	return head;
-}
-
-
 void extendPreviousLevel(// input
 		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
@@ -860,7 +850,7 @@ void extendPreviousLevel(// input
 }
 
 
-struct SubtreeIsoDataStoreList* iterativeBFS(// input
+struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		size_t threshold,
@@ -1068,7 +1058,7 @@ void iterativeBFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStre
 		currentLevelSearchTree = getVertex(gp->vertexPool);
 		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
 
-		currentLevelSupportSets = iterativeBFS(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, &currentLevelSearchTree, logStream, gp, sgp);
+		currentLevelSupportSets = iterativeBFSOneLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, &currentLevelSearchTree, logStream, gp, sgp);
 
 		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
 		printSubtreeIsoDataStoreListsSparse(currentLevelSupportSets, featureStream);
