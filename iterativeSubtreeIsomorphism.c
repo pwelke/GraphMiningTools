@@ -282,7 +282,7 @@ struct SubtreeIsoDataStore initG(struct Graph* g) {
 
 
 /** create the set of characteristics for a single edge pattern graph */
-struct SubtreeIsoDataStore initIterativeSubtreeCheckForGraph(struct SubtreeIsoDataStore base, struct Graph* h) {
+struct SubtreeIsoDataStore initIterativeSubtreeCheckForEdge(struct SubtreeIsoDataStore base, struct Graph* h) {
 	struct SubtreeIsoDataStore info = {0};
 	// copy stuff from below
 	info.g = base.g;
@@ -330,6 +330,33 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheckForGraph(struct SubtreeIsoDa
 	return info;
 }
 
+/** create the set of characteristics for a single vertex pattern graph */
+struct SubtreeIsoDataStore initIterativeSubtreeCheckForSingleton(struct SubtreeIsoDataStore base, struct Graph* h) {
+	struct SubtreeIsoDataStore info = {0};
+	// copy stuff from below
+	info.g = base.g;
+	info.postorder = base.postorder;
+	info.h = h;
+
+	struct Vertex* u = h->vertices[0];
+	char* uLabel = u->label;
+
+	// create cube
+	createNewCubeForSingletonPattern(&info);
+
+	for (int vi=0; vi<(info.g)->n; ++vi) {
+		struct Vertex* v = (info.g)->vertices[info.postorder[vi]];
+
+		if (labelCmp(v->label, uLabel) == 0) {
+			// if vertex labels match, there is a characteristic (H^y_u, v)
+			addCharacteristic(&info, u, u, v);
+			info.foundIso = 1;
+		}
+	}
+
+	return info;
+}
+
 /** create the set of characteristics for a single edge pattern graph, given as VertexList. A new graph is created. */
 struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp) {
 		// create graph from edge
@@ -338,7 +365,7 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 		(h)->vertices[1]->label = patternEdge->endPoint->label;
 		addEdgeBetweenVertices(0, 1, patternEdge->label, h, gp);
 
-		return initIterativeSubtreeCheckForGraph(base, h);
+		return initIterativeSubtreeCheckForEdge(base, h);
 
 }
 

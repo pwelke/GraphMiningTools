@@ -25,6 +25,7 @@ struct SubtreeIsoDataStore {
 	int foundIso;
 };
 
+void createNewCubeForSingletonPattern(struct SubtreeIsoDataStore* info);
 void createNewCubeForEdgePattern(struct SubtreeIsoDataStore* info);
 void createNewCubeFromBase(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new);
 void dumpNewCube(int*** S, int x);

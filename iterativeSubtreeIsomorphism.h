@@ -42,6 +42,8 @@ struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base
 struct SubtreeIsoDataStore initG(struct Graph* g);
 /** create the set of characteristics for a single edge pattern graph */
 struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp);
-struct SubtreeIsoDataStore initIterativeSubtreeCheckForGraph(struct SubtreeIsoDataStore base, struct Graph* h);
+struct SubtreeIsoDataStore initIterativeSubtreeCheckForEdge(struct SubtreeIsoDataStore base, struct Graph* h);
+struct SubtreeIsoDataStore initIterativeSubtreeCheckForSingleton(struct SubtreeIsoDataStore base, struct Graph* h);
+
 
 #endif

@@ -47,6 +47,19 @@ void createNewCubeForEdgePattern(struct SubtreeIsoDataStore* info) {
 	}
 }
 
+void createNewCubeForSingletonPattern(struct SubtreeIsoDataStore* info) {
+	info->S = createNewCube_intern(info->g->n, 1);
+	info->elementsInS = 0;
+	int* array = malloc(2 * info->g->n * sizeof(int));
+	size_t position = 0;
+	for (int v=0; v<(info->g)->n; ++v) {
+		int* newPos = array + position;
+		(info->S)[v][0] = newPos; // pointer arithmetic
+		(info->S)[v][0][0] = 0;
+		position += 2;
+	}
+}
+
 
 void createNewCubeFromBase(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new) {
 
