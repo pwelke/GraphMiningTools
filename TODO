@@ -1,12 +1,12 @@
 TODO
 
-- buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
-- speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
-- separate sampling methods from treeSamplingMain.c into a lib file
-- remove countCycleDegree.c and store the only important functionality somewhere (i.e. cycle degrees of all vertices)
-- treeEnumeration might be too slow, as we do not enumerate perfectly
-- extract weisfeiler lehman from treesampling into new executable
-- make optimized vertex and edge counting methods work with importance embedding operator
+- [ ]  buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
+- [X]  speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
+- [ ]  separate sampling methods from treeSamplingMain.c into a lib file
+- [ ]  remove countCycleDegree.c and store the only important functionality somewhere (i.e. cycle degrees of all vertices)
+- [ ]  treeEnumeration might be too slow, as we do not enumerate perfectly
+- [ ]  extract weisfeiler lehman from treesampling into new executable
+- [ ]  make optimized vertex and edge counting methods work with importance embedding operator
 
 - a unified levelwise mining executable that does 
 	- tree -> tree
