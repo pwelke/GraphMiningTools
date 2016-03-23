@@ -31,6 +31,14 @@ void printIntSet(struct IntSet* s, FILE*out) {
 	fprintf(out, "]\n");
 }
 
+void printIntSetSparse(struct IntSet* s, int id, FILE* out) {
+	fprintf(out, "%i:", id);
+	for (struct IntElement* i=s->first; i!=NULL; i=i->next) {
+		fprintf(out, " %i", i->value);
+	}
+	fprintf(out, "\n");
+}
+
 void dumpIntSet(struct IntSet* s) {
 	if (s->size > 0) {
 		dumpIntElements(s->first);

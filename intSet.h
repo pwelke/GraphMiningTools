@@ -17,6 +17,7 @@ struct IntElement* getIntElement();
 struct IntSet* getIntSet();
 void dumpIntElements(struct IntElement* e);
 void printIntSet(struct IntSet* s, FILE*out);
+void printIntSetSparse(struct IntSet* s, int id, FILE* out);
 void dumpIntSet(struct IntSet* s);
 void appendInt(struct IntSet* s, int i);
 void addIntSortedNoDuplicates(struct IntSet* s, int i);
