@@ -268,8 +268,8 @@ The algorithm changes the ->flag values of edges in g and the ->d values of vert
 Difference to bipartiteMatchingFastAndDirty() is that this method does not
 explicitly add source and sink vertices but stores coverage of vertices by matching in the ->d flag of vertices.
 
-Furthermore, it uses the claim that the way how the matching is constructed, vertices that one test for an augmenting
-path starting at each vertex is sufficient. As of 2016-03-17 this is still a claim, but I'm working on a proof.
+Furthermore, it uses the fact that the way how the matching is constructed, vertices that one test for an augmenting
+path starting at each vertex is sufficient.
 */
 int bipartiteMatchingEvenMoreDirty(struct Graph* g) {
 	int matchingSize = 0;
@@ -279,6 +279,45 @@ int bipartiteMatchingEvenMoreDirty(struct Graph* g) {
 	}
 	g->activity = activity;
 	return matchingSize;
+}
+
+/**
+Return 1 if there is a matching that covers A, or 0 otherwise.
+
+Input is a bipartite graph g. That is: V(g) = A \dot{\cup} B,
+g->number = |A| and vertices 0 to |A|-1 belong to A.
+
+Furthermore, there are only edges {a, b} with a \in A and
+b \in B which are undirected (hence, (a,b) and (b,a) are present in B).
+The ->label of edge (a,b) points to the edge (b,a).
+That is, the cast ((struct VertexList*)e->label) is valid.
+
+The residual capacity of those edges is expected to be
+0 for (a,b) and
+1 for (b,a)
+and needs to be encoded in the ->flag member of each edge.
+->visited needs to be initialized to 0 for each vertex.
+
+The algorithm changes the ->flag values of edges in g and the ->d values of vertices.
+
+Due to the claim mentioned above, we can stop searching for a matching that covers A the
+instant we have found a vertex where no augmenting path starts. Hence, in this situation
+the algorithm terminates early.
+
+*/
+char bipartiteMatchingTerminateEarly(struct Graph* B) {
+
+	for (int v=0; v<B->number; ++v) {
+		if (B->vertices[v]->d == 0) {
+			char found = augment_B_rec(B, B->vertices[v]);
+			if (found) {
+				B->vertices[v]->d = 1;
+			} else {
+				return 0;
+			}
+		}
+	}
+	return 1;
 }
 
 
