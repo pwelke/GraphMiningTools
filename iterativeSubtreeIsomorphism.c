@@ -140,14 +140,21 @@ static struct Graph* makeBipartiteInstanceFromVerticesCached(struct SubtreeIsoDa
 	return B;
 }
 
+//
+//int computeCharacteristicCached(struct SubtreeIsoDataStore data, struct CachedGraph* cachedB, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
+//	struct Graph* B = makeBipartiteInstanceFromVerticesCached(data, cachedB, y, u, v, gp);
+//	int sizeofMatching = bipartiteMatchingEvenMoreDirty(B);
+//
+//	int nNeighbors = B->number;
+//	returnCachedGraph(cachedB);
+//	return (sizeofMatching == nNeighbors) ? 1 : 0;
+//}
 
 int computeCharacteristicCached(struct SubtreeIsoDataStore data, struct CachedGraph* cachedB, struct Vertex* y, struct Vertex* u, struct Vertex* v, struct GraphPool* gp) {
 	struct Graph* B = makeBipartiteInstanceFromVerticesCached(data, cachedB, y, u, v, gp);
-	int sizeofMatching = bipartiteMatchingEvenMoreDirty(B);
-
-	int nNeighbors = B->number;
+	char hasMatchingCoveringAll = bipartiteMatchingTerminateEarly(B);
 	returnCachedGraph(cachedB);
-	return (sizeofMatching == nNeighbors) ? 1 : 0;
+	return hasMatchingCoveringAll;
 }
 
 
@@ -232,8 +239,12 @@ static void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct
 		// filter existing characteristics
 		for (int ui=0; ui<h->n-1; ++ui) {
 			struct Vertex* u = h->vertices[ui];
-
+#ifdef INTCUBE
 			int* oldCharacteristics = rawCharacteristics(base, u, v);
+#endif
+#ifdef BYTECUBE
+			uint8_t* oldCharacteristics = rawCharacteristics(base, u, v);
+#endif
 
 			for (int yi=1; yi<=oldCharacteristics[0]; ++yi) {
 				struct Vertex* y = h->vertices[oldCharacteristics[yi]];
