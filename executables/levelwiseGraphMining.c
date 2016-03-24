@@ -858,6 +858,66 @@ struct SubtreeIsoDataStoreList* initLevelwiseMining(struct Graph** db, int** pos
 	return vertexSupportSets;
 }
 
+
+void madness(struct SubtreeIsoDataStoreList* previousLevelSupportSets, struct Vertex* previousLevelSearchTree,
+		     struct ShallowGraph* extensionEdges, size_t maxPatternSize, size_t threshold,
+			 struct SubtreeIsoDataStoreList** currentLevelSupportSets, struct Vertex** currentLevelSearchTree,
+			 FILE* featureStream, FILE* patternStream, FILE* logStream,
+			 struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	fprintf(logStream, "the madness begins!\n");
+
+	*currentLevelSearchTree = NULL;
+	*currentLevelSupportSets = NULL;
+	for (size_t p=1; (p<=maxPatternSize) && (previousLevelSearchTree->number>0); ++p) {
+		*currentLevelSearchTree = getVertex(gp->vertexPool);
+		offsetSearchTreeIds(*currentLevelSearchTree, previousLevelSearchTree->lowPoint);
+		struct Graph* currentLevelCandidates = NULL;
+
+		extendPreviousLevel(previousLevelSupportSets, previousLevelSearchTree, extensionEdges, threshold,
+				currentLevelSupportSets, &currentLevelCandidates, logStream,
+				gp, sgp);
+
+		// add frequent extensions to current level search tree output, set their numbers correctly
+		// dump those candidates that are not frequent
+		int nAllFrequentExtensions = 0;
+
+		struct Graph* candidate;
+		struct SubtreeIsoDataStoreList* candidateSupportSet;
+		for (candidate=currentLevelCandidates, candidateSupportSet=*currentLevelSupportSets; candidate!=NULL; candidate=candidate->next, candidateSupportSet=candidateSupportSet->next) {
+			++nAllFrequentExtensions;
+			struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
+			addToSearchTree(*currentLevelSearchTree, cString, gp, sgp);
+			candidate->number = (*currentLevelSearchTree)->lowPoint;
+
+			// set candidate to be pattern in each of the support records
+			for (struct SubtreeIsoDataStoreElement* e=candidateSupportSet->first; e!=NULL;e=e->next) {
+				e->data.h = candidate;
+				e->data.S = NULL;
+			}
+		}
+		fprintf(logStream, "mad patterns: %i\n", nAllFrequentExtensions);
+
+		printStringsInSearchTree(*currentLevelSearchTree, patternStream, sgp);
+		printSubtreeIsoDataStoreListsSparse(*currentLevelSupportSets, featureStream);
+
+		// garbage collection:
+		// what is now all previousLevel... data structures will not be used at all in the next iteration
+		dumpSearchTree(gp, previousLevelSearchTree);
+		while (previousLevelSupportSets) {
+			struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
+			// ...hence, we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
+			dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
+			previousLevelSupportSets = tmp;
+		}
+
+		// previous level = current level
+		previousLevelSearchTree = *currentLevelSearchTree;
+		previousLevelSupportSets = *currentLevelSupportSets;
+	}
+}
+
+
 void iterativeBFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	/* init data structures */
@@ -908,6 +968,8 @@ void iterativeBFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStre
 		previousLevelSearchTree = currentLevelSearchTree;
 		previousLevelSupportSets = currentLevelSupportSets;
 	}
+
+	madness(currentLevelSupportSets, currentLevelSearchTree, extensionEdges, maxPatternSize, threshold, &previousLevelSupportSets, &previousLevelSearchTree, featureStream, patternStream, logStream, gp, sgp);
 
 	// garbage collection
 	dumpSearchTree(gp, frequentVertices);
