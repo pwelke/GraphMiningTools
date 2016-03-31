@@ -13,9 +13,10 @@ LWGNAME = lwg
 GENNAME = ggen
 NGENNAME = ngen
 WLNAME = wl
+PENAME = gpe
 TESTNAME = iterativeSubtreeTest 
 
-ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME)
+ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME)
 
 CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
 #CPPFLAGS = -g -Wall -Wextra -pedantic -W -std=gnu99 -lm -O2 -D NDEBUG -Wl,-O1
@@ -53,6 +54,8 @@ NGENOBJECTS = $(OBJECTS) ./executables/neighborhoodGenerator.o
 NGENHELP = ./executables/neighborhoodGeneratorHelp.help
 WLOBJECTS = $(OBJECTS) ./executables/weisfeilerLehmanMain.o
 WLHELP = ./executables/weisfeilerLehmanMainHelp.help
+PEOBJECTS = $(OBJECTS) ./executables/patternExtractor.o
+PEHELP = ./executables/patternExtractorHelp.help
 TESTOBJECTS = $(OBJECTS) ./executables/iterativeSubtreeTest.o
 
 # visualize the include dependencies between the source files.
@@ -114,6 +117,9 @@ $(NGENNAME): $(NGENHELP) $(NGENOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(WLNAME): $(WLHELP) $(WLOBJECTS)
+	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	
+$(PENAME): $(PEHELP) $(PEOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(TESTNAME): $(TESTOBJECTS)
