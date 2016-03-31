@@ -2,20 +2,21 @@
 #define BIT_SET_H_ value
 
 #include <stdio.h>
+#include <stdint.h>
 
-char* createBitset(size_t n);
-char* copyBitset(char* bitset, size_t n);
-void destroyBitset(char* bitset);
+uint8_t* createBitset(size_t n);
+uint8_t* copyBitset(uint8_t* bitset, size_t n);
+void destroyBitset(uint8_t* bitset);
 
-void setBitTrue(char* bitset, size_t i);
-void setBitFalse(char* bitset, size_t i);
-void setBit(char* bitset, size_t i, char value);
+void setBitTrue(uint8_t* bitset, size_t i);
+void setBitFalse(uint8_t* bitset, size_t i);
+void setBit(uint8_t* bitset, size_t i, uint8_t value);
 
-char getBit(char* bitset, size_t i);
+uint8_t getBit(uint8_t* bitset, size_t i);
 
-void bitsetUnion(char* a, char* b, size_t n);
-void bitsetIntersection(char* a, char* b, size_t n);
+void bitsetUnion(uint8_t* a, uint8_t* b, size_t n);
+void bitsetIntersection(uint8_t* a, uint8_t* b, size_t n);
 
-void printBitset(char* bitset, size_t n, FILE* out);
+void printBitset(uint8_t* bitset, size_t n, FILE* out);
 
 #endif

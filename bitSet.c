@@ -2,36 +2,36 @@
 #include <string.h>
 #include "bitSet.h"
 
-char* createBitset(size_t n) {
-	char* bitset;
+uint8_t* createBitset(size_t n) {
+	uint8_t* bitset;
 	if (n % 8 == 0) {
-		bitset = calloc((n / 8), sizeof(char));
+		bitset = calloc((n / 8), sizeof(uint8_t));
 	} else {
-		bitset = calloc((n / 8 + 1), sizeof(char));
+		bitset = calloc((n / 8 + 1), sizeof(uint8_t));
 	} 
 	return bitset;
 }
 
-char* copyBitset(char* bitset, size_t n) {
-	char* copy = createBitset(n);
+uint8_t* copyBitset(uint8_t* bitset, size_t n) {
+	uint8_t* copy = createBitset(n);
 	size_t nBytes = (n % 8 == 0) ? (n / 8) : (n / 8 + 1);
 	memcpy(copy, bitset, nBytes);
 	return copy;
 }
 
-void destroyBitset(char* bitset) {
+void destroyBitset(uint8_t* bitset) {
 	free(bitset);
 }
 
-void setBitTrue(char* bitset, size_t i) {
+void setBitTrue(uint8_t* bitset, size_t i) {
 	bitset[i / 8] |= (1 << (i % 8));
 }
 
-void setBitFalse(char* bitset, size_t i) {
+void setBitFalse(uint8_t* bitset, size_t i) {
 	bitset[i / 8] &= ~(1 << (i % 8));
 }
 
-void setBit(char* bitset, size_t i, char value) {
+void setBit(uint8_t* bitset, size_t i, uint8_t value) {
 	if (value) {
 		setBitTrue(bitset, i);
 	} else {
@@ -39,11 +39,11 @@ void setBit(char* bitset, size_t i, char value) {
 	}
 }
 
-char getBit(char* bitset, size_t i) {
+uint8_t getBit(uint8_t* bitset, size_t i) {
 	return (bitset[i / 8] & (1 << (i % 8))) ? 1 : 0;
 }
 
-void printBitset(char* bitset, size_t n, FILE* out) {
+void printBitset(uint8_t* bitset, size_t n, FILE* out) {
 	fprintf(out, "[");
 	for (size_t i=0; i<n; ++i) {
 		fprintf(out, "%i", getBit(bitset, i));
@@ -51,14 +51,14 @@ void printBitset(char* bitset, size_t n, FILE* out) {
 	fprintf(out, "]\n");
 }
 
-void bitsetUnion(char* a, char* b, size_t n) {
+void bitsetUnion(uint8_t* a, uint8_t* b, size_t n) {
 	int i = (n % 8) ? n / 8 : n / 8 - 1;
 	for ( ; i>=0; --i) {
 		a[i] |= b[i];
 	}
 }
 
-void bitsetIntersection(char* a, char* b, size_t n) {
+void bitsetIntersection(uint8_t* a, uint8_t* b, size_t n) {
 	int i = (n % 8) ? n / 8 : n / 8 - 1;
 	for ( ; i>=0; --i) {
 		a[i] &= b[i];
@@ -66,10 +66,10 @@ void bitsetIntersection(char* a, char* b, size_t n) {
 }
 
 // int main(int argc, char** argv) {
-// 	char* bitset = createBitset(16);
-// 	char* b = createBitset(16);
-// 	char* c = createBitset(16);
-// 	char* d;
+//	 uint8_t* bitset = createBitset(16);
+//	 uint8_t* b = createBitset(16);
+//	 uint8_t* c = createBitset(16);
+//	 uint8_t* d;
 // 	printBitset(bitset, 16, stdout);
 // 	// printStrange(bitset, 2);
 // 	setBitTrue(bitset, 5);
