@@ -1,0 +1,18 @@
+This program returns some extracted features for each graph in a db.
+
+Usage: ./gpe [OPTIONS] [FILE]
+
+If no FILE argument is given or FILE is - the program reads from stdin.
+It always prints to stdout.
+
+
+Options:
+
+-m METHOD: Specify the features this method should output
+    triangles (default):   Compute a set of fingerprints that is based on the
+	                       triangles in a graph that contain at least two edges
+	                       that are present. For sparse graphs, this is much
+	                       faster than brute force enumeration of all induced
+	                       subgraphs of size 3.
+    triples:               Compute a set of fingerprints based on the set of all
+                           induced subgraphs of size 3.
