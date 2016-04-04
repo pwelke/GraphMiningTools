@@ -568,31 +568,80 @@ void testNewCubeSizes(uint8_t*** S, int gn, int hn) {
 
 #ifdef BITCUBE
 
-char* createNewCube(int x, int y) {
-	return createBitset(x * y * y);
+static uint8_t* createNewCube(size_t gn, size_t hn) {
+	uint8_t* characteristics = {0};
+	characteristics = createBitset(gn * hn * hn);
+	return characteristics;
 }
 
-void createNewBaseCubeFast(struct SubtreeIsoDataStore* info) {
+void createNewCubeForSingletonPattern(struct SubtreeIsoDataStore* info) {
+	info->S = createNewCube(info->g->n, 1);
+}
+
+void createNewCubeForEdgePattern(struct SubtreeIsoDataStore* info) {
 	info->S = createNewCube(info->g->n, 2);
 }
 
-
-void createNewCubeFromBaseFast(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new) {
+void createNewCubeFromBase(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new) {
 	new->S = createNewCube(base.g->n, base.h->n + 1);
 }
 
-void dumpNewCubeFast(char* S, int x, int y) {
-	destroyBitset(S);
+void dumpNewCube(uint8_t* S, int x) {
+	(void)x; // unused
+	free(S);
 }
+
+static inline size_t getCharacteristicPosition(const size_t y, const size_t u, const size_t v, const size_t hn) {
+	return (v * hn + u) * hn + y;
+}
+
+//int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+//	return getBit(data.S, getCharacteristicPosition(y->number, u->number, v->number, data.h->n));
+//}
 
 int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
-	return getBit(data.S, ((v->number * data.h->n) + u->number) * data.h->n + y->number);
+	return getBit(data.S, (v->number * data.h->n + u->number) * data.h->n + y->number);
 }
 
+char checkSanityOfWrite(struct SubtreeIsoDataStore* data, struct Vertex* u, struct Vertex* v) {
+	// unused
+	(void)data;
+	(void)u;
+	(void)v;
+	return 0;
+}
 
 void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
-	setBitTrue(data->S, ((v->number * data->h->n) + u->number) * data->h->n + y->number);
+	setBitTrue(data->S, getCharacteristicPosition(y->number, u->number, v->number, data->h->n));
 }
+
+//int* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v);
+
+//uint8_t* createNewCube(int x, int y) {
+//	return createBitset(x * y * y);
+//}
+//
+//void createNewBaseCubeFast(struct SubtreeIsoDataStore* info) {
+//	info->S = createNewCube(info->g->n, 2);
+//}
+//
+//
+//void createNewCubeFromBaseFast(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new) {
+//	new->S = createNewCube(base.g->n, base.h->n + 1);
+//}
+//
+//void dumpNewCubeFast(uint8_t* S, int x, int y) {
+//	destroyBitset(S);
+//}
+//
+//int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+//	return getBit(data.S, ((v->number * data.h->n) + u->number) * data.h->n + y->number);
+//}
+//
+//
+//void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
+//	setBitTrue(data->S, ((v->number * data->h->n) + u->number) * data->h->n + y->number);
+//}
 
 #endif
 

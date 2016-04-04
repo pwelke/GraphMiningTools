@@ -14,8 +14,8 @@
 #include "graph.h"
 #include "inttypes.h"
 
-// #define BITCUBE
- #define BYTECUBE
+ #define BITCUBE
+// #define BYTECUBE
 //#define INTCUBE
 
 #ifdef INTCUBE
@@ -92,23 +92,28 @@ struct SubtreeIsoDataStore {
 	struct Graph* g;
 
 	struct Graph* h;
-//	int*** S;
-	char* S;
+	uint8_t* S;
 	size_t elementsInS;
 	int foundIso;
 };
 
-/** Utility data structure creator.
-Cube will store, what is called S in the paper. */
-char* createNewCube(int x, int y);
-void createNewBaseCubeFast(struct SubtreeIsoDataStore* info);
-void createNewCubeFromBaseFast(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new);
-void dumpNewCubeFast(char* S, int x, int y);
+void createNewCubeForSingletonPattern(struct SubtreeIsoDataStore* info);
+void createNewCubeForEdgePattern(struct SubtreeIsoDataStore* info);
+void createNewCubeFromBase(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new);
+void dumpNewCube(uint8_t* S, int x);
+
 int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
 char checkSanityOfWrite(struct SubtreeIsoDataStore* data, struct Vertex* u, struct Vertex* v);
-// assumes that
 void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
-/** Print a single entry in the cube */
+//int* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v);
+
+//void printNewCubeRow(struct BitCube S, int v, int u);
+//void printNewSDanger(struct BitCube data, size_t length);
+//void printNewCube(struct BitCube S, int gn, int hn);
+//void printNewCubeCondensed(struct BitCube S, int gn, int hn);
+
+//void testNewCubeSizes(struct BitCube S, int gn, int hn);
+
 #endif
 
 
