@@ -246,14 +246,8 @@ static void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct
 #ifdef BYTECUBE
 			uint8_t* oldCharacteristics = rawCharacteristics(base, u, v);
 #endif
-
 			for (int yi=1; yi<=oldCharacteristics[0]; ++yi) {
 				struct Vertex* y = h->vertices[oldCharacteristics[yi]];
-#else
-			for (int yi=0; yi<h->n-1; ++yi) {
-				struct Vertex* y = h->vertices[yi];
-				if (!containsCharacteristic(base, y, u, v)) { continue; }
-#endif
 				if (y->number == parentsHa[u->number]) { // might be a problem for y == a ?
 					addCharacteristic(current, y, u, v);
 				} else {
@@ -266,6 +260,30 @@ static void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct
 					}
 				}
 			}
+#else
+			// cache computation. yes, this makes a difference! hottest part of this code is checking if a characteristic exists in base.
+			size_t cubeOffset = (v->number * base.h->n + u->number) * base.h->n;
+			if (getBit(base.S, cubeOffset + u->number)) {
+				int uuCharacteristic = computeCharacteristicCached(*current, cachedB, u, u, v, gp);
+				if (uuCharacteristic) {
+					addCharacteristic(current, u, u, v);
+					current->foundIso = 1;
+				}
+			}
+			for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
+				struct Vertex* y = e->endPoint;
+				if (y == b) { continue; } // already dealt with above
+				if (!getBit(base.S, cubeOffset + y->number)) { continue; } // this is the whole point of this algorithm
+				if (y->number == parentsHa[u->number]) { // might be a problem for y == a ?
+					addCharacteristic(current, y, u, v);
+				} else {
+					int yuCharacteristic = computeCharacteristicCached(*current, cachedB, y, u, v, gp);
+					if (yuCharacteristic) {
+						addCharacteristic(current, y, u, v);
+					}
+				}
+			}
+#endif
 		}
 	}
 
@@ -375,13 +393,13 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheckForSingleton(struct SubtreeI
 
 /** create the set of characteristics for a single edge pattern graph, given as VertexList. A new graph is created. */
 struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct VertexList* patternEdge, struct GraphPool* gp) {
-		// create graph from edge
-		struct Graph* h = createGraph(2, gp);
-		(h)->vertices[0]->label = patternEdge->startPoint->label;
-		(h)->vertices[1]->label = patternEdge->endPoint->label;
-		addEdgeBetweenVertices(0, 1, patternEdge->label, h, gp);
+	// create graph from edge
+	struct Graph* h = createGraph(2, gp);
+	(h)->vertices[0]->label = patternEdge->startPoint->label;
+	(h)->vertices[1]->label = patternEdge->endPoint->label;
+	addEdgeBetweenVertices(0, 1, patternEdge->label, h, gp);
 
-		return initIterativeSubtreeCheckForEdge(base, h);
+	return initIterativeSubtreeCheckForEdge(base, h);
 
 }
 
