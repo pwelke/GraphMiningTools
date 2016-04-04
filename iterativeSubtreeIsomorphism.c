@@ -239,6 +239,7 @@ static void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct
 		// filter existing characteristics
 		for (int ui=0; ui<h->n-1; ++ui) {
 			struct Vertex* u = h->vertices[ui];
+#ifndef BITCUBE
 #ifdef INTCUBE
 			int* oldCharacteristics = rawCharacteristics(base, u, v);
 #endif
@@ -248,7 +249,11 @@ static void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct
 
 			for (int yi=1; yi<=oldCharacteristics[0]; ++yi) {
 				struct Vertex* y = h->vertices[oldCharacteristics[yi]];
-
+#else
+			for (int yi=0; yi<h->n-1; ++yi) {
+				struct Vertex* y = h->vertices[yi];
+				if (!containsCharacteristic(base, y, u, v)) { continue; }
+#endif
 				if (y->number == parentsHa[u->number]) { // might be a problem for y == a ?
 					addCharacteristic(current, y, u, v);
 				} else {
