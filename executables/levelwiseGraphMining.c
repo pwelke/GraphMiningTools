@@ -969,7 +969,7 @@ void iterativeBFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStre
 		previousLevelSupportSets = currentLevelSupportSets;
 	}
 
-	madness(currentLevelSupportSets, currentLevelSearchTree, extensionEdges, maxPatternSize, threshold, &previousLevelSupportSets, &previousLevelSearchTree, featureStream, patternStream, logStream, gp, sgp);
+//	madness(currentLevelSupportSets, currentLevelSearchTree, extensionEdges, maxPatternSize, threshold, &previousLevelSupportSets, &previousLevelSearchTree, featureStream, patternStream, logStream, gp, sgp);
 
 	// garbage collection
 	dumpSearchTree(gp, frequentVertices);
