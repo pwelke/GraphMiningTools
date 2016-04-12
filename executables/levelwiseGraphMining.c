@@ -620,7 +620,8 @@ void extendPreviousLevel(// input
 		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
 
 		// extend frequent pattern
-		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
+//		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
+		struct Graph* listOfExtensions = extendPatternByLargerEdgesTMP(frequentPattern, extensionEdges, gp);
 
 		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
 			// count number of generated extensions
@@ -946,6 +947,7 @@ void iterativeBFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStre
 	struct SubtreeIsoDataStoreList* currentLevelSupportSets = previousLevelSupportSets; // initialization for garbage collection in case of maxPatternSize == 1
 
 	for (size_t p=2; (p<=maxPatternSize) && (previousLevelSearchTree->number>0); ++p) {
+		fprintf(logStream, "Processing patterns with %zu vertices:\n", p); fflush(logStream);
 		currentLevelSearchTree = getVertex(gp->vertexPool);
 		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
 
