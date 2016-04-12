@@ -87,6 +87,166 @@ struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges
 }
 
 
+/** Return a list of vertices that are on a path from v to the vertex with ->number == 0.
+ * The implementation assumes that the tree that v belongs to was created by an extension process
+ * that adds new leaves to an existing graph and hence that there is at most one neighbor for
+ * each vertex that has a lower ->number.
+ */
+static struct VertexList* getMostRecentPath(struct Vertex* v, struct ListPool* lp) {
+	if (v->number == 0) {
+		struct VertexList* goal = getVertexList(lp);
+		goal->startPoint = v;
+		return goal;
+	}
+	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint->number < v->number) {
+			struct VertexList* path = getVertexList(lp);
+			path->startPoint = v;
+			path->next = getMostRecentPath(e->endPoint, lp);
+			return path;
+		}
+	}
+	fprintf(stderr, "Nastiness occurred.\n");
+	return NULL; // should never happen
+}
+
+/**
+CAUTION: NOT A COMPLETE ENUMERATOR AT THE MOMENT
+
+Take a tree and add any edge in the candidate set to each vertex in the graph that is on the path
+from vertex 0 to vertex n-1.
+candidateEdges is expected to contain edges that have a nonNULL ->startPoint and ->endPoint.
+The label of startPoint determines, which vertex can be used for appending the edge,
+the label of the endpoint defines the label of the new vertex added
+
+TODO make this thing a complete enumeration, if possible.
+ */
+struct Graph* extendPatternOnMostRecentPath(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
+	struct Graph* rho = NULL;
+	struct VertexList* mostRecentPath = getMostRecentPath(g->vertices[g->n-1], gp->listPool);
+	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
+		for (struct VertexList* v=mostRecentPath; v!=NULL; v=v->next) {
+			/* if the labels are compatible */
+			if (strcmp(v->startPoint->label, e->startPoint->label) == 0) {
+				struct Graph* h = refinementGraph(g, v->startPoint->number, e, gp);
+				h->next = rho;
+				rho = h;
+			}
+		}
+	}
+	return rho;
+}
+
+char hasDegreeLarger2(struct Vertex* v) {
+	return ((v->neighborhood) && (v->neighborhood->next) && (v->neighborhood->next->next));
+}
+
+
+static char isReverseIsomorphicEdge(struct VertexList* e, struct VertexList* candidate) {
+	return (labelCmp(e->startPoint->label, candidate->endPoint->label) == 0) &&
+		   (labelCmp(e->endPoint->label, candidate->startPoint->label) == 0) &&
+		   (labelCmp(e->label, candidate->label) == 0);
+}
+
+struct VertexList* filterCandidateEdgesByOrder(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
+	struct VertexList* filteredEdges = NULL;
+	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
+		filteredEdges = push(filteredEdges, shallowCopyEdge(e, lp));
+	}
+	for (int v=0; v<g->n; ++v) {
+		/* If the removal of v from g results in a new leaf edge, this leaf (in g-v) may have a higher order than the leaf to v, hence we cannot do the thing */
+		if (isLeaf(g->vertices[v]) && hasDegreeLarger2(g->vertices[v]->neighborhood->endPoint)) {
+			// compare edge leading to v to extension edges, remove the ones that come after it, if still there.
+			struct VertexList* e = g->vertices[v]->neighborhood;
+			for (struct VertexList* candidate=filteredEdges; candidate!=NULL; candidate=candidate->next) {
+				// extension edges end at the leaf, e is the other way round, hence change positions of startPoint and endPoint
+				if (isReverseIsomorphicEdge(e, candidate)) {
+					dumpVertexListRecursively(lp, candidate->next);
+					candidate->next = NULL;
+					break;
+				}
+			}
+		}
+	}
+	return filteredEdges;
+}
+
+
+struct VertexList* filterCandidateEdgesByOrder2(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
+	struct VertexList* filteredEdges = NULL;
+	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
+		filteredEdges = push(filteredEdges, shallowCopyEdge(e, lp));
+	}
+	for (int v=0; v<g->n; ++v) {
+		if (isLeaf(g->vertices[v])) {
+			struct VertexList* e = g->vertices[v]->neighborhood;
+			struct VertexList* candidate = filteredEdges;
+
+			// special case where removal of e results in a leaf
+			if (hasDegreeLarger2(e->endPoint)) {
+				// find the leaf in g-e
+				struct VertexList* f = e->endPoint->neighborhood;
+				if (f->endPoint->number == v) {
+					f = f->next; // we want the edge from the neighbor of v to the other incident vertex, not to v
+				}
+				// fast-forward to the new leaf
+				for (/*candidate was set before*/; candidate!=NULL; candidate=candidate->next) {
+					// extension edges end at the leaf, e is the other way round, hence change positions of startPoint and endPoint
+					if (isReverseIsomorphicEdge(f, candidate)) {
+						break;
+					}
+				}
+
+			}
+
+			// compare edge leading to v to extension edges, remove the ones that come after it, if there are any
+			for (/*candidate was set before*/; candidate!=NULL; candidate=candidate->next) {
+				// extension edges end at the leaf, e is the other way round, hence change positions of startPoint and endPoint
+				if (isReverseIsomorphicEdge(e, candidate)) {
+					dumpVertexListRecursively(lp, candidate->next);
+					candidate->next = NULL;
+					break;
+				}
+			}
+		}
+	}
+	return filteredEdges;
+}
+
+
+/**
+Take a tree and add any edge in the candidate set to each vertex in the graph in turn.
+candidateEdges is expected to contain edges that have a nonNULL ->startPoint and ->endPoint.
+The label of startPoint determines, which vertex can be used for appending the edge,
+the label of the endpoint defines the label of the ne vertex added
+
+TODO there is speedup to gain here. The appending at the moment runs in o(#candidates * n).
+ */
+struct Graph* extendPatternByLargerEdges(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
+	struct Graph* rho = NULL;
+	struct VertexList* filteredCandidates = filterCandidateEdgesByOrder(g, candidateEdges, gp->listPool);
+	for (struct VertexList* e=filteredCandidates; e!=NULL; e=e->next) {
+		for (int v=0; v<g->n; ++v) {
+			/* if the labels are compatible */
+			if (strcmp(g->vertices[v]->label, e->startPoint->label) == 0) {
+				struct Graph* h = refinementGraph(g, v, e, gp);
+				h->next = rho;
+				rho = h;
+			}
+		}
+	}
+	dumpVertexListRecursively(gp->listPool, filteredCandidates);
+	return rho;
+}
+
+struct Graph* extendPatternByLargerEdgesTMP(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
+	if (g->n < 3) {
+		return extendPattern(g, candidateEdges, gp);
+	} else {
+		return extendPatternByLargerEdges(g, candidateEdges, gp);
+	}
+}
+
 /**
 check if the canonicalStringOfTree of pattern is already contained in search tree
  */
