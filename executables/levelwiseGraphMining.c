@@ -627,6 +627,13 @@ void extendPreviousLevel(// input
 			// count number of generated extensions
 			++nAllExtensionsPreApriori;
 
+			if (nDumped >= 609041) {
+				fprintf(logStream, "break!\n");
+			}
+			if (nAddedToOutput >= 25067) {
+				fprintf(logStream, "break!\n");
+			}
+
 			/* filter out patterns that were already enumerated as the extension of some other pattern
 				and are in the search tree */
 			struct ShallowGraph* string = canonicalStringOfTree(extension, sgp);
@@ -1014,10 +1021,11 @@ int main(int argc, char** argv) {
 	int threshold = 1000;
 	unsigned int maxPatternSize = 20;
 	void (*miningStrategy)(size_t, size_t, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
+	char* patternFile = NULL;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "ht:p:m:";
+	const char* validArgs = "ht:p:m:o:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -1047,6 +1055,9 @@ int main(int argc, char** argv) {
 			}
 			fprintf(stderr, "Unknown mining technique: %s\n", optarg);
 			return EXIT_FAILURE;
+		case 'o':
+			patternFile = optarg;
+			break;
 		case '?':
 			return EXIT_FAILURE;
 			break;
@@ -1080,11 +1091,18 @@ int main(int argc, char** argv) {
 	FILE* patternStream = stdout;
 	FILE* logStream = stderr;
 
+	if (patternFile != NULL) {
+		patternStream = fopen(patternFile, "w");
+		fprintf(logStream, "Write patterns to file: %s\n", patternFile);
+	}
+
 	miningStrategy(maxPatternSize, threshold, featureStream, patternStream, logStream, gp, sgp);
 
 	destroyFileIterator(); // graphs are in memory now
 
-//	fclose(kvStream);
+	if (patternFile != NULL) {
+		fclose(patternStream);
+	}
 
 	/* global garbage collection */
 	freeGraphPool(gp);
