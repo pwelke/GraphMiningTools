@@ -4,7 +4,7 @@
 
 #include "../loading.h"
 #include "../cactustree.h"
-#include "../subtreeIsomorphism.h"
+#include "../iterativeSubtreeIsomorphism.h"
 
 
 int main(int argc, char **argv){
@@ -58,7 +58,8 @@ int main(int argc, char **argv){
         return EXIT_FAILURE;
     }
     // cactusTreeSubIso(graph, pattern, gPool, sgPool);
-    char check = subtreeCheck(graph, pattern, gPool, sgPool);
+//    char check = subtreeCheck(graph, pattern, gPool, sgPool);
+    char check = isSubtree(graph, pattern, gPool, sgPool);
     printf("Return value: %i\n", check);
 
     dumpGraph(gPool,graph);

@@ -133,10 +133,10 @@ int main(int argc, char **argv){
             time2 = clock();
             firstTime = ((double) (time2-time1))/CLOCKS_PER_SEC;
             time1 = clock();
-            tResult = subtreeCheckF(g,h,gPool,sgPool);
+            tResult = isSubtree(g,h,gPool);
             time2 = clock();
             secondTime = ((double) (time2-time1))/CLOCKS_PER_SEC;
-            fprintf(outFile,"%c %.10f %.10f %.20f\n", tResult + 42 + 3*(1-tResult), firstTime , secondTime , firstTime/secondTime);
+            fprintf(outFile,"%c %.10f %.10f %.20f\n", tResult + 42 + 3*(1-tResult), firstTime , secondTime , firstTime/secondTime); // smaller than 1 => first is faster
             if(cResult != tResult){
                 printf("\ndifferent results %i %i for graph %i (Tree? %i)and graph of size %i.\n",cResult, tResult, g->number, isTree(g),h->n);
                 for(k=0;k<g->n;++k){

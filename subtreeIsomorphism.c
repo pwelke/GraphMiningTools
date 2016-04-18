@@ -12,7 +12,7 @@ int _cubeY = 0;
 char _cubeInUse = 0;
 
 /** Utility data structure destructor */
-void _freeCube(int*** cube, int x, int y) {
+static void _freeCube(int*** cube, int x, int y) {
 	int i, j;
 	for (i=0; i<x; ++i) {
 		if (cube[i] != NULL) {
@@ -34,7 +34,7 @@ void dumpCube() {
 
 /** Utility data structure creator.
 Cube will store, what is called S in the paper. */
-int*** createCube(int x, int y) {
+static int*** createCube(int x, int y) {
 	if (!_cubeInUse) {
 		int i, j;
 		if ((x > _cubeX) || (y > _cubeY)) {
@@ -75,7 +75,7 @@ int*** createCube(int x, int y) {
 
 
 /** Utility data structure destructor */
-void freeCube(int*** cube, int x, int y) {
+static void freeCube(int*** cube, int x, int y) {
 	int i, j;
 	for (i=0; i<x; ++i) {
 		if (cube[i] != NULL) {
@@ -92,42 +92,42 @@ void freeCube(int*** cube, int x, int y) {
 
 
 
-/** Print a single entry in the cube */
-void printS(int*** S, int v, int u) {
-	int i;
-	printf("S(%i, %i)={", v, u);
-	if (S[v][u]) {
-		for (i=1; i<S[v][u][0]-1; ++i) {
-			printf("%i, ", S[v][u][i]);
-		}
-		printf("%i}\n", S[v][u][S[v][u][0]-1]);
-	} else {
-		printf("}\n");
-	}
-	fflush(stdout);
-}
+///** Print a single entry in the cube */
+//void printS(int*** S, int v, int u) {
+//	int i;
+//	printf("S(%i, %i)={", v, u);
+//	if (S[v][u]) {
+//		for (i=1; i<S[v][u][0]-1; ++i) {
+//			printf("%i, ", S[v][u][i]);
+//		}
+//		printf("%i}\n", S[v][u][S[v][u][0]-1]);
+//	} else {
+//		printf("}\n");
+//	}
+//	fflush(stdout);
+//}
 
 
-/**
- * Print some information about a ShallowGraph
- */
-void printStrangeMatching(struct ShallowGraph* g) {
-	
-	struct ShallowGraph* index = g;
-	struct VertexList* e;
-	do {
-		if (index) {
-			printf("matching ");
-			for (e=index->edges; e; e=e->next) {
-				printf("(%i, %i) ", e->startPoint->lowPoint, e->endPoint->lowPoint);
-			}
-			printf("\n");
-		} else {
-			/* if index is NULL, the input pointed to a list and not to a cycle */
-			break;
-		}
-	} while (index != g);
-}
+///**
+// * Print some information about a ShallowGraph
+// */
+//void printStrangeMatching(struct ShallowGraph* g) {
+//
+//	struct ShallowGraph* index = g;
+//	struct VertexList* e;
+//	do {
+//		if (index) {
+//			printf("matching ");
+//			for (e=index->edges; e; e=e->next) {
+//				printf("(%i, %i) ", e->startPoint->lowPoint, e->endPoint->lowPoint);
+//			}
+//			printf("\n");
+//		} else {
+//			/* if index is NULL, the input pointed to a list and not to a cycle */
+//			break;
+//		}
+//	} while (index != g);
+//}
 
 
 /**
@@ -138,7 +138,7 @@ leaves, i.e. number of leaves plus one.
 Subsequent positions of leaves contain the vertex numbers of leaves in ascending order. 
 The method sets the ->d members of leaf vertices in g to 1 all other to 0.
 */
-int* findLeaves(struct Graph* g, int root) {
+static int* findLeaves(struct Graph* g, int root) {
 	int nLeaves = 0;
 	int* leaves;
 	int v;
@@ -168,11 +168,7 @@ int* findLeaves(struct Graph* g, int root) {
 }
 
 
-
-
-
-
-struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, struct ShallowGraphPool* sgp) {
+static struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* temp = getShallowGraph(sgp);
 	struct VertexList* e;
 	struct VertexList* f;
@@ -219,7 +215,7 @@ struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, s
 	return temp;
 }
 
-void addVertexToBipartiteInstance(struct ShallowGraph* temp) {
+static void addVertexToBipartiteInstance(struct ShallowGraph* temp) {
 	struct VertexList* e;
 
 	for (e=popEdge(temp); e!=NULL; e=popEdge(temp)) {
@@ -229,17 +225,9 @@ void addVertexToBipartiteInstance(struct ShallowGraph* temp) {
 }
 
 
-
-
-
-
-
-
-
-
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp) {
+static struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct GraphPool* gp) {
 	struct Graph* B;
 	int i, j;
 
@@ -300,7 +288,7 @@ struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph* h, int
 
 /* vertices of g have their ->visited values set to the postorder. Thus, 
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-struct Graph* makeBipartiteInstanceF(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct CachedGraph* cache) {
+static struct Graph* makeBipartiteInstanceF(struct Graph* g, int v, struct Graph* h, int u, int*** S, struct CachedGraph* cache) {
 	struct Graph* B;
 	int i, j;
 
@@ -359,7 +347,7 @@ struct Graph* makeBipartiteInstanceF(struct Graph* g, int v, struct Graph* h, in
 }
 
 
-struct ShallowGraph* removeVertexFromBipartiteInstanceF(struct Graph* B, int v, struct Vertex* s, struct ShallowGraphPool* sgp) {
+static struct ShallowGraph* removeVertexFromBipartiteInstanceF(struct Graph* B, int v, struct Vertex* s, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* temp = getShallowGraph(sgp);
 	struct VertexList* e;
 	struct VertexList* f;
@@ -438,7 +426,7 @@ Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2
 
 in the labeled version
 */
-char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+static char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* iterators */
 	int u, v;
 
@@ -680,7 +668,7 @@ Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2
 
 in the labeled version
 */
-char subtreeCheckF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+static char subtreeCheckF(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	/* iterators */
 	int u, v;
 
@@ -828,7 +816,7 @@ dfs that searches for a path from s to t and augments it,
 if found.
 returns 1 if there is a path or 0 otherwise.
 */
-char augmentLFF(struct Vertex* s, struct Vertex* t) {
+static char augmentLFF(struct Vertex* s, struct Vertex* t) {
 	struct VertexList* e;
 
 	if (s == t) {
@@ -860,7 +848,7 @@ Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism. Section 2
 
 in the labeled version
 */
-char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct CachedGraph* cacheB) {
+static char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct CachedGraph* cacheB) {
 	/* iterators */
 	int u, v;
 
@@ -999,7 +987,7 @@ char subtreeCheckCached(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 }
 
 
-char subtreeCheckFF(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+static char subtreeCheckFF(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 	struct CachedGraph* cacheB = initCachedGraph(gp, g->n);
 	char isSubtree = subtreeCheckCached(g, h, gp, cacheB);
 	dumpCachedGraph(cacheB);
