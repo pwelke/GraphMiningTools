@@ -403,3 +403,122 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 
 }
 
+
+
+/// NONITERATIVE VERSION OF SUBTREE ISO ALGORITHM THAT IS COMPATIBLE WITH ABOVE
+
+
+static void addNoncriticalVertexCharacteristics(struct SubtreeIsoDataStore* data, struct Graph* B, struct Vertex* u, struct Vertex* v) {
+	/* the maximum matching computed above covers all but one neighbor of u
+	we need to identify those covered neighbors that can be swapped with
+	that uncovered neighbor without decreasing the cardinality of the matching
+	these are exactly the non-critical vertices.
+
+	a vertex is critical <=> 1.) AND NOT 2.)
+	hence
+	a vertex is non-critical <=> NOT 1.) OR 2.)
+	where
+	1.) matched in the matching above
+	2.) reachable by augmenting path from the single unmatched vertex.
+	This means, all vertices reachable from the single uncovered neighbor of u (including that neighbor are non-critical.
+	*/
+	struct Vertex* uncoveredNeighbor = NULL;
+
+	// find the single uncovered neighbor of u
+	for (int i=0; i<B->number; ++i) {
+		if (!isMatched(B->vertices[i])) {
+			uncoveredNeighbor = B->vertices[i];
+			break;
+		}
+	}
+
+	// mark all vertices reachable from uncoveredNeighbor by an augmenting path
+	markReachable(uncoveredNeighbor, B->number);
+
+	// add non-critical vertices to output
+	for (int i=0; i<B->number; ++i) {
+		if (B->vertices[i]->visited == 1) {
+			// vertex is not critical, add characteristic
+			addCharacteristicRaw(data, B->vertices[i]->lowPoint, u->number, v->number);
+//			matchings[i+1] = B->vertices[i]->lowPoint;
+		}
+	}
+}
+
+/**
+Iterative Labeled Subtree Isomorphism Check.
+
+Implements the labeled subtree isomorphism algorithm of
+Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism in an iterative version:
+
+Input:
+	a text    tree g
+	a pattern tree h
+	the cube that was computed for some subtree h-e and g, where e is an edge to a leaf of h
+	(object pool data structures)
+
+Output:
+	yes, if h is subgraph isomorphic to g, no otherwise
+	the cube for h and g
+
+ */
+static void noniterativeSubtreeCheck_intern(struct SubtreeIsoDataStore* current, struct GraphPool* gp) {
+
+	struct Graph* g = current->g;
+	struct Graph* h = current->h;
+
+	struct CachedGraph* cachedB = initCachedGraph(gp, h->n);
+
+	current->foundIso = 0;
+	for (int vi=0; vi<g->n; ++vi) {
+		struct Vertex* v = g->vertices[current->postorder[vi]];
+
+		for (int ui=0; ui<h->n; ++ui) {
+			struct Vertex* u = h->vertices[ui];
+
+			// check if vertex labels match
+			if (labelCmp(u->label, v->label) != 0) { continue; }
+
+			// compute maximum matching
+			struct Graph* B = makeBipartiteInstanceFromVerticesCached(*current, cachedB, u, u, v, gp);
+			int sizeofMatching = bipartiteMatchingEvenMoreDirty(B);
+			int nNeighbors = B->number;
+
+			// is there a subgraph iso here?
+			if (sizeofMatching == nNeighbors) {
+				addCharacteristic(current, u, u, v);
+				current->foundIso = 1;
+
+				returnCachedGraph(cachedB);
+				dumpCachedGraph(cachedB);
+				return; // early termination when subtree iso is found
+			}
+
+			// compute partial subgraph isomorphisms
+			if (sizeofMatching == nNeighbors - 1) {
+				addNoncriticalVertexCharacteristics(current, B, u, v);
+			}
+
+			returnCachedGraph(cachedB);
+		}
+	}
+
+	dumpCachedGraph(cachedB);
+}
+
+
+struct SubtreeIsoDataStore noniterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore info = {0};
+	info.g = base.g;
+	info.h = h;
+	info.postorder = base.postorder;
+	info.S = createNewCube(info.g->n, info.h->n);
+
+	noniterativeSubtreeCheck_intern(&info, gp);
+//	printGraphAidsFormat(info.h, stderr);
+//	printNewCube(info.S, info.g->n, info.h->n, stderr);
+	dumpNewCube(info.S, info.g->n);
+	info.S = NULL;
+
+	return info;
+}

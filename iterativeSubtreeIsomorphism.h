@@ -35,6 +35,7 @@ Output:
 */
 //void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* currentPointer, struct GraphPool* gp);
 struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp);
+struct SubtreeIsoDataStore noniterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp);
 
 
 // INITIALIZATORS

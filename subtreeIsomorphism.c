@@ -584,7 +584,7 @@ char subtreeCheck(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct
 /**
 Find all vertices reachable by augmenting paths that start with a non-matching edge
 */
-static void markReachable(struct Vertex* a, int num) {
+void markReachable(struct Vertex* a, int num) {
 	struct VertexList* e;
 
 	a->visited = 1;
