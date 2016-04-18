@@ -59,7 +59,7 @@ int main(int argc, char **argv){
     }
     // cactusTreeSubIso(graph, pattern, gPool, sgPool);
 //    char check = subtreeCheck(graph, pattern, gPool, sgPool);
-    char check = isSubtree(graph, pattern, gPool, sgPool);
+    char check = isSubtree(graph, pattern, gPool);
     printf("Return value: %i\n", check);
 
     dumpGraph(gPool,graph);

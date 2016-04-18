@@ -5,7 +5,7 @@
 
 #include "../loading.h"
 #include "../cactustree.h"
-#include "../subtreeIsomorphism.h"
+#include "../iterativeSubtreeIsomorphism.h"
 #include "../graph.h"
 #include "../outerplanar.h"
 #include "../connectedComponents.h"
