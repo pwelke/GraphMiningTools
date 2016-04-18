@@ -627,13 +627,6 @@ void extendPreviousLevel(// input
 			// count number of generated extensions
 			++nAllExtensionsPreApriori;
 
-			if (nDumped >= 609041) {
-				fprintf(logStream, "break!\n");
-			}
-			if (nAddedToOutput >= 25067) {
-				fprintf(logStream, "break!\n");
-			}
-
 			/* filter out patterns that were already enumerated as the extension of some other pattern
 				and are in the search tree */
 			struct ShallowGraph* string = canonicalStringOfTree(extension, sgp);
@@ -721,7 +714,8 @@ struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 		//iterate over all graphs in the support
 		for (struct SubtreeIsoDataStoreElement* e=candidateSupport->first; e!=NULL; e=e->next) {
 			// create actual support list for candidate pattern
-			struct SubtreeIsoDataStore result = iterativeSubtreeCheck(e->data, candidate, gp);
+//			struct SubtreeIsoDataStore result = iterativeSubtreeCheck(e->data, candidate, gp);
+			struct SubtreeIsoDataStore result = noniterativeSubtreeCheck(e->data, candidate, gp);
 
 			if (result.foundIso) {
 				//TODO store result id somehow
