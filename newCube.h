@@ -97,6 +97,7 @@ struct SubtreeIsoDataStore {
 	int foundIso;
 };
 
+uint8_t* createNewCube(size_t gn, size_t hn);
 void createNewCubeForSingletonPattern(struct SubtreeIsoDataStore* info);
 void createNewCubeForEdgePattern(struct SubtreeIsoDataStore* info);
 void createNewCubeFromBase(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* new);
@@ -107,12 +108,13 @@ char checkSanityOfWrite(struct SubtreeIsoDataStore* data, struct Vertex* u, stru
 void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
 //int* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v);
 
-//void printNewCubeRow(struct BitCube S, int v, int u);
-//void printNewSDanger(struct BitCube data, size_t length);
-//void printNewCube(struct BitCube S, int gn, int hn);
-//void printNewCubeCondensed(struct BitCube S, int gn, int hn);
+//void printNewCubeRow(uint8_t* S, int v, int u);
+//void printNewSDanger(uint8_t* data, size_t length);
+//void printNewCube(uint8_t* S, int gn, int hn);
+void printNewCubeCondensed(uint8_t* S, int gn, int hn, FILE* out);
+void printNewCube(uint8_t* S, int gn, int hn, FILE* out);
 
-//void testNewCubeSizes(struct BitCube S, int gn, int hn);
+//void testNewCubeSizes(uint8_t* S, int gn, int hn);
 
 #endif
 

@@ -270,6 +270,16 @@ void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struc
 	//	}
 }
 
+void addCharacteristicRaw(struct SubtreeIsoDataStore* data, int y, int u, int v) {
+	//assert(checkSanityOfWrite(data, u, v));
+	data->elementsInS += 1;
+	int* current = data->S[v][u];
+	current[0] += 1;
+	int newPos = current[0];
+	current[newPos] = y;
+}
+
+
 
 /** Print a single entry in the cube */
 void printNewCubeRow(int*** S, int v, int u) {
@@ -506,6 +516,16 @@ void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struc
 	current[newPos] = y->number;
 }
 
+// assumes that
+void addCharacteristicRaw(struct SubtreeIsoDataStore* data, int y, int u, int v) {
+	//assert(checkSanityOfWrite(data, u, v));
+	data->elementsInS += 1;
+	uint8_t* current = data->S[v][u];
+	current[0] += 1;
+	int newPos = current[0];
+	current[newPos] = y;
+}
+
 
 /** Print a single entry in the cube */
 void printNewCubeRow(uint8_t*** S, int v, int u) {
@@ -568,7 +588,7 @@ void testNewCubeSizes(uint8_t*** S, int gn, int hn) {
 
 #ifdef BITCUBE
 
-static uint8_t* createNewCube(size_t gn, size_t hn) {
+uint8_t* createNewCube(size_t gn, size_t hn) {
 	uint8_t* characteristics = {0};
 	characteristics = createBitset(gn * hn * hn);
 	return characteristics;
@@ -588,7 +608,7 @@ void createNewCubeFromBase(struct SubtreeIsoDataStore base, struct SubtreeIsoDat
 
 void dumpNewCube(uint8_t* S, int x) {
 	(void)x; // unused
-	free(S);
+	if (S) { free(S); }
 }
 
 static inline size_t getCharacteristicPosition(const size_t y, const size_t u, const size_t v, const size_t hn) {
@@ -613,6 +633,36 @@ char checkSanityOfWrite(struct SubtreeIsoDataStore* data, struct Vertex* u, stru
 
 void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v) {
 	setBitTrue(data->S, getCharacteristicPosition(y->number, u->number, v->number, data->h->n));
+}
+
+void addCharacteristicRaw(struct SubtreeIsoDataStore* data, int y, int u, int v) {
+	setBitTrue(data->S, getCharacteristicPosition(y, u, v, data->h->n));
+}
+
+void printNewCubeCondensed(uint8_t* S, int gn, int hn, FILE* out) {
+	for (int v=0; v<gn; ++v) {
+		for (int u=0; u<hn; ++u) {
+			fprintf(out, "(%i, %i): ", v, u);
+			for (int y=0; y<hn; ++y) {
+				if (getBit(S, getCharacteristicPosition(y, u, v, hn))) {
+					fprintf(out, " %i", y);
+				}
+			}
+			fprintf(out, "\n");
+		}
+	}
+}
+
+void printNewCube(uint8_t* S, int gn, int hn, FILE* out) {
+	for (int v=0; v<gn; ++v) {
+		for (int u=0; u<hn; ++u) {
+			fprintf(out, "(%i, %i): ", v, u);
+			for (int y=0; y<hn; ++y) {
+				fprintf(out, "%i", getBit(S, getCharacteristicPosition(y, u, v, hn)));
+			}
+			fprintf(out, "\n");
+		}
+	}
 }
 
 //int* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v);
