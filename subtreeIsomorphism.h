@@ -11,6 +11,8 @@ void dumpCube();
 // struct ShallowGraph* removeVertexFromBipartiteInstance(struct Graph* B, int v, struct ShallowGraphPool* sgp);
 // void addVertexToBipartiteInstance(struct ShallowGraph* temp);
 
+void markReachable(struct Vertex* a, int num);
+
 int labelCmp(const char* l1, const char* l2);
 int* getPostorder(struct Graph* g, int root);
 int*** createCube(int x, int y);

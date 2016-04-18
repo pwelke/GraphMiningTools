@@ -40,6 +40,7 @@ void dumpNewCube(int*** S, int x);
 int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
 char checkSanityOfWrite(struct SubtreeIsoDataStore* data, struct Vertex* u, struct Vertex* v);
 void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
+void addCharacteristicRaw(struct SubtreeIsoDataStore* data, int y, int u, int v);
 int* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v);
 
 void printNewCubeRow(int*** S, int v, int u);
@@ -73,6 +74,7 @@ void dumpNewCube(uint8_t*** S, int x);
 int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
 char checkSanityOfWrite(struct SubtreeIsoDataStore* data, struct Vertex* u, struct Vertex* v);
 void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
+void addCharacteristicRaw(struct SubtreeIsoDataStore* data, int y, int u, int v);
 uint8_t* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v);
 
 void printNewCubeRow(uint8_t*** S, int v, int u);
@@ -106,6 +108,7 @@ void dumpNewCube(uint8_t* S, int x);
 int containsCharacteristic(struct SubtreeIsoDataStore data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
 char checkSanityOfWrite(struct SubtreeIsoDataStore* data, struct Vertex* u, struct Vertex* v);
 void addCharacteristic(struct SubtreeIsoDataStore* data, struct Vertex* y, struct Vertex* u, struct Vertex* v);
+void addCharacteristicRaw(struct SubtreeIsoDataStore* data, int y, int u, int v);
 //int* rawCharacteristics(struct SubtreeIsoDataStore data, struct Vertex* u, struct Vertex* v);
 
 //void printNewCubeRow(uint8_t* S, int v, int u);
