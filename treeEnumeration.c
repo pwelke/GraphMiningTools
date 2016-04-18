@@ -6,6 +6,7 @@
 #include "cs_Tree.h"
 #include "searchTree.h"
 #include "bloomFilter.h"
+#include "subtreeIsomorphism.h"
 #include "treeEnumeration.h"
 #include "intSet.h"
 

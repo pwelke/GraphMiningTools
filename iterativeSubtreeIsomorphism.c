@@ -440,7 +440,6 @@ static void addNoncriticalVertexCharacteristics(struct SubtreeIsoDataStore* data
 		if (B->vertices[i]->visited == 1) {
 			// vertex is not critical, add characteristic
 			addCharacteristicRaw(data, B->vertices[i]->lowPoint, u->number, v->number);
-//			matchings[i+1] = B->vertices[i]->lowPoint;
 		}
 	}
 }
