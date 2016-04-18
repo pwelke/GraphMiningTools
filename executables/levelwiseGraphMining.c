@@ -13,10 +13,11 @@
 #include "../cs_Tree.h"
 #include "../treeEnumeration.h"
 #include "../levelwiseTreePatternMining.h"
-#include "../subtreeIsomorphism.h"
 #include "../bitSet.h"
 #include "../graphPrinting.h"
 #include "../intSet.h"
+#include "../subtreeIsoUtils.h"
+#include "../subtreeIsomorphism.h"
 #include "../iterativeSubtreeIsomorphism.h"
 #include "../subtreeIsoDataStoreList.h"
 

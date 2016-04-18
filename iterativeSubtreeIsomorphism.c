@@ -6,11 +6,10 @@
 #include "newCube.h"
 #include "graph.h"
 #include "bipartiteMatching.h"
-#include "subtreeIsomorphism.h"
-#include "iterativeSubtreeIsomorphism.h"
+#include "subtreeIsoUtils.h"
 #include "bitSet.h"
 #include "cachedGraph.h"
-
+#include "iterativeSubtreeIsomorphism.h"
 
 
 // MISC TOOLING
@@ -514,10 +513,24 @@ struct SubtreeIsoDataStore noniterativeSubtreeCheck(struct SubtreeIsoDataStore b
 	info.S = createNewCube(info.g->n, info.h->n);
 
 	noniterativeSubtreeCheck_intern(&info, gp);
-//	printGraphAidsFormat(info.h, stderr);
-//	printNewCube(info.S, info.g->n, info.h->n, stderr);
 	dumpNewCube(info.S, info.g->n);
 	info.S = NULL;
 
 	return info;
+}
+
+/**
+ * Due to historic reasons, this function checks if h is subgraph isomorphic to g.
+ */
+char isSubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore info = {0};
+	info.g = g;
+	info.h = h;
+	info.postorder = getPostorder(g, 0);
+	info.S = createNewCube(info.g->n, info.h->n);
+
+	noniterativeSubtreeCheck_intern(&info, gp);
+	dumpNewCube(info.S, info.g->n);
+
+	return info.foundIso;
 }
