@@ -137,7 +137,7 @@ struct Graph* extendPatternOnMostRecentPath(struct Graph* g, struct ShallowGraph
 	return rho;
 }
 
-char hasDegreeLarger2(struct Vertex* v) {
+static char hasDegreeLarger2(struct Vertex* v) {
 	return ((v->neighborhood) && (v->neighborhood->next) && (v->neighborhood->next->next));
 }
 
@@ -148,6 +148,13 @@ static char isReverseIsomorphicEdge(struct VertexList* e, struct VertexList* can
 		   (labelCmp(e->label, candidate->label) == 0);
 }
 
+
+/**
+ * Not clear, if this is complete, either. seems to work. there might also be a proof. TODO check my papers in birlinghoven.
+ *
+ * Idea: only extend frequent graph with edge that is larger than the largest leaf in some total order on extension edges.
+ * However, problems occur, if a leaf's removal creates a new leaf.
+ */
 struct VertexList* filterCandidateEdgesByOrder(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
 	struct VertexList* filteredEdges = NULL;
 	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
