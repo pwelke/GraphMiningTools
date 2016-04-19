@@ -621,8 +621,8 @@ void extendPreviousLevel(// input
 		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
 
 		// extend frequent pattern
-//		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
-		struct Graph* listOfExtensions = extendPatternByLargerEdgesTMP(frequentPattern, extensionEdges, gp);
+		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
+//		struct Graph* listOfExtensions = extendPatternByLargerEdgesTMP(frequentPattern, extensionEdges, gp);
 
 		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
 			// count number of generated extensions

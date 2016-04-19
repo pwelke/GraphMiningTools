@@ -151,7 +151,9 @@ static char isReverseIsomorphicEdge(struct VertexList* e, struct VertexList* can
 
 
 /**
- * Not clear, if this is complete, either. seems to work. there might also be a proof. TODO check my papers in birlinghoven.
+ * CAUTION: NOT A COMPLETE ENUMERATOR AT THE MOMENT
+ *
+ * Not complete. However, much more complete than the most recent path idea.
  *
  * Idea: only extend frequent graph with edge that is larger than the largest leaf in some total order on extension edges.
  * However, problems occur, if a leaf's removal creates a new leaf.
@@ -180,6 +182,14 @@ struct VertexList* filterCandidateEdgesByOrder(struct Graph* g, struct ShallowGr
 }
 
 
+/**
+ * CAUTION: NOT A COMPLETE ENUMERATOR AT THE MOMENT
+ *
+ * Not complete. However, much more complete than the most recent path idea.
+ *
+ * Idea: only extend frequent graph with edge that is larger than the largest leaf in some total order on extension edges.
+ * However, problems occur, if a leaf's removal creates a new leaf.
+ */
 struct VertexList* filterCandidateEdgesByOrder2(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
 	struct VertexList* filteredEdges = NULL;
 	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
@@ -223,12 +233,7 @@ struct VertexList* filterCandidateEdgesByOrder2(struct Graph* g, struct ShallowG
 
 
 /**
-Take a tree and add any edge in the candidate set to each vertex in the graph in turn.
-candidateEdges is expected to contain edges that have a nonNULL ->startPoint and ->endPoint.
-The label of startPoint determines, which vertex can be used for appending the edge,
-the label of the endpoint defines the label of the ne vertex added
-
-TODO there is speedup to gain here. The appending at the moment runs in o(#candidates * n).
+ * CAUTION: NOT A COMPLETE ENUMERATOR AT THE MOMENT
  */
 struct Graph* extendPatternByLargerEdges(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
 	struct Graph* rho = NULL;
@@ -247,6 +252,10 @@ struct Graph* extendPatternByLargerEdges(struct Graph* g, struct ShallowGraph* c
 	return rho;
 }
 
+
+/**
+ * CAUTION: NOT A COMPLETE ENUMERATOR AT THE MOMENT
+ */
 struct Graph* extendPatternByLargerEdgesTMP(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
 	if (g->n < 3) {
 		return extendPattern(g, candidateEdges, gp);
