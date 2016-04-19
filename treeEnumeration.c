@@ -8,6 +8,7 @@
 #include "bloomFilter.h"
 #include "subtreeIsoUtils.h"
 #include "treeEnumeration.h"
+#include "outerplanar.h"
 #include "intSet.h"
 
 
@@ -158,7 +159,7 @@ static char isReverseIsomorphicEdge(struct VertexList* e, struct VertexList* can
  * Idea: only extend frequent graph with edge that is larger than the largest leaf in some total order on extension edges.
  * However, problems occur, if a leaf's removal creates a new leaf.
  */
-struct VertexList* filterCandidateEdgesByOrder(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
+static struct VertexList* filterCandidateEdgesByOrder(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
 	struct VertexList* filteredEdges = NULL;
 	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
 		filteredEdges = push(filteredEdges, shallowCopyEdge(e, lp));
@@ -190,7 +191,7 @@ struct VertexList* filterCandidateEdgesByOrder(struct Graph* g, struct ShallowGr
  * Idea: only extend frequent graph with edge that is larger than the largest leaf in some total order on extension edges.
  * However, problems occur, if a leaf's removal creates a new leaf.
  */
-struct VertexList* filterCandidateEdgesByOrder2(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
+static struct VertexList* filterCandidateEdgesByOrder2(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
 	struct VertexList* filteredEdges = NULL;
 	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
 		filteredEdges = push(filteredEdges, shallowCopyEdge(e, lp));
@@ -267,7 +268,7 @@ struct Graph* extendPatternByLargerEdgesTMP(struct Graph* g, struct ShallowGraph
 /**
 check if the canonicalStringOfTree of pattern is already contained in search tree
  */
-char alreadyEnumerated(struct Graph* pattern, struct Vertex* searchTree, struct ShallowGraphPool* sgp) {
+static char alreadyEnumerated(struct Graph* pattern, struct Vertex* searchTree, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* string = canonicalStringOfTree(pattern, sgp);
 	char alreadyFound = containsString(searchTree, string);
 	dumpShallowGraph(sgp, string);
@@ -308,7 +309,7 @@ struct Graph* basicFilter(struct Graph* extension, struct Vertex* listOfGraphs, 
 return the fingerprint of pattern (being the bitwise or of the hashes of the subgraphs)
 OR 0 if there exists a subgraph of pattern that is not frequent.
  */
-int getPatternFingerPrint(struct Graph* pattern, struct Vertex* searchTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+static int getPatternFingerPrint(struct Graph* pattern, struct Vertex* searchTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int v;
 	int fingerPrint = 0;
 
@@ -357,7 +358,7 @@ two tests are run: g itself must not be contained in currentLevel and any subtre
 in lowerLevel. 
 if g fulfills both conditions, it is added to the output and to currentLevel.
  */
-struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+static struct Graph* filterExtension(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* idx = extension; 
 	struct Graph* filteredExtension = NULL;
 
@@ -411,7 +412,7 @@ if g fulfills both conditions, it is added to the output and to currentLevel.
 
 In contrast to the above filterExtension, this methos does not use any hashing.
  */
-struct Graph* aprioriFilterExtension(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+static struct Graph* aprioriFilterExtension(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int v;
 	struct Graph* idx = extension; 
 	struct Graph* filteredExtension = NULL;
@@ -576,15 +577,7 @@ struct IntSet* aprioriCheckExtensionReturnList(struct Graph* extension, struct V
 }
 
 
-char isPath(struct 	Graph* tree) {
-	int v;
-	for (v=0; v<tree->n; ++v) {
-		if (degree(tree->vertices[v]) > 2) {
-			return 0;
-		}
-	}
-	return 1;
-}
+
 
 
 /**
@@ -593,7 +586,7 @@ two tests are run: g itself must not be contained in currentLevel and any subtre
 in lowerLevel. 
 if g fulfills both conditions, it is added to the output and to currentLevel.
  */
-struct Graph* filterExtensionForPaths(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+static struct Graph* filterExtensionForPaths(struct Graph* extension, struct Vertex* lowerLevel, struct Vertex* currentLevel, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Graph* idx = extension; 
 	struct Graph* filteredExtension = NULL;
 
