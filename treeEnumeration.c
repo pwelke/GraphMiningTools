@@ -183,54 +183,54 @@ static struct VertexList* filterCandidateEdgesByOrder(struct Graph* g, struct Sh
 }
 
 
-/**
- * CAUTION: NOT A COMPLETE ENUMERATOR AT THE MOMENT
- *
- * Not complete. However, much more complete than the most recent path idea.
- *
- * Idea: only extend frequent graph with edge that is larger than the largest leaf in some total order on extension edges.
- * However, problems occur, if a leaf's removal creates a new leaf.
- */
-static struct VertexList* filterCandidateEdgesByOrder2(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
-	struct VertexList* filteredEdges = NULL;
-	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
-		filteredEdges = push(filteredEdges, shallowCopyEdge(e, lp));
-	}
-	for (int v=0; v<g->n; ++v) {
-		if (isLeaf(g->vertices[v])) {
-			struct VertexList* e = g->vertices[v]->neighborhood;
-			struct VertexList* candidate = filteredEdges;
-
-			// special case where removal of e results in a leaf
-			if (hasDegreeLarger2(e->endPoint)) {
-				// find the leaf in g-e
-				struct VertexList* f = e->endPoint->neighborhood;
-				if (f->endPoint->number == v) {
-					f = f->next; // we want the edge from the neighbor of v to the other incident vertex, not to v
-				}
-				// fast-forward to the new leaf
-				for (/*candidate was set before*/; candidate!=NULL; candidate=candidate->next) {
-					// extension edges end at the leaf, e is the other way round, hence change positions of startPoint and endPoint
-					if (isReverseIsomorphicEdge(f, candidate)) {
-						break;
-					}
-				}
-
-			}
-
-			// compare edge leading to v to extension edges, remove the ones that come after it, if there are any
-			for (/*candidate was set before*/; candidate!=NULL; candidate=candidate->next) {
-				// extension edges end at the leaf, e is the other way round, hence change positions of startPoint and endPoint
-				if (isReverseIsomorphicEdge(e, candidate)) {
-					dumpVertexListRecursively(lp, candidate->next);
-					candidate->next = NULL;
-					break;
-				}
-			}
-		}
-	}
-	return filteredEdges;
-}
+///**
+// * CAUTION: NOT A COMPLETE ENUMERATOR AT THE MOMENT
+// *
+// * Not complete. However, much more complete than the most recent path idea.
+// *
+// * Idea: only extend frequent graph with edge that is larger than the largest leaf in some total order on extension edges.
+// * However, problems occur, if a leaf's removal creates a new leaf.
+// */
+//static struct VertexList* filterCandidateEdgesByOrder2(struct Graph* g, struct ShallowGraph* candidateEdges, struct ListPool* lp) {
+//	struct VertexList* filteredEdges = NULL;
+//	for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
+//		filteredEdges = push(filteredEdges, shallowCopyEdge(e, lp));
+//	}
+//	for (int v=0; v<g->n; ++v) {
+//		if (isLeaf(g->vertices[v])) {
+//			struct VertexList* e = g->vertices[v]->neighborhood;
+//			struct VertexList* candidate = filteredEdges;
+//
+//			// special case where removal of e results in a leaf
+//			if (hasDegreeLarger2(e->endPoint)) {
+//				// find the leaf in g-e
+//				struct VertexList* f = e->endPoint->neighborhood;
+//				if (f->endPoint->number == v) {
+//					f = f->next; // we want the edge from the neighbor of v to the other incident vertex, not to v
+//				}
+//				// fast-forward to the new leaf
+//				for (/*candidate was set before*/; candidate!=NULL; candidate=candidate->next) {
+//					// extension edges end at the leaf, e is the other way round, hence change positions of startPoint and endPoint
+//					if (isReverseIsomorphicEdge(f, candidate)) {
+//						break;
+//					}
+//				}
+//
+//			}
+//
+//			// compare edge leading to v to extension edges, remove the ones that come after it, if there are any
+//			for (/*candidate was set before*/; candidate!=NULL; candidate=candidate->next) {
+//				// extension edges end at the leaf, e is the other way round, hence change positions of startPoint and endPoint
+//				if (isReverseIsomorphicEdge(e, candidate)) {
+//					dumpVertexListRecursively(lp, candidate->next);
+//					candidate->next = NULL;
+//					break;
+//				}
+//			}
+//		}
+//	}
+//	return filteredEdges;
+//}
 
 
 /**
@@ -265,15 +265,15 @@ struct Graph* extendPatternByLargerEdgesTMP(struct Graph* g, struct ShallowGraph
 	}
 }
 
-/**
-check if the canonicalStringOfTree of pattern is already contained in search tree
- */
-static char alreadyEnumerated(struct Graph* pattern, struct Vertex* searchTree, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* string = canonicalStringOfTree(pattern, sgp);
-	char alreadyFound = containsString(searchTree, string);
-	dumpShallowGraph(sgp, string);
-	return alreadyFound;
-}
+///**
+//check if the canonicalStringOfTree of pattern is already contained in search tree
+// */
+//static char alreadyEnumerated(struct Graph* pattern, struct Vertex* searchTree, struct ShallowGraphPool* sgp) {
+//	struct ShallowGraph* string = canonicalStringOfTree(pattern, sgp);
+//	char alreadyFound = containsString(searchTree, string);
+//	dumpShallowGraph(sgp, string);
+//	return alreadyFound;
+//}
 
 
 /**
