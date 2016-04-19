@@ -112,6 +112,10 @@ int main(int argc, char** argv) {
 				filter = cactus;
 				break;
 			}
+			if (strcmp(optarg, "path") == 0) {
+				filter = path;
+				break;
+			}
 			if (strcmp(optarg, "traceableCactus") == 0) {
 				filter = traceableCactus;
 				break;
@@ -384,6 +388,9 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case cactus:
 		measure = isCactus(g, sgp);
+		break;
+	case path:
+		measure = isPath(g);
 		break;
 	case traceableCactus:
 		measure = isTraceableCactus(g, sgp);

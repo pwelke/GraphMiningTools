@@ -52,9 +52,10 @@ options: options (except -h) are always followed by a value.
              
         *boolean properties* (return 0 or 1)
         connected    check if a graph is connected
-        outerplanar  check if a graph is outerplanar
+        path         check if a graph is a path
         tree         check if a graph is a tree
         cactus       check if a graph is a connected cactus graph
+        outerplanar  check if a graph is outerplanar
         traceableCactus       check if the graph is a connected 
                               cactus graph and contains a Hamiltonian 
                               path

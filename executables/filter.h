@@ -37,6 +37,7 @@ typedef enum {
 	connected,
 	outerplanar,
 	tree,
+	path,
 	cactus,
 	traceableCactus,
 	weaklyTraceable,

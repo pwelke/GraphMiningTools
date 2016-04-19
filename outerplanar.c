@@ -8,6 +8,16 @@
 #include "connectedComponents.h"
 #include "outerplanar.h"
 
+char isPath(struct 	Graph* tree) {
+	if (tree->m != tree->n - 1) { return 0; }
+	for (int v=0; v<tree->n; ++v) {
+		if (degree(tree->vertices[v]) > 2) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 
 /**
 A tree is a connected graph with m = n-1 edges.
