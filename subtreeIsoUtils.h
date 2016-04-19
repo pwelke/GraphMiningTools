@@ -19,6 +19,7 @@
 
 int labelCmp(const char* l1, const char* l2);
 int* getPostorder(struct Graph* g, int root);
+int* getPostorderForTree(struct Graph* g, int root);
 void markReachable(struct Vertex* a, int num);
 
 #endif /* SUBTREEISOUTILS_H_ */

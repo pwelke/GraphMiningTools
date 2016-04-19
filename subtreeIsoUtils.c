@@ -67,15 +67,22 @@ int* getPostorderOfTree(struct Graph* g, int root) {
 
 
 /**
-Compute a dfs order or postorder on g starting at vertex root.
+Compute a dfs order or postorder on g.
 The ->visited members of vertices are set to the position they have in the order
 (starting with 0).
 The method returns an array of length g->n where position i contains the vertex number
 of the ith vertex in the order.
-The ->lowPoint s of vertices in g point to their parents in the postorder.
+(a root of a connected component has the highest position, i.e. iteration
+	for (i=0; i<g->n; ++i) {}
+iterates through the graph bottom up.)
+The ->lowPoint's of vertices in g point to their parents in the postorder.
 
-If g is disconnected, another dfs is started for each connected component that does not contain root.
-For each of those components, the root is the vertex in that component with the lowest ->number.
+If g is disconnected, a dfs is started for each connected component.
+For the component containing root, its root will be root. :)
+For each other connected component, the root is the vertex in that component with the lowest ->number.
+
+Note, that the parameter root vertex will not be the vertex with the highest position, if there is more
+than one connected component.
 */
 int* getPostorder(struct Graph* g, int root) {
 	int* order = malloc(g->n * sizeof(int));
@@ -83,11 +90,14 @@ int* getPostorder(struct Graph* g, int root) {
 		g->vertices[i]->visited = -1;
 		order[i] = -1;
 	}
+
 	int nVisited = dfs(g->vertices[root], 0);
 	g->vertices[root]->lowPoint = -1;
 	for (int i=0; i<g->n; ++i) {
 		if (g->vertices[i]->visited == -1) {
 			nVisited = dfs(g->vertices[i], nVisited + 1);
+			g->vertices[i]->lowPoint = -1;
+
 		}
 		order[g->vertices[i]->visited] = i;
 	}

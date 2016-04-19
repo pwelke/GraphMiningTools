@@ -66,56 +66,12 @@
 		while ((g = iterateFile())) {
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
-
-				struct VertexList* edge = getVertexList(lp);
-				edge->startPoint = getVertex(vp);
-				edge->endPoint = getVertex(vp);
-				edge->startPoint->label = intLabel(2);
-				edge->label = intLabel(1);
-				edge->endPoint->label = intLabel(1);
-
-				edge->isStringMaster = 1;
-				edge->startPoint->isStringMaster = 1;
-				edge->endPoint->isStringMaster = 1;
-
-				struct SubtreeIsoDataStore base = initG(g);
-				struct SubtreeIsoDataStore one = initIterativeSubtreeCheck(base, edge, gp);
-
-				printf("lenght 1, Found Iso: %i\n", one.foundIso);
-//				printNewCubeCondensed(one.S, one.g->n, one.h->n);
-
-				struct SubtreeIsoDataStore prev = one;
-				for (int i=1; i<2; ++i) {
-					struct Graph* ext = refinementGraph(prev.h, 0, edge, gp);
-					struct SubtreeIsoDataStore current = iterativeSubtreeCheck(prev, ext, gp);
-
-					printf("lenght %i, Found Iso: %i\n", current.h->m, current.foundIso);
-//					printNewCubeCondensed(current.S, current.g->n, current.h->n);
-
-					dumpNewCube(prev.S, prev.g->n);
-					dumpGraph(gp, prev.h);
-
-					prev = current;
+				int* postorder = getPostorder(g, 0);
+				for (int i=0; i<g->n; ++i) {
+					printf("%i ", postorder[i] + 1);
 				}
-
-
-				dumpNewCube(prev.S, prev.g->n);
-				dumpGraph(gp, prev.h);
-				
-				// printNewCube(next.S, next.g->n, next.h->n);
-
-				// garbage collection
-				// dumpNewCube(next.S, next.g->n, next.h->n);
-				// dumpGraph(gp, next.h);				
-
-				// dumpNewCube(one.S, one.g->n, one.h->n);
-				// dumpGraph(gp, one.h);
-				free(base.postorder);
-
-				dumpVertex(vp, edge->startPoint);
-				dumpVertex(vp, edge->endPoint);
-				dumpVertexList(lp, edge);
-			} 
+				printf("\n");
+			}
 			/* garbage collection */
 			dumpGraph(gp, g);
 		}
