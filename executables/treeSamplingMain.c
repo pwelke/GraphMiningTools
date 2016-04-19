@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 				break;
 			}
 			if (strcmp(optarg, "cactus") == 0) {
-				samplingMethod = cactus;
+				samplingMethod = cactusSampling;
 				break;
 			}
 			if (strcmp(optarg, "bridgeForest") == 0) {
@@ -169,6 +169,7 @@ int main(int argc, char** argv) {
 			break;
 		case 'v': 
 			verbosity = 1;
+			break;
 		case '?':
 			return EXIT_FAILURE;
 			break;
@@ -232,7 +233,8 @@ int main(int argc, char** argv) {
 						break;
 					case partialListing:
 						sample = sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
-					case cactus:
+						break;
+					case cactusSampling:
 						sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
 						break;
 					case bridgeForest:
@@ -267,7 +269,8 @@ int main(int argc, char** argv) {
 						// sample = sampleSpanningTreesUsingPartialListingMix(g, k, threshold, gp, sgp);
 						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingPartialListingMix,
 							g, k, threshold, gp, sgp);
-					case cactus:
+						break;
+					case cactusSampling:
 						// sample = sampleSpanningTreesUsingCactusMix(g, k, threshold, gp, sgp);
 						sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingCactusMix,
 							g, k, threshold, gp, sgp);

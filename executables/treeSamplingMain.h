@@ -9,7 +9,7 @@ typedef enum {
 		listing,
 		mix,
 		partialListing,
-		cactus,
+		cactusSampling,
 		bridgeForest,
 		listOrSample,
 	} SamplingMethod;	
