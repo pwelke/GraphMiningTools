@@ -6,6 +6,7 @@
 #include "../graph.h"
 #include "../loading.h"
 #include "../iterativeSubtreeIsomorphism.h"
+#include "../subtreeIsoUtils.h"
 #include "../subtreeIsomorphism.h"
 #include "../treeEnumeration.h"
 
