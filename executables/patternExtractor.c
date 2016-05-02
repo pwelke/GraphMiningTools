@@ -5,6 +5,8 @@
 
 #include "../loading.h"
 #include "../intSet.h"
+#include "../levelwiseGraphMining.h"
+#include "../subtreeIsomorphism.h"
 #include "patternExtractor.h"
 
 /**
@@ -196,6 +198,19 @@ struct IntSet* getTripletFingerprintsBruteForce(struct Graph* g, struct ShallowG
 }
 
 
+struct IntSet* computeSubtreeIsomorphisms(struct Graph* g, struct Graph** patterns, int nPatterns, struct GraphPool* gp) {
+	struct IntSet* features = getIntSet();
+
+	for (int i=0; i<nPatterns; ++i) {
+		if (isSubtree(g, patterns[i], gp)) {
+			addIntSortedNoDuplicates(features, patterns[i]->number);
+		}
+	}
+	return features;
+}
+
+
+
 /**
 * Compute a set of fingerprints that is based on the triangles in a graph that contain at least two edges that are present.
 * For sparse graphs, this is much faster than brute force enumeration of all induced subgraphs of size 3.
@@ -230,7 +245,8 @@ struct IntSet* getTripletFingerprintsTriangulation(struct Graph* g, struct Shall
 
 int main(int argc, char** argv) {
 
-	typedef enum {triangles, bruteForceTriples} ExtractionMethod;
+	typedef enum {triangles, bruteForceTriples, treePatterns} ExtractionMethod;
+	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
 	/* object pools */
 	struct ListPool *lp;
@@ -243,15 +259,27 @@ int main(int argc, char** argv) {
 
 	// handle user input
 	ExtractionMethod method = triangles;
+	char* patternFile = NULL;
+	struct Graph** patterns = NULL;
+	int nPatters = 0;
+	InputMethod inputMethod = AIDS99_INPUT;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hm:";
+	const char* validArgs = "hm:f:c:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
 			printHelp();
 			return EXIT_SUCCESS;
+		case 'a':
+			patternFile = optarg;
+			inputMethod = AIDS99_INPUT;
+			break;
+		case 'c':
+			patternFile = optarg;
+			inputMethod = CANONICALSTRING_INPUT;
+			break;
 		case 'm':
 			if (strcmp(optarg, "triangles") == 0) {
 				method = triangles;
@@ -259,6 +287,10 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "triples") == 0) {
 				method = bruteForceTriples;
+				break;
+			}
+			if (strcmp(optarg, "treePatterns") == 0) {
+				method = treePatterns;
 				break;
 			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
@@ -275,6 +307,27 @@ int main(int argc, char** argv) {
 	vp = createVertexPool(10000);
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
+
+	if (method == treePatterns) {
+		if (patternFile == NULL) {
+			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
+			return EXIT_FAILURE;
+		} else {
+			FILE* patternStream = NULL;
+			switch (inputMethod) {
+			case AIDS99_INPUT:
+				createFileIterator(patternFile, gp);
+				nPatters = getDB(&patterns);
+				destroyFileIterator();
+				break;
+			case CANONICALSTRING_INPUT:
+				patternStream = fopen(patternFile, "r");
+				nPatters = getDBfromCanonicalStrings(&patterns, patternStream, 20, gp, sgp);
+				fclose(patternStream);
+				break;
+			}
+		}
+	}
 
 	/* initialize the stream to read graphs from
 		   check if there is a filename present in the command line arguments
@@ -303,6 +356,8 @@ int main(int argc, char** argv) {
 			case bruteForceTriples:
 				fingerprints = getTripletFingerprintsBruteForce(g, sgp);
 				break;
+			case treePatterns:
+				fingerprints = computeSubtreeIsomorphisms(g, patterns, nPatters, gp);
 			}
 			printIntSetSparse(fingerprints, g->number, stdout);
 		}

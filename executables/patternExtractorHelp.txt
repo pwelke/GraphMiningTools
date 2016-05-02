@@ -16,3 +16,7 @@ Options:
 	                       subgraphs of size 3.
     triples:               Compute a set of fingerprints based on the set of all
                            induced subgraphs of size 3.
+    treePatterns:          Given a set of tree patterns (specified via -f), return
+                           the set of tree patterns that match the graph (i.e.
+                           those that are subgraph isomorphic to the graph). This 
+                           method only supports tree databases and tree patterns.
