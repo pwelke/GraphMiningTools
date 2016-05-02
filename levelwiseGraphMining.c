@@ -38,6 +38,43 @@ int getDB(struct Graph*** db) {
 	return i;
 }
 
+static void unshallowGraph(struct Graph* g) {
+	for (int vi=0; vi<g->n; ++vi) {
+		struct Vertex* v = g->vertices[vi];
+		if (v->isStringMaster == 0) {
+			v->label = copyString(v->label);
+			v->isStringMaster = 1;
+		}
+		for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+			if (e->isStringMaster == 0) {
+				e->label = copyString(e->label);
+				e->isStringMaster = 1;
+			}
+		}
+	}
+}
+
+int getDBfromCanonicalStrings(struct Graph*** db, FILE* stream, int bufferSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* g = NULL;
+	int dbSize = 0;
+	int i = 0;
+	int graphId = -1;
+
+	while ((g = streamReadPatterns(stream, bufferSize, &graphId, sgp))) {
+		/* make space for storing graphs in array */
+		if (dbSize <= i) {
+			dbSize = dbSize == 0 ? 128 : dbSize * 2;
+			*db = realloc(*db, dbSize * sizeof (struct Graph*));
+		}
+		/* store graph */
+		(*db)[i] = treeCanonicalString2Graph(g, gp);
+		unshallowGraph((*db)[i]);
+		dumpShallowGraph(sgp, g);
+		++i;
+	}
+	return i;
+}
+
 
 /**
 Find the frequent vertices in a graph db given by an array of graphs.
