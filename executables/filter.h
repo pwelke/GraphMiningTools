@@ -29,9 +29,6 @@ typedef enum {
 
 	/* labels */
 	label,
-	AvsI,
-	AMvsI,
-	AvsMI,
 
 	/* boolean properties */
 	connected,

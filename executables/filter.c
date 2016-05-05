@@ -75,16 +75,8 @@ int main(int argc, char** argv) {
 			return EXIT_SUCCESS;
 		case 'f':
 			/* labels */
-			if (strcmp(optarg, "AvsI") == 0) {
-				filter = AvsI;
-				break;
-			}
-			if (strcmp(optarg, "AvsMI") == 0) {
-				filter = AvsMI;
-				break;
-			}
-			if (strcmp(optarg, "AMvsI") == 0) {
-				filter = AMvsI;
+			if (strcmp(optarg, "label") == 0) {
+				filter = label;
 				break;
 			}
 			/* counting */
@@ -340,38 +332,6 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	/* labels */
 	case label:
-		measure = g->activity;
-		break;
-	case AvsI:
-		if (g->activity == 1) {
-			g->activity = 0;
-		}
-		if (g->activity == 0) {
-			g->activity = -1;
-		}
-		if (g->activity == 2) {
-			g->activity = 1;
-		}
-		if (conditionHolds(g->activity, value, comparator)) {
-			output(g, g->activity, oOption, out);
-		}
-		measure = g->activity;
-		break;
-	case AvsMI:
-		if (g->activity == 2) {
-			g->activity = 1;
-		} else {
-			g->activity = -1;
-		}
-		measure = g->activity;
-		break;
-	case AMvsI:
-		if (g->activity == 0) {
-			g->activity = -1;
-		}
-		if (g->activity == 2) {
-			g->activity = 1;
-		}
 		measure = g->activity;
 		break;
 

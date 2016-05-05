@@ -40,15 +40,6 @@ options: options (except -h) are always followed by a value.
              
         *labels* (labels are integer in our db format)
         label    the label of a graph, specified in the graph db
-
-        * the following filters remap the labels to 1 and -1 for the target
-        * classes. AvsI maps moderately active labels to 0, thus filtering
-        * ./gf -f AvsI -c '!=' -v 0  results in the Active vs. Inactive sub-
-        * set of AIDS99. The other two filters just change the labels of all
-        * graphs accordingly.
-        AvsI     for AIDS99-target attributes
-        AMvsI    for AIDS99-target attributes
-        AvsMI    for AIDS99-target attributes
              
         *boolean properties* (return 0 or 1)
         connected    check if a graph is connected
