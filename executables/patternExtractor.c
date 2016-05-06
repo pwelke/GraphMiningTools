@@ -272,7 +272,7 @@ int main(int argc, char** argv) {
 		case 'h':
 			printHelp();
 			return EXIT_SUCCESS;
-		case 'a':
+		case 'f':
 			patternFile = optarg;
 			inputMethod = AIDS99_INPUT;
 			break;
