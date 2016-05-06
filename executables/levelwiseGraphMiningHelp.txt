@@ -1,1 +1,41 @@
-TODO
+This is a frequent subtree mining tool.
+Implemented by Pascal Welke 2016.
+
+This program computes and outputs frequent subtrees according to several
+definitions of that notion and feature representations of the mined graphs.
+
+usage: ./lwg [options] [FILE]
+
+If no FILE argument is given or FILE is - the program reads from stdin.
+It always prints to stdout.
+
+
+Options:
+
+-t THRESHOLD:    Minimum absolute support threshold in the graph database
+
+-p PATTERNSIZE:  Maximum size (number of vertices) of patterns returned
+
+-o PATTERNFILE:  output the frequent subtrees in this file
+
+-m METHOD:       Choose mining method among
+             bfs: (default) mine in a levelwise fashion (like apriori). 
+                 This results in better pruning behavior, but large memory 
+                 footprint
+             dfs: mine in a depth-first fashion (like FP-growth). This 
+                 results in better memory footprint, but larger run time. 
+                 
+-e OPERATOR:     Choose embedding operator among
+             subtree: (default) classical subtree isomorphism algorithm.
+                 A pattern matches a graph, if it is subgraph isomorphic 
+                 to it.
+             iterative: classical subtree isomorphism algorithm in an
+                 iterative version. Uses more space than subtree, but 
+                 might increase mining speed in some cases.
+             absImp: absolute importance threshold (specify using -i).
+                 A pattern needs to be subtree of at least i connected
+                 components of a graph to match the graph.
+             relImp: relative importance threshold (specify unsing -i).
+                 A pattern needs to be subtree of at least a -i fraction
+                 of connected components of a graph to match it.
+-h:              print this possibly helpful information.

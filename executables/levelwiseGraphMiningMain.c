@@ -43,12 +43,14 @@ int main(int argc, char** argv) {
 	/* user input handling variables */
 	int threshold = 1000;
 	unsigned int maxPatternSize = 20;
-	void (*miningStrategy)(size_t, size_t, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
+	void (*miningStrategy)(size_t, size_t, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
+	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*) = &noniterativeSubtreeCheckOperator;
+	double importance = 0.5;
 	char* patternFile = NULL;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "ht:p:m:o:";
+	const char* validArgs = "ht:p:m:o:e:i:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -78,6 +80,30 @@ int main(int argc, char** argv) {
 			}
 			fprintf(stderr, "Unknown mining technique: %s\n", optarg);
 			return EXIT_FAILURE;
+		case 'e':
+			if (strcmp(optarg, "relImp") == 0) {
+				embeddingOperator = &relativeImportanceOperator;
+			}
+			if (strcmp(optarg, "absImp") == 0) {
+				embeddingOperator = &absoluteImportanceOperator;
+			}
+			if (strcmp(optarg, "subtree") == 0) {
+				embeddingOperator = &noniterativeSubtreeCheckOperator;
+			}
+			if (strcmp(optarg, "iterative") == 0) {
+				embeddingOperator = &iterativeSubtreeCheckOperator;
+			}
+			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
+			return EXIT_FAILURE;
+		case 'i':
+			if (sscanf(optarg, "%lf", &importance) != 1) {
+				fprintf(stderr, "value must be float, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			if (importance <= 0) {
+				fprintf(stderr, "value must be larger than zero but is %lf\n", importance);
+			}
+			break;
 		case 'o':
 			patternFile = optarg;
 			break;
@@ -119,7 +145,7 @@ int main(int argc, char** argv) {
 		fprintf(logStream, "Write patterns to file: %s\n", patternFile);
 	}
 
-	miningStrategy(maxPatternSize, threshold, featureStream, patternStream, logStream, gp, sgp);
+	miningStrategy(maxPatternSize, threshold, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
 
 	destroyFileIterator(); // graphs are in memory now
 

@@ -17,6 +17,7 @@
 #include "subtreeIsoUtils.h"
 #include "subtreeIsomorphism.h"
 #include "iterativeSubtreeIsomorphism.h"
+#include "importantSubtrees.h"
 #include "levelwiseGraphMining.h"
 
 
@@ -288,7 +289,19 @@ void DFS(struct Graph** db, struct IntSet* candidateSupport, struct Graph* candi
 }
 
 
-void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t threshold, int maxPatternSize, struct ShallowGraph* frequentEdges, struct Vertex* processedPatterns, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport,
+		size_t threshold,
+		int maxPatternSize,
+		struct ShallowGraph* frequentEdges,
+		struct Vertex* processedPatterns,
+	    // embedding operator function pointer,
+	    struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+	    double importance,
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
 
 	struct Graph* candidate = candidateSupport->first->data.h;
 
@@ -306,7 +319,7 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t thres
 		// test if candidate is frequent
 		struct SubtreeIsoDataStoreList* refinementSupport = getSubtreeIsoDataStoreList();
 		for (struct SubtreeIsoDataStoreElement* i=candidateSupport->first; i!=NULL; i=i->next) {
-			struct SubtreeIsoDataStore result = iterativeSubtreeCheck(i->data, refinement, gp);
+			struct SubtreeIsoDataStore result = embeddingOperator(i->data, refinement, importance, gp);
 
 			if (result.foundIso) {
 				appendSubtreeIsoDataStore(refinementSupport, result);
@@ -321,7 +334,7 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t thres
 			dumpShallowGraph(sgp, cString);
 			printSubtreeIsoDataStoreListSparse(refinementSupport, featureStream);
 
-			iterativeDFS(refinementSupport, threshold, maxPatternSize, frequentEdges, processedPatterns, featureStream, patternStream, logStream, gp, sgp);
+			iterativeDFS(refinementSupport, threshold, maxPatternSize, frequentEdges, processedPatterns, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
 		}
 		// clean up
 		dumpSubtreeIsoDataStoreList(refinementSupport);
@@ -357,7 +370,16 @@ struct SubtreeIsoDataStoreList* initIterativeDFS(struct Graph** db, size_t nGrap
 /**
  * Input handling, parsing of database and call of opk feature extraction method.
  */
-void iterativeDFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void iterativeDFSMain(size_t maxPatternSize,
+		              size_t threshold,
+					  // embedding operator function pointer,
+					 struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+					 double importance,
+					 FILE* featureStream,
+					 FILE* patternStream,
+					 FILE* logStream,
+					 struct GraphPool* gp,
+					 struct ShallowGraphPool* sgp) {
 
 	struct Vertex* frequentVertices = getVertex(gp->vertexPool);
 
@@ -416,7 +438,7 @@ void iterativeDFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStre
 			if (!containsString(processedPatterns, cString)) {
 				struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, -1, gp);
 				addToSearchTree(processedPatterns, cString, gp, sgp);
-				iterativeDFS(edgeSupport, threshold, maxPatternSize, extensionEdges, processedPatterns, featureStream, patternStream, logStream, gp, sgp);
+				iterativeDFS(edgeSupport, threshold, maxPatternSize, extensionEdges, processedPatterns, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
 				dumpSubtreeIsoDataStoreListWithPostorder(edgeSupport, gp);
 			} else {
 				dumpShallowGraph(sgp, cString);
@@ -695,12 +717,41 @@ void extendPreviousLevel(// input
 	assert(nAddedToOutput + nDumped == nAllExtensionsPreApriori);
 }
 
+// WRAPPERS FOR DIFFERENT EMBEDDING OPERATORS
+
+struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
+	(void)importance; // unused
+	return noniterativeSubtreeCheck(data, h, gp);
+}
+
+struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.foundIso = isImportantSubtreeRelative(result.g, result.h, importance, gp);
+	return result;
+}
+
+struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.foundIso = isImportantSubtreeAbsolute(result.g, result.h, importance, gp);
+	return result;
+}
+
+struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
+	(void)importance; // unused
+	return iterativeSubtreeCheck(data, h, gp);
+}
+
 
 struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		size_t threshold,
 		struct ShallowGraph* frequentEdges,
+		// embedding operator function pointer,
+		struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+		double importance,
 		// output
 		struct Vertex** currentLevelSearchTree,
 		FILE* logStream,
@@ -729,7 +780,8 @@ struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 		for (struct SubtreeIsoDataStoreElement* e=candidateSupport->first; e!=NULL; e=e->next) {
 			// create actual support list for candidate pattern
 //			struct SubtreeIsoDataStore result = iterativeSubtreeCheck(e->data, candidate, gp);
-			struct SubtreeIsoDataStore result = noniterativeSubtreeCheck(e->data, candidate, gp);
+//			struct SubtreeIsoDataStore result = noniterativeSubtreeCheck(e->data, candidate, gp);
+			struct SubtreeIsoDataStore result = embeddingOperator(e->data, candidate, importance, gp);
 
 			if (result.foundIso) {
 				//TODO store result id somehow
@@ -934,7 +986,16 @@ void madness(struct SubtreeIsoDataStoreList* previousLevelSupportSets, struct Ve
 }
 
 
-void iterativeBFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void iterativeBFSMain(size_t maxPatternSize,
+		              size_t threshold,
+					  // embedding operator function pointer,
+					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+					  double importance,
+					  FILE* featureStream,
+					  FILE* patternStream,
+					  FILE* logStream,
+					  struct GraphPool* gp,
+					  struct ShallowGraphPool* sgp) {
 
 	/* init data structures */
 	struct Graph** db = NULL;
@@ -966,7 +1027,7 @@ void iterativeBFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStre
 		currentLevelSearchTree = getVertex(gp->vertexPool);
 		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
 
-		currentLevelSupportSets = iterativeBFSOneLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, &currentLevelSearchTree, logStream, gp, sgp);
+		currentLevelSupportSets = iterativeBFSOneLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
 
 		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
 		printSubtreeIsoDataStoreListsSparse(currentLevelSupportSets, featureStream);

@@ -12,9 +12,30 @@ void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSetSize, s
 
 void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patterns, int nPatterns, struct Vertex** pointers, struct GraphPool* gp);
 void DFS(struct Graph** db, struct IntSet* candidateSupport, struct Graph* candidate, size_t threshold, int maxPatternSize, struct ShallowGraph* frequentEdges, struct Vertex* processedPatterns, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport, size_t threshold, int maxPatternSize, struct ShallowGraph* frequentEdges, struct Vertex* processedPatterns, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport,
+		size_t threshold,
+		int maxPatternSize,
+		struct ShallowGraph* frequentEdges,
+		struct Vertex* processedPatterns,
+	    // embedding operator function pointer,
+	    struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+	    double importance,
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStoreList* initIterativeDFS(struct Graph** db, size_t nGraphs, struct VertexList* e, int edgeId, struct GraphPool* gp);
-void iterativeDFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void iterativeDFSMain(size_t maxPatternSize,
+		              size_t threshold,
+					  // embedding operator function pointer,
+					 struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+					 double importance,
+					 FILE* featureStream,
+					 FILE* patternStream,
+					 FILE* logStream,
+					 struct GraphPool* gp,
+					 struct ShallowGraphPool* sgp);
 void DFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void filterInfrequentCandidates(// input
 		struct Graph* extensions,
@@ -43,6 +64,9 @@ struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 		struct Vertex* previousLevelSearchTree,
 		size_t threshold,
 		struct ShallowGraph* frequentEdges,
+		// embedding operator function pointer,
+		struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+		double importance,
 		// output
 		struct Vertex** currentLevelSearchTree,
 		FILE* logStream,
@@ -61,7 +85,19 @@ void madness(struct SubtreeIsoDataStoreList* previousLevelSupportSets, struct Ve
 			 struct SubtreeIsoDataStoreList** currentLevelSupportSets, struct Vertex** currentLevelSearchTree,
 			 FILE* featureStream, FILE* patternStream, FILE* logStream,
 			 struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void iterativeBFSMain(size_t maxPatternSize, size_t threshold, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void iterativeBFSMain(size_t maxPatternSize,
+		              size_t threshold,
+					  // embedding operator function pointer,
+					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+					  double importance,
+					  FILE* featureStream,
+					  FILE* patternStream,
+					  FILE* logStream,
+					  struct GraphPool* gp,
+					  struct ShallowGraphPool* sgp);
 
-
+struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp);
+struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp);
+struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp);
+struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp);
 
