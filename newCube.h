@@ -28,7 +28,6 @@ struct SubtreeIsoDataStore {
 
 	struct Graph* h;
 	int*** S;
-	size_t elementsInS;
 	int foundIso;
 };
 
@@ -62,7 +61,6 @@ struct SubtreeIsoDataStore {
 
 	struct Graph* h;
 	uint8_t*** S;
-	size_t elementsInS;
 	int foundIso;
 };
 
@@ -95,7 +93,6 @@ struct SubtreeIsoDataStore {
 
 	struct Graph* h;
 	uint8_t* S;
-	size_t elementsInS;
 	int foundIso;
 };
 
