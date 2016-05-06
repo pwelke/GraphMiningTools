@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
 	/* parse command line arguments */
 	int arg;
 	int seed;
-	const char* validArgs = "hs:k:t:o:ur:vdw";
+	const char* validArgs = "hs:k:t:o:ur:vdwm";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -162,6 +162,10 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "tree") == 0) {
 				outputMethod = tr;
+				break;
+			}
+			if (strcmp(optarg, "multiple") == 0) {
+				outputMethod = mi;
 				break;
 			}
 			fprintf(stderr, "Unknown output method: %s\n", optarg);
@@ -321,12 +325,35 @@ int main(int argc, char** argv) {
 					fflush(stdout);
 					break;
 				case fo:
-					/* output tree patterns as forest un standard format */
+					/* output tree patterns as forest in standard format */
 					forest = NULL;
 					strings = listStringsInSearchTree(searchTree, sgp);
 					for (string=strings; string!=NULL; string=string->next) {
 						struct Graph* tmp;
 						tmp = treeCanonicalString2Graph(string, gp);
+						tmp->next = forest;
+						forest = tmp;
+					}
+					forest = mergeGraphs(forest, gp);
+					forest->number = g->number;
+					forest->activity = g->activity;
+					printGraphAidsFormat(forest, stdout);
+					dumpGraph(gp, forest);
+					dumpShallowGraphCycle(sgp, strings);
+					break;
+				case mi:
+					/* output tree patterns as forest in standard format, but print each spanning tree as many times as it was found */
+					forest = NULL;
+					strings = listStringsInSearchTree(searchTree, sgp);
+					for (string=strings; string!=NULL; string=string->next) {
+						struct Graph* tmp;
+						tmp = treeCanonicalString2Graph(string, gp);
+						int multiplicity = string->lastEdge->endPoint->visited;
+						for (int i=1; i<multiplicity; ++i) {
+							struct Graph* copy = cloneGraph(tmp, gp);
+							copy->next = forest;
+							forest = copy;
+						}
 						tmp->next = forest;
 						forest = tmp;
 					}

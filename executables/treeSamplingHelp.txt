@@ -81,6 +81,12 @@ options: options (except -h, -u, -v, -w) are always followed by a value.
                         a label equal to the graph id. This might be useful to 
                         feed the output to a tree mining algorithm that can 
                         only handle tree transactions, not forest transactions. 
+       multiple:        Output sampled trees as forest in standard graph db
+                        format. Different to forest / graph, this choice multiplies
+                        isomorphic spanning trees to their true multiplicity, i.e.
+                        sampling k spanning trees results in k connected components
+                        for all connected graphs in the input (particularly for 
+                        trees).
 
     -h:  display this help
 
