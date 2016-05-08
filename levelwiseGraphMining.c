@@ -727,6 +727,7 @@ struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDat
 struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
+	result.S = NULL;
 	result.foundIso = isImportantSubtreeRelative(result.g, result.h, importance, gp);
 	return result;
 }
@@ -734,6 +735,7 @@ struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore
 struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
+	result.S = NULL;
 	result.foundIso = isImportantSubtreeAbsolute(result.g, result.h, importance, gp);
 	return result;
 }
