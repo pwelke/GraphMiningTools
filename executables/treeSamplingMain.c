@@ -425,7 +425,7 @@ int main(int argc, char** argv) {
 	}
 
 	/* if output is standard graph db, terminate it with dollar sign */
-	if ((outputMethod == tr)  || (outputMethod == fo)) {
+	if ((outputMethod == tr)  || (outputMethod == fo) || (outputMethod == mi)) {
 		fprintf(stdout, "$\n");
 	}
 

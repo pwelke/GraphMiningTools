@@ -17,7 +17,8 @@ typedef enum {
 typedef enum {
 		cs,
 		fo,
-		tr
+		tr,
+		mi
 } OutputMethod;
 
 int main(int argc, char** argv);
