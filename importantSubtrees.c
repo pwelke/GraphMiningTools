@@ -11,28 +11,30 @@
 struct Graph* graph2Components(struct Graph* g, struct GraphPool* gp) {
 	// init visited to 0
 	for (int v=0; v<g->n; ++v) {
-		g->vertices[v]->visited = 0;
+		g->vertices[v]->lowPoint = -1;
 	}
 	// mark vertices of connected components in g
-	int nComponents = 1;
+	int nComponents = 0;
 	for (int v=0; v<g->n; ++v) {
-		if (g->vertices[v]->visited == 0) {
+		if (g->vertices[v]->lowPoint == -1) {
 			markComp(g->vertices[v], nComponents);
 			++nComponents;
 		}
 	}
+
 	// create graph struct for each found component
 	struct Graph** components = malloc(nComponents * sizeof(struct Graph*));
 	for (int i=0; i<nComponents; ++i) {
 		components[i] = getGraph(gp);
-		if (i<nComponents-1) {
-			components[i]->next = components[i+1];
-		}
+	}
+	// make list from array.
+	for (int i=0; i<nComponents-1; ++i) {
+		components[i]->next = components[i+1];
 	}
 	// count number of vertices in each component
 	for (int v=0; v<g->n; ++v) {
-		int c = g->vertices[v]->visited - 1;
-		++components[c]->n;
+		int c = g->vertices[v]->lowPoint;
+		++(components[c]->n);
 	}
 	// create vertex arrays for graphs
 	for (int i=0; i<nComponents; ++i) {
@@ -40,7 +42,7 @@ struct Graph* graph2Components(struct Graph* g, struct GraphPool* gp) {
 	}
 	// store vertices of g in the corresponding component graphs
 	for (int v=0; v<g->n; ++v) {
-		int c = g->vertices[v]->visited - 1;
+		int c = g->vertices[v]->lowPoint;
 		int newpos = components[c]->number;
 		components[c]->vertices[newpos] = g->vertices[v];
 		g->vertices[v]->number = newpos;
