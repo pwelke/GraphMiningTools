@@ -531,6 +531,7 @@ char isSubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 
 	noniterativeSubtreeCheck_intern(&info, gp);
 	dumpNewCube(info.S, info.g->n);
+	free(info.postorder);
 
 	return info.foundIso;
 }
