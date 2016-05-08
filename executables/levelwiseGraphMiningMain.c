@@ -12,16 +12,17 @@ const char DEBUG_INFO = 1;
  * Print --help message
  */
 int printHelp() {
-	FILE* helpFile = fopen("executables/levelwiseGraphMiningHelp.txt", "r");
-	if (helpFile != NULL) {
-		int c = EOF;
-		while ((c = fgetc(helpFile)) != EOF) {
-			fputc(c, stdout);
+#include "levelwiseGraphMiningHelp.help"
+	unsigned char* help = executables_levelwiseGraphMiningHelp_txt;
+	int len = executables_levelwiseGraphMiningHelp_txt_len;
+	if (help != NULL) {
+		int i=0;
+		for (i=0; i<len; ++i) {
+			fputc(help[i], stdout);
 		}
-		fclose(helpFile);
 		return EXIT_SUCCESS;
 	} else {
-		fprintf(stderr, "Could not read helpfile\n");
+		fprintf(stderr, "Could not read help file\n");
 		return EXIT_FAILURE;
 	}
 }
@@ -83,15 +84,19 @@ int main(int argc, char** argv) {
 		case 'e':
 			if (strcmp(optarg, "relImp") == 0) {
 				embeddingOperator = &relativeImportanceOperator;
+				break;
 			}
 			if (strcmp(optarg, "absImp") == 0) {
 				embeddingOperator = &absoluteImportanceOperator;
+				break;
 			}
 			if (strcmp(optarg, "subtree") == 0) {
 				embeddingOperator = &noniterativeSubtreeCheckOperator;
+				break;
 			}
 			if (strcmp(optarg, "iterative") == 0) {
 				embeddingOperator = &iterativeSubtreeCheckOperator;
+				break;
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
 			return EXIT_FAILURE;
