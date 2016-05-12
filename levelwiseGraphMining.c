@@ -56,12 +56,14 @@ static void unshallowGraph(struct Graph* g) {
 }
 
 int getDBfromCanonicalStrings(struct Graph*** db, FILE* stream, int bufferSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* g = NULL;
 	int dbSize = 0;
 	int i = 0;
 	int graphId = -1;
+	int graphCount = -1;
+	char buffer[bufferSize];
 
-	while ((g = streamReadPatterns(stream, bufferSize, &graphId, sgp))) {
+	while (fscanf(stream, "%i\t%i\t", &graphCount, &graphId) == 2) {
+		struct ShallowGraph* g = parseCString(stream, buffer, sgp);
 		/* make space for storing graphs in array */
 		if (dbSize <= i) {
 			dbSize = dbSize == 0 ? 128 : dbSize * 2;
@@ -69,6 +71,8 @@ int getDBfromCanonicalStrings(struct Graph*** db, FILE* stream, int bufferSize, 
 		}
 		/* store graph */
 		(*db)[i] = treeCanonicalString2Graph(g, gp);
+		(*db)[i]->number = graphId;
+		(*db)[i]->activity = graphCount;
 		unshallowGraph((*db)[i]);
 		dumpShallowGraph(sgp, g);
 		++i;
