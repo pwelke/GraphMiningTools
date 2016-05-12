@@ -7,7 +7,9 @@
 #include "../intSet.h"
 #include "../levelwiseGraphMining.h"
 #include "../subtreeIsomorphism.h"
+#include "../minhashing.h"
 #include "patternExtractor.h"
+
 
 /**
  * Print --help message
@@ -241,11 +243,16 @@ struct IntSet* getTripletFingerprintsTriangulation(struct Graph* g, struct Shall
 	return fingerprints;
 }
 
-
+static void printintarray(int* a, int n) {
+	for (int i=0; i<n; ++i) {
+		printf("%i ", a[i]);
+	}
+	printf("\n");
+}
 
 int main(int argc, char** argv) {
 
-	typedef enum {triangles, bruteForceTriples, treePatterns} ExtractionMethod;
+	typedef enum {triangles, bruteForceTriples, treePatterns, minHash} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
 	/* object pools */
@@ -261,7 +268,7 @@ int main(int argc, char** argv) {
 	ExtractionMethod method = triangles;
 	char* patternFile = NULL;
 	struct Graph** patterns = NULL;
-	int nPatters = 0;
+	int nPatterns = 0;
 	InputMethod inputMethod = AIDS99_INPUT;
 
 	/* parse command line arguments */
@@ -293,6 +300,10 @@ int main(int argc, char** argv) {
 				method = treePatterns;
 				break;
 			}
+			if (strcmp(optarg, "minHash") == 0) {
+				method = minHash;
+				break;
+			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -308,7 +319,7 @@ int main(int argc, char** argv) {
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
 
-	if (method == treePatterns) {
+	if ((method == treePatterns) || (method == minHash)) {
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -317,16 +328,33 @@ int main(int argc, char** argv) {
 			switch (inputMethod) {
 			case AIDS99_INPUT:
 				createFileIterator(patternFile, gp);
-				nPatters = getDB(&patterns);
+				nPatterns = getDB(&patterns);
 				destroyFileIterator();
 				break;
 			case CANONICALSTRING_INPUT:
 				patternStream = fopen(patternFile, "r");
-				nPatters = getDBfromCanonicalStrings(&patterns, patternStream, 20, gp, sgp);
+				nPatterns = getDBfromCanonicalStrings(&patterns, patternStream, 20, gp, sgp);
 				fclose(patternStream);
 				break;
 			}
 		}
+	}
+
+	struct Graph* patternPoset = NULL;
+	int K = 5;
+	int* permutations[K];
+	int permutationSizes[K];
+	if (method == minHash) {
+		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
+		printGraph(patternPoset);
+		for (int i=0; i<K; ++i) {
+			permutations[i] = getRandomPermutation(nPatterns);
+			printintarray(permutations[i], nPatterns);
+			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
+			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
+			printintarray(permutations[i], permutationSizes[i]);
+		}
+		return EXIT_SUCCESS;
 	}
 
 	/* initialize the stream to read graphs from
@@ -357,7 +385,11 @@ int main(int argc, char** argv) {
 				fingerprints = getTripletFingerprintsBruteForce(g, sgp);
 				break;
 			case treePatterns:
-				fingerprints = computeSubtreeIsomorphisms(g, patterns, nPatters, gp);
+				fingerprints = computeSubtreeIsomorphisms(g, patterns, nPatterns, gp);
+				break;
+			case minHash:
+				fingerprints = NULL; // TODO
+				break;
 			}
 			printIntSetSparse(fingerprints, g->number, stdout);
 		}
