@@ -4,6 +4,7 @@
 #include "graph.h"
 #include "searchTree.h"
 #include "cs_Tree.h"
+#include "cs_Parsing.h"
 #include "listComponents.h"
 
 // PERMUTATIONS
@@ -25,12 +26,12 @@ static void shuffleArray(int* array, int arraySize) {
 	}
 }
 
-/** Return a random permutation of the numbers from 0 to n-1 */
+/** Return a random permutation of the numbers from 1 to n */
 int* getRandomPermutation(int n) {
 	int* permutation = malloc(n * sizeof(int));
 	if (permutation) {
 		for (int i=0; i<n; ++i) {
-			permutation[i] = i;
+			permutation[i] = i+1;
 		}
 		shuffleArray(permutation, n);
 	} else {
@@ -79,6 +80,7 @@ int* posetPermutationShrink(int* permutation, int n, int shrunkSize) {
 			++posInCondensed;
 		}
 	}
+	free(permutation);
 	return condensedSequence;
 }
 
@@ -86,6 +88,16 @@ int* posetPermutationShrink(int* permutation, int n, int shrunkSize) {
 
 
 static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	// singletons have the empty graph as ancestor
+	if (pattern->n == 1) {
+		struct VertexList* e = getVertexList(gp->listPool);
+		e->startPoint = F->vertices[0];
+		e->endPoint = F->vertices[pattern->number];
+		addEdge(e->startPoint, e);
+		F->m += 1;
+		return 1;
+	}
 
 	int edgeCount = 0;
 	// create graph that will hold subgraphs of size n-1 (this assumes that all extension trees have the same size)
@@ -119,7 +131,11 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 			addEdge(edge->startPoint, edge);
 
 			if (subtreeID != -1) {
-				addEdgeBetweenVertices(subtreeID, pattern->number, NULL, F, gp);
+				struct VertexList* e = getVertexList(gp->listPool);
+				e->startPoint = F->vertices[subtreeID];
+				e->endPoint = F->vertices[pattern->number];
+				addEdge(e->startPoint, e);
+				F->m += 1;
 				++edgeCount;
 			} else {
 				fprintf(stderr, "subtree not found in searchtree. this should not happen\n");
@@ -140,93 +156,129 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 	return edgeCount;
 }
 
-/**
- * Build a poset of trees given by their canononical strings, ordered by subgraph isomorphism.
- *
- * Input: a list of canonical strings of trees, ordered by number of vertices
- * Output: a graph F where each vertex corresponds to a canonical string.
- *
- * - The vertex number of a canonical string is given by the position of the
- *   canonical string in the input list.
- * - The vertex->label points to a graph representation of the canonical string in the input list (be
- *   careful to cast correctly to struct Graph* when using)
- * - There is an edge (v,w) \in E(F) <=> |V(v)| = |V(w)| - 1 AND v is subgraph
- *   isomorphic to w
- */
-struct Graph* buildTreePosetFromStrings(struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	// count number of strings, add strings to a search tree with correct numbers
-	int nStrings = 0;
-	struct Vertex* searchTree = getVertex(gp->vertexPool);
-	for (struct ShallowGraph* s=strings; s!=NULL; s=s->next) {
-		addToSearchTree(searchTree, cloneShallowGraph(s, sgp), gp, sgp);
-		++nStrings;
-	}
-
-	// create graph with vertices corresponding to strings.
-	struct Graph* F = createGraph(nStrings, gp);
-	nStrings = 0;
-	for (struct ShallowGraph* s=strings; s!=NULL; s=s->next) {
-		struct Graph* pattern = treeCanonicalString2Graph(s, gp);
-		F->vertices[nStrings]->label = (char*)pattern; // misuse of char* pointer
-		addEdgesFromSubtrees(pattern, searchTree, F, gp, sgp);
-		++nStrings;
-	}
-
-	return F;
-}
+///**
+// * Build a poset of trees given by their canononical strings, ordered by subgraph isomorphism.
+// *
+// * Input: a list of canonical strings of trees, ordered by number of vertices
+// * Output: a graph F where each vertex corresponds to a canonical string.
+// *
+// * - The vertex number of a canonical string is given by the position of the
+// *   canonical string in the input list.
+// * - The vertex->label points to a graph representation of the canonical string in the input list (be
+// *   careful to cast correctly to struct Graph* when using)
+// * - There is an edge (v,w) \in E(F) <=> |V(v)| = |V(w)| - 1 AND v is subgraph
+// *   isomorphic to w
+// */
+//struct Graph* buildTreePosetFromStrings(struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+//	// count number of strings, add strings to a search tree with correct numbers
+//	int nStrings = 0;
+//	struct Vertex* searchTree = getVertex(gp->vertexPool);
+//	for (struct ShallowGraph* s=strings; s!=NULL; s=s->next) {
+//		addToSearchTree(searchTree, cloneShallowGraph(s, sgp), gp, sgp);
+//		++nStrings;
+//	}
+//
+//	// create graph with vertices corresponding to strings.
+//	struct Graph* F = createGraph(nStrings, gp);
+//	nStrings = 0;
+//	for (struct ShallowGraph* s=strings; s!=NULL; s=s->next) {
+//		struct Graph* pattern = treeCanonicalString2Graph(s, gp);
+//		F->vertices[nStrings]->label = (char*)pattern; // misuse of char* pointer
+//		addEdgesFromSubtrees(pattern, searchTree, F, gp, sgp);
+//		++nStrings;
+//	}
+//
+//	return F;
+//}
+//
+///**
+// * Build a poset of trees given as graphs, ordered by subgraph isomorphism.
+// *
+// * Input: a list of graphs that are trees, ordered by number of vertices
+// * Output: a graph F where each vertex corresponds to a canonical string.
+// *
+// * - The vertex number of a canonical string is given by the position of the
+// *   canonical string in the input list.
+// * - The vertex->label points to a graph representation of the canonical string in the input list (be
+// *   careful to cast correctly to struct Graph* when using)
+// * - There is an edge (v,w) \in E(F) <=> |V(v)| = |V(w)| - 1 AND v is subgraph
+// *   isomorphic to w
+// */
+//struct Graph* buildTreePosetFromGraphs(struct Graph* graphs, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+//	// count number of strings, add strings to a search tree with correct numbers
+//	int nStrings = 0;
+//	struct Vertex* searchTree = getVertex(gp->vertexPool);
+//	for (struct Graph* g=graphs; g!=NULL; g=g->next) {
+//		struct ShallowGraph* string = canonicalStringOfTree(g, sgp);
+//		addToSearchTree(searchTree, string, gp, sgp);
+//		++nStrings;
+//	}
+//
+//	// create graph with vertices corresponding to strings.
+//	struct Graph* F = createGraph(nStrings, gp);
+//	nStrings = 0;
+//	for (struct Graph* g=graphs; g!=NULL; g=g->next) {
+//		F->vertices[nStrings]->label = (char*)g; // misuse of char* pointer
+//		addEdgesFromSubtrees(g, searchTree, F, gp, sgp);
+//		++nStrings;
+//	}
+//
+//	return F;
+//}
 
 /**
  * Build a poset of trees given as graphs, ordered by subgraph isomorphism.
  *
  * Input: a list of graphs that are trees, ordered by number of vertices
- * Output: a graph F where each vertex corresponds to a canonical string.
+ * Output: a graph F where each vertex corresponds to a canonical string in
+ *         the input, except vertex 0 that corresponds to the empty pattern.
+ *
  *
  * - The vertex number of a canonical string is given by the position of the
- *   canonical string in the input list.
+ *   canonical string in the input list (starting with 1).
  * - The vertex->label points to a graph representation of the canonical string in the input list (be
  *   careful to cast correctly to struct Graph* when using)
  * - There is an edge (v,w) \in E(F) <=> |V(v)| = |V(w)| - 1 AND v is subgraph
  *   isomorphic to w
  */
-struct Graph* buildTreePosetFromGraphs(struct Graph* graphs, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	// count number of strings, add strings to a search tree with correct numbers
-	int nStrings = 0;
+struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	// add strings to a search tree with correct numbers
 	struct Vertex* searchTree = getVertex(gp->vertexPool);
-	for (struct Graph* g=graphs; g!=NULL; g=g->next) {
-		struct ShallowGraph* string = canonicalStringOfTree(g, sgp);
+	for (int i=0; i<nGraphs; ++i) {
+		db[i]->number = i + 1; // we assign new ids that match the position in our poset graph
+		struct ShallowGraph* string = canonicalStringOfTree(db[i], sgp);
 		addToSearchTree(searchTree, string, gp, sgp);
-		++nStrings;
 	}
 
 	// create graph with vertices corresponding to strings.
-	struct Graph* F = createGraph(nStrings, gp);
-	nStrings = 0;
-	for (struct Graph* g=graphs; g!=NULL; g=g->next) {
-		F->vertices[nStrings]->label = (char*)g; // misuse of char* pointer
+	struct Graph* F = createGraph(nGraphs + 1, gp);
+	for (int i=0; i<nGraphs; ++i) {
+		struct Graph* g = db[i];
+		F->vertices[i]->label = (char*)g; // misuse of char* pointer
 		addEdgesFromSubtrees(g, searchTree, F, gp, sgp);
-		++nStrings;
 	}
 
+	dumpSearchTree(gp, searchTree);
 	return F;
 }
 
-// PARSING HELPER FUNCTION
-
-struct ShallowGraph* readFrequentPatternStrings(FILE* stream, struct ShallowGraphPool* sgp) {
-	char* buffer[50];
-
-	int count = -1;
-	int id = -1;
-	struct ShallowGraph* strings = NULL;
-	struct ShallowGraph* stringsTail = NULL;
-	while (fscanf(stream, "%i\t%i\t", &count, &id) == 2) {
-		struct ShallowGraph* string = parseCString(stream, buffer, sgp);
-		if (stringsTail) {
-			stringsTail->next = string;
-			stringsTail = string;
-		} else {
-			strings = stringsTail = string;
-		}
-	}
-	return strings;
-}
+//// PARSING HELPER FUNCTION
+//
+//struct ShallowGraph* readFrequentPatternStrings(FILE* stream, int bufferSize, struct ShallowGraphPool* sgp) {
+//	char buffer[bufferSize];
+//
+//	int count = -1;
+//	int id = -1;
+//	struct ShallowGraph* strings = NULL;
+//	struct ShallowGraph* stringsTail = NULL;
+//	while (fscanf(stream, "%i\t%i\t", &count, &id) == 2) {
+//		struct ShallowGraph* string = parseCString(stream, buffer, sgp);
+//		if (stringsTail) {
+//			stringsTail->next = string;
+//			stringsTail = string;
+//		} else {
+//			strings = stringsTail = string;
+//		}
+//	}
+//	return strings;
+//}
