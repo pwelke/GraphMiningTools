@@ -349,10 +349,10 @@ int main(int argc, char** argv) {
 		printGraph(patternPoset);
 		for (int i=0; i<K; ++i) {
 			permutations[i] = getRandomPermutation(nPatterns);
-			printintarray(permutations[i], nPatterns);
+//			printintarray(permutations[i], nPatterns);
 			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
 			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
-			printintarray(permutations[i], permutationSizes[i]);
+//			printintarray(permutations[i], permutationSizes[i]);
 		}
 		return EXIT_SUCCESS;
 	}

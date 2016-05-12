@@ -84,8 +84,33 @@ int* posetPermutationShrink(int* permutation, int n, int shrunkSize) {
 	return condensedSequence;
 }
 
-// BUILD TREE POSET
+struct Pair {
+	int a;
+	int b;
+};
 
+struct EvaluationPlan {
+	int orderLength;
+	struct Pair* order;
+};
+
+struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, int* permutationSizes, int K, struct Graph* F) {
+	struct EvaluationPlan p = {0};
+	for (int i=0; i<K; ++i) {
+		p.orderLength += permutationSizes[i];
+	}
+	p.order = malloc(p.orderLength * sizeof(struct Pair));
+	if (p.order) {
+
+	} else {
+		fprintf(stderr, "could not allocate space for evaluation plan. this program will break now.\n");
+		p = {0};
+	}
+
+	return p;
+}
+
+// BUILD TREE POSET
 
 static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
@@ -193,4 +218,10 @@ struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct G
 	return F;
 }
 
+
+// COMPUTATION OF MINHASHES
+
+int* fastMinHash(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+}
 
