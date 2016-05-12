@@ -49,12 +49,12 @@ int* getRandomPermutation(int n) {
  *  The method returns the number of possible min hash positions and sets the values
  *  of the invalid positions to -1.
  */
-int posetPermutationMark(int* permutation, int n, struct Graph* F) {
+int posetPermutationMark(int* permutation, size_t n, struct Graph* F) {
 	for (int v=0; v<F->n; ++v) {
 		F->vertices[v]->visited = 0;
 	}
-	int shrunkSize = 0;
-	for (int i=0; i<n; ++i) {
+	size_t shrunkSize = 0;
+	for (size_t i=0; i<n; ++i) {
 		struct Vertex* v = F->vertices[permutation[i]];
 		if (v->visited == 0) {
 			markConnectedComponent(v, 1);
@@ -71,10 +71,10 @@ int posetPermutationMark(int* permutation, int n, struct Graph* F) {
  * value shrunkSize of that function, return an array of shrunkSize that only contains the
  * valid positions.
  */
-int* posetPermutationShrink(int* permutation, int n, int shrunkSize) {
+int* posetPermutationShrink(int* permutation, size_t n, size_t shrunkSize) {
 	int* condensedSequence = malloc(shrunkSize * sizeof(int));
-	int posInCondensed = 0;
-	for (int i=0; i<n; ++i) {
+	size_t posInCondensed = 0;
+	for (size_t i=0; i<n; ++i) {
 		if (permutation[i] != -1) {
 			condensedSequence[posInCondensed] = permutation[i];
 			++posInCondensed;
@@ -84,27 +84,47 @@ int* posetPermutationShrink(int* permutation, int n, int shrunkSize) {
 	return condensedSequence;
 }
 
-struct Pair {
-	int a;
-	int b;
+struct PosPair {
+	size_t a;
+	size_t b;
 };
 
 struct EvaluationPlan {
-	int orderLength;
-	struct Pair* order;
+	struct Graph* F;
+	struct PosPair* order;
+	int** shrunkPermutations;
+	size_t orderLength;
 };
 
-struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, int* permutationSizes, int K, struct Graph* F) {
+struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, int K, struct Graph* F) {
 	struct EvaluationPlan p = {0};
+	size_t maxPermutationSize = 0;
 	for (int i=0; i<K; ++i) {
 		p.orderLength += permutationSizes[i];
+		if (permutationSizes[i] > maxPermutationSize) {
+			maxPermutationSize = permutationSizes[i];
+		}
 	}
-	p.order = malloc(p.orderLength * sizeof(struct Pair));
+	p.order = malloc(p.orderLength * sizeof(struct IntPair));
 	if (p.order) {
+		// fix some evaluation order.
+		// TODO make it respect order given by F in each level to skip additional embedding op evals
+		size_t position = 0;
+		for (size_t level=0; level<maxPermutationSize; ++level) {
+			for (size_t i=0; i<K; ++i) {
+				if (level < permutationSizes[i]) {
+					p.order[position].a = level;
+					p.order[position].b = i;
+					++position;
+				}
+			}
+		}
 
 	} else {
 		fprintf(stderr, "could not allocate space for evaluation plan. this program will break now.\n");
-		p = {0};
+		p.order = NULL;
+		p.orderLength = 0;
+		p.F = NULL;
 	}
 
 	return p;
