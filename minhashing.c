@@ -5,7 +5,9 @@
 #include "searchTree.h"
 #include "cs_Tree.h"
 #include "cs_Parsing.h"
+#include "iterativeSubtreeIsomorphism.h"
 #include "listComponents.h"
+#include "minhashing.h"
 
 // PERMUTATIONS
 
@@ -84,28 +86,20 @@ int* posetPermutationShrink(int* permutation, size_t n, size_t shrunkSize) {
 	return condensedSequence;
 }
 
-struct PosPair {
-	size_t a;
-	size_t b;
-};
-
-struct EvaluationPlan {
-	struct Graph* F;
-	struct PosPair* order;
-	int** shrunkPermutations;
-	size_t orderLength;
-};
-
-struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, int K, struct Graph* F) {
+struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F) {
 	struct EvaluationPlan p = {0};
+	p.F = F;
+	p.sketchSize = K;
+	p.shrunkPermutations = shrunkPermutations;
+
 	size_t maxPermutationSize = 0;
-	for (int i=0; i<K; ++i) {
+	for (size_t i=0; i<K; ++i) {
 		p.orderLength += permutationSizes[i];
 		if (permutationSizes[i] > maxPermutationSize) {
 			maxPermutationSize = permutationSizes[i];
 		}
 	}
-	p.order = malloc(p.orderLength * sizeof(struct IntPair));
+	p.order = malloc(p.orderLength * sizeof(struct PosPair));
 	if (p.order) {
 		// fix some evaluation order.
 		// TODO make it respect order given by F in each level to skip additional embedding op evals
@@ -113,8 +107,8 @@ struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* perm
 		for (size_t level=0; level<maxPermutationSize; ++level) {
 			for (size_t i=0; i<K; ++i) {
 				if (level < permutationSizes[i]) {
-					p.order[position].a = level;
-					p.order[position].b = i;
+					p.order[position].level = level;
+					p.order[position].permutation = i;
 					++position;
 				}
 			}
@@ -122,12 +116,31 @@ struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* perm
 
 	} else {
 		fprintf(stderr, "could not allocate space for evaluation plan. this program will break now.\n");
-		p.order = NULL;
-		p.orderLength = 0;
 		p.F = NULL;
+		p.order = NULL;
+		p.shrunkPermutations = NULL;
+		p.orderLength = 0;
+		p.sketchSize = 0;
+
 	}
 
+	free(permutationSizes); // we do not need this information any more
 	return p;
+}
+
+struct EvaluationPlan dumpEvaluationPlan(struct EvaluationPlan p, struct GraphPool* gp) {
+	free(p.order);
+	for (size_t i=0; i<p.sketchSize; ++i) {
+		free(p.shrunkPermutations[i]);
+	}
+	free(p.shrunkPermutations);
+	for (int v=1; v<p.F->n; ++v) { // start from 1, as empty pattern has no graph attached
+		dumpGraph(gp, (struct Graph*)(p.F->vertices[v]->label));
+		p.F->vertices[v]->label = NULL;
+	}
+	dumpGraph(gp, p.F);
+	struct EvaluationPlan empty = {0};
+	return empty;
 }
 
 // BUILD TREE POSET
@@ -230,7 +243,7 @@ struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct G
 	struct Graph* F = createGraph(nGraphs + 1, gp);
 	for (int i=0; i<nGraphs; ++i) {
 		struct Graph* g = db[i];
-		F->vertices[i]->label = (char*)g; // misuse of char* pointer
+		F->vertices[i+1]->label = (char*)g; // misuse of char* pointer
 		addEdgesFromSubtrees(g, searchTree, F, gp, sgp);
 	}
 
@@ -241,7 +254,59 @@ struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct G
 
 // COMPUTATION OF MINHASHES
 
-int* fastMinHash(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-
+static void cleanEvaluationPlan(struct EvaluationPlan p) {
+	for (int i=0; i<p.F->n; ++i) {
+		p.F->vertices[i]->visited = 0;
+	}
 }
+
+/**
+ *
+ */
+int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int* sketch = malloc(p.sketchSize * sizeof(int));
+	if (!sketch) {
+		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
+		return NULL;
+	}
+	for (size_t i=0; i<p.sketchSize; ++i) {
+		sketch[i] = -1; // init sketch values to 'infty'
+	}
+	for (size_t i=0; i<p.orderLength; ++i) {
+		struct PosPair current = p.order[i];
+		int currentGraphNumber = p.shrunkPermutations[current.permutation][current.level];
+
+		// check if we already found level min for the permutation
+		if (sketch[current.permutation] != -1) {
+			continue;
+		}
+
+		// check if we already evaluated the embedding operator for this pattern or found a subpattern that had no match
+		if (p.F->vertices[currentGraphNumber]->visited != 0) {
+			// either the pattern with id currentGraphNumber was evaluated positively and we hence have found the
+			// min value for the current permutation or we need to continue
+			if (p.F->vertices[currentGraphNumber]->visited == 1) {
+				sketch[current.permutation] = current.level;
+			}
+			continue;
+		}
+
+		// evaluate the embedding operator
+		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+		char match = isSubtree(g, currentGraph, gp);
+		if (match) {
+			p.F->vertices[currentGraphNumber]->visited = 1;
+			sketch[current.permutation] = current.level;
+			continue;
+		} else {
+			markConnectedComponent(p.F->vertices[currentGraphNumber], -1);
+		}
+
+	}
+
+	cleanEvaluationPlan(p);
+	return sketch;
+}
+
+
 

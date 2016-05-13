@@ -340,21 +340,24 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	struct Graph* patternPoset = NULL;
-	int K = 5;
-	int* permutations[K];
-	int permutationSizes[K];
+
+	struct EvaluationPlan evaluationPlan = {0};
 	if (method == minHash) {
+		struct Graph* patternPoset = NULL;
+		size_t K = 5;
+		int** permutations = malloc(K * sizeof(int*));
+		size_t* permutationSizes = malloc(K * sizeof(size_t));
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
-		printGraph(patternPoset);
-		for (int i=0; i<K; ++i) {
+		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
+//		printGraph(patternPoset);
+		for (size_t i=0; i<K; ++i) {
 			permutations[i] = getRandomPermutation(nPatterns);
 //			printintarray(permutations[i], nPatterns);
 			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
 			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
 //			printintarray(permutations[i], permutationSizes[i]);
 		}
-		return EXIT_SUCCESS;
+		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, K, patternPoset);
 	}
 
 	/* initialize the stream to read graphs from
@@ -388,10 +391,17 @@ int main(int argc, char** argv) {
 				fingerprints = computeSubtreeIsomorphisms(g, patterns, nPatterns, gp);
 				break;
 			case minHash:
-				fingerprints = NULL; // TODO
+				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp, sgp);
 				break;
 			}
-			printIntSetSparse(fingerprints, g->number, stdout);
+			if (method != minHash) {
+				printIntSetSparse(fingerprints, g->number, stdout);
+				dumpIntSet(fingerprints);
+			} else {
+				printf("%i: ", g->number);
+				printintarray((int*)fingerprints, evaluationPlan.sketchSize);
+				free(fingerprints);
+			}
 		}
 
 
@@ -400,6 +410,7 @@ int main(int argc, char** argv) {
 	}
 
 	/* global garbage collection */
+	evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
 	destroyFileIterator();
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);
