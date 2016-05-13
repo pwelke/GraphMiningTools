@@ -308,5 +308,53 @@ int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphP
 	return sketch;
 }
 
+static void addToBorder(struct Vertex* v, struct ShallowGraph* border, struct ShallowGraphPool* sgp) {
+	struct VertexList* e = getVertexList(sgp->listPool);
+	e->endPoint = v;
+	appendEdge(border, e);
+}
+
+static struct Vertex* popFromBorder(struct ShallowGraph* border, struct ShallowGraphPool* sgp) {
+	struct VertexList* e = popEdge(border);
+	struct Vertex* v = e->endPoint;
+	dumpVertexList(sgp->listPool, e);
+	return v;
+}
+
+// FOR COMPARISON: EXPLICIT EVALUATION USING THE PATTERN POSET
+int* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* border = getShallowGraph(sgp);
+	int* featureVector = malloc((F->n - 1) * sizeof(int));
+	for (int i=0; i<F->n-1; ++i) { featureVector[i] = 0; }
+
+	// add minimal elements to border
+	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
+		addToBorder(e->endPoint, border, sgp);
+	}
+
+	// bfs evaluation with pruning through the poset
+	while (border->m != 0) {
+		struct Vertex* v = popFromBorder(border, sgp);
+		struct Graph* pattern = (struct Graph*)(v->label);
+		if (v->visited != -1) {
+			char match = isSubtree(g, pattern, gp);
+			if (match) {
+				featureVector[v->number - 1] = 1;
+				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+					addToBorder(e->endPoint, border, sgp);
+				}
+			} else {
+				markConnectedComponent(v, -1);
+			}
+		}
+	}
+	//cleanup
+	for (int v=0; v<F->n; ++v) { F->vertices[v]->visited = 0; }
+
+	return featureVector;
+
+}
+
+
 
 

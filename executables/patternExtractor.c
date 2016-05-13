@@ -252,7 +252,7 @@ static void printintarray(int* a, int n) {
 
 int main(int argc, char** argv) {
 
-	typedef enum {triangles, bruteForceTriples, treePatterns, minHash} ExtractionMethod;
+	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast, minHash} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
 	/* object pools */
@@ -268,7 +268,7 @@ int main(int argc, char** argv) {
 	ExtractionMethod method = triangles;
 	char* patternFile = NULL;
 	struct Graph** patterns = NULL;
-	int nPatterns = 0;
+	size_t nPatterns = 0;
 	InputMethod inputMethod = AIDS99_INPUT;
 
 	/* parse command line arguments */
@@ -300,6 +300,10 @@ int main(int argc, char** argv) {
 				method = treePatterns;
 				break;
 			}
+			if (strcmp(optarg, "treePatternsFast") == 0) {
+				method = treePatternsFast;
+				break;
+			}
 			if (strcmp(optarg, "minHash") == 0) {
 				method = minHash;
 				break;
@@ -319,7 +323,7 @@ int main(int argc, char** argv) {
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
 
-	if ((method == treePatterns) || (method == minHash)) {
+	if ((method == treePatterns) || (method == minHash) || (method == treePatternsFast)) {
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -342,7 +346,7 @@ int main(int argc, char** argv) {
 
 
 	struct EvaluationPlan evaluationPlan = {0};
-	if (method == minHash) {
+	if ((method == minHash) || (method == treePatternsFast)) {
 		struct Graph* patternPoset = NULL;
 		size_t K = 5;
 		int** permutations = malloc(K * sizeof(int*));
@@ -393,8 +397,11 @@ int main(int argc, char** argv) {
 			case minHash:
 				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp, sgp);
 				break;
+			case treePatternsFast:
+				fingerprints = (struct IntSet*)explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
+				break;
 			}
-			if (method != minHash) {
+			if ((method != minHash) || (method == treePatternsFast)) {
 				printIntSetSparse(fingerprints, g->number, stdout);
 				dumpIntSet(fingerprints);
 			} else {
@@ -410,7 +417,15 @@ int main(int argc, char** argv) {
 	}
 
 	/* global garbage collection */
-	evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
+	if (method == minHash) {
+		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
+	}
+	if (method == treePatterns) {
+		for (size_t i=0; i<nPatterns; ++i) {
+			dumpGraph(gp, patterns[i]);
+		}
+		free(patterns);
+	}
 	destroyFileIterator();
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);
