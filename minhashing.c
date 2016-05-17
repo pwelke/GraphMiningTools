@@ -8,6 +8,7 @@
 #include "iterativeSubtreeIsomorphism.h"
 #include "listComponents.h"
 #include "intSet.h"
+#include "importantSubtrees.h"
 #include "minhashing.h"
 
 // PERMUTATIONS
@@ -264,7 +265,7 @@ static void cleanEvaluationPlan(struct EvaluationPlan p) {
 /**
  *
  */
-int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
 	int* sketch = malloc(p.sketchSize * sizeof(int));
 	if (!sketch) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
@@ -313,7 +314,7 @@ int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphP
 /**
  *
  */
-int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, int importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, int importance, struct GraphPool* gp) {
 	int* sketch = malloc(p.sketchSize * sizeof(int));
 	if (!sketch) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
@@ -361,7 +362,7 @@ int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, i
 /**
  *
  */
-int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp) {
 	int* sketch = malloc(p.sketchSize * sizeof(int));
 	if (!sketch) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
@@ -458,6 +459,81 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struc
 
 }
 
+struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct Graph* F, size_t importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	//cleanup
+	for (int v=0; v<F->n; ++v) { F->vertices[v]->visited = 0; }
+
+	// init output
+	struct IntSet* features = getIntSet();
+
+	// add minimal elements to border
+	struct ShallowGraph* border = getShallowGraph(sgp);
+	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
+		addToBorder(e->endPoint, border, sgp);
+	}
+
+	// bfs evaluation with pruning through the poset
+	while (border->m != 0) {
+		struct Vertex* v = popFromBorder(border, sgp);
+		struct Graph* pattern = (struct Graph*)(v->label);
+		if (v->visited == 0) {
+			char match = isImportantSubtreeAbsolute(g, pattern, importance, gp);
+			if (match) {
+				addIntSortedNoDuplicates(features, v->number - 1);
+				v->visited = 1;
+				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+					if (e->endPoint->visited == 0) {
+						addToBorder(e->endPoint, border, sgp);
+					}
+				}
+			} else {
+				markConnectedComponent(v, -1);
+			}
+		}
+	}
+
+	return features;
+
+}
+
+struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct Graph* F, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	//cleanup
+	for (int v=0; v<F->n; ++v) { F->vertices[v]->visited = 0; }
+
+	// init output
+	struct IntSet* features = getIntSet();
+
+	// add minimal elements to border
+	struct ShallowGraph* border = getShallowGraph(sgp);
+	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
+		addToBorder(e->endPoint, border, sgp);
+	}
+
+	// bfs evaluation with pruning through the poset
+	while (border->m != 0) {
+		struct Vertex* v = popFromBorder(border, sgp);
+		struct Graph* pattern = (struct Graph*)(v->label);
+		if (v->visited == 0) {
+			char match = isImportantSubtreeRelative(g, pattern, importance, gp);
+			if (match) {
+				addIntSortedNoDuplicates(features, v->number - 1);
+				v->visited = 1;
+				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+					if (e->endPoint->visited == 0) {
+						addToBorder(e->endPoint, border, sgp);
+					}
+				}
+			} else {
+				markConnectedComponent(v, -1);
+			}
+		}
+	}
+
+	return features;
+
+}
 
 
 
