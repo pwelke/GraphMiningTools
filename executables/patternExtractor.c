@@ -258,7 +258,7 @@ void printIntArray(int* a, int n, int id) {
 
 int main(int argc, char** argv) {
 
-	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast, minHash} ExtractionMethod;
+	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast, minHashTree, minHashRelImportant, minHashAbsImportant} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
 	/* object pools */
@@ -277,10 +277,12 @@ int main(int argc, char** argv) {
 	size_t nPatterns = 0;
 	size_t hashSize = 5;
 	InputMethod inputMethod = AIDS99_INPUT;
+	size_t absImportance = 5;
+	double relImportance = 0.5;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hm:f:c:k:";
+	const char* validArgs = "hm:f:c:k:i:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -298,6 +300,14 @@ int main(int argc, char** argv) {
 			if (sscanf(optarg, "%zu", &hashSize) != 1) {
 				fprintf(stderr, "Hash size argument must be unsigned integer, is: %s\n", optarg);
 				return EXIT_FAILURE;
+			}
+			break;
+		case 'i':
+			if ((sscanf(optarg, "%lf", &relImportance) != 1) || (relImportance <= 0)) {
+				fprintf(stderr, "Hash size argument must be positive float or integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} else {
+				absImportance = (int)relImportance;
 			}
 			break;
 		case 'm':
@@ -318,7 +328,15 @@ int main(int argc, char** argv) {
 				break;
 			}
 			if (strcmp(optarg, "minHash") == 0) {
-				method = minHash;
+				method = minHashTree;
+				break;
+			}
+			if (strcmp(optarg, "minHashRel") == 0) {
+				method = minHashRelImportant;
+				break;
+			}
+			if (strcmp(optarg, "minHashAbs") == 0) {
+				method = minHashAbsImportant;
 				break;
 			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
@@ -330,13 +348,34 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	// sanity check of input arguments
+	switch (method) {
+	case minHashAbsImportant:
+		if (absImportance == 0) {
+			fprintf("Absolute importance threshold should be positive, but is %zu\n", absImportance);
+			return EXIT_FAILURE;
+		}
+		break;
+	case minHashRelImportant:
+		if ((relImportance > 1) || (relImportance <= 0)) {
+			fprintf("Relative importance threshold should be greater than 0, and at most 1 but is %lf\n", relImportance);
+			return EXIT_FAILURE;
+		}
+	}
+
 	/* init object pools */
 	lp = createListPool(10000);
 	vp = createVertexPool(10000);
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
 
-	if ((method == treePatterns) || (method == minHash) || (method == treePatternsFast)) {
+	// load pattern database for those methods that require one
+	switch (method) {
+	case treePatterns:
+	case treePatternsFast:
+	case minHashTree:
+	case minHashAbsImportant:
+	case minHashRelImportant:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -355,11 +394,16 @@ int main(int argc, char** argv) {
 				break;
 			}
 		}
+		break;
 	}
 
-
+	// preprocessing for those methods that require some
 	struct EvaluationPlan evaluationPlan = {0};
-	if ((method == minHash) || (method == treePatternsFast)) {
+	switch (method) {
+	case treePatternsFast:
+	case minHashTree:
+	case minHashAbsImportant:
+	case minHashRelImportant:
 		struct Graph* patternPoset = NULL;
 		int** permutations = malloc(hashSize * sizeof(int*));
 		size_t* permutationSizes = malloc(hashSize * sizeof(size_t));
@@ -371,11 +415,12 @@ int main(int argc, char** argv) {
 			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
 		}
 		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, hashSize, patternPoset);
+		break;
 	}
 
-	/* initialize the stream to read graphs from
-		   check if there is a filename present in the command line arguments
-		   if so, open the file, if not, read from stdin */
+	/* initialize the stream to read graphs from.
+	check if there is a filename present in the command line arguments.
+	if so, open the file, if not, read from stdin. */
 	if (optind < argc) {
 		char* filename = argv[optind];
 		/* if the present filename is not '-' then init a file iterator for that file name */
@@ -403,16 +448,23 @@ int main(int argc, char** argv) {
 			case treePatterns:
 				fingerprints = computeSubtreeIsomorphisms(g, patterns, nPatterns, gp);
 				break;
-			case minHash:
-				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp, sgp);
-				break;
 			case treePatternsFast:
 				fingerprints = (struct IntSet*)explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
 				break;
+			case minHashTree:
+				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp, sgp);
+				break;
+			case minHashAbsImportant:
+				fingerprints = (struct IntSet*)fastMinHashForAbsImportantTrees(g, evaluationPlan, absImportance, gp, sgp);
+				break;
+			case minHashRelImportant:
+				fingerprints = (struct IntSet*)fastMinHashForRelImportantTrees(g, evaluationPlan, relImportance, gp, sgp);
+				break;
+
 			}
 			// output
 			switch (method) {
-			case minHash:
+			case minHashTree:
 				printIntArrayNoId((int*)fingerprints, evaluationPlan.sketchSize);
 				free(fingerprints);
 				break;
@@ -429,10 +481,10 @@ int main(int argc, char** argv) {
 	}
 
 	/* global garbage collection */
-	if (method == minHash) {
+	if ((method == minHashTree) || (method == minHashAbsImportant) || (method == minHashRelImportant)) {
 		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
 	}
-	if (method == treePatterns) {
+	if ((method == treePatterns) || (method == treePatternsFast)){
 		for (size_t i=0; i<nPatterns; ++i) {
 			dumpGraph(gp, patterns[i]);
 		}
