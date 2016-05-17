@@ -38,6 +38,8 @@ struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct G
 
 // COMPUTATION OF MINHASHES
 int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, int importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
