@@ -205,7 +205,8 @@ struct IntSet* computeSubtreeIsomorphisms(struct Graph* g, struct Graph** patter
 
 	for (int i=0; i<nPatterns; ++i) {
 		if (isSubtree(g, patterns[i], gp)) {
-			addIntSortedNoDuplicates(features, patterns[i]->number);
+//			addIntSortedNoDuplicates(features, patterns[i]->number);
+			addIntSortedNoDuplicates(features, i);
 		}
 	}
 	return features;
@@ -243,11 +244,16 @@ struct IntSet* getTripletFingerprintsTriangulation(struct Graph* g, struct Shall
 	return fingerprints;
 }
 
-static void printintarray(int* a, int n) {
+void printIntArrayNoId(int* a, int n) {
 	for (int i=0; i<n; ++i) {
 		printf("%i ", a[i]);
 	}
 	printf("\n");
+}
+
+void printIntArray(int* a, int n, int id) {
+	printf("%i: ", id);
+	printIntArrayNoId(a, n);
 }
 
 int main(int argc, char** argv) {
@@ -269,11 +275,12 @@ int main(int argc, char** argv) {
 	char* patternFile = NULL;
 	struct Graph** patterns = NULL;
 	size_t nPatterns = 0;
+	size_t hashSize = 5;
 	InputMethod inputMethod = AIDS99_INPUT;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hm:f:c:";
+	const char* validArgs = "hm:f:c:k:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -286,6 +293,12 @@ int main(int argc, char** argv) {
 		case 'c':
 			patternFile = optarg;
 			inputMethod = CANONICALSTRING_INPUT;
+			break;
+		case 'k':
+			if (sscanf(optarg, "%zu", &hashSize) != 1) {
+				fprintf(stderr, "Hash size argument must be unsigned integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
 			break;
 		case 'm':
 			if (strcmp(optarg, "triangles") == 0) {
@@ -348,20 +361,16 @@ int main(int argc, char** argv) {
 	struct EvaluationPlan evaluationPlan = {0};
 	if ((method == minHash) || (method == treePatternsFast)) {
 		struct Graph* patternPoset = NULL;
-		size_t K = 5;
-		int** permutations = malloc(K * sizeof(int*));
-		size_t* permutationSizes = malloc(K * sizeof(size_t));
+		int** permutations = malloc(hashSize * sizeof(int*));
+		size_t* permutationSizes = malloc(hashSize * sizeof(size_t));
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
-//		printGraph(patternPoset);
-		for (size_t i=0; i<K; ++i) {
+		for (size_t i=0; i<hashSize; ++i) {
 			permutations[i] = getRandomPermutation(nPatterns);
-//			printintarray(permutations[i], nPatterns);
 			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
 			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
-//			printintarray(permutations[i], permutationSizes[i]);
 		}
-		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, K, patternPoset);
+		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, hashSize, patternPoset);
 	}
 
 	/* initialize the stream to read graphs from
@@ -401,13 +410,16 @@ int main(int argc, char** argv) {
 				fingerprints = (struct IntSet*)explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
 				break;
 			}
-			if ((method != minHash) || (method == treePatternsFast)) {
-				printIntSetSparse(fingerprints, g->number, stdout);
-				dumpIntSet(fingerprints);
-			} else {
-				printf("%i: ", g->number);
-				printintarray((int*)fingerprints, evaluationPlan.sketchSize);
+			// output
+			switch (method) {
+			case minHash:
+				printIntArrayNoId((int*)fingerprints, evaluationPlan.sketchSize);
 				free(fingerprints);
+				break;
+			default:
+				printIntSetAsLibSvm(fingerprints, g->activity, stdout);
+				dumpIntSet(fingerprints);
+				break;
 			}
 		}
 
