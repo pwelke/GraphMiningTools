@@ -9,17 +9,60 @@ It always prints to stdout.
 Options:
 
 -m METHOD: Specify the features this method should output
+    
     triangles (default):   Compute a set of fingerprints that is based on the
 	                       triangles in a graph that contain at least two edges
 	                       that are present. For sparse graphs, this is much
 	                       faster than brute force enumeration of all induced
 	                       subgraphs of size 3.
+    
     triples:               Compute a set of fingerprints based on the set of all
                            induced subgraphs of size 3.
-    treePatterns:          Given a set of tree patterns (specified via -f), return
-                           the set of tree patterns that match the graph (i.e.
-                           those that are subgraph isomorphic to the graph). This 
-                           method only supports tree databases and tree patterns.
+    
+    treePatterns:          Given a set of tree patterns (specified via -f or -c), 
+                           return the set of tree patterns that match the graph 
+                           (i.e. those that are subgraph isomorphic to the graph). 
+                           This method only supports forest databases and tree 
+                           patterns.
+    
+    treePatternsFast:      Given a set of tree patterns (specified via -f or -c), 
+                           return the set of tree patterns that match the graph 
+                           (i.e. those that are subgraph isomorphic to the graph). 
+                           This method only supports forest databases and tree 
+                           patterns. This version assumes that the set of patterns 
+                           is closed under taking subgraphs and uses apriori-like
+                           pruning for each graph to speed up computations.
+    
+    minHash:               Compute a min-hash array of size k (specified via -k)
+                           for the feature set computed by treePatternsFast. It 
+                           uses the ideas described in our paper (citation needed) 
+                           to do this fast. The current version only works for 
+                           tree patterns and  forest databases.
+    
+    minHashAbs:            Min-hashing as above with the absolute importance embedding 
+                           operator. Importance threshold needs to be specified via
+                           -i (default 5). The current version only works for 
+                           tree patterns and  forest databases.
+    
+    minHashRel:            Min-hashing as above with the relative importance embedding
+                           operator. Importance threshold needs to be specified via
+                           -i (default 0.5). The current version only works for 
+                           tree patterns and  forest databases. 
+
+
+-k INT:                    Specify the number of permutations used by the minHash* 
+                           methods.
                            
--c FILENAME:  Load patterns from file in canonical string format.
--f FILENAME:  Load patterns from file in AIDS99 format.
+                           
+-i DOUBLE or INT:          Specify the importance threshold used by the various 
+                           methods that respect importance. For absolute importance,
+                           the value should be a positive integer (default 5), for
+                           relative importance, the value should be larger than zero
+                           and not larger than one (default 0.5).
+                           
+                           
+-c FILENAME:               Load patterns from file in canonical string format.
+
+
+-f FILENAME:               Load patterns from file in AIDS99 format.
+                           
