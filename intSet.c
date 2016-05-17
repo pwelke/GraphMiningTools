@@ -31,12 +31,24 @@ void printIntSet(struct IntSet* s, FILE*out) {
 	fprintf(out, "]\n");
 }
 
-void printIntSetSparse(struct IntSet* s, int id, FILE* out) {
-	fprintf(out, "%i:", id);
+void printIntSetSparseNoId(struct IntSet* s, FILE* out) {
 	for (struct IntElement* i=s->first; i!=NULL; i=i->next) {
 		fprintf(out, " %i", i->value);
 	}
 	fprintf(out, "\n");
+}
+
+void printIntSetAsLibSvm(struct IntSet* s, int label, FILE* out) {
+	fprintf(out, "%i", label);
+	for (struct IntElement* i=s->first; i!=NULL; i=i->next) {
+		fprintf(out, " %i:1", i->value);
+	}
+	fprintf(out, "\n");
+}
+
+void printIntSetSparse(struct IntSet* s, int id, FILE* out) {
+	fprintf(out, "%i:", id);
+	printIntSetSparseNoId(s, out);
 }
 
 void dumpIntSet(struct IntSet* s) {
