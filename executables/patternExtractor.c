@@ -258,7 +258,9 @@ void printIntArray(int* a, int n, int id) {
 
 int main(int argc, char** argv) {
 
-	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast, minHashTree, minHashRelImportant, minHashAbsImportant} ExtractionMethod;
+	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast,
+		treePatternsFastAbsImp, treePatternsFastRelImp,
+		minHashTree, minHashRelImportant, minHashAbsImportant} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
 	/* object pools */
@@ -327,6 +329,14 @@ int main(int argc, char** argv) {
 				method = treePatternsFast;
 				break;
 			}
+			if (strcmp(optarg, "treePatternsFastAbs") == 0) {
+				method = treePatternsFastAbsImp;
+				break;
+			}
+			if (strcmp(optarg, "treePatternsFastRel") == 0) {
+				method = treePatternsFastRelImp;
+				break;
+			}
 			if (strcmp(optarg, "minHash") == 0) {
 				method = minHashTree;
 				break;
@@ -351,16 +361,21 @@ int main(int argc, char** argv) {
 	// sanity check of input arguments
 	switch (method) {
 	case minHashAbsImportant:
+	case treePatternsFastAbsImp:
 		if (absImportance == 0) {
-			fprintf("Absolute importance threshold should be positive, but is %zu\n", absImportance);
+			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
 		}
 		break;
 	case minHashRelImportant:
+	case treePatternsFastRelImp:
 		if ((relImportance > 1) || (relImportance <= 0)) {
-			fprintf("Relative importance threshold should be greater than 0, and at most 1 but is %lf\n", relImportance);
+			fprintf(stderr, "Relative importance threshold should be greater than 0, and at most 1 but is %lf\n", relImportance);
 			return EXIT_FAILURE;
 		}
+		break;
+	default:
+		break; // do nothing for other methods
 	}
 
 	/* init object pools */
@@ -373,6 +388,8 @@ int main(int argc, char** argv) {
 	switch (method) {
 	case treePatterns:
 	case treePatternsFast:
+	case treePatternsFastAbsImp:
+	case treePatternsFastRelImp:
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
@@ -395,17 +412,24 @@ int main(int argc, char** argv) {
 			}
 		}
 		break;
+	default:
+		break; // do nothing for other methods
 	}
 
 	// preprocessing for those methods that require some
 	struct EvaluationPlan evaluationPlan = {0};
 	switch (method) {
+	// local variables
+	struct Graph* patternPoset = NULL;
+	int** permutations;
+	// cases
 	case treePatternsFast:
+	case treePatternsFastAbsImp:
+	case treePatternsFastRelImp:
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
-		struct Graph* patternPoset = NULL;
-		int** permutations = malloc(hashSize * sizeof(int*));
+		permutations = malloc(hashSize * sizeof(int*));
 		size_t* permutationSizes = malloc(hashSize * sizeof(size_t));
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
@@ -416,6 +440,8 @@ int main(int argc, char** argv) {
 		}
 		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, hashSize, patternPoset);
 		break;
+	default:
+		break; // do nothing for other methods
 	}
 
 	/* initialize the stream to read graphs from.
@@ -449,16 +475,22 @@ int main(int argc, char** argv) {
 				fingerprints = computeSubtreeIsomorphisms(g, patterns, nPatterns, gp);
 				break;
 			case treePatternsFast:
-				fingerprints = (struct IntSet*)explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
+				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
+				break;
+			case treePatternsFastAbsImp:
+				fingerprints = explicitEmbeddingForAbsImportantTrees(g, evaluationPlan.F, absImportance, gp, sgp);
+				break;
+			case treePatternsFastRelImp:
+				fingerprints = explicitEmbeddingForRelImportantTrees(g, evaluationPlan.F, relImportance, gp, sgp);
 				break;
 			case minHashTree:
-				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp, sgp);
+				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp);
 				break;
 			case minHashAbsImportant:
-				fingerprints = (struct IntSet*)fastMinHashForAbsImportantTrees(g, evaluationPlan, absImportance, gp, sgp);
+				fingerprints = (struct IntSet*)fastMinHashForAbsImportantTrees(g, evaluationPlan, absImportance, gp);
 				break;
 			case minHashRelImportant:
-				fingerprints = (struct IntSet*)fastMinHashForRelImportantTrees(g, evaluationPlan, relImportance, gp, sgp);
+				fingerprints = (struct IntSet*)fastMinHashForRelImportantTrees(g, evaluationPlan, relImportance, gp);
 				break;
 
 			}
