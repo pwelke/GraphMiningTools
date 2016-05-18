@@ -513,15 +513,25 @@ int main(int argc, char** argv) {
 	}
 
 	/* global garbage collection */
-	if ((method == minHashTree) || (method == minHashAbsImportant) || (method == minHashRelImportant)) {
+	switch (method) {
+	case minHashTree:
+	case minHashAbsImportant:
+	case minHashRelImportant:
+	case treePatternsFast:
+	case treePatternsFastAbsImp:
+	case treePatternsFastRelImp:
 		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
-	}
-	if ((method == treePatterns) || (method == treePatternsFast)){
+		break;
+	case treePatterns:
 		for (size_t i=0; i<nPatterns; ++i) {
 			dumpGraph(gp, patterns[i]);
 		}
 		free(patterns);
+		break;
+	default:
+		break; // don't do anything
 	}
+
 	destroyFileIterator();
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);
