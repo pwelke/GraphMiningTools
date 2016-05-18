@@ -71,4 +71,4 @@ your graph database of choice to a forest database using the program ts. Then mi
 frequent subtrees using lwg on that forest db. With the patterns from the latter and new 
 (or old) forests from the former, you can now get feature representations and min-hashes 
 and whatnot to have jolly fun. 
-                           
+
