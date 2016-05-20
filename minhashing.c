@@ -88,6 +88,17 @@ int* posetPermutationShrink(int* permutation, size_t n, size_t shrunkSize) {
 	return condensedSequence;
 }
 
+int posPairSorter(const void* a, const void* b, void* context) {
+	struct PosPair one = *(struct PosPair*)a;
+	struct PosPair two = *(struct PosPair*)b;
+	struct EvaluationPlan p = *(struct EvaluationPlan*)context;
+
+	int oneID = p.shrunkPermutations[one.permutation][one.level];
+	int twoID = p.shrunkPermutations[two.permutation][two.level];
+
+	return oneID - twoID;
+}
+
 struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F) {
 	struct EvaluationPlan p = {0};
 	p.F = F;
@@ -107,6 +118,7 @@ struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* perm
 		// TODO make it respect order given by F in each level to skip additional embedding op evals
 		size_t position = 0;
 		for (size_t level=0; level<maxPermutationSize; ++level) {
+			size_t old_pos = position;
 			for (size_t i=0; i<K; ++i) {
 				if (level < permutationSizes[i]) {
 					p.order[position].level = level;
@@ -114,6 +126,13 @@ struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* perm
 					++position;
 				}
 			}
+			// sort current level of the permutations based on the pattern id. This ensures that lower level
+			// patterns come before higher level patterns in each level of the order.
+//			qsort_r(&(p.order[old_pos]), position - old_pos, sizeof(struct PosPair), &posPairSorter, &p);
+			for (size_t i=old_pos; i<position; ++i) {
+				printf("%i ", p.shrunkPermutations[p.order[i].permutation][p.order[i].level]);
+			}
+			printf("\n");
 		}
 
 	} else {
