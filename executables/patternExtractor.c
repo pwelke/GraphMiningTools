@@ -260,7 +260,7 @@ int main(int argc, char** argv) {
 
 	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast,
 		treePatternsFastAbsImp, treePatternsFastRelImp,
-		minHashTree, minHashRelImportant, minHashAbsImportant} ExtractionMethod;
+		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
 	/* object pools */
@@ -349,6 +349,10 @@ int main(int argc, char** argv) {
 				method = minHashAbsImportant;
 				break;
 			}
+			if (strcmp(optarg, "minHashAndOr") == 0) {
+				method = minHashAndOr;
+				break;
+			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -393,6 +397,7 @@ int main(int argc, char** argv) {
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
+	case minHashAndOr:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -429,6 +434,7 @@ int main(int argc, char** argv) {
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
+	case minHashAndOr:
 		permutations = malloc(hashSize * sizeof(int*));
 		size_t* permutationSizes = malloc(hashSize * sizeof(size_t));
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
@@ -438,7 +444,7 @@ int main(int argc, char** argv) {
 			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
 			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
 		}
-		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, hashSize, patternPoset);
+		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, hashSize, patternPoset, gp);
 		break;
 	default:
 		break; // do nothing for other methods
@@ -492,11 +498,16 @@ int main(int argc, char** argv) {
 			case minHashRelImportant:
 				fingerprints = (struct IntSet*)fastMinHashForRelImportantTrees(g, evaluationPlan, relImportance, gp);
 				break;
-
+			case minHashAndOr:
+				fingerprints = (struct IntSet*)fastMinHashForAndOr(g, evaluationPlan, gp);
+				break;
 			}
 			// output
 			switch (method) {
 			case minHashTree:
+			case minHashAbsImportant:
+			case minHashRelImportant:
+			case minHashAndOr:
 				printIntArrayNoId((int*)fingerprints, evaluationPlan.sketchSize);
 				free(fingerprints);
 				break;
@@ -517,6 +528,7 @@ int main(int argc, char** argv) {
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
+	case minHashAndOr:
 	case treePatternsFast:
 	case treePatternsFastAbsImp:
 	case treePatternsFastRelImp:

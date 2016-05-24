@@ -48,6 +48,11 @@ Options:
                            operator. Importance threshold needs to be specified via
                            -i (default 0.5). The current version only works for 
                            tree patterns and  forest databases. 
+    
+    minHashAndOr:          Same as above with embedding operator being a funky gap
+                           amplificator. Only works for exactly 16 sampled trees per
+                           graph. Hat tip to the input agnostic algorithm guy that
+                           cries in vain. 
 
 
 -k INT:                    Specify the number of permutations used by the minHash* 
