@@ -1,11 +1,12 @@
 
 #include <stddef.h>
 #include <malloc.h>
+#include <assert.h>
 
 #include "graph.h"
 #include "connectedComponents.h"
 #include "iterativeSubtreeIsomorphism.h"
-
+#include "importantSubtrees.h"
 
 
 struct Graph* graph2Components(struct Graph* g, struct GraphPool* gp) {
@@ -104,4 +105,28 @@ char isImportantSubtreeRelative(struct Graph* g, struct Graph* h, double relativ
 	return importance >= relativeThreshold;
 }
 
-
+/*
+ * Gap Amplification a la locality sensitive hashing. OR_4(AND_4)
+ */
+char andorEmbedding(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+	struct Graph* components = graph2Components(g, gp);
+	char match = 0;
+	int freq = 0;
+	int componentCount = 0;
+	for (struct Graph* component=components; component!=NULL; component=component->next) {
+		if (isSubtree(component, h, gp)) {
+			++freq;
+		}
+		++componentCount;
+		if (componentCount % 4 == 0) {
+			if (freq == 4) {
+				match = 1;
+			} else {
+				freq = 0;
+			}
+		}
+	}
+	assert(componentCount == 16);
+	graph2ComponentCleanup(g, components, gp);
+	return match;
+}
