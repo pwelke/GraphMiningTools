@@ -99,9 +99,26 @@ int posPairSorter(const void* a, const void* b, void* context) {
 	return oneID - twoID;
 }
 
-struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F) {
+
+struct Graph* reverseGraph(struct Graph* g, struct GraphPool* gp) {
+	struct Graph* reverse = emptyGraph(g, gp);
+	for (int v=0; v<g->n; ++v) {
+		for (struct VertexList* e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+			struct VertexList* f = shallowCopyEdge(e, gp->listPool);
+			f->startPoint = reverse->vertices[e->endPoint->number];
+			f->endPoint = reverse->vertices[e->startPoint->number];
+			addEdge(f->startPoint, f);
+		}
+	}
+	reverse->m = g->m;
+	return reverse;
+}
+
+
+struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F, struct GraphPool* gp) {
 	struct EvaluationPlan p = {0};
 	p.F = F;
+	p.reverseF = reverseGraph(F, gp);
 	p.sketchSize = K;
 	p.shrunkPermutations = shrunkPermutations;
 
@@ -115,7 +132,6 @@ struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* perm
 	p.order = malloc(p.orderLength * sizeof(struct PosPair));
 	if (p.order) {
 		// fix some evaluation order.
-		// TODO make it respect order given by F in each level to skip additional embedding op evals
 		size_t position = 0;
 		for (size_t level=0; level<maxPermutationSize; ++level) {
 			size_t old_pos = position;
@@ -128,11 +144,11 @@ struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* perm
 			}
 			// sort current level of the permutations based on the pattern id. This ensures that lower level
 			// patterns come before higher level patterns in each level of the order.
-//			qsort_r(&(p.order[old_pos]), position - old_pos, sizeof(struct PosPair), &posPairSorter, &p);
-			for (size_t i=old_pos; i<position; ++i) {
-				printf("%i ", p.shrunkPermutations[p.order[i].permutation][p.order[i].level]);
-			}
-			printf("\n");
+			qsort_r(&(p.order[old_pos]), position - old_pos, sizeof(struct PosPair), &posPairSorter, &p);
+//			for (size_t i=old_pos; i<position; ++i) {
+//				printf("(%zu %zu: %i) ", p.order[i].level, p.order[i].permutation, p.shrunkPermutations[p.order[i].permutation][p.order[i].level]);
+//			}
+//			printf("\n");
 		}
 
 	} else {
@@ -159,6 +175,7 @@ struct EvaluationPlan dumpEvaluationPlan(struct EvaluationPlan p, struct GraphPo
 		dumpGraph(gp, (struct Graph*)(p.F->vertices[v]->label));
 		p.F->vertices[v]->label = NULL;
 	}
+	dumpGraph(gp, p.reverseF);
 	dumpGraph(gp, p.F);
 	struct EvaluationPlan empty = {0};
 	return empty;
@@ -278,13 +295,11 @@ struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct G
 static void cleanEvaluationPlan(struct EvaluationPlan p) {
 	for (int i=0; i<p.F->n; ++i) {
 		p.F->vertices[i]->visited = 0;
+		p.reverseF->vertices[i]->visited = 0;
 	}
 }
 
-/**
- *
- */
-int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
+int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
 	int* sketch = malloc(p.sketchSize * sizeof(int));
 	if (!sketch) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
@@ -314,7 +329,7 @@ int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphP
 
 		// evaluate the embedding operator
 		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
-		char match = isSubtree(g, currentGraph, gp);
+		char match = andorEmbedding(g, currentGraph, gp);
 		if (match) {
 			p.F->vertices[currentGraphNumber]->visited = 1;
 			sketch[current.permutation] = current.level;
@@ -326,6 +341,84 @@ int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphP
 	}
 
 	cleanEvaluationPlan(p);
+	return sketch;
+}
+
+
+/**
+Traverses the reverse graph of the poset graph F and marks all vertices reachable from v with the number given
+by the argument component.
+
+Hence, v needs to be a vertex in the reverse graph p.reverseF !
+
+Careful: To avoid infinite runtime, the method tests if a visited vertex has ->visited == component.
+Thus, either initialize ->visited's  with some value < 0 or start component counting with 1.
+ */
+static void rayOfLight(struct Vertex* v, int component, struct EvaluationPlan p) {
+
+	/* mark vertex as visited */
+	v->visited = component;
+	p.F->vertices[v->number]->visited = component;
+
+
+	/*recursive call for all neighbors that are not visited so far */
+	for (struct VertexList* index = v->neighborhood; index; index = index->next) {
+		if (index->endPoint->visited != component) {
+			rayOfLight(index->endPoint, component, p);
+		}
+	}
+}
+
+/**
+ *
+ */
+int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
+	int* sketch = malloc(p.sketchSize * sizeof(int));
+	if (!sketch) {
+		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
+		return NULL;
+	}
+	int nEvaluations = 0;
+
+	cleanEvaluationPlan(p);
+
+	for (size_t i=0; i<p.sketchSize; ++i) {
+		sketch[i] = -1; // init sketch values to 'infty'
+	}
+	for (size_t i=0; i<p.orderLength; ++i) {
+		struct PosPair current = p.order[i];
+		int currentGraphNumber = p.shrunkPermutations[current.permutation][current.level];
+
+		// check if we already found level min for the permutation
+		if (sketch[current.permutation] != -1) {
+			continue;
+		}
+
+		// check if we already evaluated the embedding operator for this pattern or found a subpattern that had no match
+		if (p.F->vertices[currentGraphNumber]->visited != 0) {
+			// either the pattern with id currentGraphNumber was evaluated positively and we hence have found the
+			// min value for the current permutation or we need to continue
+			if (p.F->vertices[currentGraphNumber]->visited == 1) {
+				sketch[current.permutation] = current.level;
+			}
+			continue;
+		}
+
+		// evaluate the embedding operator
+		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+		char match = isSubtree(g, currentGraph, gp);
+		++nEvaluations;
+		if (match) {
+//			p.F->vertices[currentGraphNumber]->visited = 1;
+			rayOfLight(p.reverseF->vertices[currentGraphNumber], 1, p);
+			// TODO mark parent patterns visited !
+			sketch[current.permutation] = current.level;
+//			continue;
+		} else {
+			markConnectedComponent(p.F->vertices[currentGraphNumber], -1);
+		}
+	}
+	fprintf(stderr, "%i\n", nEvaluations);
 	return sketch;
 }
 
@@ -442,6 +535,8 @@ static struct Vertex* popFromBorder(struct ShallowGraph* border, struct ShallowG
 // FOR COMPARISON: EXPLICIT EVALUATION USING THE PATTERN POSET
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
+	int nEvaluations = 0;
+
 	//cleanup
 	for (int v=0; v<F->n; ++v) { F->vertices[v]->visited = 0; }
 
@@ -460,6 +555,7 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struc
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
 			char match = isSubtree(g, pattern, gp);
+			++nEvaluations;
 			if (match) {
 				addIntSortedNoDuplicates(features, v->number - 1);
 				v->visited = 1;
@@ -473,7 +569,7 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struc
 			}
 		}
 	}
-
+	fprintf(stderr, "%i\n", nEvaluations);
 	return features;
 
 }

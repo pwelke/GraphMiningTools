@@ -18,6 +18,7 @@ struct PosPair {
 
 struct EvaluationPlan {
 	struct Graph* F;
+	struct Graph* reverseF;
 	struct PosPair* order;
 	int** shrunkPermutations;
 	size_t orderLength;
@@ -30,7 +31,7 @@ int posetPermutationMark(int* permutation, size_t n, struct Graph* F);
 int* posetPermutationShrink(int* permutation, size_t n, size_t shrunkSize);
 
 // EVALUATION PLAN
-struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F);
+struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F, struct GraphPool* gp);
 struct EvaluationPlan dumpEvaluationPlan(struct EvaluationPlan p, struct GraphPool* gp);
 
 // BUILD TREE POSET
@@ -40,6 +41,7 @@ struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct G
 int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
 int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp);
 int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, int importance, struct GraphPool* gp);
+int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
 
 // FOR COMPARISON: EXPLICIT EVALUATION USING THE PATTERN POSET
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp);\
