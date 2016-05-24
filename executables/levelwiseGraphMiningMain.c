@@ -90,6 +90,10 @@ int main(int argc, char** argv) {
 				embeddingOperator = &absoluteImportanceOperator;
 				break;
 			}
+			if (strcmp(optarg, "andOr") == 0) {
+				embeddingOperator = &andorEmbeddingOperator;
+				break;
+			}
 			if (strcmp(optarg, "subtree") == 0) {
 				embeddingOperator = &noniterativeSubtreeCheckOperator;
 				break;

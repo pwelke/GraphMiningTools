@@ -38,4 +38,6 @@ Options:
              relImp: relative importance threshold (specify unsing -i).
                  A pattern needs to be subtree of at least a -i fraction
                  of connected components of a graph to match it.
+             andOr:  and or gap amplification. only works for exactly 16
+                 sampled spanning trees.
 -h:              print this possibly helpful information.
