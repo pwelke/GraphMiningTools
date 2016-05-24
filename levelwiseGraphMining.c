@@ -744,6 +744,15 @@ struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore
 	return result;
 }
 
+struct SubtreeIsoDataStore andorEmbeddingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
+	(void)importance; // unused
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.S = NULL;
+	result.foundIso = andorEmbedding(result.g, result.h, gp);
+	return result;
+}
+
 struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
 	(void)importance; // unused
 	return iterativeSubtreeCheck(data, h, gp);
