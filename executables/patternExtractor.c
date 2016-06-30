@@ -205,7 +205,8 @@ struct IntSet* computeSubtreeIsomorphisms(struct Graph* g, struct Graph** patter
 
 	for (int i=0; i<nPatterns; ++i) {
 		if (isSubtree(g, patterns[i], gp)) {
-			addIntSortedNoDuplicates(features, patterns[i]->number);
+//			addIntSortedNoDuplicates(features, patterns[i]->number);
+			addIntSortedNoDuplicates(features, i);
 		}
 	}
 	return features;
@@ -243,16 +244,23 @@ struct IntSet* getTripletFingerprintsTriangulation(struct Graph* g, struct Shall
 	return fingerprints;
 }
 
-static void printintarray(int* a, int n) {
+void printIntArrayNoId(int* a, int n) {
 	for (int i=0; i<n; ++i) {
 		printf("%i ", a[i]);
 	}
 	printf("\n");
 }
 
+void printIntArray(int* a, int n, int id) {
+	printf("%i: ", id);
+	printIntArrayNoId(a, n);
+}
+
 int main(int argc, char** argv) {
 
-	typedef enum {triangles, bruteForceTriples, treePatterns, minHash} ExtractionMethod;
+	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast,
+		treePatternsFastAbsImp, treePatternsFastRelImp,
+		minHashTree, minHashRelImportant, minHashAbsImportant} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
 	/* object pools */
@@ -268,12 +276,15 @@ int main(int argc, char** argv) {
 	ExtractionMethod method = triangles;
 	char* patternFile = NULL;
 	struct Graph** patterns = NULL;
-	int nPatterns = 0;
+	size_t nPatterns = 0;
+	size_t hashSize = 5;
 	InputMethod inputMethod = AIDS99_INPUT;
+	size_t absImportance = 5;
+	double relImportance = 0.5;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hm:f:c:";
+	const char* validArgs = "hm:f:c:k:i:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -286,6 +297,20 @@ int main(int argc, char** argv) {
 		case 'c':
 			patternFile = optarg;
 			inputMethod = CANONICALSTRING_INPUT;
+			break;
+		case 'k':
+			if (sscanf(optarg, "%zu", &hashSize) != 1) {
+				fprintf(stderr, "Hash size argument must be unsigned integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
+		case 'i':
+			if ((sscanf(optarg, "%lf", &relImportance) != 1) || (relImportance <= 0)) {
+				fprintf(stderr, "Hash size argument must be positive float or integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} else {
+				absImportance = (int)relImportance;
+			}
 			break;
 		case 'm':
 			if (strcmp(optarg, "triangles") == 0) {
@@ -300,8 +325,28 @@ int main(int argc, char** argv) {
 				method = treePatterns;
 				break;
 			}
+			if (strcmp(optarg, "treePatternsFast") == 0) {
+				method = treePatternsFast;
+				break;
+			}
+			if (strcmp(optarg, "treePatternsFastAbs") == 0) {
+				method = treePatternsFastAbsImp;
+				break;
+			}
+			if (strcmp(optarg, "treePatternsFastRel") == 0) {
+				method = treePatternsFastRelImp;
+				break;
+			}
 			if (strcmp(optarg, "minHash") == 0) {
-				method = minHash;
+				method = minHashTree;
+				break;
+			}
+			if (strcmp(optarg, "minHashRel") == 0) {
+				method = minHashRelImportant;
+				break;
+			}
+			if (strcmp(optarg, "minHashAbs") == 0) {
+				method = minHashAbsImportant;
 				break;
 			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
@@ -313,13 +358,41 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	// sanity check of input arguments
+	switch (method) {
+	case minHashAbsImportant:
+	case treePatternsFastAbsImp:
+		if (absImportance == 0) {
+			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
+			return EXIT_FAILURE;
+		}
+		break;
+	case minHashRelImportant:
+	case treePatternsFastRelImp:
+		if ((relImportance > 1) || (relImportance <= 0)) {
+			fprintf(stderr, "Relative importance threshold should be greater than 0, and at most 1 but is %lf\n", relImportance);
+			return EXIT_FAILURE;
+		}
+		break;
+	default:
+		break; // do nothing for other methods
+	}
+
 	/* init object pools */
 	lp = createListPool(10000);
 	vp = createVertexPool(10000);
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
 
-	if ((method == treePatterns) || (method == minHash)) {
+	// load pattern database for those methods that require one
+	switch (method) {
+	case treePatterns:
+	case treePatternsFast:
+	case treePatternsFastAbsImp:
+	case treePatternsFastRelImp:
+	case minHashTree:
+	case minHashAbsImportant:
+	case minHashRelImportant:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -338,28 +411,42 @@ int main(int argc, char** argv) {
 				break;
 			}
 		}
+		break;
+	default:
+		break; // do nothing for other methods
 	}
 
+	// preprocessing for those methods that require some
+	struct EvaluationPlan evaluationPlan = {0};
+	switch (method) {
+	// local variables
 	struct Graph* patternPoset = NULL;
-	int K = 5;
-	int* permutations[K];
-	int permutationSizes[K];
-	if (method == minHash) {
+	int** permutations;
+	// cases
+	case treePatternsFast:
+	case treePatternsFastAbsImp:
+	case treePatternsFastRelImp:
+	case minHashTree:
+	case minHashAbsImportant:
+	case minHashRelImportant:
+		permutations = malloc(hashSize * sizeof(int*));
+		size_t* permutationSizes = malloc(hashSize * sizeof(size_t));
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
-		printGraph(patternPoset);
-		for (int i=0; i<K; ++i) {
+		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
+		for (size_t i=0; i<hashSize; ++i) {
 			permutations[i] = getRandomPermutation(nPatterns);
-//			printintarray(permutations[i], nPatterns);
 			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
 			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
-//			printintarray(permutations[i], permutationSizes[i]);
 		}
-		return EXIT_SUCCESS;
+		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, hashSize, patternPoset);
+		break;
+	default:
+		break; // do nothing for other methods
 	}
 
-	/* initialize the stream to read graphs from
-		   check if there is a filename present in the command line arguments
-		   if so, open the file, if not, read from stdin */
+	/* initialize the stream to read graphs from.
+	check if there is a filename present in the command line arguments.
+	if so, open the file, if not, read from stdin. */
 	if (optind < argc) {
 		char* filename = argv[optind];
 		/* if the present filename is not '-' then init a file iterator for that file name */
@@ -387,11 +474,37 @@ int main(int argc, char** argv) {
 			case treePatterns:
 				fingerprints = computeSubtreeIsomorphisms(g, patterns, nPatterns, gp);
 				break;
-			case minHash:
-				fingerprints = NULL; // TODO
+			case treePatternsFast:
+				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
+				break;
+			case treePatternsFastAbsImp:
+				fingerprints = explicitEmbeddingForAbsImportantTrees(g, evaluationPlan.F, absImportance, gp, sgp);
+				break;
+			case treePatternsFastRelImp:
+				fingerprints = explicitEmbeddingForRelImportantTrees(g, evaluationPlan.F, relImportance, gp, sgp);
+				break;
+			case minHashTree:
+				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp);
+				break;
+			case minHashAbsImportant:
+				fingerprints = (struct IntSet*)fastMinHashForAbsImportantTrees(g, evaluationPlan, absImportance, gp);
+				break;
+			case minHashRelImportant:
+				fingerprints = (struct IntSet*)fastMinHashForRelImportantTrees(g, evaluationPlan, relImportance, gp);
+				break;
+
+			}
+			// output
+			switch (method) {
+			case minHashTree:
+				printIntArrayNoId((int*)fingerprints, evaluationPlan.sketchSize);
+				free(fingerprints);
+				break;
+			default:
+				printIntSetAsLibSvm(fingerprints, g->activity, stdout);
+				dumpIntSet(fingerprints);
 				break;
 			}
-			printIntSetSparse(fingerprints, g->number, stdout);
 		}
 
 
@@ -400,6 +513,25 @@ int main(int argc, char** argv) {
 	}
 
 	/* global garbage collection */
+	switch (method) {
+	case minHashTree:
+	case minHashAbsImportant:
+	case minHashRelImportant:
+	case treePatternsFast:
+	case treePatternsFastAbsImp:
+	case treePatternsFastRelImp:
+		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
+		break;
+	case treePatterns:
+		for (size_t i=0; i<nPatterns; ++i) {
+			dumpGraph(gp, patterns[i]);
+		}
+		free(patterns);
+		break;
+	default:
+		break; // don't do anything
+	}
+
 	destroyFileIterator();
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);
