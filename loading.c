@@ -222,13 +222,45 @@ static inline int fastAtoi( const char ** pos )
 }
 
 
+/**
+Parse a positive integer from the string starting at *pos.
+Skip any number of initial white spaces.
+Return -1 if nothing was read.
+*/
+static inline int fastAtoiNeg( const char ** pos )
+{
+   const char *p = *pos;
+   unsigned int d;
+   unsigned int n;
+
+   for ( ; isspace(*p); p++) {}
+   int x;
+   if (*p == '-') {
+	   x = -1;
+	   ++p;
+   } else {
+	   x = 1;
+   }
+   n = digitValue(*p);
+   while ((d = digitValue(*++p)) <= 9)
+   {
+      n = n * 10 + d;
+   }
+
+	if (*pos != p) {
+		*pos = p;
+    	return x*n;
+	}
+}
+
+
 static inline int parseHeader(int* id, int* activity, int* n, int* m) { 
 	const char *current = *HEAD_PTR + 1;
 	if ((*HEAD_PTR)[0] != '#') { 
 		return -1; 
 	}
-	*id = fastAtoi(&current);
-	*activity = fastAtoi(&current);
+	*id = fastAtoiNeg(&current);
+	*activity = fastAtoiNeg(&current);
 	*n = fastAtoi(&current);
 	*m = fastAtoi(&current);
 	/* return number of correctly read items.
