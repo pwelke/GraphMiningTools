@@ -196,29 +196,80 @@ static unsigned int digitValue (char c)
 
 /**
 Parse a positive integer from the string starting at *pos.
-Skip any number of initial white spaces.
-Return -1 if nothing was read.
+Move *pos to the first position in the string where there is no number.
+Skip any number of initial white spaces, then terminate at first position that is not a digit.
+
+Return -1 if nothing was read due to invalid input.
+In this case, the value *pos is not changed
 */
 static inline int fastAtoi( const char ** pos )
 {
+	const char *p = *pos;
+	unsigned int d;
+	unsigned int n=0;
+
+	for ( ; isspace(*p); p++) {}
+	const char* start = p;
+	--p;
+	while ((d = digitValue(*++p)) <= 9)
+	{
+		n = n * 10 + d;
+	}
+
+	if (start != p) {
+		*pos = p;
+		return n;
+	} else {
+		return -1;
+	}
+}
+
+static int AGNOSTIC_ERROR = 1;
+
+/**
+Parse an integer from the string starting at *pos.
+Move *pos to the first position in the string where there is no number.
+Skip any number of initial white spaces, then terminate at first position that is not initial - or digit.
+
+Cornercase: Interprets '-' as 0.
+
+Set local variable AGNOSTIC_ERROR to 1 if nothing was read due to invalid input.
+*/
+static inline int fastAtoiAgnostic( const char ** pos )
+{
    const char *p = *pos;
-   unsigned int d;
-   unsigned int n;
+
+
 
    for ( ; isspace(*p); p++) {}
-   
-   n = digitValue(*p);
+   const char *start = p;
+   int x;
+   if (*p == '-') {
+	   x = -1;
+   } else {
+	   x = 1;
+	   --p;
+   }
+
+   int n = 0;
+   unsigned int d;
    while ((d = digitValue(*++p)) <= 9)
    {
       n = n * 10 + d;
    }
 
-	if (*pos != p) {
-		*pos = p;
-    	return n;
-	} else {
-		return -1;
-	}
+
+   if (start != p) {
+	   // move pointer
+	   *pos = p;
+	   AGNOSTIC_ERROR = 0;
+	   return x*n;
+   } else {
+	   // return error code
+	   AGNOSTIC_ERROR = 1;
+	   return 0;
+   }
+
 }
 
 
@@ -227,8 +278,8 @@ static inline int parseHeader(int* id, int* activity, int* n, int* m) {
 	if ((*HEAD_PTR)[0] != '#') { 
 		return -1; 
 	}
-	*id = fastAtoi(&current);
-	*activity = fastAtoi(&current);
+	*id = fastAtoiAgnostic(&current);
+	*activity = fastAtoiAgnostic(&current);
 	*n = fastAtoi(&current);
 	*m = fastAtoi(&current);
 	/* return number of correctly read items.
@@ -317,7 +368,7 @@ struct Graph* iterateFile() {
 			
 	/* parse header */	
 	if (parseHeader(&(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
-		/* if reading of header does not work anymore, check if we have readched the correct end of the stream */
+		/* if reading of header does not work anymore, check if we have reached the correct end of the stream */
 		if (**HEAD_PTR != '$') {
 			fprintf(stderr, "Invalid Graph header: %s\n", *HEAD_PTR);
 		}
