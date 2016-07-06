@@ -102,6 +102,10 @@ int main(int argc, char** argv) {
 				embeddingOperator = &iterativeSubtreeCheckOperator;
 				break;
 			}
+			if (strcmp(optarg, "localEasy") == 0) {
+				embeddingOperator = &noniterativeLocalEasySubtreeCheckOperator;
+				break;
+			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
 			return EXIT_FAILURE;
 		case 'i':

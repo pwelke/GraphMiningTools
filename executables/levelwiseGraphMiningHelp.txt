@@ -40,4 +40,6 @@ Options:
                  of connected components of a graph to match it.
              andOr:  and or gap amplification. only works for exactly 16
                  sampled spanning trees.
+             localEasy: Yakuns implementation of subtree iso for local easy
+                 graphs.
 -h:              print this possibly helpful information.

@@ -728,6 +728,16 @@ struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDat
 	return noniterativeSubtreeCheck(data, h, gp);
 }
 
+struct SubtreeIsoDataStore noniterativeLocalEasySubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.S = NULL;
+
+	singleGraphPreprocessing(...);
+	result.foundIso = subGraphIsoCheck(result.h, result.g, ...);
+	return result;
+}
+
 struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
