@@ -732,9 +732,9 @@ struct SubtreeIsoDataStore noniterativeLocalEasySubtreeCheckOperator(struct Subt
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
 	result.S = NULL;
-
-	singleGraphPreprocessing(...);
-	result.foundIso = subGraphIsoCheck(result.h, result.g, ...);
+//
+//	singleGraphPreprocessing(...);
+//	result.foundIso = subGraphIsoCheck(result.h, result.g, ...);
 	return result;
 }
 
