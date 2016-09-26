@@ -6,6 +6,8 @@
 #include "../graph.h"
 #include "../loading.h"
 #include "../listComponents.h"
+#include "../wilsonsAlgorithm.h"
+#include "../graphPrinting.h"
 
 
 /*
@@ -20,14 +22,18 @@ struct BlockTree{
 	struct Graph* g;
 	struct Vertex** roots;
 	struct Vertex** parents;
-	//struct VertexList** rootChildren;
 	struct ShallowGraph** vRootedBlocks;
 	int nRoots;
 };
 
-void dumpBlockTree(struct BlockTree* blockTree) {
-
-}
+struct SpanningtreeTree{
+	struct Graph* g;
+	struct Vertex** roots;
+	struct Vertex** parents;
+	struct Graph** blocks;
+	struct ShallowGraph** blockSpanningTrees;
+	int nRoots;
+};
 
 /* return the head of the list or NULL if list is empty.
  * remove head of list
@@ -139,6 +145,77 @@ struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
 	return blockTree;
 }
 
+/**
+ * Merge two shallow graphs. The the result is the first shallow graph in list with
+ * all the edges added, the second shallow graph is dumped.
+ */
+static struct ShallowGraph* mergeTwoShallowGraphs(struct ShallowGraph* first, struct ShallowGraph* second, struct ShallowGraphPool* sgp) {
+	first->lastEdge->next = second->edges;
+	first->lastEdge = second->lastEdge;
+	first->m += second->m;
+
+	second->edges = second->lastEdge = NULL;
+	second->next = NULL;
+	dumpShallowGraph(sgp, second);
+	return first;
+}
+
+
+/**
+ * Merge all shallow graphs in the list. The list is consumed, the result is the first shallow graph in list with
+ * all the edges added.
+ */
+static struct ShallowGraph* mergeShallowGraphs(struct ShallowGraph* list, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* head = popShallowGraph(&list);
+	head->next = NULL;
+
+	for (struct ShallowGraph* pop=popShallowGraph(&list); pop!=NULL; pop=popShallowGraph(&list)) {
+		mergeTwoShallowGraphs(head, pop, sgp);
+	}
+	return head;
+}
+
+struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct SpanningtreeTree sptTree = {0};
+	sptTree.g = blockTree.g;
+	sptTree.nRoots = blockTree.nRoots;
+	sptTree.roots = blockTree.roots;
+	sptTree.parents = blockTree.parents;
+	sptTree.blocks = malloc(sptTree.nRoots * sizeof(struct Graph*));
+	sptTree.blockSpanningTrees = malloc(sptTree.nRoots * sizeof(struct ShallowGraph*));
+
+	for (int v=0; v<sptTree.nRoots; ++v) {
+		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
+		struct Graph* mergedGraph = shallowGraphToGraph(mergedEdges, gp);
+		sptTree.blocks[v] = mergedGraph;
+
+//		printf("%i:\n", blockTree.roots[v]->number);
+//		printShallowGraph(mergedEdges);
+
+		if (mergedGraph->m != mergedGraph->n-1) {
+			sptTree.blockSpanningTrees[v] = NULL;
+			// sample spanning trees according to parameter
+			for (int i=0; i<spanningTreesPerBlock; ++i) {
+				struct ShallowGraph* spt = randomSpanningTreeAsShallowGraph(mergedGraph, sgp);
+				spt->next = sptTree.blockSpanningTrees[v];
+				sptTree.blockSpanningTrees[v] = spt;
+			}
+			dumpShallowGraph(sgp, mergedEdges);
+		} else {
+			// the block is a tree, we don't need to do anything
+			sptTree.blockSpanningTrees[v] = mergedEdges;
+		}
+//		printf("spanning trees:\n");
+//		printShallowGraph(sptTree.blockSpanningTrees[v]);
+	}
+
+	/* garbage collection */
+	free(blockTree.vRootedBlocks);
+	return sptTree;
+}
+
+
+
 int main(int argc, char** argv) {
 
 	/* object pools */
@@ -171,8 +248,8 @@ int main(int argc, char** argv) {
 	gp = createGraphPool(100, vp, lp);
 
 	/* initialize the stream to read graphs from
-		   check if there is a filename present in the command line arguments
-		   if so, open the file, if not, read from stdin */
+	check if there is a filename present in the command line arguments
+	if so, open the file, if not, read from stdin */
 	if (optind < argc) {
 		char* filename = argv[optind];
 		/* if the present filename is not '-' then init a file iterator for that file name */
@@ -190,15 +267,17 @@ int main(int argc, char** argv) {
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n > 0) {
 
-			//			struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
-			//			dumpShallowGraphCycle(sgp, biconnectedComponents);
-			//
-			//			for (int v=0; v<g->n; ++v) {
-			//				fprintf(stdout, "%i ", g->vertices[v]->lowPoint);
-			//			}
-			//			fprintf(stdout, "\n");
+			struct BlockTree blockTree = getBlockTreeT(g, sgp);
+			struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, 2, gp, sgp);
 
-			getBlockTreeT(g, sgp);
+			free(sptTree.roots);
+			free(sptTree.parents);
+			for (int v=0; v<sptTree.nRoots; ++v) {
+				dumpShallowGraphCycle(sgp, sptTree.blockSpanningTrees[v]);
+				dumpGraph(gp, sptTree.blocks[v]);
+			}
+			free(sptTree.blocks);
+			free(sptTree.blockSpanningTrees);
 
 		}
 		/* garbage collection */
