@@ -14,8 +14,7 @@ GENNAME = ggen
 NGENNAME = ngen
 WLNAME = wl
 PENAME = gpe
-TESTNAME = iterativeSubtreeTest 
-
+TESTNAME = test
 ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME)
 
 #CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
@@ -56,7 +55,7 @@ WLOBJECTS = $(OBJECTS) ./executables/weisfeilerLehmanMain.o
 WLHELP = ./executables/weisfeilerLehmanMainHelp.help
 PEOBJECTS = $(OBJECTS) ./executables/patternExtractor.o
 PEHELP = ./executables/patternExtractorHelp.help
-TESTOBJECTS = $(OBJECTS) ./executables/iterativeSubtreeTest.o
+TESTOBJECTS = $(OBJECTS) ./executables/lowPointTest.o
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
