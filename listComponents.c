@@ -332,14 +332,16 @@ struct ShallowGraph* __tarjanFBC(struct Vertex *v, struct Vertex* w, int i, stru
 				for (stackEdge = stack->next; stackEdge->startPoint->visited >= index->endPoint->visited; stackEdge = stack->next) {
 					/* pop stackEdge and add it to the newBiconnectedComponent */
 					stack->next = stackEdge->next;
-					newBiconnectedComponent->edges = push(newBiconnectedComponent->edges, stackEdge);
-					++(newBiconnectedComponent->m);
+					pushEdge(newBiconnectedComponent, stackEdge);
+//					newBiconnectedComponent->edges = push(newBiconnectedComponent->edges, stackEdge);
+//					++(newBiconnectedComponent->m);
 				}
 
 				/* pop index edge */
 				stack->next = stackEdge->next;
-				newBiconnectedComponent->edges = push(newBiconnectedComponent->edges, stackEdge);
-				++(newBiconnectedComponent->m);
+				pushEdge(newBiconnectedComponent, stackEdge);
+//				newBiconnectedComponent->edges = push(newBiconnectedComponent->edges, stackEdge);
+//				++(newBiconnectedComponent->m);
 
 				/* set the prev and next pointers s.t. newBiconnectedComponent is "a cycle of length 1" */
 				newBiconnectedComponent->next = newBiconnectedComponent;
