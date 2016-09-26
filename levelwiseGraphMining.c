@@ -729,6 +729,9 @@ struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDat
 }
 
 struct SubtreeIsoDataStore noniterativeLocalEasySubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp) {
+	(void)importance; // unused
+	(void)gp; //unused
+
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
 	result.S = NULL;
