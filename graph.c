@@ -430,6 +430,8 @@ struct Graph* cloneInducedGraph(struct Graph* g, struct GraphPool* gp) {
 
 /**
  * create a graph that is isomorphic to the induced subgraph defined by edgeList
+ * this implementation ensures that the vertices in the resulting graph correspond to the order in
+ * which the vertices appear in edgeList. E.g. g->vertices[0] == edgeList->edges->startPoint.
  */
 struct Graph* shallowGraphToGraph(struct ShallowGraph* edgeList, struct GraphPool* gp) {
 	struct Graph* g = getGraph(gp);
