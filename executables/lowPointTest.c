@@ -8,125 +8,135 @@
 #include "../listComponents.h"
 
 
-struct Graph* getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
+/*
+ want a tree on roots.
+ edges should go from parent to child
+ [x] each vertex should store its parent vertex (where, in g or in the tree?)
+ [x] each vertex should store all its v-rooted components
+ each vertex should store spanning trees of the v-rooted components
+ each vertex should store the set of characteristics
+ and maybe some pruning info?... */
+struct BlockTree{
+	struct Graph* g;
+	struct Vertex** roots;
+	struct Vertex** parents;
+	//struct VertexList** rootChildren;
+	struct ShallowGraph** vRootedBlocks;
+	int nRoots;
+};
 
-	char* isRoot = malloc(g->n * sizeof(char));
-	int* smallestComponent = malloc(g->n * sizeof(int));
-	int* parentRoot = malloc(g->n * sizeof(int));
+void dumpBlockTree(struct BlockTree* blockTree) {
+
+}
+
+/* return the head of the list or NULL if list is empty.
+ * remove head of list
+ * (for speeds sake, don't change pointers
+ */
+static struct ShallowGraph* popShallowGraph(struct ShallowGraph** list) {
+	struct ShallowGraph* head = *list;
+	if (head != NULL) {
+		*list = (*list)->next;
+	}
+	return head;
+}
+
+static int lowPointComparator(const void* a, const void* b) {
+	struct Vertex* v = *(struct Vertex**)a;
+	struct Vertex* w = *(struct Vertex**)b;
+
+	return v->lowPoint - w->lowPoint;
+}
+
+struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
+
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 
 	for (int v=0; v<g->n; ++v) {
-		isRoot[v] = 0;
-		smallestComponent[v] = g->n + 1;
-		parentRoot[v] = g->n + 1;
+		g->vertices[v]->visited = 0; // isRoot
+		g->vertices[v]->d = -1; // parent root
 	}
 
-	/* nonroots occur in exactly one biconnected component, roots occur in at least two components.
-	 * (see tarjans paper DEPTH-FIRST SEARCH AND LINEAR GRAPH ALGORITHMS (1972) We can hence just count
-	 * the number of occurrences and get the roots */
-	int currentComp = 0;
-	int nRoots = 0;
-	for (struct ShallowGraph* bic=biconnectedComponents; bic!=NULL; bic=bic->next, ++currentComp) {
-		for (struct VertexList* e=bic->edges; e!=NULL; e=e->next) {
-			struct Vertex* v = e->startPoint;
-			struct Vertex* w = e->endPoint;
+	/* we mark for each component the vertex with the lowest lowPoint.
+	 * that is the root of the component.
+	 *
+	 * Due to the order in which listBiconnectedComponents() returns the bics,
+	 * we obtain the right parent roots for the roots in this way. */
 
-			if (smallestComponent[v->number] < currentComp) {
-				isRoot[v->number] = 1;
-				++nRoots;
-			} else {
-				smallestComponent[v->number] = currentComp;
-			}
-
-			if (smallestComponent[w->number] < currentComp) {
-				isRoot[w->number] = 1;
-				++nRoots;
-			} else {
-				smallestComponent[w->number] = currentComp;
-			}
-		}
-	}
-
-	/* now, to build a tree from that, we mark for each vertex the lowest lowPoint of any vertex in any component that contains v.
-	 * that is the parent root */
 	for (struct ShallowGraph* bic=biconnectedComponents; bic!=NULL; bic=bic->next) {
-		int minLowPoint = g->n + 1;
-		struct Vertex* rootOfComponent = NULL;
-		for (struct VertexList* e=bic->edges; e!=NULL; e=e->next) {
-			struct Vertex* v = e->startPoint;
-			struct Vertex* w = e->endPoint;
 
-			if (minLowPoint > v->lowPoint) {
-				minLowPoint = v->lowPoint;
-				rootOfComponent = v;
-			}
+		// listBiconnectedComponents returns bics where the first vertex in the first edge is the root of each bic
+		struct Vertex* rootOfComponent = bic->edges->startPoint;
 
-			if (minLowPoint > w->lowPoint) {
-				minLowPoint = w->lowPoint;
-			}
-		}
-		// TODO here, we should store the blocks directly with the corresponding roots.
+		// mark the root of this component as root.
+		rootOfComponent->visited = 1;
+
+		// store the root as information with each vertex and the component
 		int rootId = rootOfComponent->number;
+		bic->data = rootId;
 		for (struct VertexList* e=bic->edges; e!=NULL; e=e->next) {
-			struct Vertex* v = e->startPoint;
-			struct Vertex* w = e->endPoint;
-
-			parentRoot[v->number] = rootId;
-			parentRoot[w->number] = rootId;
+			e->startPoint->d = rootId;
+			e->endPoint->d = rootId;
 		}
 	}
 
-	// want a tree on roots.
-	// edges should go from parent to child
-	// each vertex should store its parent vertex (where, in g or in the tree?)
-	// each vertex should store all its v-rooted components
-	// each vertex should store spanning trees of the v-rooted components
-	// each vertex should store the set of characteristics
-	// and maybe some pruning info?...
+	// create output struct
+	struct BlockTree blockTree = {0};
+	blockTree.g = g;
 
-	struct Graph* rootTree = createGraph(nRoots, gp);
-//	int i = 0;
-	for (int v=0, i=0; v<g->n; ++v) {
-		if (isRoot[v]) {
-			struct Vertex* rootTreeVertex = rootTree->vertices[i];
-			struct Vertex* originalVertex = g->vertices[v];
-
-			rootTreeVertex->lowPoint = parentRoot[v];
-			addEdge(,
-		}
-	}
-
-//	for (int v=0; v<g->n; ++v) {
-//		fprintf(stdout, "%i ", g->vertices[v]->lowPoint);
-//	}
-//	fprintf(stdout, "\n");
-//	for (int v=0; v<g->n; ++v) {
-//		fprintf(stdout, "%i ", isRoot[v]);
-//	}
-//	fprintf(stdout, "\n");
-//	for (int v=0; v<g->n; ++v) {
-//		fprintf(stdout, "%i ", isLeaf(g->vertices[v]));
-//	}
-//	fprintf(stdout, "\n");
-//	for (int v=0; v<g->n; ++v) {
-//		fprintf(stdout, "%i ", smallestComponent[v]);
-//	}
-//	fprintf(stdout, "\n");
-//	for (int v=0; v<g->n; ++v) {
-//		fprintf(stdout, "%i ", parentRoot[v]);
-//	}
-//	fprintf(stdout, "\n");
-
+	// count number of roots in g, init storage
 	for (int v=0; v<g->n; ++v) {
-		if (isRoot[v]) {
-			fprintf(stdout, "(%i -> %i) ", v, parentRoot[v]);
+		if (g->vertices[v]->visited) {
+			++blockTree.nRoots;
 		}
 	}
-	fprintf(stdout, "\n");
-	fprintf(stdout, "\n");
+	blockTree.roots = malloc(blockTree.nRoots * sizeof(struct Vertex*));
+	blockTree.parents = malloc(blockTree.nRoots * sizeof(struct Vertex*));
+	blockTree.vRootedBlocks = malloc(blockTree.nRoots * sizeof(struct ShallowGraph*));
 
-	return NULL;
+	// select and sort roots by lowpoint. this ensures bottom up traversal of the
+	// blocktree if iterating through the array
+	for (int v=0, r=0; v<g->n; ++v) {
+		if (g->vertices[v]->visited) {
+			blockTree.roots[r] = g->vertices[v];
+			++r;
+		}
+	}
+	qsort(blockTree.roots, blockTree.nRoots, sizeof(struct Vertex*), &lowPointComparator);
 
+	// add parents of roots to array (after sorting the above, of course)
+	// init vRootedBlocks to NULL
+	// set root->visited to its position in roots (so that we can map the bics efficiently)
+	for (int v=0; v<blockTree.nRoots; ++v) {
+		blockTree.parents[v] = g->vertices[blockTree.roots[v]->d];
+		blockTree.vRootedBlocks[v] = NULL;
+		blockTree.roots[v]->visited = v;
+	}
+
+	// add blocks to respective roots
+	for (struct ShallowGraph* bic=popShallowGraph(&biconnectedComponents); bic!=NULL; bic=popShallowGraph(&biconnectedComponents)) {
+		int rootPositionInBlockTreeArrays = g->vertices[bic->data]->visited;
+		bic->next = blockTree.vRootedBlocks[rootPositionInBlockTreeArrays];
+		blockTree.vRootedBlocks[rootPositionInBlockTreeArrays] = bic;
+	}
+
+
+//	for (int v=0; v<blockTree.nRoots; ++v) {
+//		fprintf(stdout, "%i ", blockTree.roots[v]->lowPoint);
+//	}
+//	fprintf(stdout, "\n");
+//	for (int v=0; v<blockTree.nRoots; ++v) {
+//		fprintf(stdout, "%i->%i:\n", blockTree.roots[v]->number, blockTree.parents[v]->number);
+//		printShallowGraph(blockTree.vRootedBlocks[v]);
+//	}
+//	fprintf(stdout, "\n");
+//	for (int v=0; v<blockTree.nRoots; ++v) {
+//		printShallowGraph(blockTree)
+//	}
+//	fprintf(stdout, "\n");
+//	fprintf(stdout, "\n");
+
+	return blockTree;
 }
 
 int main(int argc, char** argv) {
