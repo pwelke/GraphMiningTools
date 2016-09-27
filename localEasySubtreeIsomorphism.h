@@ -38,6 +38,7 @@ struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp);
 struct Graph* blockConverter(struct ShallowGraph* edgeList, struct GraphPool* gp);
 struct Graph* spanningTreeConverter(struct ShallowGraph* localTrees, struct Graph* component, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp);
 
 char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp);
 

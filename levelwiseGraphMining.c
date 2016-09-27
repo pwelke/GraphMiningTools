@@ -748,22 +748,7 @@ struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(str
 
 	result.foundIso = noniterativeLocalEasySubtreeCheck(&sptTree, h, gp);
 
-	for (int v=0; v<sptTree.nRoots; ++v) {
-		dumpGraphList(gp, sptTree.localSpanningTrees[v]);
-		if (sptTree.characteristics[v]) {
-			struct SubtreeIsoDataStoreElement* tmp;
-			for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=tmp) {
-				tmp = e->next;
-				dumpNewCube(e->data.S, e->data.g->n);
-				free(e);
-			}
-		}
-		free(sptTree.characteristics[v]);
-	}
-	free(sptTree.parents);
-	free(sptTree.roots);
-	free(sptTree.localSpanningTrees);
-	free(sptTree.characteristics);
+	dumpSpanningtreeTree(sptTree, gp);
 
 //	printf("after: ");
 //	printSptTree(sptTree);
