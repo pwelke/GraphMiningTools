@@ -48,5 +48,8 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 struct SubtreeIsoDataStore initIterativeSubtreeCheckForEdge(struct SubtreeIsoDataStore base, struct Graph* h);
 struct SubtreeIsoDataStore initIterativeSubtreeCheckForSingleton(struct SubtreeIsoDataStore base, struct Graph* h);
 
+// Other
+
+void addNoncriticalVertexCharacteristics(struct SubtreeIsoDataStore* data, struct Graph* B, struct Vertex* u, struct Vertex* v);
 
 #endif

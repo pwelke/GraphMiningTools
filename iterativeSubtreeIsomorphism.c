@@ -407,7 +407,7 @@ struct SubtreeIsoDataStore initIterativeSubtreeCheck(struct SubtreeIsoDataStore 
 /// NONITERATIVE VERSION OF SUBTREE ISO ALGORITHM THAT IS COMPATIBLE WITH ABOVE
 
 
-static void addNoncriticalVertexCharacteristics(struct SubtreeIsoDataStore* data, struct Graph* B, struct Vertex* u, struct Vertex* v) {
+void addNoncriticalVertexCharacteristics(struct SubtreeIsoDataStore* data, struct Graph* B, struct Vertex* u, struct Vertex* v) {
 	/* the maximum matching computed above covers all but one neighbor of u
 	we need to identify those covered neighbors that can be swapped with
 	that uncovered neighbor without decreasing the cardinality of the matching
@@ -535,3 +535,4 @@ char isSubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 
 	return info.foundIso;
 }
+
