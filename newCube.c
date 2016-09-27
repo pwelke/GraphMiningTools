@@ -640,6 +640,10 @@ void addCharacteristicRaw(struct SubtreeIsoDataStore* data, int y, int u, int v)
 }
 
 void printNewCubeCondensed(uint8_t* S, int gn, int hn, FILE* out) {
+	if (S == NULL) {
+		fprintf(out, "(NULL)\n");
+		return;
+	}
 	for (int v=0; v<gn; ++v) {
 		for (int u=0; u<hn; ++u) {
 			fprintf(out, "(%i, %i): ", v, u);

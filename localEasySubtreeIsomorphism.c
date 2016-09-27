@@ -454,9 +454,30 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 	dumpCachedGraph(cachedB);
 }
 
+printSptTree(struct SpanningtreeTree sptTree) {
+	printf("\nbase graph:\n")
+	printGraph(sptTree.g);
+
+	printf("\nnRoots: %i\n", sptTree.nRoots);
+
+	printf("local spanning trees:\n");
+	for (int v=0; v<sptTree.nRoots; ++v) {
+		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v].number);
+		printGraph(sptTree.localSpanningTrees);
+	}
+
+	printf("Characteristics:\n")
+	for (int v=0; v<sptTree.nRoots; ++v) {
+		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v].number);
+		for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v].first; e!=NULL; e=e->next) {
+			printNewCubeCondensed(e->data.S, e->data.g->n, e->data.h->n, stdout);
+		}
+	}
+}
+
 char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree sptTree, struct Graph* h, struct GraphPool* gp) {
 	sptTree.characteristics = malloc(sptTree.nRoots * sizeof(struct SubtreeIsoDataStore));
-	for (int v=sptTree.nRoots-1; v>=0; ++v) {
+	for (int v=sptTree.nRoots-1; v>=0; --v) {
 		sptTree.characteristics[v] = getSubtreeIsoDataStoreList();
 		for (struct Graph* localTree=sptTree.localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
 			struct SubtreeIsoDataStore info = {0};
