@@ -301,7 +301,7 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport,
 		struct ShallowGraph* frequentEdges,
 		struct Vertex* processedPatterns,
 	    // embedding operator function pointer,
-	    struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*),
+	    struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
 	    double importance,
 		FILE* featureStream,
 		FILE* patternStream,
@@ -325,7 +325,7 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport,
 		// test if candidate is frequent
 		struct SubtreeIsoDataStoreList* refinementSupport = getSubtreeIsoDataStoreList();
 		for (struct SubtreeIsoDataStoreElement* i=candidateSupport->first; i!=NULL; i=i->next) {
-			struct SubtreeIsoDataStore result = embeddingOperator(i->data, refinement, importance, gp);
+			struct SubtreeIsoDataStore result = embeddingOperator(i->data, refinement, importance, gp, sgp);
 
 			if (result.foundIso) {
 				appendSubtreeIsoDataStore(refinementSupport, result);
