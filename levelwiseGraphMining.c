@@ -737,10 +737,19 @@ struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(str
 	result.h = h;
 	result.S = NULL;
 
+//	printf("h: ");
+//	printGraph(h);
+
 	struct BlockTree blockTree = getBlockTreeT(result.g, sgp);
 	struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, (int)importance, gp, sgp);
 
-	result.foundIso = noniterativeLocalEasySubtreeCheck(sptTree, h, gp);
+//	printf("before: ");
+//	printSptTree(sptTree);
+
+	result.foundIso = noniterativeLocalEasySubtreeCheck(&sptTree, h, gp);
+
+//	printf("after: ");
+//	printSptTree(sptTree);
 	return result;
 }
 
