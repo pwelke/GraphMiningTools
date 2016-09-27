@@ -572,3 +572,15 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 	//printSptTree(sptTree);
 	return 0;
 }
+
+
+char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct BlockTree blockTree = getBlockTreeT(g, sgp);
+	struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+
+	char result = noniterativeLocalEasySubtreeCheck(&sptTree, h, gp);
+
+	dumpSpanningtreeTree(sptTree, gp);
+
+	return result;
+}

@@ -41,5 +41,6 @@ struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int span
 void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp);
 
 char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp);
+char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 #endif
