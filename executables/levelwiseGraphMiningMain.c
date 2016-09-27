@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
 	/* user input handling variables */
 	int threshold = 1000;
 	unsigned int maxPatternSize = 20;
-	void (*miningStrategy)(size_t, size_t, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
-	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*) = &noniterativeSubtreeCheckOperator;
+	void (*miningStrategy)(size_t, size_t, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
+	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &noniterativeSubtreeCheckOperator;
 	double importance = 0.5;
 	char* patternFile = NULL;
 
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
 				break;
 			}
 			if (strcmp(optarg, "localEasy") == 0) {
-				embeddingOperator = &noniterativeLocalEasySubtreeCheckOperator;
+				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperator;
 				break;
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
