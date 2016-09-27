@@ -22,3 +22,12 @@ trees.txt
 data
 /doc/output/*
 *.pid
+ggen
+gpe
+ngen
+tci
+perf
+test
+lwg
+ts
+wl
