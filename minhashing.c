@@ -10,6 +10,7 @@
 #include "intSet.h"
 #include "importantSubtrees.h"
 #include "minhashing.h"
+#include "localEasySubtreeIsomorphism.h"
 
 // PERMUTATIONS
 
@@ -555,6 +556,48 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struc
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
 			char match = isSubtree(g, pattern, gp);
+			++nEvaluations;
+			if (match) {
+				addIntSortedNoDuplicates(features, v->number - 1);
+				v->visited = 1;
+				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+					if (e->endPoint->visited == 0) {
+						addToBorder(e->endPoint, border, sgp);
+					}
+				}
+			} else {
+				markConnectedComponent(v, -1);
+			}
+		}
+	}
+	fprintf(stderr, "%i\n", nEvaluations);
+	return features;
+
+}
+
+
+struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Graph* F, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	int nEvaluations = 0;
+
+	//cleanup
+	for (int v=0; v<F->n; ++v) { F->vertices[v]->visited = 0; }
+
+	// init output
+	struct IntSet* features = getIntSet();
+
+	// add minimal elements to border
+	struct ShallowGraph* border = getShallowGraph(sgp);
+	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
+		addToBorder(e->endPoint, border, sgp);
+	}
+
+	// bfs evaluation with pruning through the poset
+	while (border->m != 0) {
+		struct Vertex* v = popFromBorder(border, sgp);
+		struct Graph* pattern = (struct Graph*)(v->label);
+		if (v->visited == 0) {
+			char match = isProbabilisticLocalSampleSubtree(g, pattern, nLocalTrees, gp, sgp);
 			++nEvaluations;
 			if (match) {
 				addIntSortedNoDuplicates(features, v->number - 1);
