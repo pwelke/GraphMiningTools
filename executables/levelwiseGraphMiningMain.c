@@ -79,6 +79,10 @@ int main(int argc, char** argv) {
 				miningStrategy = &iterativeBFSMain;
 				break;
 			}
+			if (strcmp(optarg, "localEasyBFS") == 0) {
+				miningStrategy = &localEasyBFSMain;
+				break;
+			}
 			fprintf(stderr, "Unknown mining technique: %s\n", optarg);
 			return EXIT_FAILURE;
 		case 'e':

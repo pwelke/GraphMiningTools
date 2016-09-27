@@ -24,6 +24,8 @@ Options:
                  footprint
              dfs: mine in a depth-first fashion (like FP-growth). This 
                  results in better memory footprint, but larger run time. 
+             leb: variant of bfs mining that works with localEasy embedding
+                 operator for general graphs.
                  
 -e OPERATOR:     Choose embedding operator among
              subtree: (default) classical subtree isomorphism algorithm.
@@ -40,6 +42,8 @@ Options:
                  of connected components of a graph to match it.
              andOr:  and or gap amplification. only works for exactly 16
                  sampled spanning trees.
-             localEasy: Yakuns implementation of subtree iso for local easy
-                 graphs.
+             localEasy: My implementation of the local easy tree sampling
+                 algorithm. When METHOD = leb is selected, mining works for
+                 arbitrary graphs.
+                  
 -h:              print this possibly helpful information.
