@@ -258,7 +258,7 @@ void printIntArray(int* a, int n, int id) {
 
 int main(int argc, char** argv) {
 
-	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast,
+	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast, localEasyPatternsFast,
 		treePatternsFastAbsImp, treePatternsFastRelImp,
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
@@ -329,6 +329,10 @@ int main(int argc, char** argv) {
 				method = treePatternsFast;
 				break;
 			}
+			if (strcmp(optarg, "localEasyPatternsFast") == 0) {
+				method = localEasyPatternsFast;
+				break;
+			}
 			if (strcmp(optarg, "treePatternsFastAbs") == 0) {
 				method = treePatternsFastAbsImp;
 				break;
@@ -366,6 +370,7 @@ int main(int argc, char** argv) {
 	switch (method) {
 	case minHashAbsImportant:
 	case treePatternsFastAbsImp:
+	case localEasyPatternsFast:
 		if (absImportance == 0) {
 			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
@@ -392,6 +397,7 @@ int main(int argc, char** argv) {
 	switch (method) {
 	case treePatterns:
 	case treePatternsFast:
+	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:
 	case treePatternsFastRelImp:
 	case minHashTree:
@@ -429,6 +435,7 @@ int main(int argc, char** argv) {
 	int** permutations;
 	// cases
 	case treePatternsFast:
+	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:
 	case treePatternsFastRelImp:
 	case minHashTree:
@@ -482,6 +489,9 @@ int main(int argc, char** argv) {
 				break;
 			case treePatternsFast:
 				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
+				break;
+			case localEasyPatternsFast:
+				fingerprints = explicitEmbeddingForLocalEasyOperator(g, evaluationPlan.F, absImportance, gp, sgp);
 				break;
 			case treePatternsFastAbsImp:
 				fingerprints = explicitEmbeddingForAbsImportantTrees(g, evaluationPlan.F, absImportance, gp, sgp);
