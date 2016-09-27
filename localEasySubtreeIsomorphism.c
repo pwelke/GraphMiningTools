@@ -456,7 +456,7 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 			if ((w->d == -1) || (w->d == 0)) {
 				computeCharacteristics(current, NULL, cachedB, u, w, NULL, gp);
 				if (current->foundIso) {
-					// todo clean up
+					//dumpCachedGraph(cachedB);
 					return;
 				}
 
@@ -468,7 +468,7 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 					struct Vertex* wBelow = e->data.g->vertices[0];
 					computeCharacteristics(current, &(e->data), cachedB, u, w, wBelow, gp);
 					if (current->foundIso) {
-						// todo clean up
+						//dumpCachedGraph(cachedB);
 						return;
 					}
 				}
@@ -533,6 +533,9 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 
 			noniterativeLocalEasySubtreeCheck_intern(&info, sptTree, gp);
 			appendSubtreeIsoDataStore(sptTree->characteristics[v], info);
+
+			free(info.postorder);
+			info.postorder = NULL;
 
 //			pc(*sptTree);
 
