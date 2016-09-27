@@ -440,8 +440,8 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 	for (int wi=0; wi<g->n; ++wi) {
 		struct Vertex* w = g->vertices[current->postorder[wi]];
 
-		// we do not process v in the v-rooted component processing step
-		if (w->number == 0) {
+		// we do not process v in the v-rooted component processing step, unless it is the root of g
+		if ((w->number == 0) && (w->d != 0)) {
 			continue;
 		}
 
@@ -451,7 +451,9 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 			// check if vertex labels match
 			if (labelCmp(u->label, w->label) != 0) { continue; }
 
-			if (w->d == -1) { // w is no root. life is easy
+			// if w is not a root, life is easy, we do not need to process all \theta \in \Theta_{vw}
+			// if w = r (i.e. w is the root of g, the same holds
+			if ((w->d == -1) || (w->d == 0)) {
 				computeCharacteristics(current, NULL, cachedB, u, w, NULL, gp);
 				if (current->foundIso) {
 					// todo clean up
