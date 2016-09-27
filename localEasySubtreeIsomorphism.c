@@ -105,6 +105,12 @@ struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
 		blockTree.vRootedBlocks[rootPositionInBlockTreeArrays] = bic;
 	}
 
+//	printf("visited values in g:\n");
+//	for (int v=0; v<g->n; ++v) {
+//		printf("%i ", g->vertices[v]->visited);
+//	}
+//	printf("\n");
+
 	return blockTree;
 }
 
@@ -188,8 +194,14 @@ struct Graph* blockConverter(struct ShallowGraph* edgeList, struct GraphPool* gp
 		 * set to -1 if they are not roots and to the index of the root in sptTree->root, if they are a root.
 		 * Transfer this information to the resulting graph. */
 		f->startPoint->d = e->startPoint->visited;
-		f->endPoint->d = e->startPoint->visited;
+		f->endPoint->d = e->endPoint->visited;
 	}
+
+//	printf("d values in g:\n");
+//	for (int v=0; v<g->n; ++v) {
+//		printf("%i ", g->vertices[v]->d);
+//	}
+//	printf("\n");
 
 	return g;
 }
@@ -229,6 +241,7 @@ struct Graph* spanningTreeConverter(struct ShallowGraph* localTrees, struct Grap
 
 /**
  * blockTree is comsumed
+ * spanningTreesPerBlock must be >= 1
  */
 struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct SpanningtreeTree sptTree = {0};
@@ -238,9 +251,16 @@ struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int span
 	sptTree.parents = blockTree.parents;
 	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct ShallowGraph*));
 
+//		printf("visited values in g: (in getSpanningTree)\n");
+//		for (int v=0; v<sptTree.g->n; ++v) {
+//			printf("%i ", sptTree.g->vertices[v]->visited);
+//		}
+//		printf("\n");
+
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
 		// TODO make destructive. shallowGraphs are not used afterwards.
+//		printf("root %i: ", sptTree.roots[v]->number);
 		struct Graph* mergedGraph = blockConverter(mergedEdges, gp);
 
 		struct ShallowGraph* shallowSpanningtrees = NULL;
@@ -263,6 +283,8 @@ struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int span
 		// garbage collection
 		dumpShallowGraph(sgp, mergedEdges);
 		dumpGraph(gp, mergedGraph);
+
+
 	}
 
 	//garbage collection
@@ -276,7 +298,7 @@ struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int span
 
 /* vertices of g have their ->visited values set to the postorder. Thus,
 children of v are vertices u that are neighbors of v and have u->visited < v->visited */
-static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct SubtreeIsoDataStore data, struct SubtreeIsoDataStore wcharacteristics, struct CachedGraph* cachedB, struct Vertex* u, struct Vertex* w, struct Vertex* wBelow, struct GraphPool* gp) {
+static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct SubtreeIsoDataStore data, struct SubtreeIsoDataStore* wcharacteristics, struct CachedGraph* cachedB, struct Vertex* u, struct Vertex* w, struct Vertex* wBelow, struct GraphPool* gp) {
 
 	int sizeofX = degree(u);
 	int sizeofY = degree(w);
@@ -327,7 +349,7 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 			int y = B->vertices[j]->lowPoint;
 
 			/* y has to be a child of v */
-			if (data.g->vertices[y]->visited < w->visited) {
+			if (data.g->vertices[y]->visited < w->visited) { // TODO can we move this out of the loop, this should be known
 				/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
 				these values were stored in B->vertices[i,j]->label */
 				if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
@@ -341,18 +363,18 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 		for (int j=sizeofXY; j<B->n; ++j) {
 			int y = B->vertices[j]->lowPoint;
 
-			/* y has to be a child of v */
-			if (wcharacteristics.g->vertices[y]->visited < w->visited) {
+			/* y is definitively a child of wBelow */
+//			if (wcharacteristics->g->vertices[y]->visited < w->visited) {
 				/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
 				these values were stored in B->vertices[i,j]->label */
 				if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
-					if (containsCharacteristic(wcharacteristics, u, wcharacteristics.h->vertices[x], wcharacteristics.g->vertices[y])) {
+					if (containsCharacteristic(*wcharacteristics, u, wcharacteristics->h->vertices[x], wcharacteristics->g->vertices[y])) {
 						addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
 						++B->m;
 					}
 				}
 			}
-		}
+//		}
 	}
 	return B;
 }
@@ -367,7 +389,7 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 void computeCharacteristics(struct SubtreeIsoDataStore* current, struct SubtreeIsoDataStore* wCharacteristics, struct CachedGraph* cachedB, struct Vertex* u, struct Vertex* w, struct Vertex* wBelow, struct GraphPool* gp) {
 
 	// compute maximum matching
-	struct Graph* B = makeBipartiteInstanceFromVerticesForLocalEasyCached(*current, *wCharacteristics, cachedB, u, w, wBelow, gp);
+	struct Graph* B = makeBipartiteInstanceFromVerticesForLocalEasyCached(*current, wCharacteristics, cachedB, u, w, wBelow, gp);
 	int sizeofMatching = bipartiteMatchingEvenMoreDirty(B);
 	int nNeighbors = B->number;
 
@@ -407,7 +429,7 @@ Output:
 	the cube for h and g
 
  */
-static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore* current, struct SpanningtreeTree sptTree, struct GraphPool* gp) {
+static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore* current, struct SpanningtreeTree* sptTree, struct GraphPool* gp) {
 
 	struct Graph* g = current->g;
 	struct Graph* h = current->h;
@@ -418,13 +440,18 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 	for (int wi=0; wi<g->n; ++wi) {
 		struct Vertex* w = g->vertices[current->postorder[wi]];
 
+		// we do not process v in the v-rooted component processing step
+		if (w->number == 0) {
+			continue;
+		}
+
 		for (int ui=0; ui<h->n; ++ui) {
 			struct Vertex* u = h->vertices[ui];
 
 			// check if vertex labels match
 			if (labelCmp(u->label, w->label) != 0) { continue; }
 
-			if (w->d == -1) {
+			if (w->d == -1) { // w is no root. life is easy
 				computeCharacteristics(current, NULL, cachedB, u, w, NULL, gp);
 				if (current->foundIso) {
 					// todo clean up
@@ -434,13 +461,8 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 			} else {
 				// w is a root, stuff gets complicated
 
-				// we do not process v here
-				if (w->number == 0) {
-					continue;
-				}
-
 				// loop over the spanning trees of the w-rooted components
-				for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[w->d]->first; e!=NULL; e=e->next) {
+				for (struct SubtreeIsoDataStoreElement* e=sptTree->characteristics[w->d]->first; e!=NULL; e=e->next) {
 					struct Vertex* wBelow = e->data.g->vertices[0];
 					computeCharacteristics(current, &(e->data), cachedB, u, w, wBelow, gp);
 					if (current->foundIso) {
@@ -463,23 +485,44 @@ void printSptTree(struct SpanningtreeTree sptTree) {
 	printf("local spanning trees:\n");
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v]->number);
-		printGraph(sptTree.localSpanningTrees);
+		printGraph(sptTree.localSpanningTrees[v]);
 	}
 
 	printf("Characteristics:\n");
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v]->number);
-		for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=e->next) {
-			printNewCubeCondensed(e->data.S, e->data.g->n, e->data.h->n, stdout);
+		if (sptTree.characteristics && sptTree.characteristics[v]) {
+			for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=e->next) {
+				printNewCubeCondensed(e->data.S, e->data.g->n, e->data.h->n, stdout);
+			}
+		} else {
+			printf("empty\n");
 		}
 	}
 }
 
-char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree sptTree, struct Graph* h, struct GraphPool* gp) {
-	sptTree.characteristics = malloc(sptTree.nRoots * sizeof(struct SubtreeIsoDataStore));
-	for (int v=sptTree.nRoots-1; v>=0; --v) {
-		sptTree.characteristics[v] = getSubtreeIsoDataStoreList();
-		for (struct Graph* localTree=sptTree.localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
+void pc(struct SpanningtreeTree sptTree) {
+	printf("Characteristics:\n");
+	for (int v=0; v<sptTree.nRoots; ++v) {
+		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v]->number);
+		if (sptTree.characteristics && sptTree.characteristics[v]) {
+			for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=e->next) {
+				printNewCubeCondensed(e->data.S, e->data.g->n, e->data.h->n, stdout);
+			}
+		} else {
+			printf("empty\n");
+		}
+	}
+}
+
+char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp) {
+	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStore));
+	for (int v=0; v<sptTree->nRoots; ++v) { sptTree->characteristics[v] = NULL; }
+//	printf("begin:\n");
+//	printSptTree(*sptTree);
+	for (int v=sptTree->nRoots-1; v>=0; --v) {
+		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
+		for (struct Graph* localTree=sptTree->localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
 			struct SubtreeIsoDataStore info = {0};
 			info.g = localTree;
 			info.h = h;
@@ -487,14 +530,20 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree sptTree, struct G
 			info.S = createNewCube(info.g->n, info.h->n);
 
 			noniterativeLocalEasySubtreeCheck_intern(&info, sptTree, gp);
-			appendSubtreeIsoDataStore(sptTree.characteristics[v], info);
+			appendSubtreeIsoDataStore(sptTree->characteristics[v], info);
+
+//			pc(*sptTree);
 
 			if (info.foundIso) {
 				// TODO clean up
+				//printf("found iso\n");
+				//printSptTree(sptTree);
 				return 1;
 			}
 		}
 	}
 	// TODO clean up
+	//printf("no iso\n");
+	//printSptTree(sptTree);
 	return 0;
 }

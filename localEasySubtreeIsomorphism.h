@@ -39,6 +39,6 @@ struct Graph* blockConverter(struct ShallowGraph* edgeList, struct GraphPool* gp
 struct Graph* spanningTreeConverter(struct ShallowGraph* localTrees, struct Graph* component, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
-char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree sptTree, struct Graph* h, struct GraphPool* gp);
+char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp);
 
 #endif
