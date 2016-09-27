@@ -1,4 +1,6 @@
 //#include <string.h>
+#ifndef LEVELWISE_GRAPH_MINING_H_
+#define LEVELWISE_GRAPH_MINING_H_
 
 #include "graph.h"
 #include "loading.h"
@@ -102,3 +104,16 @@ struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore
 struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore andorEmbeddingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+
+void localEasyBFSMain(size_t maxPatternSize,
+		              size_t threshold,
+					  // embedding operator function pointer,
+					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
+					  double importance,
+					  FILE* featureStream,
+					  FILE* patternStream,
+					  FILE* logStream,
+					  struct GraphPool* gp,
+					  struct ShallowGraphPool* sgp);
+
+#endif
