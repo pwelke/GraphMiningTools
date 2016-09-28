@@ -540,6 +540,7 @@ int main(int argc, char** argv) {
 	case minHashRelImportant:
 	case minHashAndOr:
 	case treePatternsFast:
+	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:
 	case treePatternsFastRelImp:
 		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);

@@ -32,6 +32,18 @@ Options:
                            patterns. This version assumes that the set of patterns 
                            is closed under taking subgraphs and uses apriori-like
                            pruning for each graph to speed up computations.
+                           
+    localEasyPatternsFast: Given a set of tree patterns (specified via -f or -c), 
+                           return the set of tree patterns that match the graph 
+                           (i.e. those that are subgraph isomorphic to the graph). 
+                           This method supports forest and general graph databases 
+                           but only tree patterns. 
+                           For this it uses the localEasySampling embedding opera-
+                           tor. The number of sampled local trees per root can be
+                           specified via the -i parameter and must be an int >= 1.
+                           This version assumes that the set of patterns is closed 
+                           under taking subgraphs and uses apriori-like pruning
+                           for each graph to speed up computations.
     
     minHash:               Compute a min-hash array of size k (specified via -k)
                            for the feature set computed by treePatternsFast. It 
