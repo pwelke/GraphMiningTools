@@ -327,12 +327,6 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 		sizeofZ = degree(wBelow);
 	}
 
-//	// if one of the neighbors of u is removed from this instance to see if there is a matching covering all neighbors but it,
-//	// the bipartite graph must be smaller
-//	if (removalVertex->number != u->number) {
-//		--sizeofX;
-//	}
-
 	struct Graph* B = getCachedGraph(sizeofX + sizeofY + sizeofZ, cachedB);
 
 	/* store size of first partitioning set */
@@ -342,13 +336,12 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 	and add edge labels to vertex labels to compare edges easily */
 	int i = 0;
 	for (struct VertexList* e=u->neighborhood; e!=NULL; e=e->next) {
-//		if (e->endPoint->number != removalVertex->number) {
 		B->vertices[i]->lowPoint = e->endPoint->number;
 		B->vertices[i]->label = e->label;
 		++i;
-//		}
 	}
 	for (struct VertexList* e=w->neighborhood; e!=NULL; e=e->next) {
+		/* y has to be a child of v */
 		if (e->endPoint->visited < w->visited) {
 			B->vertices[i]->lowPoint = e->endPoint->number;
 			B->vertices[i]->label = e->label;
@@ -359,6 +352,7 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 	}
 	if (wBelow) {
 		for (struct VertexList* e=wBelow->neighborhood; e!=NULL; e=e->next) {
+			/* contrary to the above computation, y is definitively a child of wBelow */
 			B->vertices[i]->lowPoint = e->endPoint->number;
 			B->vertices[i]->label = e->label;
 			++i;
@@ -373,22 +367,18 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 		for (int j=sizeofX; j<sizeofXY; ++j) {
 			int y = B->vertices[j]->lowPoint;
 
-			/* y has to be a child of v */
-			if (data.g->vertices[y]->visited < w->visited) { // TODO can we move this out of the loop, this should be known
-				/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
-				these values were stored in B->vertices[i,j]->label */
-				if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
-					if (containsCharacteristic(data, u, data.h->vertices[x], data.g->vertices[y])) {
-						addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
-						++B->m;
-					}
+			/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
+			these values were stored in B->vertices[i,j]->label */
+			if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+				if (containsCharacteristic(data, u, data.h->vertices[x], data.g->vertices[y])) {
+					addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+					++B->m;
 				}
 			}
 		}
 		for (int j=sizeofXY; j<sizeofXYZ; ++j) {
 			int y = B->vertices[j]->lowPoint;
 
-			/* contrary to the above computation, y is definitively a child of wBelow */
 			/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
 			these values were stored in B->vertices[i,j]->label */
 			if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
