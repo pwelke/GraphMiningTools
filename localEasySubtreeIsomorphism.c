@@ -26,11 +26,20 @@ static struct ShallowGraph* popShallowGraph(struct ShallowGraph** list) {
 	return head;
 }
 
+/* we have to make sure that the children of each node come after the node in the resulting order
+ * hence we first compare lowpoints (depth in the dfs from the root) of the vertices. If those are identical, then we return the
+ * difference between the lowpoints of the parents (their height in the tree).
+ *
+ * A root v and some root w that belongs to a v-rooted component have the same ->lowPoint, but have different parents (w has v
+ * as a parent, while v has a different parent (unless v is the root of the component)
+ */
 static int lowPointComparator(const void* a, const void* b) {
 	struct Vertex* v = *(struct Vertex**)a;
 	struct Vertex* w = *(struct Vertex**)b;
 
-	return v->lowPoint - w->lowPoint;
+	int depthDiff = v->lowPoint - w->lowPoint;
+	int parentDepthDiff = v->visited - w->visited;
+	return (depthDiff != 0) ? depthDiff : parentDepthDiff;
 }
 
 struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
@@ -83,6 +92,13 @@ struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
 	// blocktree if iterating through the array
 	for (int v=0, r=0; v<g->n; ++v) {
 		if (g->vertices[v]->visited == 1) {
+			// set ->visited of each root to the lowpoint of its parent root
+			// this way, we can order the roots in one block correctly using lowPointComparator
+			g->vertices[v]->visited = g->vertices[g->vertices[v]->d]->lowPoint;
+			// if v is its own parent, mark this with a special visited value
+			if (g->vertices[g->vertices[v]->d]->number == g->vertices[v]->number) {
+				g->vertices[v]->visited = 0;
+			}
 			blockTree.roots[r] = g->vertices[v];
 			++r;
 		}
@@ -503,7 +519,7 @@ void printSptTree(struct SpanningtreeTree sptTree) {
 
 	printf("local spanning trees:\n");
 	for (int v=0; v<sptTree.nRoots; ++v) {
-		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v]->number);
+		printf("root %i (-> %i): lps (%i %i) \n", sptTree.roots[v]->number, sptTree.parents[v]->number, sptTree.roots[v]->lowPoint, sptTree.parents[v]->lowPoint);
 		printGraph(sptTree.localSpanningTrees[v]);
 	}
 
