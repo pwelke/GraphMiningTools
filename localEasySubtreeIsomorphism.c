@@ -294,24 +294,26 @@ struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int span
 }
 
 void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp) {
-
-
-for (int v=0; v<sptTree.nRoots; ++v) {
-	dumpGraphList(gp, sptTree.localSpanningTrees[v]);
-	if (sptTree.characteristics[v]) {
-		struct SubtreeIsoDataStoreElement* tmp;
-		for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=tmp) {
-			tmp = e->next;
-			dumpNewCube(e->data.S, e->data.g->n);
-			free(e);
+	for (int v=0; v<sptTree.nRoots; ++v) {
+		dumpGraphList(gp, sptTree.localSpanningTrees[v]);
+		if (sptTree.characteristics) {
+			if (sptTree.characteristics[v]) {
+				struct SubtreeIsoDataStoreElement* tmp;
+				for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=tmp) {
+					tmp = e->next;
+					dumpNewCube(e->data.S, e->data.g->n);
+					free(e);
+				}
+			}
+			free(sptTree.characteristics[v]);
 		}
 	}
-	free(sptTree.characteristics[v]);
-}
-free(sptTree.parents);
-free(sptTree.roots);
-free(sptTree.localSpanningTrees);
-free(sptTree.characteristics);
+	free(sptTree.parents);
+	free(sptTree.roots);
+	free(sptTree.localSpanningTrees);
+	if (sptTree.characteristics) {
+		free(sptTree.characteristics);
+	}
 }
 
 
@@ -453,7 +455,8 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 	for (int wi=0; wi<g->n; ++wi) {
 		struct Vertex* w = g->vertices[current->postorder[wi]];
 
-		// we do not process v in the v-rooted component processing step, unless it is the root of g
+		// we do not process v in the v-rooted component processing step,
+		// TODO unless it is the root of a connected component of g
 		if ((w->number == 0) && (w->d != 0)) {
 			continue;
 		}
@@ -477,6 +480,7 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 				// w is a root, stuff gets complicated
 
 				// loop over the spanning trees of the w-rooted components
+				struct SubtreeIsoDataStoreList* l = sptTree->characteristics[w->d];
 				for (struct SubtreeIsoDataStoreElement* e=sptTree->characteristics[w->d]->first; e!=NULL; e=e->next) {
 					struct Vertex* wBelow = e->data.g->vertices[0];
 					computeCharacteristics(current, &(e->data), cachedB, u, w, wBelow, gp);

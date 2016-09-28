@@ -592,12 +592,33 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 		addToBorder(e->endPoint, border, sgp);
 	}
 
+	// init data structure for embedding operator
+	struct BlockTree blockTree = getBlockTreeT(g, sgp);
+	struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+
 	// bfs evaluation with pruning through the poset
 	while (border->m != 0) {
 		struct Vertex* v = popFromBorder(border, sgp);
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
-			char match = isProbabilisticLocalSampleSubtree(g, pattern, nLocalTrees, gp, sgp);
+			char match = noniterativeLocalEasySubtreeCheck(&sptTree, pattern, gp);
+
+			// garbage collection in SpanningtreeTree
+			for (int r=0; r<sptTree.nRoots; ++r) {
+				if (sptTree.characteristics[r]) {
+					struct SubtreeIsoDataStoreElement* tmp;
+					for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[r]->first; e!=NULL; e=tmp) {
+						tmp = e->next;
+						dumpNewCube(e->data.S, e->data.g->n);
+						free(e);
+					}
+				}
+				free(sptTree.characteristics[r]);
+			}
+			free(sptTree.characteristics);
+			sptTree.characteristics = NULL;
+
+
 			++nEvaluations;
 			if (match) {
 				addIntSortedNoDuplicates(features, v->number - 1);
@@ -612,6 +633,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 			}
 		}
 	}
+	dumpSpanningtreeTree(sptTree, gp);
 	fprintf(stderr, "%i\n", nEvaluations);
 	return features;
 
