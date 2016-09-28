@@ -278,13 +278,16 @@ static inline int parseHeader(int* id, int* activity, int* n, int* m) {
 	if ((*HEAD_PTR)[0] != '#') { 
 		return -1; 
 	}
+
 	*id = fastAtoiAgnostic(&current);
+	int agnostic_errors = AGNOSTIC_ERROR;
 	*activity = fastAtoiAgnostic(&current);
+	agnostic_errors += AGNOSTIC_ERROR;
 	*n = fastAtoi(&current);
 	*m = fastAtoi(&current);
 	/* return number of correctly read items.
 		See: C11(ISO/IEC 9899:201x) §6.5.8 Relational operators */
-	return (*id != -1) + (*activity != -1) + (*n != -1) + (*m != -1);
+	return 2 - agnostic_errors + (*n != -1) + (*m != -1);
 }
 
 
@@ -370,7 +373,7 @@ struct Graph* iterateFile() {
 	if (parseHeader(&(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
 		/* if reading of header does not work anymore, check if we have reached the correct end of the stream */
 		if (**HEAD_PTR != '$') {
-			fprintf(stderr, "Invalid Graph header: %s\n", *HEAD_PTR);
+			fprintf(stderr, "Invalid Graph header: %s\nparsing result: %i %i %i %i\n", *HEAD_PTR, g->number, g->activity, g->n, g->m);
 		}
 		dumpGraph(FI_GP, g);
 		return NULL;
