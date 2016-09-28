@@ -349,9 +349,13 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 //		}
 	}
 	for (struct VertexList* e=w->neighborhood; e!=NULL; e=e->next) {
-		B->vertices[i]->lowPoint = e->endPoint->number;
-		B->vertices[i]->label = e->label;
-		++i;
+		if (e->endPoint->visited < w->visited) {
+			B->vertices[i]->lowPoint = e->endPoint->number;
+			B->vertices[i]->label = e->label;
+			++i;
+		} else {
+			--sizeofY;
+		}
 	}
 	if (wBelow) {
 		for (struct VertexList* e=wBelow->neighborhood; e!=NULL; e=e->next) {
@@ -362,6 +366,7 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 	}
 
 	int sizeofXY = sizeofX + sizeofY;
+	int sizeofXYZ = sizeofXY + sizeofZ;
 	/* add edge (x,y) if u in S(y,x) */
 	for (i=0; i<sizeofX; ++i) {
 		int x = B->vertices[i]->lowPoint;
@@ -380,21 +385,19 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 				}
 			}
 		}
-		for (int j=sizeofXY; j<B->n; ++j) {
+		for (int j=sizeofXY; j<sizeofXYZ; ++j) {
 			int y = B->vertices[j]->lowPoint;
 
-			/* y is definitively a child of wBelow */
-//			if (wcharacteristics->g->vertices[y]->visited < w->visited) {
-				/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
-				these values were stored in B->vertices[i,j]->label */
-				if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
-					if (containsCharacteristic(*wcharacteristics, u, wcharacteristics->h->vertices[x], wcharacteristics->g->vertices[y])) {
-						addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
-						++B->m;
-					}
+			/* contrary to the above computation, y is definitively a child of wBelow */
+			/* edge labels have to match, (v, child)->label in g == (u, child)->label in h
+			these values were stored in B->vertices[i,j]->label */
+			if (labelCmp(B->vertices[i]->label, B->vertices[j]->label) == 0) {
+				if (containsCharacteristic(*wcharacteristics, u, wcharacteristics->h->vertices[x], wcharacteristics->g->vertices[y])) {
+					addResidualEdges(B->vertices[i], B->vertices[j], gp->listPool);
+					++B->m;
 				}
 			}
-//		}
+		}
 	}
 	return B;
 }
