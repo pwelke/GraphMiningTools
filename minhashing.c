@@ -595,28 +595,44 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 	// init data structure for embedding operator
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
 	struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+//	printSptTree(sptTree);
 
 	// bfs evaluation with pruning through the poset
 	while (border->m != 0) {
 		struct Vertex* v = popFromBorder(border, sgp);
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
-			char match = noniterativeLocalEasySubtreeCheck(&sptTree, pattern, gp);
+//			printGraph(pattern);
+			char match = 0;
+			if (pattern->n == 1) {
+				match = 1;
+				char* l = pattern->vertices[0]->label;
+				for (int v=0; v<g->n; ++v) {
+					// will be 0 after loop iff one label matches
+					match &= labelCmp(l, g->vertices[v]->label);
+				}
+				// invert result
+				match = !match;
+			} else {
+				match = noniterativeLocalEasySubtreeCheck(&sptTree, pattern, gp);
+			}
 
 			// garbage collection in SpanningtreeTree
-			for (int r=0; r<sptTree.nRoots; ++r) {
-				if (sptTree.characteristics[r]) {
-					struct SubtreeIsoDataStoreElement* tmp;
-					for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[r]->first; e!=NULL; e=tmp) {
-						tmp = e->next;
-						dumpNewCube(e->data.S, e->data.g->n);
-						free(e);
+			if (sptTree.characteristics) {
+				for (int r=0; r<sptTree.nRoots; ++r) {
+					if (sptTree.characteristics[r]) {
+						struct SubtreeIsoDataStoreElement* tmp;
+						for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[r]->first; e!=NULL; e=tmp) {
+							tmp = e->next;
+							dumpNewCube(e->data.S, e->data.g->n);
+							free(e);
+						}
 					}
+					free(sptTree.characteristics[r]);
 				}
-				free(sptTree.characteristics[r]);
+				free(sptTree.characteristics);
+				sptTree.characteristics = NULL;
 			}
-			free(sptTree.characteristics);
-			sptTree.characteristics = NULL;
 
 
 			++nEvaluations;
