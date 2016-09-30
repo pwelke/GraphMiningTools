@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "../loading.h"
 #include "../intSet.h"
@@ -282,14 +283,26 @@ int main(int argc, char** argv) {
 	size_t absImportance = 5;
 	double relImportance = 0.5;
 
+	// init random with system time
+	srand(time(NULL));
+
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hm:f:c:k:i:";
+	const char* validArgs = "hm:f:c:k:i:r:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
+		int tmpRndSeed;
 		switch (arg) {
 		case 'h':
 			printHelp();
 			return EXIT_SUCCESS;
+		case 'r':
+			if (sscanf(optarg, "%i", &tmpRndSeed) != 1) {
+				fprintf(stderr, "Random seed must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} else {
+				srand(tmpRndSeed);
+			}
+			break;
 		case 'f':
 			patternFile = optarg;
 			inputMethod = AIDS99_INPUT;

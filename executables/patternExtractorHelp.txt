@@ -83,6 +83,12 @@ Options:
 
 -f FILENAME:               Load patterns from file in AIDS99 format.
 
+
+-r INT:                    Init random number generator (e.g. needed by 
+                           localEasyPatternsFast) with given seed. Defaults to current
+                           system time.
+                           
+
 To run the spanning tree sampling algorithms described in our paper, first transform
 your graph database of choice to a forest database using the program ts. Then mine some
 frequent subtrees using lwg on that forest db. With the patterns from the latter and new 
