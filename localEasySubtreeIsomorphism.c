@@ -471,11 +471,11 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 	for (int wi=0; wi<g->n; ++wi) {
 		struct Vertex* w = g->vertices[current->postorder[wi]];
 
-		// we do not process v in the v-rooted component processing step,
-		// TODO unless it is the root of a connected component of g
-		if ((w->number == 0) && (w->d != 0)) {
-			continue;
-		}
+//		// we do not process v in the v-rooted component processing step,
+//		// TODO unless it is the root of a connected component of g
+//		if ((w->number == 0) && (w->d != 0)) {
+//			continue;
+//		}
 
 		for (int ui=0; ui<h->n; ++ui) {
 			struct Vertex* u = h->vertices[ui];
