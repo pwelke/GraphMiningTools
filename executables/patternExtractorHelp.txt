@@ -34,7 +34,7 @@ Options:
                            pruning for each graph to speed up computations.
                            
     localEasyPatternsFast: Given a set of tree patterns (specified via -f or -c), 
-                           return the set of tree patterns that match the graph 
+                           return a subset of the tree patterns that match the graph 
                            (i.e. those that are subgraph isomorphic to the graph). 
                            This method supports forest and general graph databases 
                            but only tree patterns. 
@@ -43,7 +43,24 @@ Options:
                            specified via the -i parameter and must be an int >= 1.
                            This version assumes that the set of patterns is closed 
                            under taking subgraphs and uses apriori-like pruning
-                           for each graph to speed up computations.
+                           for each graph to speed up computations. The spanning 
+                           trees for each graph are sampled once before the traver-
+                           sal of the pattern poset and not resampled for different
+                           patterns.
+                           
+    localEasyPatternsResampling:  Given a set of tree pattenrs (specified via -f 
+                                  or -c), return a subset of the tree patterns that 
+                                  match the graph (i.e. those that are subgraph 
+                                  isomorphic to the graph). This method supports 
+                                  forest and general graph databases but only tree 
+                                  patterns. 
+                                  It uses the localEasySampling embedding opera-
+                                  tor. The number of sampled local trees per root 
+                                  can be specified via the -i parameter and must 
+                                  be an int >= 1. This version tests each pattern 
+                                  independently of any apriori pruning of the 
+                                  pattern space and resamples spanning trees for
+                                  each pattern.
     
     minHash:               Compute a min-hash array of size k (specified via -k)
                            for the feature set computed by treePatternsFast. It 

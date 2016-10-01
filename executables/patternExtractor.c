@@ -9,6 +9,7 @@
 #include "../levelwiseGraphMining.h"
 #include "../subtreeIsomorphism.h"
 #include "../minhashing.h"
+#include "../localEasySubtreeIsomorphism.h"
 #include "patternExtractor.h"
 
 
@@ -213,6 +214,17 @@ struct IntSet* computeSubtreeIsomorphisms(struct Graph* g, struct Graph** patter
 	return features;
 }
 
+struct IntSet* computeResampledLocalEasyFullEmbedding(struct Graph* g, int nLocalTrees, struct Graph** patterns, int nPatterns, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct IntSet* features = getIntSet();
+
+	for (int i=0; i<nPatterns; ++i) {
+		if (isProbabilisticLocalSampleSubtree(g, patterns[i], nLocalTrees, gp, sgp)) {
+			addIntSortedNoDuplicates(features, i);
+		}
+	}
+	return features;
+}
+
 
 
 /**
@@ -259,8 +271,9 @@ void printIntArray(int* a, int n, int id) {
 
 int main(int argc, char** argv) {
 
-	typedef enum {triangles, bruteForceTriples, treePatterns, treePatternsFast, localEasyPatternsFast,
-		treePatternsFastAbsImp, treePatternsFastRelImp,
+	typedef enum {triangles, bruteForceTriples,
+		localEasyPatternsFast, localEasyPatternsResampling,
+		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
@@ -346,6 +359,10 @@ int main(int argc, char** argv) {
 				method = localEasyPatternsFast;
 				break;
 			}
+			if (strcmp(optarg, "localEasyPatternsFast") == 0) {
+				method = localEasyPatternsResampling;
+				break;
+			}
 			if (strcmp(optarg, "treePatternsFastAbs") == 0) {
 				method = treePatternsFastAbsImp;
 				break;
@@ -384,6 +401,7 @@ int main(int argc, char** argv) {
 	case minHashAbsImportant:
 	case treePatternsFastAbsImp:
 	case localEasyPatternsFast:
+	case localEasyPatternsResampling:
 		if (absImportance == 0) {
 			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
@@ -409,6 +427,7 @@ int main(int argc, char** argv) {
 	// load pattern database for those methods that require one
 	switch (method) {
 	case treePatterns:
+	case localEasyPatternsResampling:
 	case treePatternsFast:
 	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:
@@ -500,6 +519,9 @@ int main(int argc, char** argv) {
 			case treePatterns:
 				fingerprints = computeSubtreeIsomorphisms(g, patterns, nPatterns, gp);
 				break;
+			case localEasyPatternsResampling:
+				fingerprints = computeResampledLocalEasyFullEmbedding(g, absImportance, patterns, nPatterns, gp, sgp);
+				break;
 			case treePatternsFast:
 				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
 				break;
@@ -559,6 +581,7 @@ int main(int argc, char** argv) {
 		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
 		break;
 	case treePatterns:
+	case localEasyPatternsResampling:
 		for (size_t i=0; i<nPatterns; ++i) {
 			dumpGraph(gp, patterns[i]);
 		}
