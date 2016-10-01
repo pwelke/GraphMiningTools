@@ -11,6 +11,7 @@
 #include "importantSubtrees.h"
 #include "minhashing.h"
 #include "localEasySubtreeIsomorphism.h"
+#include "subtreeIsoUtils.h"
 
 // PERMUTATIONS
 
