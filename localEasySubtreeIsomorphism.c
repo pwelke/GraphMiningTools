@@ -12,6 +12,7 @@
 #include "bitSet.h"
 #include "cachedGraph.h"
 #include "localEasySubtreeIsomorphism.h"
+#include "graphPrinting.h"
 
 /* return the head of the list or NULL if list is empty.
  * remove head of list
@@ -496,7 +497,6 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 				// w is a root, stuff gets complicated
 
 				// loop over the spanning trees of the w-rooted components
-				struct SubtreeIsoDataStoreList* l = sptTree->characteristics[w->d];
 				for (struct SubtreeIsoDataStoreElement* e=sptTree->characteristics[w->d]->first; e!=NULL; e=e->next) {
 					struct Vertex* wBelow = e->data.g->vertices[0];
 					computeCharacteristics(current, &(e->data), cachedB, u, w, wBelow, gp);
