@@ -10,6 +10,7 @@
 #include "../subtreeIsomorphism.h"
 #include "../minhashing.h"
 #include "../localEasySubtreeIsomorphism.h"
+#include "../sampleSubtrees.h"
 #include "patternExtractor.h"
 
 
@@ -226,6 +227,24 @@ struct IntSet* computeResampledLocalEasyFullEmbedding(struct Graph* g, int nLoca
 }
 
 
+struct IntSet* computeResampledTreeFullEmbedding(struct Graph* g, int nSpanningTrees, struct Graph** patterns, int nPatterns, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct IntSet* features = getIntSet();
+
+	for (int i=0; i<nPatterns; ++i) {
+		struct ShallowGraph* spanningTrees = sampleSpanningTreesUsingKruskal(g, nSpanningTrees, gp, sgp);
+		for (struct ShallowGraph* spt=spanningTrees; spt!=NULL; spt=spt->next) {
+			struct Graph* sptg = shallowGraphToGraph(spt, gp);
+			if (isSubtree(sptg, patterns[i], gp)) {
+				addIntSortedNoDuplicates(features, i);
+				break;
+			}
+			dumpGraph(gp, sptg);
+		}
+		dumpShallowGraphCycle(sgp, spanningTrees);
+	}
+	return features;
+}
+
 
 /**
 * Compute a set of fingerprints that is based on the triangles in a graph that contain at least two edges that are present.
@@ -273,6 +292,7 @@ int main(int argc, char** argv) {
 
 	typedef enum {triangles, bruteForceTriples,
 		localEasyPatternsFast, localEasyPatternsResampling,
+		treePatternsResampling,
 		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
@@ -363,6 +383,10 @@ int main(int argc, char** argv) {
 				method = localEasyPatternsResampling;
 				break;
 			}
+			if (strcmp(optarg, "treePatternsResampling") == 0) {
+				method = treePatternsResampling;
+				break;
+			}
 			if (strcmp(optarg, "treePatternsFastAbs") == 0) {
 				method = treePatternsFastAbsImp;
 				break;
@@ -402,6 +426,7 @@ int main(int argc, char** argv) {
 	case treePatternsFastAbsImp:
 	case localEasyPatternsFast:
 	case localEasyPatternsResampling:
+	case treePatternsResampling:
 		if (absImportance == 0) {
 			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
@@ -428,6 +453,7 @@ int main(int argc, char** argv) {
 	switch (method) {
 	case treePatterns:
 	case localEasyPatternsResampling:
+	case treePatternsResampling:
 	case treePatternsFast:
 	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:
@@ -522,6 +548,9 @@ int main(int argc, char** argv) {
 			case localEasyPatternsResampling:
 				fingerprints = computeResampledLocalEasyFullEmbedding(g, absImportance, patterns, nPatterns, gp, sgp);
 				break;
+			case treePatternsResampling:
+				fingerprints = computeResampledTreeFullEmbedding(g, absImportance, patterns, nPatterns, gp, sgp);
+				break;
 			case treePatternsFast:
 				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
 				break;
@@ -582,6 +611,7 @@ int main(int argc, char** argv) {
 		break;
 	case treePatterns:
 	case localEasyPatternsResampling:
+	case treePatternsResampling:
 		for (size_t i=0; i<nPatterns; ++i) {
 			dumpGraph(gp, patterns[i]);
 		}

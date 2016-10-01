@@ -48,7 +48,7 @@ Options:
                            sal of the pattern poset and not resampled for different
                            patterns.
                            
-    localEasyPatternsResampling:  Given a set of tree pattenrs (specified via -f 
+    localEasyPatternsResampling:  Given a set of tree patterns (specified via -f 
                                   or -c), return a subset of the tree patterns that 
                                   match the graph (i.e. those that are subgraph 
                                   isomorphic to the graph). This method supports 
@@ -56,6 +56,21 @@ Options:
                                   patterns. 
                                   It uses the localEasySampling embedding opera-
                                   tor. The number of sampled local trees per root 
+                                  can be specified via the -i parameter and must 
+                                  be an int >= 1. This version tests each pattern 
+                                  independently of any apriori pruning of the 
+                                  pattern space and resamples spanning trees for
+                                  each pattern.
+                                  
+    treePatternsResampling:       Given a set of tree patterns (specified via -f 
+                                  or -c), return a subset of the tree patterns that 
+                                  match the graph (i.e. those that are subgraph 
+                                  isomorphic to the graph). This method supports 
+                                  forest and general graph databases but only tree 
+                                  patterns. 
+                                  It uses the probabilistic subtree embedding opera-
+                                  tor described in DS16 with resampling for each 
+                                  pattern. The number of sampled spanningtrees for g 
                                   can be specified via the -i parameter and must 
                                   be an int >= 1. This version tests each pattern 
                                   independently of any apriori pruning of the 
