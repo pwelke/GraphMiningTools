@@ -379,7 +379,7 @@ int main(int argc, char** argv) {
 				method = localEasyPatternsFast;
 				break;
 			}
-			if (strcmp(optarg, "localEasyPatternsFast") == 0) {
+			if (strcmp(optarg, "localEasyPatternsResampling") == 0) {
 				method = localEasyPatternsResampling;
 				break;
 			}
