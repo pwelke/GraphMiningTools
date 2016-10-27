@@ -31,19 +31,27 @@ Options:
              subtree: (default) classical subtree isomorphism algorithm.
                  A pattern matches a graph, if it is subgraph isomorphic 
                  to it.
+                 
              iterative: classical subtree isomorphism algorithm in an
                  iterative version. Uses more space than subtree, but 
                  might increase mining speed in some cases.
+                 
              absImp: absolute importance threshold (specify using -i).
                  A pattern needs to be subtree of at least i connected
                  components of a graph to match the graph.
-             relImp: relative importance threshold (specify unsing -i).
+                 
+             relImp: relative importance threshold (specify using -i).
                  A pattern needs to be subtree of at least a -i fraction
                  of connected components of a graph to match it.
+                 
              andOr:  and or gap amplification. only works for exactly 16
                  sampled spanning trees.
-             localEasy: My implementation of the local easy tree sampling
-                 algorithm. When METHOD = leb is selected, mining works for
-                 arbitrary graphs.
+                 
+             localEasy: My implementation of the local easy subtree iso-
+                 morphism algorithm.
+                 
+             localEasySampling: My implementation of the local easy tree 
+                 sampling algorithm. When METHOD = leb is selected, 
+                 mining works for arbitrary graphs.
                   
 -h:              print this possibly helpful information.

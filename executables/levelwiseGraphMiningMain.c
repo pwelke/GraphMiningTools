@@ -106,11 +106,15 @@ int main(int argc, char** argv) {
 				embeddingOperator = &iterativeSubtreeCheckOperator;
 				break;
 			}
-			if (strcmp(optarg, "localEasy") == 0) {
+			if (strcmp(optarg, "localEasySampling") == 0) {
 				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
+				break;
+			}
+			if (strcmp(optarg, "localEasy") == 0) {
+				embeddingOperator = &noniterativeLocalEasySubtreeCheckOperator;
 				break;
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
