@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 				miningStrategy = &iterativeBFSMain;
 				break;
 			}
-			if (strcmp(optarg, "localEasyBFS") == 0) {
+			if (strcmp(optarg, "leb") == 0) {
 				miningStrategy = &localEasyBFSMain;
 				break;
 			}
