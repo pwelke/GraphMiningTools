@@ -742,6 +742,19 @@ struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(str
 	return result;
 }
 
+
+struct SubtreeIsoDataStore noniterativeLocalEasySubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)importance; // unused
+
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.S = NULL;
+
+	result.foundIso = isLocalEasySubtree(result.g, result.h, gp, sgp);
+	return result;
+}
+
+
 struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	struct SubtreeIsoDataStore result = data;

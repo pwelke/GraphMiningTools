@@ -595,7 +595,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 
 	// init data structure for embedding operator
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
-	struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
 //	printSptTree(sptTree);
 
 	// bfs evaluation with pruning through the poset
@@ -776,7 +776,7 @@ int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct Evaluatio
 	cleanEvaluationPlan(p);
 
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
-	struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
 
 	for (int i=0; i<dimension; ++i) {
 		// if we don't know the value, yet we need to compute it.
