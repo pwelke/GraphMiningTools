@@ -288,13 +288,39 @@ void printIntArray(int* a, int n, int id) {
 	printIntArrayNoId(a, n);
 }
 
+/**
+Return a subset of k numbers from the set 1..n
+see shuffle() */
+int* randomSubset(int n, int k) {
+
+	// create array with number 1..n
+	int* array = malloc(n * sizeof(int));
+	for (int i=0; i<n; ++i) {
+		array[i] = i + 1;
+	}
+
+	// shuffle the array
+    if (n > 1) {
+        for (int i = n - 1; i > 0; i--) {
+            size_t j = (unsigned int) (rand() % i);
+            int t = array[j];
+            array[j] = array[i];
+            array[i] = t;
+        }
+    }
+
+    return realloc(array, k * sizeof(int));
+}
+
 int main(int argc, char** argv) {
 
 	typedef enum {triangles, bruteForceTriples,
 		localEasyPatternsFast, localEasyPatternsResampling,
 		treePatternsResampling,
 		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
-		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr} ExtractionMethod;
+		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr,
+		dotApproxForTrees, dotApproxLocalEasy
+	} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
 	/* object pools */
@@ -311,7 +337,7 @@ int main(int argc, char** argv) {
 	char* patternFile = NULL;
 	struct Graph** patterns = NULL;
 	size_t nPatterns = 0;
-	size_t hashSize = 5;
+	size_t sketchSize = 5;
 	InputMethod inputMethod = AIDS99_INPUT;
 	size_t absImportance = 5;
 	double relImportance = 0.5;
@@ -345,7 +371,7 @@ int main(int argc, char** argv) {
 			inputMethod = CANONICALSTRING_INPUT;
 			break;
 		case 'k':
-			if (sscanf(optarg, "%zu", &hashSize) != 1) {
+			if (sscanf(optarg, "%zu", &sketchSize) != 1) {
 				fprintf(stderr, "Hash size argument must be unsigned integer, is: %s\n", optarg);
 				return EXIT_FAILURE;
 			}
@@ -411,6 +437,14 @@ int main(int argc, char** argv) {
 				method = minHashAndOr;
 				break;
 			}
+			if (strcmp(optarg, "dotApproxForTrees") == 0) {
+				method = dotApproxForTrees;
+				break;
+			}
+			if (strcmp(optarg, "dotApproxLocalEasy") == 0) {
+				method = dotApproxLocalEasy;
+				break;
+			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -427,6 +461,8 @@ int main(int argc, char** argv) {
 	case localEasyPatternsFast:
 	case localEasyPatternsResampling:
 	case treePatternsResampling:
+	case dotApproxForTrees:
+	case dotApproxLocalEasy:
 		if (absImportance == 0) {
 			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
@@ -462,6 +498,8 @@ int main(int argc, char** argv) {
 	case minHashAbsImportant:
 	case minHashRelImportant:
 	case minHashAndOr:
+	case dotApproxForTrees:
+	case dotApproxLocalEasy:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -487,29 +525,48 @@ int main(int argc, char** argv) {
 
 	// preprocessing for those methods that require some
 	struct EvaluationPlan evaluationPlan = {0};
+	int* randomProjection = NULL;
 	switch (method) {
 	// local variables
 	struct Graph* patternPoset = NULL;
 	int** permutations;
 	// cases
-	case treePatternsFast:
-	case localEasyPatternsFast:
-	case treePatternsFastAbsImp:
-	case treePatternsFastRelImp:
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
 	case minHashAndOr:
-		permutations = malloc(hashSize * sizeof(int*));
-		size_t* permutationSizes = malloc(hashSize * sizeof(size_t));
+		permutations = malloc(sketchSize * sizeof(int*));
+		size_t* permutationSizes = malloc(sketchSize * sizeof(size_t));
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
-		for (size_t i=0; i<hashSize; ++i) {
+		for (size_t i=0; i<sketchSize; ++i) {
 			permutations[i] = getRandomPermutation(nPatterns);
 			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
 			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
 		}
-		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, hashSize, patternPoset, gp);
+		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, sketchSize, patternPoset, gp);
+		break;
+	case treePatternsFast:
+	case localEasyPatternsFast:
+	case treePatternsFastAbsImp:
+	case treePatternsFastRelImp:
+		// these methods only need the pattern poset and its reverse
+		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
+		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
+		evaluationPlan.F = patternPoset;
+		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
+		break;
+	case dotApproxForTrees:
+	case dotApproxLocalEasy:
+		// these methods need pattern poset, its reverse, and a set of random patterns of given size
+		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
+		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
+
+		evaluationPlan.F = patternPoset;
+		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
+
+		randomProjection = randomSubset(patternPoset->n, sketchSize);
+
 		break;
 	default:
 		break; // do nothing for other methods
@@ -575,6 +632,12 @@ int main(int argc, char** argv) {
 			case minHashAndOr:
 				fingerprints = (struct IntSet*)fastMinHashForAndOr(g, evaluationPlan, gp);
 				break;
+			case dotApproxForTrees:
+				fingerprints = (struct IntSet*)dotProductApproximationEmbeddingForTrees(g, evaluationPlan, randomProjection, absImportance, gp);
+				break;
+			case dotApproxLocalEasy:
+				fingerprints = (struct IntSet*)dotProductApproximationEmbeddingLocalEasy(g, evaluationPlan, randomProjection, sketchSize, absImportance, gp, sgp);
+				break;
 			}
 			// output
 			switch (method) {
@@ -582,6 +645,8 @@ int main(int argc, char** argv) {
 			case minHashAbsImportant:
 			case minHashRelImportant:
 			case minHashAndOr:
+			case dotApproxForTrees:
+			case dotApproxLocalEasy:
 				printIntArrayNoId((int*)fingerprints, evaluationPlan.sketchSize);
 				free(fingerprints);
 				break;
@@ -608,6 +673,11 @@ int main(int argc, char** argv) {
 	case treePatternsFastAbsImp:
 	case treePatternsFastRelImp:
 		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
+		break;
+	case dotApproxForTrees:
+	case dotApproxLocalEasy:
+		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
+		free(randomProjection);
 		break;
 	case treePatterns:
 	case localEasyPatternsResampling:

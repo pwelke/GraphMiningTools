@@ -36,12 +36,17 @@ struct EvaluationPlan dumpEvaluationPlan(struct EvaluationPlan p, struct GraphPo
 
 // BUILD TREE POSET
 struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct Graph* reverseGraph(struct Graph* g, struct GraphPool* gp);
 
 // COMPUTATION OF MINHASHES
 int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
 int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp);
 int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, int importance, struct GraphPool* gp);
 int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
+
+// COMPUTATION OF OTHER SKETCHES
+int* dotProductApproximationEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* randomProjection, int dimension, struct GraphPool* gp);
+int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* randomProjection, int dimension, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 // FOR COMPARISON: EXPLICIT EVALUATION USING THE PATTERN POSET
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp);\
