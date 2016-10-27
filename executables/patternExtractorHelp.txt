@@ -81,22 +81,36 @@ Options:
                            for the feature set computed by treePatternsFast. It 
                            uses the ideas described in our paper (citation needed) 
                            to do this fast. The current version only works for 
-                           tree patterns and  forest databases.
+                           tree patterns and forest databases.
     
     minHashAbs:            Min-hashing as above with the absolute importance embedding 
                            operator. Importance threshold needs to be specified via
                            -i (default 5). The current version only works for 
-                           tree patterns and  forest databases.
+                           tree patterns and forest databases.
     
     minHashRel:            Min-hashing as above with the relative importance embedding
                            operator. Importance threshold needs to be specified via
                            -i (default 0.5). The current version only works for 
-                           tree patterns and  forest databases. 
+                           tree patterns and forest databases. 
     
     minHashAndOr:          Same as above with embedding operator being a funky gap
                            amplificator. Only works for exactly 16 sampled trees per
                            graph. Hat tip to the input agnostic algorithm guy that
                            cries in vain. 
+                           
+    dotApproxForTrees:     Given a forest database (as above) and some tree patterns,
+                           compute an approximation of the embedding vector by randomly
+                           sampling -k fixed dimensions. The method returns vectors of 
+                           the lenght of the pattern set containing three possible values:
+                           1 pattern known to be present in graph
+                           0 unknown
+                           -1 pattern known to be most likely not contained in the graph
+                           Great, isn't it? METHOD NOT THOROUGHLY TESTED!
+                           
+    dotApproxForLocalEasy: Given a general graph database, this method does and outputs
+                           the same as dotApproxForTrees, just using the local easy samp-
+                           ling algorithm (which requires the sampling parameter to be set
+                           via -i parameter. METHOD NOT THOROUGHLY TESTED!
 
 
 -k INT:                    Specify the number of permutations used by the minHash* 
