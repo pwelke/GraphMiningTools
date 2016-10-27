@@ -6,6 +6,7 @@
 #include "newCube.h"
 #include "graph.h"
 #include "listComponents.h"
+#include "listSpanningTrees.h"
 #include "bipartiteMatching.h"
 #include "wilsonsAlgorithm.h"
 #include "subtreeIsoUtils.h"
@@ -260,7 +261,7 @@ struct Graph* spanningTreeConverter(struct ShallowGraph* localTrees, struct Grap
  * blockTree is comsumed
  * spanningTreesPerBlock must be >= 1
  */
-struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct SpanningtreeTree sptTree = {0};
 	sptTree.g = blockTree.g;
 	sptTree.nRoots = blockTree.nRoots;
@@ -302,6 +303,38 @@ struct SpanningtreeTree getSpanningtreeTree(struct BlockTree blockTree, int span
 		dumpGraph(gp, mergedGraph);
 
 
+	}
+
+	//garbage collection
+	free(blockTree.vRootedBlocks);
+
+	return sptTree;
+}
+
+
+/**
+ * blockTree is comsumed
+ * spanningTreesPerBlock must be >= 1
+ */
+struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct SpanningtreeTree sptTree = {0};
+	sptTree.g = blockTree.g;
+	sptTree.nRoots = blockTree.nRoots;
+	sptTree.roots = blockTree.roots;
+	sptTree.parents = blockTree.parents;
+	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct ShallowGraph*));
+
+	for (int v=0; v<sptTree.nRoots; ++v) {
+		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
+		// TODO make destructive. shallowGraphs are not used afterwards.
+		struct Graph* mergedGraph = blockConverter(mergedEdges, gp);
+
+		struct ShallowGraph* shallowSpanningtrees = listSpanningTrees(mergedGraph, sgp, gp);
+		sptTree.localSpanningTrees[v] = spanningTreeConverter(shallowSpanningtrees, mergedGraph, gp, sgp);
+
+		// garbage collection
+		dumpShallowGraph(sgp, mergedEdges);
+		dumpGraph(gp, mergedGraph);
 	}
 
 	//garbage collection
@@ -445,7 +478,7 @@ void computeCharacteristics(struct SubtreeIsoDataStore* current, struct SubtreeI
 
 
 /**
-Iterative Labeled Subtree Isomorphism Check.
+Labeled Subtree Isomorphism Check.
 
 Implements the labeled subtree isomorphism algorithm of
 Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism in an iterative version:
@@ -551,10 +584,12 @@ void pc(struct SpanningtreeTree sptTree) {
 }
 
 char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp) {
+	// init characteristics array
 	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStore));
-	for (int v=0; v<sptTree->nRoots; ++v) { sptTree->characteristics[v] = NULL; }
-//	printf("begin:\n");
-//	printSptTree(*sptTree);
+	for (int v=0; v<sptTree->nRoots; ++v) {
+		sptTree->characteristics[v] = NULL;
+	}
+
 	for (int v=sptTree->nRoots-1; v>=0; --v) {
 		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
 		for (struct Graph* localTree=sptTree->localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
@@ -570,26 +605,30 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 			free(info.postorder);
 			info.postorder = NULL;
 
-//			pc(*sptTree);
-
 			if (info.foundIso) {
-				// TODO clean up
-				//printf("found iso\n");
-				//printSptTree(sptTree);
 				return 1;
 			}
 		}
 	}
-	// TODO clean up
-	//printf("no iso\n");
-	//printSptTree(sptTree);
+
 	return 0;
 }
 
 
 char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
-	struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+
+	char result = noniterativeLocalEasySubtreeCheck(&sptTree, h, gp);
+
+	dumpSpanningtreeTree(sptTree, gp);
+
+	return result;
+}
+
+char isLocalEasySubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct BlockTree blockTree = getBlockTreeT(g, sgp);
+	struct SpanningtreeTree sptTree = getFullSpanningtreeTree(blockTree, gp, sgp);
 
 	char result = noniterativeLocalEasySubtreeCheck(&sptTree, h, gp);
 
