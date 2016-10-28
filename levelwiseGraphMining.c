@@ -940,11 +940,13 @@ void getFrequentVerticesAndEdges(struct Graph** db, int nGraphs, size_t threshol
 }
 
 /**
- * create data structures for levelwise mining for all frequent vertices in the db.
+ * create data structures for levelwise mining for subtree and iterative subtree embedding operator
+ * for all frequent vertices in the db.
  * the ids of the frequent vertices in the search tree might be altered to ensure a sorted list of support sets.
  * To avoid leaks, the initial frequentVertices search tree must not be dumped until the end of all times.
  */
-struct SubtreeIsoDataStoreList* initLevelwiseMining(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp) {
+struct SubtreeIsoDataStoreList* initLevelwiseMining(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)sgp; // unused
 	// init levelwise search data structures for patterns with one vertex
 
 	// data structures for iterative levelwise search
@@ -1058,7 +1060,7 @@ void iterativeBFSMain(size_t maxPatternSize,
 	dumpSearchTree(gp, frequentEdges);
 
 	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMining(db, postorders, nGraphs, frequentVertices, gp);
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMining(db, postorders, nGraphs, frequentVertices, gp, sgp);
 	printStringsInSearchTree(frequentVertices, patternStream, sgp);
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
@@ -1117,153 +1119,3 @@ void iterativeBFSMain(size_t maxPatternSize,
 	free(postorders);
 
 }
-
-
-struct SubtreeIsoDataStoreList* initIterativeLocalEasyBFSForEdges(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId) {
-	struct SubtreeIsoDataStoreList* actualSupport = getSubtreeIsoDataStoreList();
-	for (size_t i=0; i<nGraphs; ++i) {
-		struct SubtreeIsoDataStore base = {0};
-		base.g = db[i];
-		base.postorder = postoderDB[i];
-		struct SubtreeIsoDataStore data = initIterativeSubtreeCheckForEdge(base, h);
-		data.h->number = patternId;
-		appendSubtreeIsoDataStore(actualSupport, data);
-	}
-	return actualSupport;
-}
-
-struct SubtreeIsoDataStoreList* initIterativeLocalEasyBFSForVertices(struct Graph** db, size_t nGraphs, struct Graph* h, int patternId) {
-	struct SubtreeIsoDataStoreList* actualSupport = getSubtreeIsoDataStoreList();
-	for (size_t i=0; i<nGraphs; ++i) {
-		struct SubtreeIsoDataStore data = {0};
-		data.g = db[i];
-		data.h->number = patternId;
-		for (int v=0; v<data.g->n; ++v) {
-			if (labelCmp(h->vertices[0]->label, data.g->vertices[v]->label) == 0) {
-				data.foundIso = 1;
-				break;
-			}
-		}
-		appendSubtreeIsoDataStore(actualSupport, data);
-	}
-	return actualSupport;
-}
-
-
-/**
- * create data structures for levelwise mining for all frequent vertices in the db.
- * the ids of the frequent vertices in the search tree might be altered to ensure a sorted list of support sets.
- * To avoid leaks, the initial frequentVertices search tree must not be dumped until the end of all times.
- */
-struct SubtreeIsoDataStoreList* initLevelwiseLocalEasyMining(struct Graph** db, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp) {
-	// init levelwise search data structures for patterns with one vertex
-
-	// data structures for iterative levelwise search
-	struct SubtreeIsoDataStoreList* vertexSupportSets = NULL;
-	struct SubtreeIsoDataStoreList* vertexSupportSetsTail = NULL;
-
-	int id = 1;
-	for (struct VertexList* e=frequentVertices->neighborhood; e!=NULL; e=e->next) {
-
-		struct Graph* candidate = createGraph(1, gp);
-		candidate->vertices[0]->label = e->label;
-		e->endPoint->lowPoint = id;
-
-		struct SubtreeIsoDataStoreList* vertexSupport = initIterativeLocalEasyBFSForVertices(db, nGraphs, candidate, id);
-
-		if (vertexSupportSetsTail != NULL) {
-			vertexSupportSetsTail->next = vertexSupport;
-			vertexSupportSetsTail = vertexSupport;
-		} else {
-			vertexSupportSets = vertexSupport;
-			vertexSupportSetsTail = vertexSupport;
-		}
-		++id;
-	}
-	return vertexSupportSets;
-}
-
-void localEasyBFSMain(size_t maxPatternSize,
-		              size_t threshold,
-					  // embedding operator function pointer,
-					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
-					  double importance,
-					  FILE* featureStream,
-					  FILE* patternStream,
-					  FILE* logStream,
-					  struct GraphPool* gp,
-					  struct ShallowGraphPool* sgp) {
-
-	/* init data structures */
-	struct Graph** db = NULL;
-	int nGraphs = getDB(&db);
-//	int** postorders = getPostorders(db, nGraphs);
-
-	struct Vertex* frequentVertices;
-	struct Vertex* frequentEdges;
-	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
-
-	/* convert frequentEdges to ShallowGraph of extension edges */
-	struct Graph* extensionEdgesVertexStore = NULL;
-	struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
-	dumpSearchTree(gp, frequentEdges);
-
-	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseLocalEasyMining(db, nGraphs, frequentVertices, gp);
-	printStringsInSearchTree(frequentVertices, patternStream, sgp);
-	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
-
-	// levelwise search for patterns with more than one vertex:
-	struct Vertex* previousLevelSearchTree = shallowCopySearchTree(frequentVertices, gp);
-	struct SubtreeIsoDataStoreList* previousLevelSupportSets = frequentVerticesSupportSets;
-	struct Vertex* currentLevelSearchTree = previousLevelSearchTree; // initialization for garbage collection in case of maxPatternSize == 1
-	struct SubtreeIsoDataStoreList* currentLevelSupportSets = previousLevelSupportSets; // initialization for garbage collection in case of maxPatternSize == 1
-
-	for (size_t p=2; (p<=maxPatternSize) && (previousLevelSearchTree->number>0); ++p) {
-		fprintf(logStream, "Processing patterns with %zu vertices:\n", p); fflush(logStream);
-		currentLevelSearchTree = getVertex(gp->vertexPool);
-		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
-
-		currentLevelSupportSets = iterativeBFSOneLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
-
-		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
-		printSubtreeIsoDataStoreListsSparse(currentLevelSupportSets, featureStream);
-
-		// garbage collection:
-		// what is now all previousLevel... data structures will not be used at all in the next iteration
-		dumpSearchTree(gp, previousLevelSearchTree);
-		while (previousLevelSupportSets) {
-			struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
-			// ...hence, we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
-			dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
-			previousLevelSupportSets = tmp;
-		}
-
-		// previous level = current level
-		previousLevelSearchTree = currentLevelSearchTree;
-		previousLevelSupportSets = currentLevelSupportSets;
-	}
-
-	// garbage collection
-	dumpSearchTree(gp, frequentVertices);
-	dumpShallowGraphCycle(sgp, extensionEdges);
-	dumpGraph(gp, extensionEdgesVertexStore);
-	dumpSearchTree(gp, previousLevelSearchTree);
-
-	while (previousLevelSupportSets) {
-		struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
-		// we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
-		dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
-		previousLevelSupportSets = tmp;
-	}
-
-	for (int i=0; i<nGraphs; ++i) {
-		dumpGraph(gp, db[i]);
-//		free(postorders[i]);
-	}
-
-	free(db);
-//	free(postorders);
-
-}
-

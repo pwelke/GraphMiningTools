@@ -80,7 +80,7 @@ struct SubtreeIsoDataStoreList* initIterativeBFSForEdges(struct Graph** db, int*
 struct SubtreeIsoDataStoreList* initIterativeBFSForVertices(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId);
 int** getPostorders(struct Graph** db, int nGraphs);
 void getFrequentVerticesAndEdges(struct Graph** db, int nGraphs, size_t threshold, struct Vertex** frequentVertices, struct Vertex** frequentEdges, FILE* logStream, struct GraphPool* gp);
-struct SubtreeIsoDataStoreList* initLevelwiseMining(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp);
+struct SubtreeIsoDataStoreList* initLevelwiseMining(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 void madness(struct SubtreeIsoDataStoreList* previousLevelSupportSets, struct Vertex* previousLevelSearchTree,
 		     struct ShallowGraph* extensionEdges, size_t maxPatternSize, size_t threshold,
@@ -98,6 +98,7 @@ void iterativeBFSMain(size_t maxPatternSize,
 					  struct GraphPool* gp,
 					  struct ShallowGraphPool* sgp);
 
+// embedding operators
 struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
@@ -105,17 +106,5 @@ struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataSt
 struct SubtreeIsoDataStore andorEmbeddingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore noniterativeLocalEasySubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-
-
-void localEasyBFSMain(size_t maxPatternSize,
-		              size_t threshold,
-					  // embedding operator function pointer,
-					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
-					  double importance,
-					  FILE* featureStream,
-					  FILE* patternStream,
-					  FILE* logStream,
-					  struct GraphPool* gp,
-					  struct ShallowGraphPool* sgp);
 
 #endif

@@ -24,8 +24,6 @@ Options:
                  footprint
              dfs: mine in a depth-first fashion (like FP-growth). This 
                  results in better memory footprint, but larger run time. 
-             leb: variant of bfs mining that works with localEasy embedding
-                 operator for general graphs.
                  
 -e OPERATOR:     Choose embedding operator among
              subtree: (default) classical subtree isomorphism algorithm.
