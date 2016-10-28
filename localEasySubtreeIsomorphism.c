@@ -444,6 +444,22 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 	return B;
 }
 
+static FILE* str2stream(char* str) {
+	// extremely dangerous and extremely nasty
+	FILE* f = fopen("/tmp/nasty", "w");
+	fprintf(f, "%s", str);
+	fclose(f);
+	return fopen("/tmp/nasty", "r");
+}
+
+static struct ShallowGraph* string2cstring(char* str, struct ShallowGraphPool* sgp) {
+	FILE* f = str2stream(str);
+	char x[20];
+	struct ShallowGraph* cstr = parseCString(f, x, sgp);
+	fclose(f);
+	return cstr;
+}
+
 
 /*
  * compute characteristics for one $\theta \in \Theta_{vw}(\tau)$
@@ -505,12 +521,6 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 	for (int wi=0; wi<g->n; ++wi) {
 		struct Vertex* w = g->vertices[current->postorder[wi]];
 
-//		// we do not process v in the v-rooted component processing step,
-//		// TODO unless it is the root of a connected component of g
-//		if ((w->number == 0) && (w->d != 0)) {
-//			continue;
-//		}
-
 		for (int ui=0; ui<h->n; ++ui) {
 			struct Vertex* u = h->vertices[ui];
 
@@ -518,8 +528,8 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 			if (labelCmp(u->label, w->label) != 0) { continue; }
 
 			// if w is not a root, life is easy, we do not need to process all \theta \in \Theta_{vw}
-			// if w = r (i.e. w is the root of g, the same holds
-			if ((w->d == -1) || (w->d == 0)) {
+			// if w = v we just compute characteristics in the current spanning tree
+			if ((w->d == -1) || (w->number == 0)) {
 				computeCharacteristics(current, NULL, cachedB, u, w, NULL, gp);
 				if (current->foundIso) {
 					//dumpCachedGraph(cachedB);
@@ -527,8 +537,7 @@ static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore*
 				}
 
 			} else {
-				// w is a root, stuff gets complicated
-
+				// if w is a root unequal v
 				// loop over the spanning trees of the w-rooted components
 				for (struct SubtreeIsoDataStoreElement* e=sptTree->characteristics[w->d]->first; e!=NULL; e=e->next) {
 					struct Vertex* wBelow = e->data.g->vertices[0];
@@ -590,7 +599,9 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 		sptTree->characteristics[v] = NULL;
 	}
 
+	// for each root, process each spanning tree of the v rooted components and compute characteristics
 	for (int v=sptTree->nRoots-1; v>=0; --v) {
+		printf("%i\n", v);
 		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
 		for (struct Graph* localTree=sptTree->localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
 			struct SubtreeIsoDataStore info = {0};
@@ -606,6 +617,7 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 			info.postorder = NULL;
 
 			if (info.foundIso) {
+				printSptTree(*sptTree);
 				return 1;
 			}
 		}
@@ -629,7 +641,6 @@ char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLo
 char isLocalEasySubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
 	struct SpanningtreeTree sptTree = getFullSpanningtreeTree(blockTree, gp, sgp);
-	printSptTree(sptTree);
 
 	char result = noniterativeLocalEasySubtreeCheck(&sptTree, h, gp);
 
