@@ -151,3 +151,23 @@ struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGrap
 	}
 	return string;
 }
+
+static FILE* str2stream(char* str) {
+	// extremely dangerous and extremely nasty
+	FILE* f = fopen("/tmp/nasty", "w");
+	fprintf(f, "%s", str);
+	fclose(f);
+	return fopen("/tmp/nasty", "r");
+}
+
+/**
+ * create a canonical string struct given its representation as a char array string
+ * Not thread safe, of course. Also, extremely inefficient, I guess. Should only be used for debugging.
+ */
+struct ShallowGraph* string2cstring(char* str, struct ShallowGraphPool* sgp) {
+	FILE* f = str2stream(str);
+	char x[20];
+	struct ShallowGraph* cstr = parseCString(f, x, sgp);
+	fclose(f);
+	return cstr;
+}

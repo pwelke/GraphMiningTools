@@ -444,22 +444,6 @@ static struct Graph* makeBipartiteInstanceFromVerticesForLocalEasyCached(struct 
 	return B;
 }
 
-static FILE* str2stream(char* str) {
-	// extremely dangerous and extremely nasty
-	FILE* f = fopen("/tmp/nasty", "w");
-	fprintf(f, "%s", str);
-	fclose(f);
-	return fopen("/tmp/nasty", "r");
-}
-
-static struct ShallowGraph* string2cstring(char* str, struct ShallowGraphPool* sgp) {
-	FILE* f = str2stream(str);
-	char x[20];
-	struct ShallowGraph* cstr = parseCString(f, x, sgp);
-	fclose(f);
-	return cstr;
-}
-
 
 /*
  * compute characteristics for one $\theta \in \Theta_{vw}(\tau)$
@@ -627,6 +611,16 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 }
 
 
+/**
+ * Check if a tree h is subgraph isomorphic to an arbitrary graph g using a sampling variant of the local easy subtree isomorphism algorithm.
+ *
+ * nLocalTrees specifies the number of local spanning trees that should be sampled for the set of v-rooted components of each root v.
+ *
+ * This method results in a subgraph isomorphism algorithm with one-sided error: If h is found to be subgraph isomorphic to g,
+ * the answer is always correct. If h is not found to be subgraph isomorphic, it might in fact still be. A higher sampling parameter
+ * results in a lower error probability and, of course, higher runtime.
+ *
+ */
 char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
 	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
@@ -638,6 +632,14 @@ char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLo
 	return result;
 }
 
+
+/**
+ * Check if a tree h is subgraph isomorphic to an arbitrary graph g using the local easy subtree isomorphsm algorithm.
+ *
+ * This algorithm is polynomial, if g is local easy. In particular, its runtime and space complexity depends on the number
+ * of local spanning trees. See our paper for details.
+ * TODO add reference.
+ */
 char isLocalEasySubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
 	struct SpanningtreeTree sptTree = getFullSpanningtreeTree(blockTree, gp, sgp);

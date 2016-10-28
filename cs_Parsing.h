@@ -17,5 +17,6 @@ char* canonicalStringToChar(struct ShallowGraph* string);
 
 /* input */
 struct ShallowGraph* parseCString(FILE* stream, char* buffer, struct ShallowGraphPool* sgp);
+struct ShallowGraph* string2cstring(char* str, struct ShallowGraphPool* sgp);
 
 #endif
