@@ -45,7 +45,8 @@ int main(int argc, char** argv) {
 	/* user input handling variables */
 	int threshold = 1000;
 	unsigned int maxPatternSize = 20;
-	void (*miningStrategy)(size_t, size_t, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
+	void (*miningStrategy)(size_t, size_t, size_t, struct Vertex*, struct SubtreeIsoDataStoreList*, struct ShallowGraph*, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
+//	void (*miningStrategy)(size_t, size_t, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
 	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &noniterativeSubtreeCheckOperator;
 	double importance = 0.5;
 	char* patternFile = NULL;
@@ -72,10 +73,10 @@ int main(int argc, char** argv) {
 			}
 			break;
 		case 'm':
-			if (strcmp(optarg, "dfs") == 0) {
-				miningStrategy = &iterativeDFSMain;
-				break;
-			}
+//			if (strcmp(optarg, "dfs") == 0) {
+//				miningStrategy = &iterativeDFSMain;
+//				break;
+//			}
 			if (strcmp(optarg, "bfs") == 0) {
 				miningStrategy = &iterativeBFSMain;
 				break;
@@ -166,7 +167,23 @@ int main(int argc, char** argv) {
 		fprintf(logStream, "Write patterns to file: %s\n", patternFile);
 	}
 
-	miningStrategy(maxPatternSize, threshold, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
+	struct Vertex* initialFrequentPatterns = NULL;
+	struct SubtreeIsoDataStoreList* supportSets = NULL;
+	struct ShallowGraph* extensionEdgeList = NULL;
+	void* dataStructures = NULL;
+	size_t initialPatternSize = initIterativeBFSForForestDB(threshold, &initialFrequentPatterns, &supportSets, &extensionEdgeList, &dataStructures,
+			// printing
+			featureStream,
+			patternStream,
+			logStream,
+			// pools
+			gp,
+			sgp);
+
+	miningStrategy(initialPatternSize, maxPatternSize, threshold, initialFrequentPatterns, supportSets, extensionEdgeList, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
+//	miningStrategy(maxPatternSize, threshold, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
+
+	garbageCollectIterativeBFSForForestDB(dataStructures, gp, sgp);
 
 	destroyFileIterator(); // graphs are in memory now
 

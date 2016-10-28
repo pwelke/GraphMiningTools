@@ -12,7 +12,6 @@ int getDBfromCanonicalStrings(struct Graph*** db, FILE* stream, int bufferSize, 
 int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* frequentVertices, struct GraphPool* gp);
 void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSetSize, struct Vertex* frequentEdges, struct GraphPool* gp);
 
-void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patterns, int nPatterns, struct Vertex** pointers, struct GraphPool* gp);
 void DFS(struct Graph** db, struct IntSet* candidateSupport, struct Graph* candidate, size_t threshold, int maxPatternSize, struct ShallowGraph* frequentEdges, struct Vertex* processedPatterns, FILE* featureStream, FILE* patternStream, FILE* logStream, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport,
 		size_t threshold,
@@ -76,19 +75,24 @@ struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 		struct GraphPool* gp,
 		struct ShallowGraphPool* sgp);
 
-struct SubtreeIsoDataStoreList* initIterativeBFSForEdges(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId);
+//struct SubtreeIsoDataStoreList* initIterativeBFSForEdges(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId);
 struct SubtreeIsoDataStoreList* initIterativeBFSForVertices(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId);
 int** getPostorders(struct Graph** db, int nGraphs);
 void getFrequentVerticesAndEdges(struct Graph** db, int nGraphs, size_t threshold, struct Vertex** frequentVertices, struct Vertex** frequentEdges, FILE* logStream, struct GraphPool* gp);
-struct SubtreeIsoDataStoreList* initLevelwiseMining(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct SubtreeIsoDataStoreList* initLevelwiseMiningForForestDB(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 void madness(struct SubtreeIsoDataStoreList* previousLevelSupportSets, struct Vertex* previousLevelSearchTree,
 		     struct ShallowGraph* extensionEdges, size_t maxPatternSize, size_t threshold,
 			 struct SubtreeIsoDataStoreList** currentLevelSupportSets, struct Vertex** currentLevelSearchTree,
 			 FILE* featureStream, FILE* patternStream, FILE* logStream,
 			 struct GraphPool* gp, struct ShallowGraphPool* sgp);
-void iterativeBFSMain(size_t maxPatternSize,
+
+void iterativeBFSMain(size_t startPatternSize,
+					  size_t maxPatternSize,
 		              size_t threshold,
+					  struct Vertex* initialFrequentPatterns,
+					  struct SubtreeIsoDataStoreList* supportSets,
+					  struct ShallowGraph* extensionEdges,
 					  // embedding operator function pointer,
 					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
 					  double importance,
@@ -97,14 +101,32 @@ void iterativeBFSMain(size_t maxPatternSize,
 					  FILE* logStream,
 					  struct GraphPool* gp,
 					  struct ShallowGraphPool* sgp);
+//void iterativeBFSMain(size_t maxPatternSize,
+//		              size_t threshold,
+//					  // embedding operator function pointer,
+//					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
+//					  double importance,
+//					  FILE* featureStream,
+//					  FILE* patternStream,
+//					  FILE* logStream,
+//					  struct GraphPool* gp,
+//					  struct ShallowGraphPool* sgp);
 
-// embedding operators
-struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct SubtreeIsoDataStore andorEmbeddingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct SubtreeIsoDataStore noniterativeLocalEasySubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+size_t initIterativeBFSForForestDB(// input
+		size_t threshold,
+		// output
+		struct Vertex** initialFrequentPatterns,
+		struct SubtreeIsoDataStoreList** supportSets,
+		struct ShallowGraph** extensionEdgeList,
+		void** dataStructures,
+		// printing
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		// pools
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp);
+
+void garbageCollectIterativeBFSForForestDB(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 #endif
