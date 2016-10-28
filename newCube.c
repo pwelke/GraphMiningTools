@@ -639,6 +639,10 @@ void addCharacteristicRaw(struct SubtreeIsoDataStore* data, int y, int u, int v)
 	setBitTrue(data->S, getCharacteristicPosition(y, u, v, data->h->n));
 }
 
+/*
+ * Print the data structure that holds the characteristics for subtree iso algorithms
+ * Indicate positions where a complete isomorphism was found.
+ */
 void printNewCubeCondensed(uint8_t* S, int gn, int hn, FILE* out) {
 	if (S == NULL) {
 		fprintf(out, "(NULL)\n");
@@ -651,6 +655,9 @@ void printNewCubeCondensed(uint8_t* S, int gn, int hn, FILE* out) {
 				if (getBit(S, getCharacteristicPosition(y, u, v, hn))) {
 					fprintf(out, " %i", y);
 				}
+			}
+			if (getBit(S, getCharacteristicPosition(u,u,v,hn))) {
+				fprintf(out, " <- !");
 			}
 			fprintf(out, "\n");
 		}
