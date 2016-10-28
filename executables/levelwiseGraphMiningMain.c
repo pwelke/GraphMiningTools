@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../lwm_embeddingOperators.h"
 #include "../levelwiseGraphMining.h"
 
 const char DEBUG_INFO = 1;
