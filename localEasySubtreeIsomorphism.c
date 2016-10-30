@@ -601,7 +601,6 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 			info.postorder = NULL;
 
 			if (info.foundIso) {
-				printSptTree(*sptTree);
 				return 1;
 			}
 		}
