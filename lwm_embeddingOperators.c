@@ -72,6 +72,9 @@ struct SubtreeIsoDataStore localEasySubtreeCheckOperator(struct SubtreeIsoDataSt
 
 	result.foundIso = noniterativeLocalEasySubtreeCheck(sptTree, h, gp);
 
+	// clean up the spanning tree tree
+	wipeCharacteristicsForLocalEasy(*sptTree);
+
 	return result;
 }
 

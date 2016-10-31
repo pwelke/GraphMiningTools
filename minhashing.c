@@ -619,6 +619,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 				match = !match;
 			} else {
 				match = noniterativeLocalEasySubtreeCheck(&sptTree, pattern, gp);
+				wipeCharacteristicsForLocalEasy(sptTree);
 			}
 
 			// garbage collection in SpanningtreeTree
@@ -788,6 +789,7 @@ int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct Evaluatio
 			// evaluate the embedding operator
 			struct Graph* pattern = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
 			char match = noniterativeLocalEasySubtreeCheck(&sptTree, pattern, gp);
+			wipeCharacteristicsForLocalEasy(sptTree);
 			++nEvaluations;
 			if (match) {
 				rayOfLight(p.reverseF->vertices[currentGraphNumber], 1, p);

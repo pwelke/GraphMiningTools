@@ -269,16 +269,8 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 	sptTree.parents = blockTree.parents;
 	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct ShallowGraph*));
 
-//		printf("visited values in g: (in getSpanningTree)\n");
-//		for (int v=0; v<sptTree.g->n; ++v) {
-//			printf("%i ", sptTree.g->vertices[v]->visited);
-//		}
-//		printf("\n");
-
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
-		// TODO make destructive. shallowGraphs are not used afterwards.
-//		printf("root %i: ", sptTree.roots[v]->number);
 		struct Graph* mergedGraph = blockConverter(mergedEdges, gp);
 
 		struct ShallowGraph* shallowSpanningtrees = NULL;
@@ -295,8 +287,6 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 			shallowSpanningtrees = randomSpanningTreeAsShallowGraph(mergedGraph, sgp);
 		}
 		sptTree.localSpanningTrees[v] = spanningTreeConverter(shallowSpanningtrees, mergedGraph, gp, sgp);
-//		printf("%i:", sptTree.roots[v]->number);
-//		printGraph(sptTree.localSpanningTrees[v]);
 
 		// garbage collection
 		dumpShallowGraph(sgp, mergedEdges);
@@ -304,6 +294,8 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 
 
 	}
+
+	initCharacteristicsArrayForLocalEasy(&sptTree);
 
 	//garbage collection
 	free(blockTree.vRootedBlocks);
@@ -336,6 +328,8 @@ struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, stru
 		dumpShallowGraph(sgp, mergedEdges);
 		dumpGraph(gp, mergedGraph);
 	}
+
+	initCharacteristicsArrayForLocalEasy(&sptTree);
 
 	//garbage collection
 	free(blockTree.vRootedBlocks);
@@ -576,17 +570,14 @@ void pc(struct SpanningtreeTree sptTree) {
 	}
 }
 
+/**
+ * expects a cleanly initialized sptTree and can then tell you if a tree h is subgraph isomorphic to one of the
+ * spanning trees represented by sptTree
+ */
 char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp) {
-	// init characteristics array
-	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStore));
-	for (int v=0; v<sptTree->nRoots; ++v) {
-		sptTree->characteristics[v] = NULL;
-	}
 
 	// for each root, process each spanning tree of the v rooted components and compute characteristics
 	for (int v=sptTree->nRoots-1; v>=0; --v) {
-		printf("%i\n", v);
-		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
 		for (struct Graph* localTree=sptTree->localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
 			struct SubtreeIsoDataStore info = {0};
 			info.g = localTree;
@@ -607,6 +598,33 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 	}
 
 	return 0;
+}
+
+void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree) {
+	// init characteristics array
+	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStore));
+	for (int v=0; v<sptTree->nRoots; ++v) {
+		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
+	}
+}
+
+void wipeCharacteristicsForLocalEasy(struct SpanningtreeTree sptTree) {
+	if (sptTree.characteristics) {
+		for (int v=0; v<sptTree.nRoots; ++v) {
+			struct SubtreeIsoDataStoreList* list = sptTree.characteristics[v];
+			if (list) {
+				struct SubtreeIsoDataStoreElement* tmp;
+				for (struct SubtreeIsoDataStoreElement* e=list->first; e!=NULL; e=tmp) {
+					tmp = e->next;
+					dumpNewCube(e->data.S, e->data.g->n);
+					free(e);
+				}
+				list->size = 0;
+				list->first = list->last = NULL;
+				list->next = NULL;
+			}
+		}
+	}
 }
 
 

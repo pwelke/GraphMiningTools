@@ -41,6 +41,9 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp);
 
+void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree);
+void wipeCharacteristicsForLocalEasy(struct SpanningtreeTree sptTree);
+
 char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp);
 char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 char isLocalEasySubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp, struct ShallowGraphPool* sgp);
