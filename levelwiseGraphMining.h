@@ -127,6 +127,22 @@ size_t initIterativeBFSForForestDB(// input
 		struct GraphPool* gp,
 		struct ShallowGraphPool* sgp);
 
+size_t initIterativeBFSForExactLocalEasy(// input
+		size_t threshold,
+		// output
+		struct Vertex** initialFrequentPatterns,
+		struct SubtreeIsoDataStoreList** supportSets,
+		struct ShallowGraph** extensionEdgeList,
+		void** dataStructures,
+		// printing
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		// pools
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp);
+
 void garbageCollectIterativeBFSForForestDB(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+void garbageCollectIterativeBFSForLocalEasy(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 #endif

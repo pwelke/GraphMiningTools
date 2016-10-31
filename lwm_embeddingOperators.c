@@ -61,6 +61,20 @@ struct SubtreeIsoDataStore noniterativeLocalEasySubtreeCheckOperator(struct Subt
 	return result;
 }
 
+struct SubtreeIsoDataStore localEasySubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)importance; // unused
+	(void)sgp; // unused
+
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.S = NULL;
+	struct SpanningtreeTree* sptTree = (struct SpanningtreeTree*)data.postorder;
+
+	result.foundIso = noniterativeLocalEasySubtreeCheck(sptTree, h, gp);
+
+	return result;
+}
+
 
 struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
