@@ -5,6 +5,7 @@
 
 #include "../lwm_embeddingOperators.h"
 #include "../levelwiseGraphMining.h"
+#include "levelwiseGraphMiningMain.h"
 
 const char DEBUG_INFO = 1;
 
@@ -45,11 +46,20 @@ int main(int argc, char** argv) {
 	/* user input handling variables */
 	int threshold = 1000;
 	unsigned int maxPatternSize = 20;
+
+	// initializator for the mining
+	size_t (*initMining)(size_t, struct Vertex**, struct SubtreeIsoDataStoreList**, struct ShallowGraph**, void**, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &initBFSBase;
+
 	// mining strategy
 	void (*miningStrategy)(size_t, size_t, size_t, struct Vertex*, struct SubtreeIsoDataStoreList*, struct ShallowGraph*, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
 
+	// garbage collector after mining
+	void (*garbageCollector)(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) = &garbageCollectBFSBase;
+
 	// embedding operator
 	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &noniterativeSubtreeCheckOperator;
+
+	// other
 	double importance = 0.5;
 	char* patternFile = NULL;
 
@@ -87,34 +97,48 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		case 'e':
 			if (strcmp(optarg, "relImp") == 0) {
+				initMining = &initIterativeBFSForForestDB;
 				embeddingOperator = &relativeImportanceOperator;
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
 			if (strcmp(optarg, "absImp") == 0) {
+				initMining = &initIterativeBFSForForestDB;
 				embeddingOperator = &absoluteImportanceOperator;
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
 			if (strcmp(optarg, "andOr") == 0) {
+				initMining = &initIterativeBFSForForestDB;
 				embeddingOperator = &andorEmbeddingOperator;
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
 			if (strcmp(optarg, "subtree") == 0) {
+				initMining = &initIterativeBFSForForestDB;
 				embeddingOperator = &noniterativeSubtreeCheckOperator;
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
 			if (strcmp(optarg, "iterative") == 0) {
+				initMining = &initIterativeBFSForForestDB;
 				embeddingOperator = &iterativeSubtreeCheckOperator;
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
 			if (strcmp(optarg, "localEasySampling") == 0) {
+				initMining = &initBFSBase;
 				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
+				garbageCollector = &garbageCollectBFSBase;
 				break;
 			}
 			if (strcmp(optarg, "localEasy") == 0) {
-				embeddingOperator = &noniterativeLocalEasySubtreeCheckOperator;
+				initMining = &initIterativeBFSForExactLocalEasy;
+				embeddingOperator = &localEasySubtreeCheckOperator;
+				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
 				break;
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
@@ -182,7 +206,7 @@ int main(int argc, char** argv) {
 //			gp,
 //			sgp);
 
-	size_t initialPatternSize = initIterativeBFSForExactLocalEasy(threshold, &initialFrequentPatterns, &supportSets, &extensionEdgeList, &dataStructures,
+	size_t initialPatternSize = initMining(threshold, &initialFrequentPatterns, &supportSets, &extensionEdgeList, &dataStructures,
 				// printing
 				featureStream,
 				patternStream,
@@ -194,7 +218,7 @@ int main(int argc, char** argv) {
 	miningStrategy(initialPatternSize, maxPatternSize, threshold, initialFrequentPatterns, supportSets, extensionEdgeList, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
 //	miningStrategy(maxPatternSize, threshold, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
 
-	garbageCollectIterativeBFSForLocalEasy(dataStructures, gp, sgp);
+	garbageCollector(dataStructures, gp, sgp);
 
 	destroyFileIterator(); // graphs are in memory now
 
