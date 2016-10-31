@@ -1,3 +1,6 @@
+// this source file uses qsort_r which is not part of C99, but a GNU specific extension.
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <malloc.h>
 
