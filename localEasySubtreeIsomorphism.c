@@ -472,23 +472,9 @@ void computeCharacteristics(struct SubtreeIsoDataStore* current, struct SubtreeI
 
 
 /**
-Labeled Subtree Isomorphism Check.
-
-Implements the labeled subtree isomorphism algorithm of
-Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism in an iterative version:
-
-Input:
-	a text    tree g
-	a pattern tree h
-	the cube that was computed for some subtree h-e and g, where e is an edge to a leaf of h
-	(object pool data structures)
-
-Output:
-	yes, if h is subgraph isomorphic to g, no otherwise
-	the cube for h and g
-
+Labeled Subtree Isomorphism Check for a single local spanning tree of some v-rooted blocks.
  */
-static void noniterativeLocalEasySubtreeCheck_intern(struct SubtreeIsoDataStore* current, struct SpanningtreeTree* sptTree, struct GraphPool* gp) {
+static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* current, struct SpanningtreeTree* sptTree, struct GraphPool* gp) {
 
 	struct Graph* g = current->g;
 	struct Graph* h = current->h;
@@ -572,9 +558,13 @@ void pc(struct SpanningtreeTree sptTree) {
 
 /**
  * expects a cleanly initialized sptTree and can then tell you if a tree h is subgraph isomorphic to one of the
- * spanning trees represented by sptTree
+ * spanning trees represented by sptTree.
+ *
+ * This algorithm implements a generalized version of the embedding operator in
+ *
+ * Welke, Horvath, Wrobel: On the Complexity of Frequent Subtree Mining in Very Simple Structures. ILP 2014
  */
-char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp) {
+char subtreeCheckForSpanningtreeTree(struct SpanningtreeTree* sptTree, struct Graph* h, struct GraphPool* gp) {
 
 	// for each root, process each spanning tree of the v rooted components and compute characteristics
 	for (int v=sptTree->nRoots-1; v>=0; --v) {
@@ -585,7 +575,7 @@ char noniterativeLocalEasySubtreeCheck(struct SpanningtreeTree* sptTree, struct 
 			info.postorder = getPostorder(localTree, 0); // 0 is the root v of localTree
 			info.S = createNewCube(info.g->n, info.h->n);
 
-			noniterativeLocalEasySubtreeCheck_intern(&info, sptTree, gp);
+			subtreeCheckForOneBlockSpanningTree(&info, sptTree, gp);
 			appendSubtreeIsoDataStore(sptTree->characteristics[v], info);
 
 			free(info.postorder);
@@ -642,7 +632,7 @@ char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLo
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
 	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
 
-	char result = noniterativeLocalEasySubtreeCheck(&sptTree, h, gp);
+	char result = subtreeCheckForSpanningtreeTree(&sptTree, h, gp);
 
 	dumpSpanningtreeTree(sptTree, gp);
 
@@ -661,7 +651,7 @@ char isLocalEasySubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
 	struct SpanningtreeTree sptTree = getFullSpanningtreeTree(blockTree, gp, sgp);
 
-	char result = noniterativeLocalEasySubtreeCheck(&sptTree, h, gp);
+	char result = subtreeCheckForSpanningtreeTree(&sptTree, h, gp);
 
 	dumpSpanningtreeTree(sptTree, gp);
 

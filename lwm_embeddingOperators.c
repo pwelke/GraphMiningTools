@@ -70,7 +70,7 @@ struct SubtreeIsoDataStore localEasySubtreeCheckOperator(struct SubtreeIsoDataSt
 	result.S = NULL;
 	struct SpanningtreeTree* sptTree = (struct SpanningtreeTree*)data.postorder;
 
-	result.foundIso = noniterativeLocalEasySubtreeCheck(sptTree, h, gp);
+	result.foundIso = subtreeCheckForSpanningtreeTree(sptTree, h, gp);
 
 	// clean up the spanning tree tree
 	wipeCharacteristicsForLocalEasy(*sptTree);

@@ -618,7 +618,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 				// invert result
 				match = !match;
 			} else {
-				match = noniterativeLocalEasySubtreeCheck(&sptTree, pattern, gp);
+				match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
 				wipeCharacteristicsForLocalEasy(sptTree);
 			}
 
@@ -788,7 +788,7 @@ int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct Evaluatio
 		if (p.F->vertices[currentGraphNumber] == 0) {
 			// evaluate the embedding operator
 			struct Graph* pattern = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
-			char match = noniterativeLocalEasySubtreeCheck(&sptTree, pattern, gp);
+			char match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
 			wipeCharacteristicsForLocalEasy(sptTree);
 			++nEvaluations;
 			if (match) {
