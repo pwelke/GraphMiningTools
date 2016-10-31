@@ -952,6 +952,57 @@ size_t initIterativeBFSForForestDB(// input
 	return 1; // returned patterns have 1 vertex
 }
 
+
+size_t initBFSBase(// input
+		size_t threshold,
+		// output
+		struct Vertex** initialFrequentPatterns,
+		struct SubtreeIsoDataStoreList** supportSets,
+		struct ShallowGraph** extensionEdgeList,
+		void** dataStructures,
+		// printing
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		// pools
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
+
+	struct Graph** db = NULL;
+	int nGraphs = getDB(&db);
+	int** postorders = getPostorders(db, nGraphs);
+
+	struct Vertex* frequentVertices;
+	struct Vertex* frequentEdges;
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+
+	/* convert frequentEdges to ShallowGraph of extension edges */
+	struct Graph* extensionEdgesVertexStore = NULL;
+	struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
+	dumpSearchTree(gp, frequentEdges);
+
+	// levelwise search for patterns with one vertex:
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
+	printStringsInSearchTree(frequentVertices, patternStream, sgp);
+	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
+
+	// store pointers for final garbage collection
+	struct IterativeBfsForForestsDataStructures* x = malloc(sizeof(struct IterativeBfsForForestsDataStructures));
+	x->db = db;
+	x->postorders = postorders;
+	x->nGraphs = nGraphs;
+	x->extensionEdges = extensionEdges;
+	x->extensionEdgesVertexStore = extensionEdgesVertexStore;
+	x->initialFrequentPatterns = frequentVertices;
+
+	// 'return'
+	*initialFrequentPatterns = frequentVertices;
+	*supportSets = frequentVerticesSupportSets;
+	*extensionEdgeList = extensionEdges;
+	*dataStructures = x;
+	return 1; // returned patterns have 1 vertex
+}
+
 struct IterativeBfsForLocalEasyDataStructures {
 	struct SpanningtreeTree* sptTrees;
 	struct Vertex* initialFrequentPatterns;
@@ -1080,6 +1131,23 @@ void iterativeBFSMain(size_t startPatternSize,
 }
 
 void garbageCollectIterativeBFSForForestDB(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct IterativeBfsForForestsDataStructures* dataStructures = (struct IterativeBfsForForestsDataStructures*)y;
+
+	dumpSearchTree(gp, dataStructures->initialFrequentPatterns);
+	dumpShallowGraphCycle(sgp, dataStructures->extensionEdges);
+	dumpGraph(gp, dataStructures->extensionEdgesVertexStore);
+
+	for (int i=0; i<dataStructures->nGraphs; ++i) {
+		dumpGraph(gp, dataStructures->db[i]);
+		free(dataStructures->postorders[i]);
+	}
+
+	free(dataStructures->db);
+	free(dataStructures->postorders);
+	free(dataStructures);
+}
+
+void garbageCollectBFSBase(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct IterativeBfsForForestsDataStructures* dataStructures = (struct IterativeBfsForForestsDataStructures*)y;
 
 	dumpSearchTree(gp, dataStructures->initialFrequentPatterns);
