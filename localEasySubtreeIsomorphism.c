@@ -15,6 +15,7 @@
 #include "localEasySubtreeIsomorphism.h"
 #include "graphPrinting.h"
 
+
 /* return the head of the list or NULL if list is empty.
  * remove head of list
  * (for speeds sake, don't change pointers
@@ -27,6 +28,7 @@ static struct ShallowGraph* popShallowGraph(struct ShallowGraph** list) {
 	}
 	return head;
 }
+
 
 /* we have to make sure that the children of each node come after the node in the resulting order
  * hence we first compare lowpoints (depth in the dfs from the root) of the vertices. If those are identical, then we return the
@@ -43,6 +45,7 @@ static int lowPointComparator(const void* a, const void* b) {
 	int parentDepthDiff = v->visited - w->visited;
 	return (depthDiff != 0) ? depthDiff : parentDepthDiff;
 }
+
 
 struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
 
@@ -123,14 +126,9 @@ struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
 		blockTree.vRootedBlocks[rootPositionInBlockTreeArrays] = bic;
 	}
 
-//	printf("visited values in g:\n");
-//	for (int v=0; v<g->n; ++v) {
-//		printf("%i ", g->vertices[v]->visited);
-//	}
-//	printf("\n");
-
 	return blockTree;
 }
+
 
 /**
  * Merge two shallow graphs. The the result is the first shallow graph in list with
@@ -215,12 +213,6 @@ struct Graph* blockConverter(struct ShallowGraph* edgeList, struct GraphPool* gp
 		f->endPoint->d = e->endPoint->visited;
 	}
 
-//	printf("d values in g:\n");
-//	for (int v=0; v<g->n; ++v) {
-//		printf("%i ", g->vertices[v]->d);
-//	}
-//	printf("\n");
-
 	return g;
 }
 
@@ -254,6 +246,15 @@ struct Graph* spanningTreeConverter(struct ShallowGraph* localTrees, struct Grap
 		resultingTrees = result;
 	}
 	return resultingTrees;
+}
+
+
+// init characteristics array
+void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree) {
+	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStore));
+	for (int v=0; v<sptTree->nRoots; ++v) {
+		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
+	}
 }
 
 
@@ -337,6 +338,27 @@ struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, stru
 	return sptTree;
 }
 
+
+void wipeCharacteristicsForLocalEasy(struct SpanningtreeTree sptTree) {
+	if (sptTree.characteristics) {
+		for (int v=0; v<sptTree.nRoots; ++v) {
+			struct SubtreeIsoDataStoreList* list = sptTree.characteristics[v];
+			if (list) {
+				struct SubtreeIsoDataStoreElement* tmp;
+				for (struct SubtreeIsoDataStoreElement* e=list->first; e!=NULL; e=tmp) {
+					tmp = e->next;
+					dumpNewCube(e->data.S, e->data.g->n);
+					free(e);
+				}
+				list->size = 0;
+				list->first = list->last = NULL;
+				list->next = NULL;
+			}
+		}
+	}
+}
+
+
 void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp) {
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		dumpGraphList(gp, sptTree.localSpanningTrees[v]);
@@ -360,6 +382,31 @@ void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp)
 	}
 }
 
+
+void printSptTree(struct SpanningtreeTree sptTree) {
+	printf("\nbase graph:\n");
+	printGraph(sptTree.g);
+
+	printf("\nnRoots: %i\n", sptTree.nRoots);
+
+	printf("local spanning trees:\n");
+	for (int v=0; v<sptTree.nRoots; ++v) {
+		printf("root %i (-> %i): lps (%i %i) \n", sptTree.roots[v]->number, sptTree.parents[v]->number, sptTree.roots[v]->lowPoint, sptTree.parents[v]->lowPoint);
+		printGraph(sptTree.localSpanningTrees[v]);
+	}
+
+	printf("Characteristics:\n");
+	for (int v=0; v<sptTree.nRoots; ++v) {
+		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v]->number);
+		if (sptTree.characteristics && sptTree.characteristics[v]) {
+			for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=e->next) {
+				printNewCubeCondensed(e->data.S, e->data.g->n, e->data.h->n, stdout);
+			}
+		} else {
+			printf("empty\n");
+		}
+	}
+}
 
 
 /* vertices of g have their ->visited values set to the postorder. Thus,
@@ -517,44 +564,6 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 	dumpCachedGraph(cachedB);
 }
 
-void printSptTree(struct SpanningtreeTree sptTree) {
-	printf("\nbase graph:\n");
-	printGraph(sptTree.g);
-
-	printf("\nnRoots: %i\n", sptTree.nRoots);
-
-	printf("local spanning trees:\n");
-	for (int v=0; v<sptTree.nRoots; ++v) {
-		printf("root %i (-> %i): lps (%i %i) \n", sptTree.roots[v]->number, sptTree.parents[v]->number, sptTree.roots[v]->lowPoint, sptTree.parents[v]->lowPoint);
-		printGraph(sptTree.localSpanningTrees[v]);
-	}
-
-	printf("Characteristics:\n");
-	for (int v=0; v<sptTree.nRoots; ++v) {
-		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v]->number);
-		if (sptTree.characteristics && sptTree.characteristics[v]) {
-			for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=e->next) {
-				printNewCubeCondensed(e->data.S, e->data.g->n, e->data.h->n, stdout);
-			}
-		} else {
-			printf("empty\n");
-		}
-	}
-}
-
-void pc(struct SpanningtreeTree sptTree) {
-	printf("Characteristics:\n");
-	for (int v=0; v<sptTree.nRoots; ++v) {
-		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v]->number);
-		if (sptTree.characteristics && sptTree.characteristics[v]) {
-			for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=e->next) {
-				printNewCubeCondensed(e->data.S, e->data.g->n, e->data.h->n, stdout);
-			}
-		} else {
-			printf("empty\n");
-		}
-	}
-}
 
 /**
  * expects a cleanly initialized sptTree and can then tell you if a tree h is subgraph isomorphic to one of the
@@ -588,33 +597,6 @@ char subtreeCheckForSpanningtreeTree(struct SpanningtreeTree* sptTree, struct Gr
 	}
 
 	return 0;
-}
-
-void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree) {
-	// init characteristics array
-	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStore));
-	for (int v=0; v<sptTree->nRoots; ++v) {
-		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
-	}
-}
-
-void wipeCharacteristicsForLocalEasy(struct SpanningtreeTree sptTree) {
-	if (sptTree.characteristics) {
-		for (int v=0; v<sptTree.nRoots; ++v) {
-			struct SubtreeIsoDataStoreList* list = sptTree.characteristics[v];
-			if (list) {
-				struct SubtreeIsoDataStoreElement* tmp;
-				for (struct SubtreeIsoDataStoreElement* e=list->first; e!=NULL; e=tmp) {
-					tmp = e->next;
-					dumpNewCube(e->data.S, e->data.g->n);
-					free(e);
-				}
-				list->size = 0;
-				list->first = list->last = NULL;
-				list->next = NULL;
-			}
-		}
-	}
 }
 
 
