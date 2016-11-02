@@ -18,6 +18,10 @@ Options:
 
 -o PATTERNFILE:  output the frequent subtrees in this file
 
+-i VALUE:   Some embedding operators require a parameter that might be
+                 a float between 0.0 and 1.0 or an integer >=1, depending 
+                 on the operator.
+
 -m METHOD:       Choose mining method among
              bfs: (default) mine in a levelwise fashion (like apriori). 
                  This results in better pruning behavior, but large memory 
@@ -28,28 +32,39 @@ Options:
 -e OPERATOR:     Choose embedding operator among
              subtree: (default) classical subtree isomorphism algorithm.
                  A pattern matches a graph, if it is subgraph isomorphic 
-                 to it.
+                 to it. Works only for forest transaction databases.
                  
              iterative: classical subtree isomorphism algorithm in an
                  iterative version. Uses more space than subtree, but 
-                 might increase mining speed in some cases.
+                 might increase mining speed in some cases. Works only 
+                 for forest transaction databases.
                  
              absImp: absolute importance threshold (specify using -i).
                  A pattern needs to be subtree of at least i connected
-                 components of a graph to match the graph.
+                 components of a graph to match the graph. Works only 
+                 for forest transaction databases.
                  
              relImp: relative importance threshold (specify using -i).
                  A pattern needs to be subtree of at least a -i fraction
-                 of connected components of a graph to match it.
+                 of connected components of a graph to match it. Works 
+                 only for forest transaction databases.
                  
              andOr:  and or gap amplification. only works for exactly 16
-                 sampled spanning trees.
+                 sampled spanning trees. Works only for forest 
+                 transaction databases.
                  
              localEasy: My implementation of the local easy subtree iso-
-                 morphism algorithm.
+                 morphism algorithm. Works for arbitrary graph transaction 
+                 databases. However, has polynomial delay only for local
+                 easy graph databases.
                  
              localEasySampling: My implementation of the local easy tree 
-                 sampling algorithm. When METHOD = leb is selected, 
-                 mining works for arbitrary graphs.
+                 sampling algorithm. Works for arbitrary graph transaction 
+                 databases with polynomial delay. However, might result in
+                 false negatives due to local spanning tree sampling. Sam-
+                 pling rate can be influenced using -i. The parameter spe-
+                 cifies the number of spanning trees that are sampled for
+                 each set of v-rooted components. Hence, a higher -i results
+                 in higher recall and higher runtime. 
                   
 -h:              print this possibly helpful information.
