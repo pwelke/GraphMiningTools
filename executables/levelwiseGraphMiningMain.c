@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 	unsigned int maxPatternSize = 20;
 
 	// initializator for the mining
-	size_t (*initMining)(size_t, struct Vertex**, struct SubtreeIsoDataStoreList**, struct ShallowGraph**, void**, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &initBFSBase;
+	size_t (*initMining)(size_t, double, struct Vertex**, struct SubtreeIsoDataStoreList**, struct ShallowGraph**, void**, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &initBFSBase;
 
 	// mining strategy
 	void (*miningStrategy)(size_t, size_t, size_t, struct Vertex*, struct SubtreeIsoDataStoreList*, struct ShallowGraph*, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &iterativeBFSMain;
@@ -127,12 +127,12 @@ int main(int argc, char** argv) {
 				break;
 			}
 			if (strcmp(optarg, "localEasySampling") == 0) {
-				initMining = &initBFSBase;
+				initMining = &initIterativeBFSForSampledLocalEasy;
 				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
-				garbageCollector = &garbageCollectBFSBase;
+				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
 				break;
 			}
 			if (strcmp(optarg, "localEasy") == 0) {
@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
 //			gp,
 //			sgp);
 
-	size_t initialPatternSize = initMining(threshold, &initialFrequentPatterns, &supportSets, &extensionEdgeList, &dataStructures,
+	size_t initialPatternSize = initMining(threshold, importance, &initialFrequentPatterns, &supportSets, &extensionEdgeList, &dataStructures,
 				// printing
 				featureStream,
 				patternStream,

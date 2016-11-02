@@ -114,6 +114,7 @@ void iterativeBFSMain(size_t startPatternSize,
 
 size_t initIterativeBFSForForestDB(// input
 		size_t threshold,
+		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
 		struct SubtreeIsoDataStoreList** supportSets,
@@ -129,6 +130,23 @@ size_t initIterativeBFSForForestDB(// input
 
 size_t initIterativeBFSForExactLocalEasy(// input
 		size_t threshold,
+		double importance,
+		// output
+		struct Vertex** initialFrequentPatterns,
+		struct SubtreeIsoDataStoreList** supportSets,
+		struct ShallowGraph** extensionEdgeList,
+		void** dataStructures,
+		// printing
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		// pools
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp);
+
+size_t initIterativeBFSForSampledLocalEasy(// input
+		size_t threshold,
+		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
 		struct SubtreeIsoDataStoreList** supportSets,
@@ -144,6 +162,7 @@ size_t initIterativeBFSForExactLocalEasy(// input
 
 size_t initBFSBase(// input
 		size_t threshold,
+		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
 		struct SubtreeIsoDataStoreList** supportSets,
