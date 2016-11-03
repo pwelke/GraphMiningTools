@@ -64,11 +64,10 @@ If the maximum is larger than INT_MAX, or the counting  did not succeed at at le
 return -1
 */
 int getMaxLocalEasiness(struct Graph* g, long int maxBound, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	int v;
 	long int max = -1;
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	long int* easiness = computeLocalEasinessExactly(biconnectedComponents, g->n, maxBound, gp, sgp);
-	for (v=0; v<g->n; ++v) {
+	for (int v=0; v<g->n; ++v) {
 		// problem occurred. counting did not work
 		if (easiness[v] == 0) {
 			return -1;
@@ -88,11 +87,10 @@ vertices v in g.
 If the minimum is larger than INT_MAX, or the value could not been computed for any vertex, return -1 
 */
 int getMinLocalEasiness(struct Graph* g, long int maxBound, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	int v;
 	long int min = -1;
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	long int* easiness = computeLocalEasinessExactly(biconnectedComponents, g->n, maxBound, gp, sgp);
-	for (v=0; v<g->n; ++v) {
+	for (int v=0; v<g->n; ++v) {
 		// error occurred. skip it.
 		if (easiness[v] == 0) {
 			continue;
@@ -101,5 +99,6 @@ int getMinLocalEasiness(struct Graph* g, long int maxBound, struct GraphPool* gp
 			min = easiness[v];
 		}
 	}
+	free(easiness);
 	return (min > (long int)INT_MAX) ? -1 : (int)min;
 }
