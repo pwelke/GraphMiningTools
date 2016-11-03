@@ -1,3 +1,5 @@
+#include <limits.h>
+
 #include "intMath.h"
 
 /** 
@@ -35,4 +37,18 @@ int ipow(int b, int e){
         return r*r;
     }
     return b*ipow(b,e-1);
+}
+
+
+char intMultiplicationWillOverflow(int a, int x) {
+	return     (a > INT_MAX / x) /* `a * x` would overflow */
+			|| (a < INT_MIN / x) /* `a * x` would underflow */
+			|| ((a == -1) && (x == INT_MIN)) /* `a * x` can overflow */;
+}
+
+
+char longMultiplicationWillOverflow(long int a, long int x) {
+	return     (a > LONG_MAX / x) /* `a * x` would overflow */
+			|| (a < LONG_MIN / x) /* `a * x` would underflow */
+			|| ((a == -1) && (x == LONG_MIN)) /* `a * x` can overflow */;
 }
