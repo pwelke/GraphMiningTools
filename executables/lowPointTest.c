@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 		if (g->n > 0) {
 
 			struct BlockTree blockTree = getBlockTreeT(g, sgp);
-			struct SpanningtreeTree sptTree = getSpanningtreeTree(blockTree, 2, gp, sgp);
+			struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, 2, gp, sgp);
 
 //			for (int v=0; v<sptTree.nRoots; ++v) {
 //				printf("%i:", sptTree.roots[v]->number);
