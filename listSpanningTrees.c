@@ -369,7 +369,7 @@ long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, 
 	/* at this point, graph and partialTree are as at the start of this call.
 	If there are already too many spanning Trees found (indicated by return value -1)
 	return at this point and prune the second __recursive call */
-	if (result1 == -1) {
+	if ((result1 == -1) || (result1 > d)) {
 		/* garbage collection */
 		dumpVertexList(sgp->listPool, e);
 		dumpShallowGraphCycle(sgp, graphEdges);
@@ -395,20 +395,15 @@ long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, 
 	dumpShallowGraphCycle(sgp, bridges);
 	dumpShallowGraphCycle(sgp, graphEdges);
 
-	if (result2 == -1) {
+	if ((result2 == -1) || (result2 > d)) {
 		/* if there were too many spanning trees in the second __recursion... */ 
 		return -1;
 	} else {
-		/* user set threshold on number of spanning trees */
-		if ((result1 > d) || (result2 > d)) {
+		/* avoid overflow */
+		if ((result1 > LONG_MAX / 2) || (result2 > LONG_MAX / 2)) {
 			return -1;
 		} else {
-			/* avoid overflow */
-			if ((result1 > LONG_MAX / 2) || (result2 > LONG_MAX / 2)) {
-				return -1;
-			} else {
-				return result1 + result2;
-			}
+			return result1 + result2;
 		}
 	}
 }
