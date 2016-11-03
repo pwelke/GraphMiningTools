@@ -331,13 +331,10 @@ struct ShallowGraph* listKSpanningTrees(struct Graph* original, int* k, struct S
 
 
 long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, int* components, int n, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
-	struct VertexList* e;
 	struct ShallowGraph* B;
-	struct ShallowGraph* bridges;
+
 	struct ShallowGraph* graphEdges = __getGraphAndNonGraphEdges(partialTree, getGraphEdges(graph, sgp), sgp);
 	struct ShallowGraph* rest = graphEdges->next;
-	long int result1;
-	long int result2;
 
 	if (rest->m == 0) {
 		/* garbage collection */
@@ -346,7 +343,7 @@ long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, 
 	}
 
 	/* get edge that will be included and excluded in this __recursive step */
-	e = popEdge(rest);
+	struct VertexList* e = popEdge(rest);
 
 	/* add e to partialTree (already contained in graph) to find spanning trees containing e */
 	addEdgeBetweenVertices(e->startPoint->number, e->endPoint->number, e->label, partialTree, gp);
@@ -358,7 +355,7 @@ long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, 
 	/* ensures, that adding an edge of graph to partialTree results in a tree in the __recursive call */
 	deleteEdges(graph, B, gp);
 
-	result1 = __recCount(d, graph, partialTree, components, n, sgp, gp);
+	long int result1 = __recCount(d, graph, partialTree, components, n, sgp, gp);
 
 	/* add edges to graph again */
 	addEdges(graph, B, gp);
@@ -381,10 +378,10 @@ long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, 
 	deleteEdgeBetweenVertices(partialTree, e, gp);
 
 	/* S2 */
-	bridges = __getNonTreeBridges(graph, partialTree, sgp);
+	struct ShallowGraph* bridges = __getNonTreeBridges(graph, partialTree, sgp);
 
 	addEdges(partialTree, bridges, gp);
-	result2 = __recCount(d, graph, partialTree, components, n, sgp, gp);
+	long int result2 = __recCount(d, graph, partialTree, components, n, sgp, gp);
 	deleteEdges(partialTree, bridges, gp);
 
 	/* At the end, spanningTree and graph need to be same as in the beginning. */
@@ -410,7 +407,7 @@ long int __recCount(long int d, struct Graph* graph, struct Graph* partialTree, 
 
 
 long int countSpanningTrees(struct Graph* original, long int maxBound, struct ShallowGraphPool* sgp, struct GraphPool* gp) {
-	
+
 	struct Graph* graph = cloneGraph(original, gp);
 	struct Graph* partialTree = emptyGraph(original, gp);
 	long int result;
