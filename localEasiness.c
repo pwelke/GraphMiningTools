@@ -14,52 +14,45 @@ long int* computeLocalEasinessExactly(struct ShallowGraph* biconnectedComponents
 	/* store the cycle degrees of each vertex in g */
 	long int* easiness = malloc(n * sizeof(long int));
 
-	int v;
-	struct ShallowGraph* comp;
-	int compNumber = 0;
-
-	for (v=0; v<n; ++v) {
+	for (int v=0; v<n; ++v) {
 		occurrences[v] = -1;
 		easiness[v] = 1;
 	}
 
-	// fprintf(stderr, "process some graph\n");
+	int compNumber = 0;
+	for (struct ShallowGraph* comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+		// if component is a bridge or singleton (I guess the latter cannot happen), then we do not need to process
+		// spanning trees, as there is only one. This would not change the easiness of the contained vertices.
+		if (comp->m <= 1) {
+			continue;
+		}
 
-	for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
-		if (comp->m > 1) {
-			struct VertexList* e;
-			struct Graph* component = shallowGraphToGraph(comp, gp);
-			// counts spanning trees in component, but breaks and returns -1 if there are more than maxBound
-			long int nSpanningTrees = countSpanningTrees(component, maxBound, sgp, gp);
-			// fprintf(stderr, "component %i: %i\n", compNumber, nSpanningTrees);
-			dumpGraph(gp, component);
-			for (e=comp->edges; e!=NULL; e=e->next) {
-				if (occurrences[e->startPoint->number] < compNumber) {
-					occurrences[e->startPoint->number] = compNumber;
-					if (nSpanningTrees != -1) {
-						easiness[e->startPoint->number] *= nSpanningTrees;
-					} else {
-						easiness[e->startPoint->number] = 0;
-					}
-				}
-				if (occurrences[e->endPoint->number] < compNumber) {
-					occurrences[e->endPoint->number] = compNumber;
-					if (nSpanningTrees != -1) {
-						easiness[e->endPoint->number] *= nSpanningTrees;
-					} else {
-						easiness[e->endPoint->number] = 0;
-					}
+		// count spanning trees in component. This breaks and returns -1 if there are more than maxBound
+		struct Graph* component = shallowGraphToGraph(comp, gp);
+		long int nSpanningTrees = countSpanningTrees(component, maxBound, sgp, gp);
+		dumpGraph(gp, component);
+
+		for (struct VertexList* e=comp->edges; e!=NULL; e=e->next) {
+			if (occurrences[e->startPoint->number] < compNumber) {
+				occurrences[e->startPoint->number] = compNumber;
+				if (nSpanningTrees != -1) {
+					easiness[e->startPoint->number] *= nSpanningTrees;
+				} else {
+					easiness[e->startPoint->number] = 0;
 				}
 			}
-			++compNumber;
-		}			
+			if (occurrences[e->endPoint->number] < compNumber) {
+				occurrences[e->endPoint->number] = compNumber;
+				if (nSpanningTrees != -1) {
+					easiness[e->endPoint->number] *= nSpanningTrees;
+				} else {
+					easiness[e->endPoint->number] = 0;
+				}
+			}
+		}
+		++compNumber;
 	}
 
-	// fprintf(stderr, "result: \n");
-	// for (v=0; v<n; ++v) {
-	// 	fprintf(stderr, "%i ", easiness[v]);
-	// }
-	// fprintf(stderr, "\n");
 	free(occurrences);
 	return easiness;
 }
@@ -84,6 +77,7 @@ int getMaxLocalEasiness(struct Graph* g, long int maxBound, struct GraphPool* gp
 			max = easiness[v];
 		}
 	}
+	free(easiness);
 	return (max > (long int)INT_MAX) ? -1 : (int)max;
 }
 
