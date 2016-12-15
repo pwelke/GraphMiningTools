@@ -163,18 +163,18 @@ int main(int argc, char** argv) {
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hd:s:";
+	const char* validArgs = "hs:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
 			printHelp();
 			return EXIT_SUCCESS;
-		case 'd':
-			if (sscanf(optarg, "%i", &depth) != 1) {
-				fprintf(stderr, "value must be integer, is: %s\n", optarg);
-				return EXIT_FAILURE;
-			}
-			break;
+//		case 'd':
+//			if (sscanf(optarg, "%i", &depth) != 1) {
+//				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+//				return EXIT_FAILURE;
+//			}
+//			break;
 		case 's':
 			if (strcmp(optarg, "disk") == 0) {
 				selector = disk;
@@ -214,6 +214,16 @@ int main(int argc, char** argv) {
 		createStdinIterator(gp);
 	}
 
+	struct Graph* (*subgraphSelector)(struct Vertex*, struct GraphPool*) = NULL;
+	switch (selector) {
+	case disk:
+		subgraphSelector = &getDiskGraph;
+		break;
+	case neighbors:
+		subgraphSelector = &getNeighborhoodGraph;
+		break;
+	}
+
 
 	/* iterate over all graphs in the database */
 	while ((g = iterateFile())) {
@@ -225,17 +235,19 @@ int main(int argc, char** argv) {
 			for (v=0; v<g->n; ++v, ++neighborhoodCount) {
 				struct Graph* subgraph = NULL;
 
-				switch (selector) {
-				case disk:
-					subgraph = getDiskGraph(g->vertices[v], gp);
-					break;
-				case neighbors:
-					subgraph = getNeighborhoodGraph(g->vertices[v], gp);
-					break;
-				} 
+				subgraph = subgraphSelector(g->vertices[v], gp);
+//				switch (selector) {
+//				case disk:
+//					subgraph = getDiskGraph(g->vertices[v], gp);
+//					break;
+//				case neighbors:
+//					subgraph = getNeighborhoodGraph(g->vertices[v], gp);
+//					break;
+//				}
 				subgraph->number = neighborhoodCount;
 				subgraph->activity = atoi(g->vertices[v]->label);
 				printGraphAidsFormat(subgraph, stdout);
+				dumpGraph(gp, subgraph);
 			}
 
 			/***** do not alter ****/

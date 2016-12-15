@@ -1,3 +1,12 @@
 Generates a new set of graphs corresponding to the 1-neighborhoods of each
 vertex in each graph of the input database.
 
+Parameters
+
+-s SELECTOR     being
+
+    neighbors:  Only output the graph induced by the neighbors of each vertex,
+                i.e. the vertex itself is not included.
+
+    disk:       Output the graph induced by the vertex and all of its neighbors.    
+
