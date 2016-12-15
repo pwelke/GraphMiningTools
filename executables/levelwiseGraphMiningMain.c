@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../lwm_embeddingOperators.h"
 #include "../levelwiseGraphMining.h"
@@ -47,6 +48,9 @@ int main(int argc, char** argv) {
 	int threshold = 1000;
 	unsigned int maxPatternSize = 20;
 
+	// init random generator according to current time
+	srand(time(NULL));
+
 	// initializator for the mining
 	size_t (*initMining)(size_t, double, struct Vertex**, struct SubtreeIsoDataStoreList**, struct ShallowGraph**, void**, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &initBFSBase;
 
@@ -65,7 +69,8 @@ int main(int argc, char** argv) {
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "ht:p:m:o:e:i:";
+	int seed;
+	const char* validArgs = "ht:p:m:o:e:i:r:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -76,6 +81,14 @@ int main(int argc, char** argv) {
 			if (sscanf(optarg, "%i", &threshold) != 1) {
 				fprintf(stderr, "value must be integer, is: %s\n", optarg);
 				return EXIT_FAILURE;
+			}
+			break;
+		case 'r':
+			if (sscanf(optarg, "%i", &seed) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			} else {
+				srand(seed);
 			}
 			break;
 		case 'p':
