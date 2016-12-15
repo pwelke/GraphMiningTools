@@ -66,5 +66,9 @@ Options:
                  cifies the number of spanning trees that are sampled for
                  each set of v-rooted components. Hence, a higher -i results
                  in higher recall and higher runtime. 
+          
+-r VALUE:        Initialize the random number generator with seed VALUE. If
+                 not specified, random generator is seeded according to 
+                 current time.
                   
 -h:              print this possibly helpful information.
