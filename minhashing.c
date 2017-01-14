@@ -752,8 +752,19 @@ struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct Gra
 
 // DOT PRODUCT APPROXIMATION BY RANDOM PROJECTIONS
 
-
-int* fullDotProductApproximationEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp) {
+/**
+ * Given a forest g, a pattern poset p and a subset of patterns represented by a (random) projection, we want to compute an embedding of g
+ * into the full space spanned by p by only evaluating (at most) all patterns in projection.
+ *
+ *
+ * For this, the method uses the same idea as the fast minhash embedding computation method above.
+ *
+ * This method outputs an array o indexed by pattern ids containing values in {0,1,-1} where
+ * o[i] == 1 : pattern i matches g
+ * o[i] == -1: pattern i does not match g
+ * o[i] == 0 : it is unknown whether i matches g or not.
+ */
+int* fullEmbeddingProjectionApproximationForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp) {
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
@@ -789,7 +800,21 @@ int* fullDotProductApproximationEmbeddingForTrees(struct Graph* g, struct Evalua
 
 }
 
-int* fullDotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+/**
+ * Given a graph g, a pattern poset p and a subset of patterns represented by a (random) projection, we want to compute an embedding of g
+ * into the full space spanned by p by only evaluating (at most) all patterns in projection. This method uses the sampled local spanning tree
+ * embedding embedding algorithm with sampling parameter nLocalTrees.
+ *
+ *
+ * For this, the method uses the same idea as the fast minhash embedding computation method above.
+ *
+ * This method outputs an array o indexed by pattern ids containing values in {0,1,-1} where
+ * o[i] == 1 : pattern i matches g
+ * o[i] == -1: pattern i does not match g
+ * o[i] == 0 : it is unknown whether i matches g or not.
+ */
+int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
@@ -831,6 +856,18 @@ int* fullDotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct Evalu
 
 }
 
+
+/**
+ * Given a forest g, a pattern poset p and a subset of patterns represented by a (random) projection, we want to compute an embedding of g
+ * into the space spanned by the subset of p given by projection by only evaluating (at most) all patterns in projection.
+ *
+ *
+ * For this, the method uses the same idea as the fast minhash embedding computation method above.
+ *
+ * This method outputs an array o indexed by numbers from 0 to projectionSize-1 containing values in {-1,1} where
+ * o[i] == 1 : pattern i matches g
+ * o[i] == -1: pattern i does not match g
+ */
 int* randomProjectionEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp) {
 
 	int nEvaluations = 0;
@@ -868,6 +905,17 @@ int* randomProjectionEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p,
 }
 
 
+/**
+ * Given a graph g, a pattern poset p and a subset of patterns represented by a (random) projection, we want to compute an embedding of g
+ * into the space spanned by the subset of p given by projection by only evaluating (at most) all patterns in projection. This method uses
+ * the sampled local spanning tree embedding embedding algorithm with sampling parameter nLocalTrees.
+ *
+ * For this, the method uses the same idea as the fast minhash embedding computation method above.
+ *
+ * This method outputs an array o indexed by numbers from 0 to projectionSize-1 containing values in {-1,1} where
+ * o[i] == 1 : pattern i matches g
+ * o[i] == -1: pattern i does not match g
+ */
 int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	int nEvaluations = 0;
