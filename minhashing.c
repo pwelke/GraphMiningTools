@@ -295,14 +295,41 @@ struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct G
 }
 
 
-// COMPUTATION OF MINHASHES
-
 static void cleanEvaluationPlan(struct EvaluationPlan p) {
 	for (int i=0; i<p.F->n; ++i) {
 		p.F->vertices[i]->visited = 0;
 		p.reverseF->vertices[i]->visited = 0;
 	}
 }
+
+
+/**
+Traverses the reverse graph of the poset graph F and marks all vertices reachable from v with the number given
+by the argument component.
+
+Hence, v needs to be a vertex in the reverse graph p.reverseF !
+
+Careful: To avoid infinite runtime, the method tests if a visited vertex has ->visited == component.
+Thus, either initialize ->visited's  with some value < 0 or start component counting with 1.
+ */
+static void rayOfLight(struct Vertex* v, int component, struct EvaluationPlan p) {
+
+	/* mark vertex as visited */
+	v->visited = component;
+	p.F->vertices[v->number]->visited = component;
+
+
+	/*recursive call for all neighbors that are not visited so far */
+	for (struct VertexList* index = v->neighborhood; index; index = index->next) {
+		if (index->endPoint->visited != component) {
+			rayOfLight(index->endPoint, component, p);
+		}
+	}
+}
+
+
+// COMPUTATION OF MINHASHES
+
 
 int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
 	int* sketch = malloc(p.sketchSize * sizeof(int));
@@ -349,30 +376,6 @@ int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphP
 	return sketch;
 }
 
-
-/**
-Traverses the reverse graph of the poset graph F and marks all vertices reachable from v with the number given
-by the argument component.
-
-Hence, v needs to be a vertex in the reverse graph p.reverseF !
-
-Careful: To avoid infinite runtime, the method tests if a visited vertex has ->visited == component.
-Thus, either initialize ->visited's  with some value < 0 or start component counting with 1.
- */
-static void rayOfLight(struct Vertex* v, int component, struct EvaluationPlan p) {
-
-	/* mark vertex as visited */
-	v->visited = component;
-	p.F->vertices[v->number]->visited = component;
-
-
-	/*recursive call for all neighbors that are not visited so far */
-	for (struct VertexList* index = v->neighborhood; index; index = index->next) {
-		if (index->endPoint->visited != component) {
-			rayOfLight(index->endPoint, component, p);
-		}
-	}
-}
 
 /**
  *
@@ -524,11 +527,16 @@ int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, d
 	return sketch;
 }
 
+
+// FOR COMPARISON: EXPLICIT EVALUATION USING THE PATTERN POSET
+
+
 static void addToBorder(struct Vertex* v, struct ShallowGraph* border, struct ShallowGraphPool* sgp) {
 	struct VertexList* e = getVertexList(sgp->listPool);
 	e->endPoint = v;
 	appendEdge(border, e);
 }
+
 
 static struct Vertex* popFromBorder(struct ShallowGraph* border, struct ShallowGraphPool* sgp) {
 	struct VertexList* e = popEdge(border);
@@ -537,7 +545,7 @@ static struct Vertex* popFromBorder(struct ShallowGraph* border, struct ShallowG
 	return v;
 }
 
-// FOR COMPARISON: EXPLICIT EVALUATION USING THE PATTERN POSET
+
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	int nEvaluations = 0;
@@ -599,14 +607,12 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 	// init data structure for embedding operator
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
 	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
-//	printSptTree(sptTree);
 
 	// bfs evaluation with pruning through the poset
 	while (border->m != 0) {
 		struct Vertex* v = popFromBorder(border, sgp);
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
-//			printGraph(pattern);
 			char match = 0;
 			if (pattern->n == 1) {
 				match = 1;
@@ -660,6 +666,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 
 }
 
+
 struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct Graph* F, size_t importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	//cleanup
@@ -697,6 +704,7 @@ struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct Gra
 	return features;
 
 }
+
 
 struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct Graph* F, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
@@ -736,16 +744,19 @@ struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct Gra
 
 }
 
-// other approximate kernels
 
-int* dotProductApproximationEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* randomProjection, int dimension, struct GraphPool* gp) {
+
+// DOT PRODUCT APPROXIMATION BY RANDOM PROJECTIONS
+
+
+int* dotProductApproximationEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp) {
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
-	for (int i=0; i<dimension; ++i) {
+	for (int i=0; i<projectionSize; ++i) {
 		// if we don't know the value, yet we need to compute it.
-		int currentGraphNumber = randomProjection[i];
+		int currentGraphNumber = projection[i];
 		if (p.F->vertices[currentGraphNumber] == 0) {
 			// evaluate the embedding operator
 			struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
@@ -774,7 +785,7 @@ int* dotProductApproximationEmbeddingForTrees(struct Graph* g, struct Evaluation
 
 }
 
-int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* randomProjection, int dimension, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
@@ -782,9 +793,9 @@ int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct Evaluatio
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
 	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
 
-	for (int i=0; i<dimension; ++i) {
+	for (int i=0; i<projectionSize; ++i) {
 		// if we don't know the value, yet we need to compute it.
-		int currentGraphNumber = randomProjection[i];
+		int currentGraphNumber = projection[i];
 		if (p.F->vertices[currentGraphNumber] == 0) {
 			// evaluate the embedding operator
 			struct Graph* pattern = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
