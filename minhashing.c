@@ -328,6 +328,24 @@ static void rayOfLight(struct Vertex* v, int component, struct EvaluationPlan p)
 }
 
 
+/**
+ * Whenever we shoot somewhere in the pattern poset and evaluate the embedding operator
+ * for some pattern given by patternId, there are two possible results:
+ *
+ * - The pattern is a match: Then by the monotonicity all patterns smaller than the current
+ *   in the poset are matches as well. We mark these positive.
+ *   - The pattern is no match: Then by the monotonicity all patterns larger than the current
+ *     in the poset are no matches as well. We mark these negative.
+ */
+static void updateEvaluationPlan(struct EvaluationPlan p, int patternId, char match) {
+	if (match) {
+		rayOfLight(p.reverseF->vertices[patternId], 1, p);
+	} else {
+		markConnectedComponent(p.F->vertices[patternId], -1);
+	}
+}
+
+
 // COMPUTATION OF MINHASHES
 
 
@@ -416,16 +434,10 @@ int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphP
 		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
 		char match = isSubtree(g, currentGraph, gp);
 		++nEvaluations;
-		if (match) {
-//			p.F->vertices[currentGraphNumber]->visited = 1;
-			rayOfLight(p.reverseF->vertices[currentGraphNumber], 1, p);
-			// TODO mark parent patterns visited !
-			sketch[current.permutation] = current.level;
-//			continue;
-		} else {
-			markConnectedComponent(p.F->vertices[currentGraphNumber], -1);
-		}
+
+		updateEvaluationPlan(p, currentGraphNumber, match);
 	}
+
 	fprintf(stderr, "%i\n", nEvaluations);
 	return sketch;
 }
@@ -749,15 +761,15 @@ struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct Gra
 // DOT PRODUCT APPROXIMATION BY RANDOM PROJECTIONS
 
 
-int* dotProductApproximationEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp) {
+int* fullDotProductApproximationEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp) {
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
 	for (int i=0; i<projectionSize; ++i) {
-		// if we don't know the value, yet we need to compute it.
+		// if we don't know the value we need to compute it.
 		int currentGraphNumber = projection[i];
-		if (p.F->vertices[currentGraphNumber] == 0) {
+		if (p.F->vertices[currentGraphNumber]->visited == 0) {
 			// evaluate the embedding operator
 			struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
 			char match = isSubtree(g, currentGraph, gp);
@@ -785,7 +797,7 @@ int* dotProductApproximationEmbeddingForTrees(struct Graph* g, struct Evaluation
 
 }
 
-int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int* fullDotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
@@ -794,9 +806,9 @@ int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct Evaluatio
 	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
 
 	for (int i=0; i<projectionSize; ++i) {
-		// if we don't know the value, yet we need to compute it.
+		// if we don't know the value we need to compute it.
 		int currentGraphNumber = projection[i];
-		if (p.F->vertices[currentGraphNumber] == 0) {
+		if (p.F->vertices[currentGraphNumber]->visited == 0) {
 			// evaluate the embedding operator
 			struct Graph* pattern = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
 			char match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
@@ -821,6 +833,85 @@ int* dotProductApproximationEmbeddingLocalEasy(struct Graph* g, struct Evaluatio
 	for (int i=1; i<p.F->n; ++i) {
 		approximateEmbedding[i-1] = p.F->vertices[i]->visited; // init sketch values to 'infty'
 	}
+
+	fprintf(stderr, "%i\n", nEvaluations);
+	return approximateEmbedding;
+
+}
+
+int* randomProjectionEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp) {
+
+	int nEvaluations = 0;
+	cleanEvaluationPlan(p);
+
+	// alloc output array
+	int* approximateEmbedding = malloc(projectionSize * sizeof(int));
+	if (!approximateEmbedding) {
+		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
+		return NULL;
+	}
+
+	for (int i=0; i<projectionSize; ++i) {
+
+		// if we don't know the value we need to compute it.
+		int currentGraphNumber = projection[i];
+		if (p.F->vertices[currentGraphNumber]->visited == 0) {
+
+			// evaluate the embedding operator
+			struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+			char match = isSubtree(g, currentGraph, gp);
+
+			// update output
+			approximateEmbedding[i] = match;
+
+			// update evaluation Plan
+			++nEvaluations;
+			updateEvaluationPlan(p, currentGraphNumber, match);
+		}
+	}
+
+	fprintf(stderr, "%i\n", nEvaluations);
+	return approximateEmbedding;
+
+}
+
+
+int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	int nEvaluations = 0;
+	cleanEvaluationPlan(p);
+
+	struct BlockTree blockTree = getBlockTreeT(g, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+
+	// alloc output array
+	int* approximateEmbedding = malloc((p.F->n - 1) * sizeof(int));
+	if (!approximateEmbedding) {
+		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
+		return NULL;
+	}
+
+	for (int i=0; i<projectionSize; ++i) {
+
+		// if we don't know the value we need to compute it.
+		int currentGraphNumber = projection[i];
+		if (p.F->vertices[currentGraphNumber]->visited == 0) {
+
+			// evaluate the embedding operator
+			struct Graph* pattern = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+			char match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
+			wipeCharacteristicsForLocalEasy(sptTree);
+
+			// update output
+			approximateEmbedding[i] = match;
+
+			// update evaluation plan
+			++nEvaluations;
+			updateEvaluationPlan(p, currentGraphNumber, match);
+		}
+	}
+
+	dumpSpanningtreeTree(sptTree, gp);
 
 	fprintf(stderr, "%i\n", nEvaluations);
 	return approximateEmbedding;
