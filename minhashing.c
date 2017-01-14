@@ -349,52 +349,6 @@ static void updateEvaluationPlan(struct EvaluationPlan p, int patternId, char ma
 // COMPUTATION OF MINHASHES
 
 
-int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
-	int* sketch = malloc(p.sketchSize * sizeof(int));
-	if (!sketch) {
-		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
-		return NULL;
-	}
-	for (size_t i=0; i<p.sketchSize; ++i) {
-		sketch[i] = -1; // init sketch values to 'infty'
-	}
-	for (size_t i=0; i<p.orderLength; ++i) {
-		struct PosPair current = p.order[i];
-		int currentGraphNumber = p.shrunkPermutations[current.permutation][current.level];
-
-		// check if we already found level min for the permutation
-		if (sketch[current.permutation] != -1) {
-			continue;
-		}
-
-		// check if we already evaluated the embedding operator for this pattern or found a subpattern that had no match
-		if (p.F->vertices[currentGraphNumber]->visited != 0) {
-			// either the pattern with id currentGraphNumber was evaluated positively and we hence have found the
-			// min value for the current permutation or we need to continue
-			if (p.F->vertices[currentGraphNumber]->visited == 1) {
-				sketch[current.permutation] = current.level;
-			}
-			continue;
-		}
-
-		// evaluate the embedding operator
-		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
-		char match = andorEmbedding(g, currentGraph, gp);
-		if (match) {
-			p.F->vertices[currentGraphNumber]->visited = 1;
-			sketch[current.permutation] = current.level;
-			continue;
-		} else {
-			markConnectedComponent(p.F->vertices[currentGraphNumber], -1);
-		}
-
-	}
-
-	cleanEvaluationPlan(p);
-	return sketch;
-}
-
-
 /**
  *
  */
@@ -443,15 +397,16 @@ int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphP
 }
 
 
-/**
- *
- */
 int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, int importance, struct GraphPool* gp) {
 	int* sketch = malloc(p.sketchSize * sizeof(int));
 	if (!sketch) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
 		return NULL;
 	}
+	int nEvaluations = 0;
+
+	cleanEvaluationPlan(p);
+
 	for (size_t i=0; i<p.sketchSize; ++i) {
 		sketch[i] = -1; // init sketch values to 'infty'
 	}
@@ -477,29 +432,26 @@ int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, i
 		// evaluate the embedding operator
 		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
 		char match = isImportantSubtreeAbsolute(g, currentGraph, importance, gp);
-		if (match) {
-			p.F->vertices[currentGraphNumber]->visited = 1;
-			sketch[current.permutation] = current.level;
-			continue;
-		} else {
-			markConnectedComponent(p.F->vertices[currentGraphNumber], -1);
-		}
+		++nEvaluations;
 
+		updateEvaluationPlan(p, currentGraphNumber, match);
 	}
 
-	cleanEvaluationPlan(p);
+	fprintf(stderr, "%i\n", nEvaluations);
 	return sketch;
 }
 
-/**
- *
- */
+
 int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp) {
 	int* sketch = malloc(p.sketchSize * sizeof(int));
 	if (!sketch) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
 		return NULL;
 	}
+	int nEvaluations = 0;
+
+	cleanEvaluationPlan(p);
+
 	for (size_t i=0; i<p.sketchSize; ++i) {
 		sketch[i] = -1; // init sketch values to 'infty'
 	}
@@ -525,17 +477,57 @@ int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, d
 		// evaluate the embedding operator
 		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
 		char match = isImportantSubtreeRelative(g, currentGraph, importance, gp);
-		if (match) {
-			p.F->vertices[currentGraphNumber]->visited = 1;
-			sketch[current.permutation] = current.level;
-			continue;
-		} else {
-			markConnectedComponent(p.F->vertices[currentGraphNumber], -1);
-		}
+		++nEvaluations;
 
+		updateEvaluationPlan(p, currentGraphNumber, match);
 	}
 
+	fprintf(stderr, "%i\n", nEvaluations);
+	return sketch;
+}
+
+
+int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
+	int* sketch = malloc(p.sketchSize * sizeof(int));
+	if (!sketch) {
+		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
+		return NULL;
+	}
+	int nEvaluations = 0;
+
 	cleanEvaluationPlan(p);
+
+	for (size_t i=0; i<p.sketchSize; ++i) {
+		sketch[i] = -1; // init sketch values to 'infty'
+	}
+	for (size_t i=0; i<p.orderLength; ++i) {
+		struct PosPair current = p.order[i];
+		int currentGraphNumber = p.shrunkPermutations[current.permutation][current.level];
+
+		// check if we already found level min for the permutation
+		if (sketch[current.permutation] != -1) {
+			continue;
+		}
+
+		// check if we already evaluated the embedding operator for this pattern or found a subpattern that had no match
+		if (p.F->vertices[currentGraphNumber]->visited != 0) {
+			// either the pattern with id currentGraphNumber was evaluated positively and we hence have found the
+			// min value for the current permutation or we need to continue
+			if (p.F->vertices[currentGraphNumber]->visited == 1) {
+				sketch[current.permutation] = current.level;
+			}
+			continue;
+		}
+
+		// evaluate the embedding operator
+		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+		char match = andorEmbedding(g, currentGraph, gp);
+		++nEvaluations;
+
+		updateEvaluationPlan(p, currentGraphNumber, match);
+	}
+
+	fprintf(stderr, "%i\n", nEvaluations);
 	return sketch;
 }
 
