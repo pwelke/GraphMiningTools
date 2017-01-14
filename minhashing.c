@@ -392,7 +392,7 @@ int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphP
 		updateEvaluationPlan(p, currentGraphNumber, match);
 	}
 
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return sketch;
 }
 
@@ -437,7 +437,7 @@ int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, i
 		updateEvaluationPlan(p, currentGraphNumber, match);
 	}
 
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return sketch;
 }
 
@@ -482,7 +482,7 @@ int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, d
 		updateEvaluationPlan(p, currentGraphNumber, match);
 	}
 
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return sketch;
 }
 
@@ -527,7 +527,7 @@ int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphP
 		updateEvaluationPlan(p, currentGraphNumber, match);
 	}
 
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return sketch;
 }
 
@@ -586,7 +586,7 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struc
 			}
 		}
 	}
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return features;
 
 }
@@ -665,7 +665,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 		}
 	}
 	dumpSpanningtreeTree(sptTree, gp);
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return features;
 
 }
@@ -795,7 +795,7 @@ int* fullEmbeddingProjectionApproximationForTrees(struct Graph* g, struct Evalua
 		approximateEmbedding[i-1] = p.F->vertices[i]->visited; // init sketch values to 'infty'
 	}
 
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return approximateEmbedding;
 
 }
@@ -851,7 +851,7 @@ int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct Evalu
 		approximateEmbedding[i-1] = p.F->vertices[i]->visited; // init sketch values to 'infty'
 	}
 
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return approximateEmbedding;
 
 }
@@ -899,7 +899,7 @@ int* randomProjectionEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p,
 		}
 	}
 
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return approximateEmbedding;
 
 }
@@ -953,7 +953,7 @@ int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p
 
 	dumpSpanningtreeTree(sptTree, gp);
 
-	fprintf(stderr, "%i\n", nEvaluations);
+//	fprintf(stderr, "%i\n", nEvaluations);
 	return approximateEmbedding;
 
 }
