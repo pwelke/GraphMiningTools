@@ -566,6 +566,10 @@ int main(int argc, char** argv) {
 		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
 
 		randomProjection = randomSubset(patternPoset->n, sketchSize);
+		//debug
+		fprintf(stderr, "projection: [");
+		for (int i=0; i<sketchSize; ++i) { fprintf(stderr, "%i,", randomProjection[i]); }
+		fprintf(stderr, "]\n");
 
 		break;
 	default:
@@ -633,10 +637,10 @@ int main(int argc, char** argv) {
 				fingerprints = (struct IntSet*)fastMinHashForAndOr(g, evaluationPlan, gp);
 				break;
 			case dotApproxForTrees:
-				fingerprints = (struct IntSet*)dotProductApproximationEmbeddingForTrees(g, evaluationPlan, randomProjection, absImportance, gp);
+				fingerprints = (struct IntSet*)fullEmbeddingProjectionApproximationForTrees(g, evaluationPlan, randomProjection, absImportance, gp);
 				break;
 			case dotApproxLocalEasy:
-				fingerprints = (struct IntSet*)dotProductApproximationEmbeddingLocalEasy(g, evaluationPlan, randomProjection, sketchSize, absImportance, gp, sgp);
+				fingerprints = (struct IntSet*)fullEmbeddingProjectionApproximationLocalEasy(g, evaluationPlan, randomProjection, sketchSize, absImportance, gp, sgp);
 				break;
 			}
 			// output

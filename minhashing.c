@@ -777,11 +777,7 @@ int* fullEmbeddingProjectionApproximationForTrees(struct Graph* g, struct Evalua
 			struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
 			char match = isSubtree(g, currentGraph, gp);
 			++nEvaluations;
-			if (match) {
-				rayOfLight(p.reverseF->vertices[currentGraphNumber], 1, p);
-			} else {
-				markConnectedComponent(p.F->vertices[currentGraphNumber], -1);
-			}
+			updateEvaluationPlan(p, currentGraphNumber, match);
 		}
 	}
 
@@ -831,11 +827,7 @@ int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct Evalu
 			char match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
 			wipeCharacteristicsForLocalEasy(sptTree);
 			++nEvaluations;
-			if (match) {
-				rayOfLight(p.reverseF->vertices[currentGraphNumber], 1, p);
-			} else {
-				markConnectedComponent(p.F->vertices[currentGraphNumber], -1);
-			}
+			updateEvaluationPlan(p, currentGraphNumber, match);
 		}
 	}
 
