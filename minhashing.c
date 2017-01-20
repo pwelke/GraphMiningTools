@@ -791,6 +791,11 @@ int* fullEmbeddingProjectionApproximationForTrees(struct Graph* g, struct Evalua
 		approximateEmbedding[i-1] = p.F->vertices[i]->visited; // init sketch values to 'infty'
 	}
 
+//	for (int i=1; i<p.F->n; ++i) {
+//		fprintf(stderr, "%i ", approximateEmbedding[i-1]);
+//	}
+//	fprintf(stderr, "\n");
+
 //	fprintf(stderr, "%i\n", nEvaluations);
 	return approximateEmbedding;
 
@@ -842,6 +847,7 @@ int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct Evalu
 	for (int i=1; i<p.F->n; ++i) {
 		approximateEmbedding[i-1] = p.F->vertices[i]->visited; // init sketch values to 'infty'
 	}
+
 
 //	fprintf(stderr, "%i\n", nEvaluations);
 	return approximateEmbedding;
@@ -949,4 +955,57 @@ int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p
 	return approximateEmbedding;
 
 }
+
+
+static int dfsRaySearch(struct Graph* g, struct EvaluationPlan p, struct Vertex* currentPattern, struct GraphPool* gp) {
+	int nEvaluations = 0;
+	if (currentPattern->visited == 0) {
+		struct Graph* pattern = (struct Graph*)(currentPattern->label);
+		char match = isSubtree(g, pattern, gp);
+		++nEvaluations;
+		if (match) {
+			for (struct VertexList* e=currentPattern->neighborhood; e!=NULL; e=e->next) {
+				nEvaluations += dfsRaySearch(g, p, e->endPoint, gp);
+			}
+			updateEvaluationPlan(p, currentPattern->number, 1);
+		} else {
+			updateEvaluationPlan(p, currentPattern->number, 0);
+		}
+	}
+	return nEvaluations;
+}
+
+
+/**
+ * Given a forest g and a pattern poset p, we want to compute an embedding of g into the space spanned by p.
+ *
+ * For this, the method uses the same idea as the fast minhash embedding computation method above to possibly deduce
+ * embedding information of other patterns by single calls to the embedding oracle (i.e. subtree isomorphism).
+ *
+ * This variant goes through all patterns in order of their ids in the evaluation plan. If a pattern is not yet evaluated,
+ * a simple dfs in the pattern space is started from this pattern. Once the dfs reaches an element in the negative border,
+ * it marks all patterns above and including it negative and all elements below and including the previous pattern positive.
+ *
+ * This method outputs an IntSet containing the matching pattern ids.
+ */
+struct IntSet* dfsDownwardEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
+
+	int nEvaluations = 0;
+	cleanEvaluationPlan(p);
+
+	for (int i=1; i<p.F->n; ++i) {
+		nEvaluations += dfsRaySearch(g, p, p.F->vertices[i], gp);
+	}
+
+	struct IntSet* features = getIntSet();
+	for (int i=1; i<p.F->n; ++i) {
+		if (p.F->vertices[i]->visited == 1) {
+			addIntSortedNoDuplicates(features, i - 1);
+		}
+	}
+
+//	fprintf(stderr, "%i\n", nEvaluations);
+	return features;
+}
+
 

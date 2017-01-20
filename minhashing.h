@@ -50,6 +50,9 @@ int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct Evalu
 int* randomProjectionEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp);
 int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
+// FAST COMPUTATION OF EXACT EMBEDDINGS
+struct IntSet* dfsDownwardEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
+
 // FOR COMPARISON: EXACT COMPUTATION OF EMBEDDING	 USING THE PATTERN POSET
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp);\
 struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct Graph* F, size_t importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
