@@ -1,0 +1,2 @@
+This is a graph format converter. At the moment, it converts the aids format to 
+gastons format.

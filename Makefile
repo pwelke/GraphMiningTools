@@ -2,6 +2,7 @@ TPKNAME = tpk
 LWMNAME = lwm
 MTGNAME = tree2gaston
 MGGNAME = aids2gaston
+GFCNAME = gfc
 CPKNAME = cpk
 STSNAME = ts
 CCDNAME = ccd
@@ -15,9 +16,9 @@ NGENNAME = ngen
 WLNAME = wl
 PENAME = gpe
 TESTNAME = test
-ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME)
+ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME) $(GFCNAME)
 
-#CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
+# CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
 CPPFLAGS = -g -Wall -Wextra -pedantic -W -std=gnu99 -lm -O2 -D NDEBUG -Wl,-O1
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
@@ -56,6 +57,8 @@ WLHELP = ./executables/weisfeilerLehmanMainHelp.help
 PEOBJECTS = $(OBJECTS) ./executables/patternExtractor.o
 PEHELP = ./executables/patternExtractorHelp.help
 TESTOBJECTS = $(OBJECTS) ./executables/lowPointTest.o
+GFCOBJECTS = $(OBJECTS) ./executables/formatConverter.o 
+GFCHELP = ./executables/formatConverterHelp.help
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
@@ -119,6 +122,9 @@ $(WLNAME): $(WLHELP) $(WLOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 	
 $(PENAME): $(PEHELP) $(PEOBJECTS)
+	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	
+$(GFCNAME): $(GFCHELP) $(GFCOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(TESTNAME): $(TESTOBJECTS)
