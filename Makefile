@@ -1,7 +1,5 @@
 TPKNAME = tpk
 LWMNAME = lwm
-MTGNAME = tree2gaston
-MGGNAME = aids2gaston
 GFCNAME = gfc
 CPKNAME = cpk
 STSNAME = ts
@@ -30,10 +28,6 @@ LWMOBJECTS = $(OBJECTS) ./executables/levelwiseTreesetMiningMain.o
 LWMHELP = ./executables/levelwiseTreesetMiningMainHelp.help
 LWGOBJECTS = $(OBJECTS) ./executables/levelwiseGraphMiningMain.o
 LWGHELP = ./executables/levelwiseGraphMiningHelp.help
-MTGOBJECTS = $(OBJECTS) ./executables/mapTrees2gaston.o
-MTGHELP =
-MGGOBJECTS = $(OBJECTS) ./executables/mapAIDS2gaston.o
-MGGHELP =
 CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
 CPKHELP =
 STSOBJECTS = $(OBJECTS) ./executables/treeSamplingMain.o
@@ -92,12 +86,6 @@ $(TPKNAME): $(TPKHELP) $(TPKOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(LWMNAME): $(LWMHELP) $(LWMOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
-
-$(MTGNAME): $(MTGHELP) $(MTGOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
-
-$(MGGNAME): $(MGGHELP) $(MGGOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(CCDNAME): $(CCDHELP) $(CCDOBJECTS)
