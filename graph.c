@@ -660,6 +660,48 @@ struct Graph* popGraph(struct Graph** list) {
 }
 
 
+static int edgeCmp(const void* a, const void* b) {
+	struct VertexList* e = *(struct VertexList**)a;
+	struct VertexList* f = *(struct VertexList**)b;
+
+	int x = e->startPoint->number - f->startPoint->number;
+	int y = e->endPoint->number - f->endPoint->number;
+
+	return x == 0 ? y : x;
+}
+
+
+void canonicalizeShallowGraphCached(struct ShallowGraph* g, struct VertexList** edgePointers) {
+	size_t i=0;
+	for (struct VertexList* e=g->edges; e!=NULL; e=e->next) {
+		edgePointers[i] = e;
+		++i;
+	}
+
+	qsort(edgePointers, sizeof(struct VertexList*), g->m, edgeCmp);
+
+	for (i=0; i<g->m-1; ++i) {
+		edgePointers[i]->next = edgePointers[i+1];
+	}
+	edgePointers[g->m-1]->next = NULL;
+	g->edges = edgePointers[0];
+
+}
+
+
+/**
+ * Canonicalize a shallow graph in place.
+ *
+ * That is: reorder the edges wrt some fixed total order. *
+ *
+ */
+void canonicalizeShallowGraph(struct ShallowGraph* g) {
+	struct VertexList** edgePointers = malloc(g->m * sizeof(struct VertexList*));
+	canonicalizeShallowGraphCached(g, edgePointers);
+	free(edgePointers);
+}
+
+
 
 /********************************************************************************************************
 ******************************* Methods that deal with ShallowGraphs ********************************
