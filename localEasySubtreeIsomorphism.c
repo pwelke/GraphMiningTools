@@ -258,8 +258,9 @@ void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree) {
 }
 
 
+
 /**
- * blockTree is comsumed
+ * blockTree is consumed
  * spanningTreesPerBlock must be >= 1
  */
 struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
@@ -282,10 +283,10 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 				spt->next = shallowSpanningtrees;
 				shallowSpanningtrees = spt;
 			}
+			// TODO filter duplicate spanning trees
 		} else {
-			// if the mergedGraph is a tree, we only 'sample' one spanning tree
-			// TODO make faster
-			shallowSpanningtrees = randomSpanningTreeAsShallowGraph(mergedGraph, sgp);
+			// if the mergedGraph is a tree, we use it directly
+			shallowSpanningtrees = getGraphEdges(mergedGraph, sgp);
 		}
 		sptTree.localSpanningTrees[v] = spanningTreeConverter(shallowSpanningtrees, mergedGraph, gp, sgp);
 
