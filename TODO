@@ -2,18 +2,14 @@ TODO
 
 - [ ]  buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
 - [X]  speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
-- [ ]  separate sampling methods from treeSamplingMain.c into a lib file
+- [X]  separate sampling methods from treeSamplingMain.c into a lib file
 - [ ]  remove countCycleDegree.c and store the only important functionality somewhere (i.e. cycle degrees of all vertices)
 - [ ]  treeEnumeration might be too slow, as we do not enumerate perfectly
-- [ ]  extract weisfeiler lehman from treesampling into new executable
+- [X]  extract weisfeiler lehman from treesampling into new executable
 - [ ]  make optimized vertex and edge counting methods work with importance embedding operator
-
-- a unified levelwise mining executable that does 
-	- tree -> tree
-	- tree -> forest
-	- tree -> cactus (with bounded cycle degree)
-	- tree -> k-easy block graph (with bounded cycle degree)
-	(also only for paths)
+- [ ]  countSpanningtrees (and most likely listSpanningTrees seem to not work) There is some memory issue.
+- [ ]  getSampledSpanningtreeTree() should filter duplicate sampled spanning trees.
+- [ ]  an option to mine only frequent paths in lwg
 
 THEORY
 
@@ -22,6 +18,11 @@ THEORY
 
 DONE 
 
+- a unified levelwise mining executable that does 
+	- tree -> tree
+	- tree -> forest
+	- tree -> cactus (with bounded cycle degree)
+	- tree -> k-easy block graph (with bounded cycle degree)
 - levelwise: pruning and embedding should be separated.
 - documentation of listSpanningTrees!
 - check if isMaximalOuterplanar checks MAXIMAL outerplanar or just outerplanar: checks outerplanar
