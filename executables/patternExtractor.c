@@ -319,7 +319,8 @@ int main(int argc, char** argv) {
 		treePatternsResampling,
 		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr,
-		dotApproxForTrees, dotApproxLocalEasy
+		dotApproxForTrees, dotApproxLocalEasy,
+		dfsForTrees
 	} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
@@ -445,6 +446,10 @@ int main(int argc, char** argv) {
 				method = dotApproxLocalEasy;
 				break;
 			}
+			if (strcmp(optarg, "dfsForTrees") == 0) {
+				method = dfsForTrees;
+				break;
+			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -463,6 +468,7 @@ int main(int argc, char** argv) {
 	case treePatternsResampling:
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
+	case dfsForTrees:
 		if (absImportance == 0) {
 			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
@@ -500,6 +506,7 @@ int main(int argc, char** argv) {
 	case minHashAndOr:
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
+	case dfsForTrees:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -558,6 +565,7 @@ int main(int argc, char** argv) {
 		break;
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
+	case dfsForTrees:
 		// these methods need pattern poset, its reverse, and a set of random patterns of given size
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
@@ -568,7 +576,7 @@ int main(int argc, char** argv) {
 		randomProjection = randomSubset(patternPoset->n, sketchSize);
 		//debug
 		fprintf(stderr, "projection: [");
-		for (int i=0; i<sketchSize; ++i) { fprintf(stderr, "%i,", randomProjection[i]); }
+		for (size_t i=0; i<sketchSize; ++i) { fprintf(stderr, "%i,", randomProjection[i]); }
 		fprintf(stderr, "]\n");
 
 		break;
@@ -642,6 +650,9 @@ int main(int argc, char** argv) {
 			case dotApproxLocalEasy:
 				fingerprints = (struct IntSet*)fullEmbeddingProjectionApproximationLocalEasy(g, evaluationPlan, randomProjection, sketchSize, absImportance, gp, sgp);
 				break;
+			case dfsForTrees:
+				fingerprints = dfsDownwardEmbeddingForTrees(g, evaluationPlan, gp);
+				break;
 			}
 			// output
 			switch (method) {
@@ -649,9 +660,12 @@ int main(int argc, char** argv) {
 			case minHashAbsImportant:
 			case minHashRelImportant:
 			case minHashAndOr:
+				printIntArrayNoId((int*)fingerprints, evaluationPlan.sketchSize);
+				free(fingerprints);
+				break;
 			case dotApproxForTrees:
 			case dotApproxLocalEasy:
-				printIntArrayNoId((int*)fingerprints, evaluationPlan.sketchSize);
+				printIntArrayNoId((int*)fingerprints, evaluationPlan.F->n);
 				free(fingerprints);
 				break;
 			default:
@@ -680,6 +694,7 @@ int main(int argc, char** argv) {
 		break;
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
+	case dfsForTrees:
 		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
 		break;

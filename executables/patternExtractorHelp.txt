@@ -101,7 +101,7 @@ Options:
     dotApproxForTrees:     Given a forest database (as above) and some tree patterns,
                            compute an approximation of the embedding vector by randomly
                            sampling -k fixed dimensions. The method returns vectors of 
-                           the lenght of the pattern set containing three possible values:
+                           the length of the pattern set containing three possible values:
                            1 pattern known to be present in graph
                            0 unknown
                            -1 pattern known to be most likely not contained in the graph
@@ -111,6 +111,11 @@ Options:
                            the same as dotApproxForTrees, just using the local easy samp-
                            ling algorithm (which requires the sampling parameter to be set
                            via -i parameter. METHOD NOT THOROUGHLY TESTED!
+                           
+    dfsForTrees:           Given a forest database (as above) and some tree patterns,
+                           compute the exact embedding, hopefully saving some evaluations 
+                           compared to the apriori method by doing a dfs that utilizes the
+                           monotonicity of the embedding operator on the pattern poset.
 
 
 -k INT:                    Specify the number of permutations used by the minHash* 
