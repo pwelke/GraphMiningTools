@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 		while (((i < maxGraphs) || (maxGraphs == -1)) && (g = iterateFile())) {
 		
 			/* if there was an error reading some graph the returned n will be -1 */
-			if (g->n > 0) {
+			if (g->n != -1) {
 
 				struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 				/* store for each vertex if the current bic.comp was already counted */

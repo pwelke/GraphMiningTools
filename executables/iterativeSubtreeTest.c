@@ -66,7 +66,7 @@
 		/* iterate over all graphs in the database */
 		while ((g = iterateFile())) {
 			/* if there was an error reading some graph the returned n will be -1 */
-			if (g->n > 0) {
+			if (g->n != -1) {
 				int* postorder = getPostorder(g, 0);
 				for (int i=0; i<g->n; ++i) {
 					printf("%i ", postorder[i] + 1);

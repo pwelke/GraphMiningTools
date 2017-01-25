@@ -209,7 +209,7 @@ int main(int argc, char** argv) {
 	while ((g = iterateFile())) {
 	
 		/* if there was an error reading some graph the returned n will be -1 */
-		if (g->n > 0) {
+		if (g->n != -1) {
 			if (unsafe || isConnected(g)) {
 				struct Vertex* searchTree = getVertex(gp->vertexPool);
 				struct ShallowGraph* sample = NULL;

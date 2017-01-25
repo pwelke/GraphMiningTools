@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 	/* iterate over all graphs in the database */
 	while ((g = iterateFile())) {
 		/* if there was an error reading some graph the returned n will be -1 */
-		if (g->n > 0) {
+		if (g->n != -1) {
 
 			struct BlockTree blockTree = getBlockTreeT(g, sgp);
 			struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, 2, gp, sgp);

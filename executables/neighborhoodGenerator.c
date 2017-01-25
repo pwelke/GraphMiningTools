@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
 	while ((g = iterateFile())) {
 	
 		/* if there was an error reading some graph the returned n will be -1 */
-		if (g->n > 0) {
+		if (g->n != -1) {
 			int v;
 
 			for (v=0; v<g->n; ++v, ++neighborhoodCount) {
