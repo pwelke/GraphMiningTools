@@ -139,7 +139,7 @@ void deleteEdgeBetweenVertices(struct Graph* g, struct VertexList* idx, struct G
 char isNeighbor(struct Graph* g, int v, int w);
 int getMaxDegree(struct Graph* g);
 int getMinDegree(struct Graph* g);
-void canonicalizeShallowGraphCached(struct ShallowGraph* g, struct VertexList* edgePointers);
+void canonicalizeShallowGraphCached(struct ShallowGraph* g, struct VertexList** edgePointers);
 void canonicalizeShallowGraph(struct ShallowGraph* g);
 
 struct Graph* popGraph(struct Graph** list);

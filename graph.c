@@ -1,6 +1,7 @@
 #include <malloc.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "graph.h"
 
 
@@ -672,7 +673,7 @@ static int edgeCmp(const void* a, const void* b) {
 
 
 void canonicalizeShallowGraphCached(struct ShallowGraph* g, struct VertexList** edgePointers) {
-	size_t i=0;
+	int i=0;
 	for (struct VertexList* e=g->edges; e!=NULL; e=e->next) {
 		edgePointers[i] = e;
 		++i;
