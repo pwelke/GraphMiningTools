@@ -116,6 +116,13 @@ Options:
                            compute the exact embedding, hopefully saving some evaluations 
                            compared to the apriori method by doing a dfs that utilizes the
                            monotonicity of the embedding operator on the pattern poset.
+                           
+    latticePathForTrees:   Given a forest database (as above) and some tree patterns,
+                           compute the exact embedding, hopefully saving some evaluations 
+                           compared to the apriori method by doing a binary search on paths
+                           in the pattern poset. The paths are constructed on the spot from
+                           the lowest pattern available to a largest pattern for both of 
+                           which there is no embedding info known, yet.
 
 
 -k INT:                    Specify the number of permutations used by the minHash* 

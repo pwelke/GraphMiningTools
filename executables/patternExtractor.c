@@ -320,7 +320,7 @@ int main(int argc, char** argv) {
 		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr,
 		dotApproxForTrees, dotApproxLocalEasy,
-		dfsForTrees
+		dfsForTrees, latticePathForTrees
 	} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
@@ -450,6 +450,11 @@ int main(int argc, char** argv) {
 				method = dfsForTrees;
 				break;
 			}
+			if (strcmp(optarg, "latticePathForTrees") == 0) {
+				method = latticePathForTrees;
+				break;
+			}
+
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -469,6 +474,7 @@ int main(int argc, char** argv) {
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
 	case dfsForTrees:
+	case latticePathForTrees:
 		if (absImportance == 0) {
 			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
@@ -507,6 +513,7 @@ int main(int argc, char** argv) {
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
 	case dfsForTrees:
+	case latticePathForTrees:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -557,6 +564,8 @@ int main(int argc, char** argv) {
 	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:
 	case treePatternsFastRelImp:
+	case dfsForTrees:
+	case latticePathForTrees:
 		// these methods only need the pattern poset and its reverse
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
@@ -565,7 +574,6 @@ int main(int argc, char** argv) {
 		break;
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
-	case dfsForTrees:
 		// these methods need pattern poset, its reverse, and a set of random patterns of given size
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
@@ -574,12 +582,12 @@ int main(int argc, char** argv) {
 		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
 
 		randomProjection = randomSubset(patternPoset->n, sketchSize);
-		//debug
-		fprintf(stderr, "projection: [");
-		for (size_t i=0; i<sketchSize; ++i) { fprintf(stderr, "%i,", randomProjection[i]); }
-		fprintf(stderr, "]\n");
-
-		break;
+//		//debug
+//		fprintf(stderr, "projection: [");
+//		for (size_t i=0; i<sketchSize; ++i) { fprintf(stderr, "%i,", randomProjection[i]); }
+//		fprintf(stderr, "]\n");
+//
+//		break;
 	default:
 		break; // do nothing for other methods
 	}
@@ -653,6 +661,9 @@ int main(int argc, char** argv) {
 			case dfsForTrees:
 				fingerprints = dfsDownwardEmbeddingForTrees(g, evaluationPlan, gp);
 				break;
+			case latticePathForTrees:
+				fingerprints = latticePathEmbeddingForTrees(g, evaluationPlan, gp);
+				break;
 			}
 			// output
 			switch (method) {
@@ -695,6 +706,7 @@ int main(int argc, char** argv) {
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
 	case dfsForTrees:
+	case latticePathForTrees:
 		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
 		break;
