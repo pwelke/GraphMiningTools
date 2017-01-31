@@ -52,6 +52,7 @@ int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p
 
 // FAST COMPUTATION OF EXACT EMBEDDINGS
 struct IntSet* dfsDownwardEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
+struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
 
 // FOR COMPARISON: EXACT COMPUTATION OF EMBEDDING	 USING THE PATTERN POSET
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp);\

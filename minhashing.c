@@ -1004,8 +1004,105 @@ struct IntSet* dfsDownwardEmbeddingForTrees(struct Graph* g, struct EvaluationPl
 		}
 	}
 
-//	fprintf(stderr, "%i\n", nEvaluations);
+	fprintf(stderr, "%i\n", nEvaluations);
 	return features;
 }
 
+
+static int* getPathInDAG(struct Vertex* v) {
+	int pathLength = 2;
+	int* path = NULL;
+
+	// DFS without backtracking in DAG
+	for (struct VertexList* e=v->neighborhood; e!=NULL && (e->endPoint->visited == 0); e=e->endPoint->neighborhood) {
+		++pathLength;
+	}
+
+	path = malloc(pathLength * sizeof(int));
+	path[0] = pathLength;
+	path[1] = v->number;
+
+	pathLength = 2;
+	// DFS without backtracking in DAG
+	for (struct VertexList* e=v->neighborhood; e!=NULL && (e->endPoint->visited == 0); e=e->endPoint->neighborhood) {
+		path[pathLength] = e->endPoint->number;
+		++pathLength;
+	}
+
+	return path;
+}
+
+static int* getLongestPathInDAG(struct Vertex* v) {
+	int pathLength = 2;
+	int* path = NULL;
+
+	// DFS without backtracking in DAG
+	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->endPoint->neighborhood) {
+		++pathLength;
+	}
+
+	path = malloc(pathLength * sizeof(int));
+	path[0] = pathLength;
+	path[1] = v->number;
+
+	pathLength = 2;
+	// DFS without backtracking in DAG
+	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->endPoint->neighborhood) {
+		path[pathLength] = e->endPoint->number;
+		++pathLength;
+	}
+
+	return path;
+}
+
+
+static int binarySearchEvaluation(struct Graph* g, struct EvaluationPlan p, int* path, struct GraphPool* gp) {
+	int nEvaluations = 0;
+	int minIdx = 1;
+	int maxIdx = path[0] - 1;
+
+	while (minIdx <= maxIdx) {
+		int currentIdx = (minIdx + maxIdx) / 2;
+
+		struct Graph* pattern = (struct Graph*)(p.F->vertices[path[currentIdx]]->label);
+		char match = isSubtree(g, pattern, gp);
+		++nEvaluations;
+		updateEvaluationPlan(p, path[currentIdx], match);
+
+		if (match) {
+			minIdx = currentIdx + 1;
+		} else {
+			maxIdx = currentIdx - 1;
+		}
+	}
+
+	return nEvaluations;
+}
+
+
+struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
+
+	int nEvaluations = 0;
+	cleanEvaluationPlan(p);
+
+	for (int i=1; i<p.F->n; ++i) {
+		if (p.F->vertices[i]->visited == 0) {
+			int* path = getPathInDAG(p.F->vertices[i]);
+//			fprintf(stderr, "%i\n", path[0]-1);
+			nEvaluations += binarySearchEvaluation(g, p, path, gp);
+			free(path);
+		}
+
+	}
+
+	struct IntSet* features = getIntSet();
+	for (int i=1; i<p.F->n; ++i) {
+		if (p.F->vertices[i]->visited == 1) {
+			addIntSortedNoDuplicates(features, i - 1);
+		}
+	}
+
+	fprintf(stderr, "%i\n", nEvaluations);
+	return features;
+}
 
