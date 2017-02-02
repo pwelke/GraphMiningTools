@@ -320,7 +320,7 @@ int main(int argc, char** argv) {
 		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr,
 		dotApproxForTrees, dotApproxLocalEasy,
-		dfsForTrees, latticePathForTrees
+		dfsForTrees, latticePathForTrees, latticeLongestPathForTrees
 	} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
@@ -454,6 +454,10 @@ int main(int argc, char** argv) {
 				method = latticePathForTrees;
 				break;
 			}
+			if (strcmp(optarg, "latticeLongestPathForTrees") == 0) {
+				method = latticeLongestPathForTrees;
+				break;
+			}
 
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
@@ -475,6 +479,7 @@ int main(int argc, char** argv) {
 	case dotApproxLocalEasy:
 	case dfsForTrees:
 	case latticePathForTrees:
+	case latticeLongestPathForTrees:
 		if (absImportance == 0) {
 			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
@@ -514,6 +519,7 @@ int main(int argc, char** argv) {
 	case dotApproxLocalEasy:
 	case dfsForTrees:
 	case latticePathForTrees:
+	case latticeLongestPathForTrees:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -566,6 +572,7 @@ int main(int argc, char** argv) {
 	case treePatternsFastRelImp:
 	case dfsForTrees:
 	case latticePathForTrees:
+	case latticeLongestPathForTrees:
 		// these methods only need the pattern poset and its reverse
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
@@ -587,7 +594,7 @@ int main(int argc, char** argv) {
 //		for (size_t i=0; i<sketchSize; ++i) { fprintf(stderr, "%i,", randomProjection[i]); }
 //		fprintf(stderr, "]\n");
 //
-//		break;
+		break;
 	default:
 		break; // do nothing for other methods
 	}
@@ -664,6 +671,9 @@ int main(int argc, char** argv) {
 			case latticePathForTrees:
 				fingerprints = latticePathEmbeddingForTrees(g, evaluationPlan, gp);
 				break;
+			case latticeLongestPathForTrees:
+				fingerprints = latticeLongestPathEmbeddingForTrees(g, evaluationPlan, gp, sgp);
+				break;
 			}
 			// output
 			switch (method) {
@@ -707,6 +717,7 @@ int main(int argc, char** argv) {
 	case dotApproxLocalEasy:
 	case dfsForTrees:
 	case latticePathForTrees:
+	case latticeLongestPathForTrees:
 		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
 		break;

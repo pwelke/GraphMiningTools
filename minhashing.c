@@ -1032,12 +1032,34 @@ static int* getPathInDAG(struct Vertex* v) {
 	return path;
 }
 
-static int* getLongestPathInDAG(struct Vertex* v) {
+static int* getLongestPathInDAG(struct Vertex* v, struct Graph* poset, struct ShallowGraphPool* sgp) {
+
+	struct ShallowGraph* border = getShallowGraph(sgp);
+	addToBorder(v, border, sgp);
+	v->lowPoint = -1;
+	v->d = 1;
+
+	// use ->lowPoint to store the a parent of w
+	// for sake of simplicity we count the number of times a vertex is in the border and
+	struct Vertex* w = NULL;
+	while (border->m != 0) {
+		w = popFromBorder(border, sgp);
+		w->d -= 1;
+		if (w->d == 0) {
+			for (struct VertexList* e=w->neighborhood; e!=NULL; e=e->next) {
+				if ((e->endPoint->visited == 0) && (e->endPoint->d == 0)) {
+					e->endPoint->lowPoint = w->number;
+					e->endPoint->d += 1;
+					addToBorder(e->endPoint, border, sgp);
+				}
+			}
+		}
+	}
+	// here w stores the last visited pattern that, by construction, is on the highest level of the poset.
+	// backtrack using the ->lowPoints from here.
 	int pathLength = 2;
 	int* path = NULL;
-
-	// DFS without backtracking in DAG
-	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->endPoint->neighborhood) {
+	for (struct Vertex* x=w; x->lowPoint!=-1; x=poset->vertices[x->lowPoint]) {
 		++pathLength;
 	}
 
@@ -1045,11 +1067,10 @@ static int* getLongestPathInDAG(struct Vertex* v) {
 	path[0] = pathLength;
 	path[1] = v->number;
 
-	pathLength = 2;
-	// DFS without backtracking in DAG
-	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->endPoint->neighborhood) {
-		path[pathLength] = e->endPoint->number;
-		++pathLength;
+	pathLength -= 1;
+	for (struct Vertex* x=w; x->lowPoint!=-1; x=poset->vertices[x->lowPoint]) {
+		path[pathLength] = x->number;
+		--pathLength;
 	}
 
 	return path;
@@ -1088,6 +1109,32 @@ struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPl
 	for (int i=1; i<p.F->n; ++i) {
 		if (p.F->vertices[i]->visited == 0) {
 			int* path = getPathInDAG(p.F->vertices[i]);
+//			fprintf(stderr, "%i\n", path[0]-1);
+			nEvaluations += binarySearchEvaluation(g, p, path, gp);
+			free(path);
+		}
+
+	}
+
+	struct IntSet* features = getIntSet();
+	for (int i=1; i<p.F->n; ++i) {
+		if (p.F->vertices[i]->visited == 1) {
+			addIntSortedNoDuplicates(features, i - 1);
+		}
+	}
+
+	fprintf(stderr, "%i\n", nEvaluations);
+	return features;
+}
+
+struct IntSet* latticeLongestPathEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	int nEvaluations = 0;
+	cleanEvaluationPlan(p);
+
+	for (int i=1; i<p.F->n; ++i) {
+		if (p.F->vertices[i]->visited == 0) {
+			int* path = getLongestPathInDAG(p.F->vertices[i], p.F, sgp);
 //			fprintf(stderr, "%i\n", path[0]-1);
 			nEvaluations += binarySearchEvaluation(g, p, path, gp);
 			free(path);

@@ -123,6 +123,10 @@ Options:
                            in the pattern poset. The paths are constructed on the spot from
                            the lowest pattern available to a largest pattern for both of 
                            which there is no embedding info known, yet.
+                           
+    latticeLongestPathForTrees:  The difference to the method above is that here we
+                           always construct a longest path in the part of the pattern
+                           poset that is not covered yet. 
 
 
 -k INT:                    Specify the number of permutations used by the minHash* 
