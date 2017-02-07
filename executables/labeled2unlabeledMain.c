@@ -104,6 +104,7 @@ int main(int argc, char** argv) {
 			
 			struct Graph* h = weisfeilerLehmanRelabel(g, wlLabels, gp, sgp);
 			printGraphAidsFormat(h, out);
+			dumpGraph(gp, h);
 
 			/***** do not alter ****/
 
