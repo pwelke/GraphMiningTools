@@ -14,7 +14,8 @@ NGENNAME = ngen
 WLNAME = wl
 PENAME = gpe
 TESTNAME = test
-ALLTARGETS = $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME) $(GFCNAME)
+L2UNAME = labeled2unlabeled
+ALLTARGETS = $(L2UNAME) $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME) $(GFCNAME)
 
 # CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
 CPPFLAGS = -g -Wall -Wextra -pedantic -W -std=gnu99 -lm -O2 -D NDEBUG -Wl,-O1
@@ -53,6 +54,8 @@ PEHELP = ./executables/patternExtractorHelp.help
 TESTOBJECTS = $(OBJECTS) ./executables/lowPointTest.o
 GFCOBJECTS = $(OBJECTS) ./executables/formatConverter.o 
 GFCHELP = ./executables/formatConverterHelp.help
+L2UOBJECTS = $(OBJECTS) ./executables/labeled2unlabeledMain.o 
+L2UHELP = ./executables/labeled2unlabeledMainHelp.help
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
@@ -116,6 +119,9 @@ $(GFCNAME): $(GFCHELP) $(GFCOBJECTS)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(TESTNAME): $(TESTOBJECTS)
+	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	
+$(L2UNAME): $(L2UOBJECTS) $(L2UHELP)
 	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 %.o : %.c %.h

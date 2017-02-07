@@ -1,0 +1,9 @@
+This is a converter that removes vertex and edge labels from
+a given graph database in aids format.
+
+Usage: ./labeled2unlabeled [FILE]
+
+If file is empty or -, read from stdin. This program always 
+prints to stdout.
+
+Written 2017-02-07 by Pascal Welke

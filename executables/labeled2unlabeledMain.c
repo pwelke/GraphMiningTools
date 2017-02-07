@@ -16,9 +16,9 @@
  * Print --help message
  */
 int printHelp() {
-#include "weisfeilerLehmanMainHelp.help"
-	unsigned char* help = executables_weisfeilerLehmanMainHelp_txt;
-	int len = executables_weisfeilerLehmanMainHelp_txt_len;
+#include "labeled2unlabeledMainHelp.help"
+	unsigned char* help = executables_labeled2unlabeledMainHelp_txt;
+	int len = executables_labeled2unlabeledMainHelp_txt_len;
 	if (help != NULL) {
 		int i=0;
 		for (i=0; i<len; ++i) {
@@ -28,6 +28,25 @@ int printHelp() {
 	} else {
 		fprintf(stderr, "Could not read help file\n");
 		return EXIT_FAILURE;
+	}
+}
+
+void removeLabelsFromGraph(struct Graph* g, char* newLabel) {
+	for (int vi=0; vi<g->n; ++vi) {
+		struct Vertex* v = g->vertices[vi];
+		if (v->isStringMaster) {
+			free(v->label);
+			v->isStringMaster = 0;
+		}
+		v->label = newLabel;
+
+		for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+			if (e->isStringMaster) {
+				free(e->label);
+				e->isStringMaster = 0;
+			}
+			e->label = newLabel;
+		}
 	}
 }
 
@@ -52,12 +71,6 @@ int main(int argc, char** argv) {
 	FILE* out = stdout;
 
 	/* user set variables to specify what needs to be done */
-	// Filter filter = count;
-	// Comparator comparator = pass;
-	// OutputOption oOption = graph;
-	// int value = -1;
-	// // can be set via -a. Used e.g. by spanningTreeListing filter, and randomSample
-	// int additionalParameter = 100;
 
 	/* parse command line arguments */
 	int arg;
@@ -97,14 +110,15 @@ int main(int argc, char** argv) {
 		createStdinIterator(gp);
 	}
 
+	char* label = "1";
+
 	/* iterate over all graphs in the database */
 	while ((g = iterateFile())) {
 		/* if there was an error reading some graph the returned n will be -1 */
 		if (g->n != -1) {
 			
-			struct Graph* h = weisfeilerLehmanRelabel(g, wlLabels, gp, sgp);
-			printGraphAidsFormat(h, out);
-			dumpGraph(gp, h);
+			removeLabelsFromGraph(g, label);
+			printGraphAidsFormat(g, out);
 
 			/***** do not alter ****/
 
