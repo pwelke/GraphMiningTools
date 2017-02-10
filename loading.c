@@ -181,11 +181,6 @@ void writeCurrentGraph(FILE* out) {
 }
 
 
-static inline int parseHeaderSlowAndSafe(int* id, int* activity, int* n, int* m) {
-	return sscanf(*HEAD_PTR, " # %i %i %i %i", id, activity, n, m);
-}
-
-
 /* from http://stackoverflow.com/questions/16826422/c-most-efficient-way-to-convert-string-to-int-faster-than-atoi 
 fastAtoi also is an altered version of code that can be found there. */
 static unsigned int digitValue (char c)
@@ -288,24 +283,6 @@ static inline int parseHeader(int* id, int* activity, int* n, int* m) {
 	/* return number of correctly read items.
 		See: C11(ISO/IEC 9899:201x) §6.5.8 Relational operators */
 	return 2 - agnostic_errors + (*n != -1) + (*m != -1);
-}
-
-
-static inline int parseEdgeSlowAndSafe(const char** currentPosition, int* v, int* w, int* label) {
-	int charsRead;
-	int ret = sscanf(*currentPosition, " %i %i %i%n", v, w, label, &charsRead);
-	*currentPosition += charsRead;
-	return ret;
-}
-
-
-static inline int parseEdge(const char** currentPosition, int* v, int* w, int* label) {
-	*v = fastAtoi(currentPosition);
-	*w = fastAtoi(currentPosition);
-	*label = fastAtoi(currentPosition);
-	/* return number of correctly read items.
-   		See: C11(ISO/IEC 9899:201x) §6.5.8 Relational operators */
-	return (*v != -1) + (*w != -1) + (*label != -1);
 }
 
 
