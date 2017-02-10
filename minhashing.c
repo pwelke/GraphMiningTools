@@ -12,9 +12,11 @@
 #include "listComponents.h"
 #include "intSet.h"
 #include "importantSubtrees.h"
-#include "minhashing.h"
 #include "localEasySubtreeIsomorphism.h"
 #include "subtreeIsoUtils.h"
+#include "vertexQueue.h"
+
+#include "minhashing.h"
 
 // PERMUTATIONS
 
@@ -534,22 +536,6 @@ int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphP
 
 // FOR COMPARISON: EXPLICIT EVALUATION USING THE PATTERN POSET
 
-
-static void addToBorder(struct Vertex* v, struct ShallowGraph* border, struct ShallowGraphPool* sgp) {
-	struct VertexList* e = getVertexList(sgp->listPool);
-	e->endPoint = v;
-	appendEdge(border, e);
-}
-
-
-static struct Vertex* popFromBorder(struct ShallowGraph* border, struct ShallowGraphPool* sgp) {
-	struct VertexList* e = popEdge(border);
-	struct Vertex* v = e->endPoint;
-	dumpVertexList(sgp->listPool, e);
-	return v;
-}
-
-
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	int nEvaluations = 0;
@@ -563,12 +549,12 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struc
 	// add minimal elements to border
 	struct ShallowGraph* border = getShallowGraph(sgp);
 	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
-		addToBorder(e->endPoint, border, sgp);
+		addToVertexQueue(e->endPoint, border, sgp);
 	}
 
 	// bfs evaluation with pruning through the poset
 	while (border->m != 0) {
-		struct Vertex* v = popFromBorder(border, sgp);
+		struct Vertex* v = popFromVertexQueue(border, sgp);
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
 			char match = isSubtree(g, pattern, gp);
@@ -578,7 +564,7 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struc
 				v->visited = 1;
 				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
 					if (e->endPoint->visited == 0) {
-						addToBorder(e->endPoint, border, sgp);
+						addToVertexQueue(e->endPoint, border, sgp);
 					}
 				}
 			} else {
@@ -605,7 +591,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 	// add minimal elements to border
 	struct ShallowGraph* border = getShallowGraph(sgp);
 	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
-		addToBorder(e->endPoint, border, sgp);
+		addToVertexQueue(e->endPoint, border, sgp);
 	}
 
 	// init data structure for embedding operator
@@ -614,7 +600,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 
 	// bfs evaluation with pruning through the poset
 	while (border->m != 0) {
-		struct Vertex* v = popFromBorder(border, sgp);
+		struct Vertex* v = popFromVertexQueue(border, sgp);
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
 			char match = 0;
@@ -656,7 +642,7 @@ struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Gra
 				v->visited = 1;
 				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
 					if (e->endPoint->visited == 0) {
-						addToBorder(e->endPoint, border, sgp);
+						addToVertexQueue(e->endPoint, border, sgp);
 					}
 				}
 			} else {
@@ -682,12 +668,12 @@ struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct Gra
 	// add minimal elements to border
 	struct ShallowGraph* border = getShallowGraph(sgp);
 	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
-		addToBorder(e->endPoint, border, sgp);
+		addToVertexQueue(e->endPoint, border, sgp);
 	}
 
 	// bfs evaluation with pruning through the poset
 	while (border->m != 0) {
-		struct Vertex* v = popFromBorder(border, sgp);
+		struct Vertex* v = popFromVertexQueue(border, sgp);
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
 			char match = isImportantSubtreeAbsolute(g, pattern, importance, gp);
@@ -696,7 +682,7 @@ struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct Gra
 				v->visited = 1;
 				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
 					if (e->endPoint->visited == 0) {
-						addToBorder(e->endPoint, border, sgp);
+						addToVertexQueue(e->endPoint, border, sgp);
 					}
 				}
 			} else {
@@ -721,12 +707,12 @@ struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct Gra
 	// add minimal elements to border
 	struct ShallowGraph* border = getShallowGraph(sgp);
 	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
-		addToBorder(e->endPoint, border, sgp);
+		addToVertexQueue(e->endPoint, border, sgp);
 	}
 
 	// bfs evaluation with pruning through the poset
 	while (border->m != 0) {
-		struct Vertex* v = popFromBorder(border, sgp);
+		struct Vertex* v = popFromVertexQueue(border, sgp);
 		struct Graph* pattern = (struct Graph*)(v->label);
 		if (v->visited == 0) {
 			char match = isImportantSubtreeRelative(g, pattern, importance, gp);
@@ -735,7 +721,7 @@ struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct Gra
 				v->visited = 1;
 				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
 					if (e->endPoint->visited == 0) {
-						addToBorder(e->endPoint, border, sgp);
+						addToVertexQueue(e->endPoint, border, sgp);
 					}
 				}
 			} else {
@@ -1035,7 +1021,7 @@ static int* getPathInDAG(struct Vertex* v) {
 static int* getLongestPathInDAG(struct Vertex* v, struct Graph* poset, struct ShallowGraphPool* sgp) {
 
 	struct ShallowGraph* border = getShallowGraph(sgp);
-	addToBorder(v, border, sgp);
+	addToVertexQueue(v, border, sgp);
 	v->lowPoint = -1;
 	v->d = 1;
 
@@ -1043,14 +1029,14 @@ static int* getLongestPathInDAG(struct Vertex* v, struct Graph* poset, struct Sh
 	// for sake of simplicity we count the number of times a vertex is in the border and
 	struct Vertex* w = NULL;
 	while (border->m != 0) {
-		w = popFromBorder(border, sgp);
+		w = popFromVertexQueue(border, sgp);
 		w->d -= 1;
 		if (w->d == 0) {
 			for (struct VertexList* e=w->neighborhood; e!=NULL; e=e->next) {
 				if ((e->endPoint->visited == 0) && (e->endPoint->d == 0)) {
 					e->endPoint->lowPoint = w->number;
 					e->endPoint->d += 1;
-					addToBorder(e->endPoint, border, sgp);
+					addToVertexQueue(e->endPoint, border, sgp);
 				}
 			}
 		}
