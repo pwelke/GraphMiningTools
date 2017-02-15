@@ -17,8 +17,8 @@ Add flow to edge flow and subtract flow from residual edge flow.
 Somebody else is responsible of checking whether this operation is valid.
 */
 void addFlow(struct VertexList* e, int flow) {
-	e->used += flow;
-	((struct VertexList*)e->label)->used -= flow;
+	e->flag += flow;
+	((struct VertexList*)e->label)->flag -= flow;
 }
 
 
@@ -61,7 +61,7 @@ char augmentWithCapacity(struct Vertex* s, struct Vertex* t) {
 
 	s->visited = 1;
 	for (struct VertexList* e=s->neighborhood; e!=NULL; e=e->next) {
-		if ((e->used < e->flag) && (e->endPoint->visited == 0)) {
+		if ((e->flag < e->used) && (e->endPoint->visited == 0)) {
 			char found = augmentWithCapacity(e->endPoint, t);
 			if (found) {
 				addFlow(e, 1);
@@ -140,9 +140,9 @@ void addResidualEdgesWithCapacity(struct Vertex* v, struct Vertex* w, int capaci
 	f1->endPoint = w;
 	f2 = inverseEdge(f1, lp);
 
-	f1->used = 0;
+	f1->used = capacity;
 	f2->used = capacity;
-	f1->flag = capacity;
+	f1->flag = 0;
 	f2->flag = capacity;
 	f1->label = (char*)f2;
 	f2->label = (char*)f1;
