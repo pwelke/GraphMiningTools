@@ -12,6 +12,15 @@ void setFlow(struct VertexList* e, int flow) {
 	((struct VertexList*)e->label)->used = 1 - flow;
 }
 
+/**
+Add flow to edge flow and subtract flow from residual edge flow.
+Somebody else is responsible of checking whether this operation is valid.
+*/
+void addFlow(struct VertexList* e, int flow) {
+	e->used += flow;
+	((struct VertexList*)e->label)->used -= flow;
+}
+
 
 /**
 dfs that searches for a path from s to t and augments it, 
@@ -30,6 +39,32 @@ char augment(struct Vertex* s, struct Vertex* t) {
 			char found = augment(e->endPoint, t);
 			if (found) {
 				setFlow(e, 1);
+				s->visited = 0;
+				return 1;
+			}
+		}
+	}
+	s->visited = 0;
+	return 0;
+}
+
+
+/**
+dfs that searches for a path from s to t and augments it by 1,
+if found.
+returns 1 if there is a path or 0 otherwise.
+*/
+char augmentWithCapacity(struct Vertex* s, struct Vertex* t) {
+	if (s == t) {
+		return 1;
+	}
+
+	s->visited = 1;
+	for (struct VertexList* e=s->neighborhood; e!=NULL; e=e->next) {
+		if ((e->used < e->flag) && (e->endPoint->visited == 0)) {
+			char found = augmentWithCapacity(e->endPoint, t);
+			if (found) {
+				addFlow(e, 1);
 				s->visited = 0;
 				return 1;
 			}
@@ -80,6 +115,35 @@ void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp) {
 
 	f1->used = 0;
 	f2->used = 1;
+	f1->label = (char*)f2;
+	f2->label = (char*)f1;
+
+	addEdge(v, f1);
+	addEdge(w, f2);
+}
+
+
+/**
+Method for constructing the residual graph. 
+Creates an edge e between v and w and its residual edge f
+between w and v.
+e->used = 0, f->used = capacity
+e->flag = f->flag = capacity
+e->label = f, f->label = e (for constant time augmenting)
+*/
+void addResidualEdgesWithCapacity(struct Vertex* v, struct Vertex* w, int capacity, struct ListPool* lp) {
+	struct VertexList* f1;
+	struct VertexList* f2;
+
+	f1 = getVertexList(lp);
+	f1->startPoint = v;
+	f1->endPoint = w;
+	f2 = inverseEdge(f1, lp);
+
+	f1->used = 0;
+	f2->used = capacity;
+	f1->flag = capacity;
+	f2->flag = capacity;
 	f1->label = (char*)f2;
 	f2->label = (char*)f1;
 
