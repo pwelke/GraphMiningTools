@@ -10,7 +10,7 @@ void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp);
 void initBipartite(struct Graph* B);
 char augment(struct Vertex* s, struct Vertex* t);
 void removeSandT(struct Graph* B, struct Vertex* s, struct Vertex* t, struct GraphPool* gp);
-void setFlag(struct VertexList* e, int flag);
+void setFlow(struct VertexList* e, int flow);
 
 struct Vertex* getMatchedVertex(struct Vertex* a);
 char isMatched(struct Vertex* a);

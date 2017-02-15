@@ -5,11 +5,11 @@
 
 
 /**
-set edge to flag (either 0 or 1) and residual edge
-to 1-flag */
-void setFlag(struct VertexList* e, int flag) {
-	e->flag = flag;
-	((struct VertexList*)e->label)->flag = 1 - flag;
+set edge flow to flow (either 0 or 1) and residual edge flow
+to 1-used */
+void setFlow(struct VertexList* e, int flow) {
+	e->used = flow;
+	((struct VertexList*)e->label)->used = 1 - flow;
 }
 
 
@@ -26,10 +26,10 @@ char augment(struct Vertex* s, struct Vertex* t) {
 	}
 	s->visited = 1;
 	for (e=s->neighborhood; e!=NULL; e=e->next) {
-		if ((e->flag == 0) && (e->endPoint->visited == 0)) {
+		if ((e->used == 0) && (e->endPoint->visited == 0)) {
 			char found = augment(e->endPoint, t);
 			if (found) {
-				setFlag(e, 1);
+				setFlow(e, 1);
 				s->visited = 0;
 				return 1;
 			}
@@ -47,7 +47,7 @@ matched. a needs to be in the set A of the bipartition.
 struct Vertex* getMatchedVertex(struct Vertex* a) {
 	struct VertexList* e;
 	for (e=a->neighborhood; e!=NULL; e=e->next) {
-		if (e->flag == 1) {
+		if (e->used == 1) {
 			return e->endPoint;
 		}
 	}
@@ -66,7 +66,7 @@ char isMatched(struct Vertex* a) {
 Method for constructing the residual graph. 
 Creates an edge e between v and w and its residual edge f
 between w and v.
-e->flag = 0, f->flag = 1
+e->used = 0, f->used = 1
 e->label = f, f->label = e (for constant time augmenting)
 */
 void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp) {
@@ -78,8 +78,8 @@ void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp) {
 	f1->endPoint = w;
 	f2 = inverseEdge(f1, lp);
 
-	f1->flag = 0;
-	f2->flag = 1;
+	f1->used = 0;
+	f2->used = 1;
 	f1->label = (char*)f2;
 	f2->label = (char*)f1;
 
@@ -111,15 +111,15 @@ struct Graph* __cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 
 
 /**
-Init the bipartite graph such that edges have flag 0, residual 
-edges have flag 1.
+Init the bipartite graph such that edges have ->used 0, residual
+edges have ->used 1.
 */
 void initBipartite(struct Graph* B) {
 	int i;
 	struct VertexList* e;
 	for (i=0; i<B->number; ++i) {
 		for (e=B->vertices[i]->neighborhood; e!=NULL; e=e->next) {
-			setFlag(e, 0);
+			setFlow(e, 0);
 		}
 	}
 }
@@ -164,10 +164,10 @@ That is, the cast ((struct VertexList*)e->label) is valid.
 The residual capacity of those edges is expected to be 
 0 for (a,b) and
 1 for (b,a)
-and needs to be encoded in the ->flag member of each edge.
+and needs to be encoded in the ->used member of each edge.
 ->visited needs to be initialized to 0 for each vertex.
 
-The algorithm changes the ->flag values of edges in g
+The algorithm changes the ->used values of edges in g
 */
 int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp) {
 	int v;
@@ -212,10 +212,10 @@ static char augment_B_rec(struct Graph* B, struct Vertex* v) {
 	}
 	v->visited = 1;
 	for (e=v->neighborhood; e!=NULL; e=e->next) {
-		if ((e->flag == 0) && (e->endPoint->visited == 0)) {
+		if ((e->used == 0) && (e->endPoint->visited == 0)) {
 			char found = augment_B_rec(B, e->endPoint);
 			if (found) {
-				setFlag(e, 1);
+				setFlow(e, 1);
 				v->visited = 0;
 				return 1;
 			}
@@ -260,10 +260,10 @@ That is, the cast ((struct VertexList*)e->label) is valid.
 The residual capacity of those edges is expected to be
 0 for (a,b) and
 1 for (b,a)
-and needs to be encoded in the ->flag member of each edge.
+and needs to be encoded in the ->used member of each edge.
 ->visited needs to be initialized to 0 for each vertex.
 
-The algorithm changes the ->flag values of edges in g and the ->d values of vertices.
+The algorithm changes the ->used values of edges in g and the ->d values of vertices.
 
 Difference to bipartiteMatchingFastAndDirty() is that this method does not
 explicitly add source and sink vertices but stores coverage of vertices by matching in the ->d flag of vertices.
@@ -295,10 +295,10 @@ That is, the cast ((struct VertexList*)e->label) is valid.
 The residual capacity of those edges is expected to be
 0 for (a,b) and
 1 for (b,a)
-and needs to be encoded in the ->flag member of each edge.
+and needs to be encoded in the ->used member of each edge.
 ->visited needs to be initialized to 0 for each vertex.
 
-The algorithm changes the ->flag values of edges in g and the ->d values of vertices.
+The algorithm changes the ->used values of edges in g and the ->d values of vertices.
 
 Due to the claim mentioned above, we can stop searching for a matching that covers A the
 instant we have found a vertex where no augmenting path starts. Hence, in this situation
@@ -322,7 +322,7 @@ char bipartiteMatchingTerminateEarly(struct Graph* B) {
 
 
 /**
-Returns ShallowGraph containing a copy of each edge from A to B that has ->flag == 1.
+Returns ShallowGraph containing a copy of each edge from A to B that has ->used == 1.
 These edges form a matching, if bipartiteMatchingFastAndDirty was invoked on g
 */
 struct ShallowGraph* getMatching(struct Graph* g, struct ShallowGraphPool* sgp) {
@@ -332,7 +332,7 @@ struct ShallowGraph* getMatching(struct Graph* g, struct ShallowGraphPool* sgp) 
 	
 	for (v=0; v<g->number; ++v) {
 		for (e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
-			if (e->flag == 1) {
+			if (e->used == 1) {
 				struct VertexList* f = shallowCopyEdge(e, sgp->listPool);
 				f->label = NULL;
 				appendEdge(matching, f);
