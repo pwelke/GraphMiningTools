@@ -5,6 +5,21 @@
 
 
 /**
+ * Bipartite matching algorithms and network flow algorithms.
+ *
+ * Somewhat unintuitively, the following conventions are used:
+ *
+ * We are dealing with directed networks. Each edge e has a capacity, some flow on it, and a residual edge e'
+ * which are stored as follows
+ *
+ * - e->label points to e' and e'->label points to e
+ * - e->used = e'->used = capacity
+ * - e->flag = capacity - e'->flag = flow on e
+ *
+ */
+
+
+/**
 set edge to flag (either 0 or 1) and residual edge
 to 1-flag */
 void setFlag(struct VertexList* e, int flag) {
@@ -23,8 +38,8 @@ void addFlow(struct VertexList* e, int flow) {
 
 
 /**
-dfs that searches for a path from s to t and augments it, 
-if found.
+dfs that searches for a path from s to t in a network where every edge has capacity 1
+and augments it, if found.
 returns 1 if there is a path or 0 otherwise.
 */
 char augment(struct Vertex* s, struct Vertex* t) {
@@ -51,7 +66,9 @@ char augment(struct Vertex* s, struct Vertex* t) {
 
 /**
 dfs that searches for a path from s to t and augments it by 1,
-if found.
+if found. Not restricted to capacity 1 networks (however, maximum
+capacities should be polynomial in graph size, o/w there might be
+superpolynomial many augmentation steps).
 returns 1 if there is a path or 0 otherwise.
 */
 char augmentWithCapacity(struct Vertex* s, struct Vertex* t) {
@@ -127,8 +144,8 @@ void addResidualEdges(struct Vertex* v, struct Vertex* w, struct ListPool* lp) {
 Method for constructing the residual graph. 
 Creates an edge e between v and w and its residual edge f
 between w and v.
-e->used = 0, f->used = capacity
-e->flag = f->flag = capacity
+e->used = capacity, f->used = capacity
+e->flag = 0. f->flag = capacity
 e->label = f, f->label = e (for constant time augmenting)
 */
 void addResidualEdgesWithCapacity(struct Vertex* v, struct Vertex* w, int capacity, struct ListPool* lp) {
@@ -156,7 +173,7 @@ void addResidualEdgesWithCapacity(struct Vertex* v, struct Vertex* w, int capaci
 Safety utility function. Given a bipartite graph, the
 matching algorithm needs some strange modifications to 
 work. If the bipartite graph should be used somewhere else
-lateron, it is better to create a local copy. 
+later on, it is better to create a local copy.
 */
 struct Graph* __cloneStrangeBipartite(struct Graph* g, struct GraphPool* gp) {
 	int v; 
