@@ -6,6 +6,8 @@
 #include <limits.h>
 
 #include "vertexQueue.h"
+#include "bipartiteMatching.h"
+
 
 /**
  * Count the number of reachable vertices.
@@ -50,8 +52,9 @@ void computeAllReachabilityCounts(struct Graph* g, struct ShallowGraphPool* sgp)
 
 
 
-struct Graph* createVertexCoverOfPoset(struct Graph* g, struct GraphPool* gp) {
+struct Graph* createVertexCoverFlowInstanceOfPoset(struct Graph* g, struct GraphPool* gp) {
 	struct Graph* flowInstance = createGraph(2 * g->n, gp);
+	int maxCapacity = g->n;
 
 	// source and sink of s-t flow instance
 	struct Vertex* s = flowInstance->vertices[0];
@@ -63,35 +66,20 @@ struct Graph* createVertexCoverOfPoset(struct Graph* g, struct GraphPool* gp) {
 	for (int v=1; v<g->n; ++v) {
 		struct Vertex* vStart = flowInstance->vertices[2 * v];
 		struct Vertex* vEnd = flowInstance->vertices[2 * v + 1];
-		// add v -> v' edge
-		struct VertexList* vertexEdge = getVertexList(gp->listPool);
-		vertexEdge->startPoint = vStart;
-		vertexEdge->endPoint = vEnd;
-		vertexEdge->flag = INT_MAX;
-		addEdge(vStart, vertexEdge);
 
-		// add copy of original edge, they have infinite capacity
+		// add edge for each vertex in the original graph
+		addResidualEdgesWithCapacity(vStart, vEnd, maxCapacity, gp->listPool);
+
+		// add copy of original edges and residuals, they have infinite capacity
 		for (struct VertexList* e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
-			struct VertexList* edgeEdge = getVertexList(gp->listPool);
-			edgeEdge->startPoint = vEnd;
-			edgeEdge->endPoint = flowInstance->vertices[2 * e->endPoint->number];
-			edgeEdge->flag = INT_MAX;
-			addEdge(vEnd, edgeEdge);
+			addResidualEdgesWithCapacity(vEnd, flowInstance->vertices[2 * e->endPoint->number], maxCapacity, gp->listPool);
 		}
 
 		// add edge from s to vEnd with capacity 1
-		struct VertexList* newEdge = getVertexList(gp->listPool);
-		newEdge->startPoint = s;
-		newEdge->endPoint = vEnd;
-		newEdge->flag = 1;
-		addEdge(s, newEdge);
+		addResidualEdgesWithCapacity(s, vEnd, 1, gp->listPool);
 
 		// add edge from v to t
-		newEdge = getVertexList(gp->listPool);
-		newEdge->startPoint = vStart;
-		newEdge->endPoint = t;
-		newEdge->flag = 1;
-		addEdge(vStart, newEdge);
+		addResidualEdgesWithCapacity(vStart, t, 1, gp->listPool);
 	}
 
 	return flowInstance;
