@@ -9,7 +9,11 @@
 #include "importantSubtrees.h"
 
 
+/**
+ * Return a list of graphs corresponding to the connected components of g (or NULL, if g is empty).
+ */
 struct Graph* graph2Components(struct Graph* g, struct GraphPool* gp) {
+
 	// init visited to 0
 	for (int v=0; v<g->n; ++v) {
 		g->vertices[v]->lowPoint = -1;
@@ -23,36 +27,38 @@ struct Graph* graph2Components(struct Graph* g, struct GraphPool* gp) {
 		}
 	}
 
-	// create graph struct for each found component
-	struct Graph** components = malloc(nComponents * sizeof(struct Graph*));
-	for (int i=0; i<nComponents; ++i) {
-		components[i] = getGraph(gp);
+	struct Graph* result = NULL;
+	if (nComponents > 0) {
+		// create graph struct for each found component
+		struct Graph** components = malloc(nComponents * sizeof(struct Graph*));
+		for (int i=0; i<nComponents; ++i) {
+			components[i] = getGraph(gp);
+		}
+		// make list from array.
+		for (int i=0; i<nComponents-1; ++i) {
+			components[i]->next = components[i+1];
+		}
+		// count number of vertices in each component
+		for (int v=0; v<g->n; ++v) {
+			int c = g->vertices[v]->lowPoint;
+			++(components[c]->n);
+		}
+		// create vertex arrays for graphs
+		for (int i=0; i<nComponents; ++i) {
+			setVertexNumber(components[i], components[i]->n);
+		}
+		// store vertices of g in the corresponding component graphs
+		for (int v=0; v<g->n; ++v) {
+			int c = g->vertices[v]->lowPoint;
+			int newpos = components[c]->number;
+			components[c]->vertices[newpos] = g->vertices[v];
+			g->vertices[v]->number = newpos;
+			components[c]->number++;
+		}
+		// TODO set components->m, components->number, ...
+		result = components[0];
+		free(components);
 	}
-	// make list from array.
-	for (int i=0; i<nComponents-1; ++i) {
-		components[i]->next = components[i+1];
-	}
-	// count number of vertices in each component
-	for (int v=0; v<g->n; ++v) {
-		int c = g->vertices[v]->lowPoint;
-		++(components[c]->n);
-	}
-	// create vertex arrays for graphs
-	for (int i=0; i<nComponents; ++i) {
-		setVertexNumber(components[i], components[i]->n);
-	}
-	// store vertices of g in the corresponding component graphs
-	for (int v=0; v<g->n; ++v) {
-		int c = g->vertices[v]->lowPoint;
-		int newpos = components[c]->number;
-		components[c]->vertices[newpos] = g->vertices[v];
-		g->vertices[v]->number = newpos;
-		components[c]->number++;
-	}
-	// TODO set components->m, components->number, ...
-	struct Graph* result = components[0];
-	free(components);
-
 	return result;
 }
 
