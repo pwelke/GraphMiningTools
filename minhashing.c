@@ -1027,9 +1027,9 @@ static int* getLongestPathInDAG(struct Vertex* v, struct Graph* poset, struct Sh
 
 	// use ->lowPoint to store the a parent of w
 	// for sake of simplicity we count the number of times a vertex is in the border and
-	struct Vertex* w = NULL;
-	while (border->m != 0) {
-		w = popFromVertexQueue(border, sgp);
+	struct Vertex* highestVertex = v;
+	for (struct Vertex* w=popFromVertexQueue(border, sgp); w!=NULL;  w=popFromVertexQueue(border, sgp)) {
+		highestVertex = w;
 		w->d -= 1;
 		if (w->d == 0) {
 			for (struct VertexList* e=w->neighborhood; e!=NULL; e=e->next) {
@@ -1045,7 +1045,7 @@ static int* getLongestPathInDAG(struct Vertex* v, struct Graph* poset, struct Sh
 	// backtrack using the ->lowPoints from here.
 	int pathLength = 2;
 	int* path = NULL;
-	for (struct Vertex* x=w; x->lowPoint!=-1; x=poset->vertices[x->lowPoint]) {
+	for (struct Vertex* x=highestVertex; x->lowPoint!=-1; x=poset->vertices[x->lowPoint]) {
 		++pathLength;
 	}
 
@@ -1054,7 +1054,7 @@ static int* getLongestPathInDAG(struct Vertex* v, struct Graph* poset, struct Sh
 	path[1] = v->number;
 
 	pathLength -= 1;
-	for (struct Vertex* x=w; x->lowPoint!=-1; x=poset->vertices[x->lowPoint]) {
+	for (struct Vertex* x=highestVertex; x->lowPoint!=-1; x=poset->vertices[x->lowPoint]) {
 		path[pathLength] = x->number;
 		--pathLength;
 	}
