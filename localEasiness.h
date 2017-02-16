@@ -5,6 +5,4 @@ long int* computeLocalEasinessExactly(struct ShallowGraph* biconnectedComponents
 int getMinLocalEasiness(struct Graph* g, long int maxBound, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 int getMaxLocalEasiness(struct Graph* g, long int maxBound, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
-
-
 #endif
