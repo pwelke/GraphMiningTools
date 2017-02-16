@@ -887,6 +887,7 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, str
 	int readCount = 0;
 
 	if (head != 2) {
+		free(buffer);
 		return 0;
 	}
 
