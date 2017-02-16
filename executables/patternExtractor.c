@@ -711,14 +711,14 @@ int main(int argc, char** argv) {
 	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:
 	case treePatternsFastRelImp:
-		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
+		dumpEvaluationPlan(evaluationPlan, gp);
 		break;
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
 	case dfsForTrees:
 	case latticePathForTrees:
 	case latticeLongestPathForTrees:
-		evaluationPlan = dumpEvaluationPlan(evaluationPlan, gp);
+		dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
 		break;
 	case treePatterns:

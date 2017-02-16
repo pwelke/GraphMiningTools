@@ -6,6 +6,7 @@
 #include "listComponents.h"
 #include "cactustree.h"
 #include "bipartiteMatching.h"
+
 // Test for subgraphisomorphismus between a `pattern` tree and a cactus `graph`
 int cactusTreeSubIso(struct Graph * graph, struct Graph *pattern, struct GraphPool *gPool, struct ShallowGraphPool *sgPool){
 
@@ -623,7 +624,7 @@ struct TreeList *mergeTreeLists(struct TreeList *one, struct TreeList *two){
     //hlp1 may be null, if one had only one element.
     if(!hlp1) return two;
     if(hlp1->treeID>hlp2->treeID){
-        hlp3=hlp1;
+//        hlp3=hlp1; // value is never read.
         hlp1=hlp2;
         hlp2=hlp1;
     }
