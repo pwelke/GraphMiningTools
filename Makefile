@@ -17,6 +17,7 @@ TESTNAME = test
 L2UNAME = labeled2unlabeled
 ALLTARGETS = $(L2UNAME) $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME) $(GFCNAME)
 
+CC = gcc
 # CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
 CPPFLAGS = -g -Wall -Wextra -pedantic -W -std=gnu99 -lm -O2 -D NDEBUG -Wl,-O1
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
@@ -74,58 +75,58 @@ all: $(ALLTARGETS)
 help: $(HELPFILES)
 
 $(GFNAME): $(GFHELP) $(GFOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(CSTRNAME): $(CSTRHELP) $(CSTROBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(CPKNAME): $(CPKHELP) $(CPKOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(STSNAME): $(STSHELP) $(STSOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(TPKNAME): $(TPKHELP) $(TPKOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(LWMNAME): $(LWMHELP) $(LWMOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(CCDNAME): $(CCDHELP) $(CCDOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(TCINAME): $(TCIHELP) $(TCIOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(PERFNAME): $(PERFHELP) $(PERFOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(LWGNAME): $(LWGHELP) $(LWGOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(GENNAME): $(GENHELP) $(GENOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(NGENNAME): $(NGENHELP) $(NGENOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(WLNAME): $(WLHELP) $(WLOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 	
 $(PENAME): $(PEHELP) $(PEOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 	
 $(GFCNAME): $(GFCHELP) $(GFCOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 $(TESTNAME): $(TESTOBJECTS)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 	
-$(L2UNAME): $(L2UOBJECTS) $(L2UHELP)
-	@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
+$(L2UNAME): $(L2UHELP) $(L2UOBJECTS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
 
 %.o : %.c %.h
-	@gcc $(CPPFLAGS) -c $< -o $@
+	@$(CC) $(CPPFLAGS) -c $< -o $@
 
 clean:
 	@rm -f *.o
