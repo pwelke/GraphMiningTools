@@ -357,7 +357,7 @@ struct Graph* iterateFile() {
 	}
 
 	/* read vertices */
-	if ((g->vertices = malloc(g->n * sizeof(struct Graph*))) == NULL) {
+	if ((g->vertices = malloc(g->n * sizeof(struct Vertex*))) == NULL) {
 		fprintf(stderr, "Error allocating vertices\n");
 		dumpGraph(FI_GP, g);
 		return NULL;

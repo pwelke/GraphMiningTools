@@ -251,7 +251,7 @@ struct Graph* spanningTreeConverter(struct ShallowGraph* localTrees, struct Grap
 
 // init characteristics array
 void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree) {
-	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStore));
+	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStoreList*));
 	for (int v=0; v<sptTree->nRoots; ++v) {
 		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
 	}
@@ -269,7 +269,7 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 	sptTree.nRoots = blockTree.nRoots;
 	sptTree.roots = blockTree.roots;
 	sptTree.parents = blockTree.parents;
-	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct ShallowGraph*));
+	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct Graph*));
 
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
@@ -316,7 +316,7 @@ struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, stru
 	sptTree.nRoots = blockTree.nRoots;
 	sptTree.roots = blockTree.roots;
 	sptTree.parents = blockTree.parents;
-	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct ShallowGraph*));
+	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct Graph*));
 
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);

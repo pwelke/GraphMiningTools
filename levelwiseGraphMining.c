@@ -738,7 +738,7 @@ struct SubtreeIsoDataStoreList* initLocalEasyForVertices(struct SpanningtreeTree
 
 
 int** getPostorders(struct Graph** db, int nGraphs) {
-	int** postorderDB = malloc(nGraphs * sizeof(int**));
+	int** postorderDB = malloc(nGraphs * sizeof(int*));
 	for (int g=0; g<nGraphs; ++g) {
 		postorderDB[g] = getPostorder(db[g], 0);
 	}
@@ -1059,7 +1059,7 @@ size_t initIterativeBFSForExactLocalEasy(// input
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
 	// store pointers for final garbage collection
-	struct IterativeBfsForLocalEasyDataStructures* x = malloc(sizeof(struct IterativeBfsForForestsDataStructures));
+	struct IterativeBfsForLocalEasyDataStructures* x = malloc(sizeof(struct IterativeBfsForLocalEasyDataStructures));
 	x->nGraphs = nGraphs;
 	x->extensionEdges = extensionEdges;
 	x->extensionEdgesVertexStore = extensionEdgesVertexStore;
@@ -1115,7 +1115,7 @@ size_t initIterativeBFSForSampledLocalEasy(// input
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
 	// store pointers for final garbage collection
-	struct IterativeBfsForLocalEasyDataStructures* x = malloc(sizeof(struct IterativeBfsForForestsDataStructures));
+	struct IterativeBfsForLocalEasyDataStructures* x = malloc(sizeof(struct IterativeBfsForLocalEasyDataStructures));
 	x->nGraphs = nGraphs;
 	x->extensionEdges = extensionEdges;
 	x->extensionEdgesVertexStore = extensionEdgesVertexStore;
