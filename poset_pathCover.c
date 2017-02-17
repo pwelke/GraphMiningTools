@@ -2,6 +2,7 @@
  * Implementation of an algorithm to find a minimum number of paths covering all vertices in a poset.
  */
 
+#include <malloc.h>
 #include <stddef.h>
 #include <limits.h>
 
@@ -52,7 +53,7 @@ void computeAllReachabilityCounts(struct Graph* g, struct ShallowGraphPool* sgp)
 
 
 
-struct Graph* createVertexCoverFlowInstanceOfPoset(struct Graph* g, struct GraphPool* gp) {
+static struct Graph* createVertexCoverFlowInstanceOfPoset(struct Graph* g, struct GraphPool* gp) {
 	struct Graph* flowInstance = createGraph(2 * g->n, gp);
 	int maxCapacity = g->n;
 
@@ -168,7 +169,7 @@ static int* getPathInFlowInstance(struct Vertex* v) {
  * Also assumes that the poset starts with an artificial vertex at position 0 that points to the smallest elements, but
  * is not a part of the poset.
  */
-struct ShallowGraph* getPathCoverOfPoset(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp) {
 
 	struct Graph* flowInstance = createVertexCoverFlowInstanceOfPoset(g, gp);
 
@@ -217,13 +218,19 @@ struct ShallowGraph* getPathCoverOfPoset(struct Graph* g, struct GraphPool* gp, 
 	}
 
 	// how many paths are there?
-	for (int v=2; v<)
-
-	// find paths from sources to sinks
-	struct ShallowGraph* paths = NULL;
+	*nPaths = 0;
 	for (int v=2; v<flowInstance->n; ++v) {
-		while (flowInstance->vertices[v]->visited > 0) {
+		if (flowInstance->vertices[v]->visited > 0) {
+			*nPaths += flowInstance->vertices[v]->visited;
+		}
+	}
 
+	// find paths from sources to sinks and store them in output
+	int** paths = malloc(*nPaths * sizeof(int*));
+	for (int v=2, i=0; v<flowInstance->n; ++v) {
+		while (flowInstance->vertices[v]->visited > 0) {
+			paths[i] = getPathInFlowInstance(flowInstance->vertices[v]);
+			++i;
 		}
 	}
 
