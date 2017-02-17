@@ -11,6 +11,7 @@
 #include "../minhashing.h"
 #include "../localEasySubtreeIsomorphism.h"
 #include "../sampleSubtrees.h"
+#include "../poset_pathCover.h"
 #include "patternExtractor.h"
 
 
@@ -312,6 +313,35 @@ int* randomSubset(int n, int k) {
     return realloc(array, k * sizeof(int));
 }
 
+
+static void printPatternPosetAidsFormat(struct Graph* g, FILE* out) {
+	int i;
+	// print header line
+	fprintf(out, "# %i %i %i %i\n", g->number, g->activity, g->n, g->m);
+
+	// print vertex labels
+	fputs("-1 ", out);
+	for (i=1; i<g->n; ++i) {
+		fprintf(out, "%i ", ((struct Graph*)g->vertices[i]->label)->number);
+	}
+	fputc('\n', out);
+
+	// print edges
+	for (i=0; i<g->n; ++i) {
+		struct VertexList* e;
+		for (e=g->vertices[i]->neighborhood; e!=NULL; e=e->next) {
+			if (e->startPoint->number < e->endPoint->number) {
+				fprintf(out, "%i %i subgraph ", e->startPoint->number + 1, e->endPoint->number + 1);
+			}
+		}
+	}
+	fputc('\n', out);
+	fputc('$', out);
+	fputc('\n', out);
+	fflush(out);
+}
+
+
 int main(int argc, char** argv) {
 
 	typedef enum {triangles, bruteForceTriples,
@@ -320,7 +350,7 @@ int main(int argc, char** argv) {
 		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr,
 		dotApproxForTrees, dotApproxLocalEasy,
-		dfsForTrees, latticePathForTrees, latticeLongestPathForTrees
+		dfsForTrees, latticePathForTrees, latticeLongestPathForTrees, dilworthsCoverForTrees
 	} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
@@ -458,7 +488,10 @@ int main(int argc, char** argv) {
 				method = latticeLongestPathForTrees;
 				break;
 			}
-
+			if (strcmp(optarg, "dilworthsCoverForTrees") == 0) {
+				method = dilworthsCoverForTrees;
+				break;
+			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -520,6 +553,7 @@ int main(int argc, char** argv) {
 	case dfsForTrees:
 	case latticePathForTrees:
 	case latticeLongestPathForTrees:
+	case dilworthsCoverForTrees:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -573,6 +607,7 @@ int main(int argc, char** argv) {
 	case dfsForTrees:
 	case latticePathForTrees:
 	case latticeLongestPathForTrees:
+	case dilworthsCoverForTrees:
 		// these methods only need the pattern poset and its reverse
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
@@ -614,6 +649,26 @@ int main(int argc, char** argv) {
 		createStdinIterator(gp);
 	}
 
+
+	// TODO remove this debug stuff
+	{
+		int nPaths = 0;
+		int** paths = NULL;
+		switch (method) {
+		case dilworthsCoverForTrees:
+			printPatternPosetAidsFormat(evaluationPlan.F, stdout);
+			paths = getPathCoverOfPoset(evaluationPlan.F, &nPaths, gp);
+			for (int i=0; i<nPaths; ++i) {
+				for (int j=1; j<paths[i][0]; ++j) {
+					fprintf(stderr, "%i ", paths[i][j]);
+				}
+				fputc('\n', stderr);
+			}
+			break;
+		default:
+			break;
+		}
+	}
 	/* iterate over all graphs in the database */
 	while ((g = iterateFile())) {
 		/* if there was an error reading some graph the returned n will be -1 */
@@ -674,6 +729,9 @@ int main(int argc, char** argv) {
 			case latticeLongestPathForTrees:
 				fingerprints = latticeLongestPathEmbeddingForTrees(g, evaluationPlan, gp, sgp);
 				break;
+			case dilworthsCoverForTrees:
+				// do nothing, for now
+				break;
 			}
 			// output
 			switch (method) {
@@ -718,6 +776,7 @@ int main(int argc, char** argv) {
 	case dfsForTrees:
 	case latticePathForTrees:
 	case latticeLongestPathForTrees:
+	case dilworthsCoverForTrees:
 		dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
 		break;
