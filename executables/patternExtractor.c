@@ -657,7 +657,7 @@ int main(int argc, char** argv) {
 		switch (method) {
 		case dilworthsCoverForTrees:
 			printPatternPosetAidsFormat(evaluationPlan.F, stdout);
-			paths = getPathCoverOfPoset(evaluationPlan.F, &nPaths, gp);
+			paths = getPathCoverOfPoset(evaluationPlan.F, &nPaths, gp, sgp);
 			for (int i=0; i<nPaths; ++i) {
 				for (int j=1; j<paths[i][0]; ++j) {
 					fprintf(stderr, "%i ", paths[i][j]);

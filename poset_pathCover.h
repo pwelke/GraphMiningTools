@@ -10,6 +10,6 @@
 
 int numberOfReachableVertices(struct Vertex* v, struct ShallowGraphPool* sgp);
 void computeAllReachabilityCounts(struct Graph* g, struct ShallowGraphPool* sgp);
-int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp);
+int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 #endif /* POSET_PATHCOVER_H_ */

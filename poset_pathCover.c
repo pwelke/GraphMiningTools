@@ -87,79 +87,71 @@ static struct Graph* createVertexCoverFlowInstanceOfPoset(struct Graph* g, struc
 }
 
 
-static int* getPathInFlowInstance(struct Vertex* v) {
+static int* getLongestPathInFlowInstance(struct Vertex* v, struct Graph* flowInstance, struct ShallowGraphPool* sgp) {
 
-	// DFS without backtracking in DAG
-	int pathLength = 2;
-	for (struct VertexList* e=v->neighborhood; e!=NULL && (e->flag > 0); e=e->endPoint->neighborhood) {
-		++pathLength;
+	struct ShallowGraph* border = getShallowGraph(sgp);
+	addToVertexQueue(v, border, sgp);
+	v->lowPoint = -1;
+	v->d = 1;
+
+	// use ->lowPoint to store the a parent of w
+	// for sake of simplicity we count the number of times a vertex is in the border and
+	// at the end of this loop highestVertex stores the last visited pattern that,
+	// by construction, is on the highest level of the poset.
+	struct Vertex* highestVertex = v;
+	for (struct Vertex* w=popFromVertexQueue(border, sgp); w!=NULL; w=popFromVertexQueue(border, sgp)) {
+		highestVertex = w;
+		w->d -= 1;
+		if (w->d == 0) {
+			for (struct VertexList* e=w->neighborhood; e!=NULL; e=e->next) {
+				if ((e->flag > 0) && (e->endPoint->d == 0)) {
+					e->endPoint->lowPoint = w->number;
+					e->endPoint->d += 1;
+					addToVertexQueue(e->endPoint, border, sgp);
+				}
+			}
+		}
 	}
 
-	// debug
-	if (pathLength % 2 == 1) {
-		fprintf(stderr, "Pathlength is odd. This must not happen.\n");
+	// remove path from graph by deleting flow on edges and fixing excess at start and endpoint of path
+	for (struct Vertex* x=highestVertex; x->lowPoint!=-1; x=flowInstance->vertices[x->lowPoint]) {
+		for (struct VertexList* e=flowInstance->vertices[x->lowPoint]->neighborhood; e!=NULL; e=e->next) {
+			if (e->endPoint == x) {
+				--e->flag;
+				break; // ...looping over neighbors
+			}
+		}
 	}
-
-	int* path = malloc((pathLength / 2) * sizeof(int));
-	path[0] = pathLength / 2;
-	path[1] = v->number;
-
-	pathLength = 2;
-	// DFS without backtracking in DAG
 	--v->visited;
-	for (struct VertexList* e=v->neighborhood; e!=NULL && (e->flag > 0); e=e->endPoint->neighborhood) {
-		--e->flag;
-		--e->endPoint->visited;
-		path[pathLength] = e->endPoint->number;
-		++pathLength;
+	++highestVertex->visited;
+
+	// we want to obtain paths in the original poset we obtained flowInstance from.
+	// Therefore we count only those vertices on the current path in flowinstance that have even ->number
+	// and will store their ->numbers divided by two to obtain the vertex ids in the original poset.
+	// This should work.
+	int pathLength = 2;
+	for (struct Vertex* x=highestVertex; x->lowPoint!=-1; x=flowInstance->vertices[x->lowPoint]) {
+		if (x->number % 2 == 0) {
+			++pathLength;
+		}
+	}
+
+	// alloc space for path and store vertex ids
+	int* path = malloc(pathLength * sizeof(int));
+	path[0] = pathLength;
+
+	// to obtain a path in the original flowInstance, we keep only those vertices that have even ->number and convert them back
+	// to original numbers by dividing by two.
+	pathLength -= 1;
+	for (struct Vertex* x=highestVertex; pathLength > 0; x=flowInstance->vertices[x->lowPoint]) {
+		if (x->number % 2 == 0) {
+			path[pathLength] = x->number / 2;
+			--pathLength;
+		}
 	}
 
 	return path;
 }
-
-//static int* getLongestPathInFlowInstance(struct Vertex* v, struct Graph* poset, struct ShallowGraphPool* sgp) {
-//
-//	struct ShallowGraph* border = getShallowGraph(sgp);
-//	addToVertexQueue(v, border, sgp);
-//	v->lowPoint = -1;
-//	v->d = 1;
-//
-//	// use ->lowPoint to store the a parent of w
-//	// for sake of simplicity we count the number of times a vertex is in the border and
-//	struct Vertex* highestVertex = v;
-//	for (struct Vertex* w=popFromVertexQueue(border, sgp); w!=NULL;  w=popFromVertexQueue(border, sgp)) {
-//		highestVertex = w;
-//		w->d -= 1;
-//		if (w->d == 0) {
-//			for (struct VertexList* e=w->neighborhood; e!=NULL; e=e->next) {
-//				if ((e->endPoint->visited == 0) && (e->endPoint->d == 0)) {
-//					e->endPoint->lowPoint = w->number;
-//					e->endPoint->d += 1;
-//					addToVertexQueue(e->endPoint, border, sgp);
-//				}
-//			}
-//		}
-//	}
-//	// here w stores the last visited pattern that, by construction, is on the highest level of the poset.
-//	// backtrack using the ->lowPoints from here.
-//	int pathLength = 2;
-//	int* path = NULL;
-//	for (struct Vertex* x=highestVertex; x->lowPoint!=-1; x=poset->vertices[x->lowPoint]) {
-//		++pathLength;
-//	}
-//
-//	path = malloc(pathLength * sizeof(int));
-//	path[0] = pathLength;
-//	path[1] = v->number;
-//
-//	pathLength -= 1;
-//	for (struct Vertex* x=highestVertex; x->lowPoint!=-1; x=poset->vertices[x->lowPoint]) {
-//		path[pathLength] = x->number;
-//		--pathLength;
-//	}
-//
-//	return path;
-//}
 
 
 
@@ -169,7 +161,7 @@ static int* getPathInFlowInstance(struct Vertex* v) {
  * Also assumes that the poset starts with an artificial vertex at position 0 that points to the smallest elements, but
  * is not a part of the poset.
  */
-int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp) {
+int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	struct Graph* flowInstance = createVertexCoverFlowInstanceOfPoset(g, gp);
 
@@ -194,12 +186,15 @@ int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp) {
 	// init ->visited of vertices
 	dumpVertexList(gp->listPool, flowInstance->vertices[0]->neighborhood);
 	dumpVertexList(gp->listPool, flowInstance->vertices[1]->neighborhood);
+	flowInstance->vertices[0]->neighborhood = NULL;
+	flowInstance->vertices[1]->neighborhood = NULL;
+
 	for (int v=2; v<flowInstance->n; ++v) {
 		struct VertexList* keep = NULL;
 		flowInstance->vertices[v]->visited = 0;
 		for (struct VertexList* e=flowInstance->vertices[v]->neighborhood; e!=NULL; e=flowInstance->vertices[v]->neighborhood) {
 			flowInstance->vertices[v]->neighborhood = e->next;
-			if ((e->flag != 0) || (e->startPoint->number > e->endPoint->number)) {
+			if ((e->flag != 0) && (e->startPoint->number < e->endPoint->number)) {
 				e->next = keep;
 				keep = e;
 			} else {
@@ -217,6 +212,9 @@ int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp) {
 		}
 	}
 
+	printGraph(flowInstance);
+	fflush(stdout);
+
 	// how many paths are there?
 	*nPaths = 0;
 	for (int v=2; v<flowInstance->n; ++v) {
@@ -229,7 +227,7 @@ int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp) {
 	int** paths = malloc(*nPaths * sizeof(int*));
 	for (int v=2, i=0; v<flowInstance->n; ++v) {
 		while (flowInstance->vertices[v]->visited > 0) {
-			paths[i] = getPathInFlowInstance(flowInstance->vertices[v]);
+			paths[i] = getLongestPathInFlowInstance(flowInstance->vertices[v], flowInstance, sgp);
 			++i;
 		}
 	}
