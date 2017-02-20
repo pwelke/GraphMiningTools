@@ -16,144 +16,165 @@ Options:
 	                       faster than brute force enumeration of all induced
 	                       subgraphs of size 3.
     
-    triples:               Compute a set of fingerprints based on the set of all
-                           induced subgraphs of size 3.
+    triples:               Compute a set of fingerprints based on the set of
+                           all induced subgraphs of size 3.
     
-    treePatterns:          Given a set of tree patterns (specified via -f or -c), 
-                           return the set of tree patterns that match the graph 
-                           (i.e. those that are subgraph isomorphic to the graph). 
-                           This method only supports forest databases and tree 
-                           patterns.
+    treePatterns:          Given a set of tree patterns (specified via -f or
+                           -c), return the set of tree patterns that match
+                           the graph (i.e. those that are subgraph
+                           isomorphic to the graph). This method only
+                           supports forest databases and tree patterns.
     
-    treePatternsFast:      Given a set of tree patterns (specified via -f or -c), 
-                           return the set of tree patterns that match the graph 
-                           (i.e. those that are subgraph isomorphic to the graph). 
-                           This method only supports forest databases and tree 
-                           patterns. This version assumes that the set of patterns 
-                           is closed under taking subgraphs and uses apriori-like
+    treePatternsFast:      Given a set of tree patterns (specified via -f or
+                           -c), return the set of tree patterns that match
+                           the graph (i.e. those that are subgraph
+                           isomorphic to the graph). This method only
+                           supports forest databases and tree patterns. This
+                           version assumes that the set of patterns is
+                           closed under taking subgraphs and uses priori-like
                            pruning for each graph to speed up computations.
                            
-    localEasyPatternsFast: Given a set of tree patterns (specified via -f or -c), 
-                           return a subset of the tree patterns that match the graph 
-                           (i.e. those that are subgraph isomorphic to the graph). 
-                           This method supports forest and general graph databases 
-                           but only tree patterns. 
-                           For this it uses the localEasySampling embedding opera-
-                           tor. The number of sampled local trees per root can be
-                           specified via the -i parameter and must be an int >= 1.
-                           This version assumes that the set of patterns is closed 
-                           under taking subgraphs and uses apriori-like pruning
-                           for each graph to speed up computations. The spanning 
-                           trees for each graph are sampled once before the traver-
-                           sal of the pattern poset and not resampled for different
+    localEasyPatternsFast: Given a set of tree patterns (specified via -f or
+                           -c), return a subset of the tree patterns that 
+                           match the graph (i.e. those that are subgraph 
+                           isomorphic to the graph). This method supports 
+                           forest and general graph databases but only tree 
+                           patterns. 
+                           For this it uses the localEasySampling embedding 
+                           operator. The number of sampled local trees per 
+                           root can be specified via the -i parameter and 
+                           must be an int >= 1.
+                           This version assumes that the set of patterns is 
+                           closed under taking subgraphs and uses 
+                           apriori-like pruning for each graph to speed up 
+                           computations. The spanning trees for each graph 
+                           are sampled once before the traversal of the 
+                           pattern poset and not resampled for different 
                            patterns.
                            
-    localEasyPatternsResampling:  Given a set of tree patterns (specified via -f 
-                                  or -c), return a subset of the tree patterns that 
-                                  match the graph (i.e. those that are subgraph 
-                                  isomorphic to the graph). This method supports 
-                                  forest and general graph databases but only tree 
-                                  patterns. 
-                                  It uses the localEasySampling embedding opera-
-                                  tor. The number of sampled local trees per root 
-                                  can be specified via the -i parameter and must 
-                                  be an int >= 1. This version tests each pattern 
-                                  independently of any apriori pruning of the 
-                                  pattern space and resamples spanning trees for
-                                  each pattern.
+    localEasyPatternsResampling:  Given a set of tree patterns (specified 
+                           via -f or -c), return a subset of the tree 
+                           patterns that match the graph (i.e. those that 
+                           are subgraph isomorphic to the graph). This 
+                           method supports forest and general graph 
+                           databases but only tree patterns. It uses the 
+                           localEasySampling embedding operator. The number 
+                           of sampled local trees per root can be specified 
+                           via the -i parameter and must be an int >= 1. 
+                           This version tests each pattern independently of 
+                           any apriori pruning of the pattern space and 
+                           resamples spanning trees foreach pattern.
                                   
-    treePatternsResampling:       Given a set of tree patterns (specified via -f 
-                                  or -c), return a subset of the tree patterns that 
-                                  match the graph (i.e. those that are subgraph 
-                                  isomorphic to the graph). This method supports 
-                                  forest and general graph databases but only tree 
-                                  patterns. 
-                                  It uses the probabilistic subtree embedding opera-
-                                  tor described in DS16 with resampling for each 
-                                  pattern. The number of sampled spanningtrees for g 
-                                  can be specified via the -i parameter and must 
-                                  be an int >= 1. This version tests each pattern 
-                                  independently of any apriori pruning of the 
-                                  pattern space and resamples spanning trees for
-                                  each pattern.
+    treePatternsResampling:   Given a set of tree patterns (specified via -f 
+                           or -c), return a subset of the tree patterns that 
+                           match the graph (i.e. those that are subgraph 
+                           isomorphic to the graph). This method supports 
+                           forest and general graph databases but only tree 
+                           patterns. It uses the probabilistic subtree 
+                           embedding operator described in DS16 with 
+                           resampling for each pattern. The number of 
+                           sampled spanningtrees for g can be specified via 
+                           the -i parameter and must be an int >= 1. This 
+                           version tests each pattern independently of any 
+                           apriori pruning of the pattern space and 
+                           resamples spanning trees foreach pattern.
     
-    minHash:               Compute a min-hash array of size k (specified via -k)
-                           for the feature set computed by treePatternsFast. It 
-                           uses the ideas described in our paper (citation needed) 
-                           to do this fast. The current version only works for 
-                           tree patterns and forest databases.
+    minHash:               Compute a min-hash array of size k (specified via 
+                           -k) for the feature set computed by 
+                           treePatternsFast. It uses the ideas described in 
+                           our paper (citation needed) to do this fast. The 
+                           current version only works for tree patterns and 
+                           forest databases.
     
-    minHashAbs:            Min-hashing as above with the absolute importance embedding 
-                           operator. Importance threshold needs to be specified via
-                           -i (default 5). The current version only works for 
-                           tree patterns and forest databases.
+    minHashAbs:            Min-hashing as above with the absolute importance 
+                           embedding operator. Importance threshold needs to 
+                           be specified via -i (default 5). The current 
+                           version only works for tree patterns and forest 
+                           databases.
     
-    minHashRel:            Min-hashing as above with the relative importance embedding
-                           operator. Importance threshold needs to be specified via
-                           -i (default 0.5). The current version only works for 
-                           tree patterns and forest databases. 
+    minHashRel:            Min-hashing as above with the relative importance 
+                           embedding operator. Importance threshold needs to 
+                           be specified via -i (default 0.5). The current 
+                           version only works for  tree patterns and forest 
+                           databases. 
     
-    minHashAndOr:          Same as above with embedding operator being a funky gap
-                           amplificator. Only works for exactly 16 sampled trees per
-                           graph. Hat tip to the input agnostic algorithm guy that
-                           cries in vain. 
+    minHashAndOr:          Same as above with embedding operator being a 
+                           funky gap amplificator. Only works for exactly 16 
+                           sampled trees per graph. Hat tip to the input 
+                           agnostic algorithm guy that cries in vain.  
                            
-    dotApproxForTrees:     Given a forest database (as above) and some tree patterns,
-                           compute an approximation of the embedding vector by randomly
-                           sampling -k fixed dimensions. The method returns vectors of 
-                           the length of the pattern set containing three possible values:
-                           1 pattern known to be present in graph
-                           0 unknown
-                           -1 pattern known to be most likely not contained in the graph
-                           Great, isn't it? METHOD NOT THOROUGHLY TESTED!
+    dotApproxForTrees:     Given a forest database (as above) and some tree 
+                           patterns, compute an approximation of the 
+                           embedding vector by randomly sampling -k fixed 
+                           dimensions. The method returns vectors of the 
+                           length of the pattern set containing three 
+                           possible values: 1 pattern known to be present in 
+                           graph 0 unknown -1 pattern known to be most 
+                           likely not contained in the graph Great, isn't 
+                           it? METHOD NOT THOROUGHLY TESTED!
                            
-    dotApproxForLocalEasy: Given a general graph database, this method does and outputs
-                           the same as dotApproxForTrees, just using the local easy samp-
-                           ling algorithm (which requires the sampling parameter to be set
-                           via -i parameter. METHOD NOT THOROUGHLY TESTED!
+    dotApproxForLocalEasy: Given a general graph database, this method does 
+                           and outputs the same as dotApproxForTrees, just 
+                           using the local easy sampling algorithm (which 
+                           requires the sampling parameter to be set via -i 
+                           parameter. METHOD NOT THOROUGHLY TESTED!
                            
-    dfsForTrees:           Given a forest database (as above) and some tree patterns,
-                           compute the exact embedding, hopefully saving some evaluations 
-                           compared to the apriori method by doing a dfs that utilizes the
-                           monotonicity of the embedding operator on the pattern poset.
+    dfsForTrees:           Given a forest database (as above) and some tree 
+                           patterns, compute the exact embedding, hopefully 
+                           saving some evaluations compared to the apriori 
+                           method by doing a dfs that utilizes the 
+                           monotonicity of the embedding operator on the 
+                           pattern poset.
                            
-    latticePathForTrees:   Given a forest database (as above) and some tree patterns,
-                           compute the exact embedding, hopefully saving some evaluations 
-                           compared to the apriori method by doing a binary search on paths
-                           in the pattern poset. The paths are constructed on the spot from
-                           the lowest pattern available to a largest pattern for both of 
-                           which there is no embedding info known, yet.
+    latticePathForTrees:   Given a forest database (as above) and some tree 
+                           patterns, compute the exact embedding, hopefully 
+                           saving some evaluations compared to the apriori 
+                           method by doing a binary search on paths in the 
+                           pattern poset. The paths are constructed on the 
+                           spot from the lowest pattern available to a 
+                           largest pattern for both of which there is no 
+                           embedding info known, yet.
                            
-    latticeLongestPathForTrees:  The difference to the method above is that here we
-                           always construct a longest path in the part of the pattern
-                           poset that is not covered yet. 
+    latticeLongestPathForTrees:  The difference to the method above is that 
+                           here we always construct a longest path in the 
+                           part of the pattern poset that is not covered 
+                           yet. 
+
+    dilworthsCoverForTrees:  We cover the patterns with a minimum number of 
+                           paths in the poset. On these paths, we run a 
+                           binary search for each path and graph in the db 
+                           to obtain a worst case runtime that only depends 
+                           on the pattern set, and not on the support of 
+                           thepatterns in the db.
 
 
--k INT:                    Specify the number of permutations used by the minHash* 
-                           methods.
+-k INT:                    Specify the number of permutations used by the 
+                           minHash* methods.
                            
                            
--i DOUBLE or INT:          Specify the importance threshold used by the various 
-                           methods that respect importance. For absolute importance,
-                           the value should be a positive integer (default 5), for
-                           relative importance, the value should be larger than zero
+-i DOUBLE or INT:          Specify the importance threshold used by the 
+                           various methods that respect importance. For 
+                           absolute importance, the value should be a 
+                           positive integer (default 5), for relative 
+                           importance, the value should be larger than zero 
                            and not larger than one (default 0.5).
                            
                            
--c FILENAME:               Load patterns from file in canonical string format.
+-c FILENAME:               Load patterns from file in canonical string 
+                           format.
 
 
 -f FILENAME:               Load patterns from file in AIDS99 format.
 
 
 -r INT:                    Init random number generator (e.g. needed by 
-                           localEasyPatternsFast) with given seed. Defaults to current
-                           system time.
+                           localEasyPatternsFast) with given seed. Defaults 
+                           to current system time.
                            
 
-To run the spanning tree sampling algorithms described in our paper, first transform
-your graph database of choice to a forest database using the program ts. Then mine some
-frequent subtrees using lwg on that forest db. With the patterns from the latter and new 
-(or old) forests from the former, you can now get feature representations and min-hashes 
-and whatnot to have jolly fun. 
-
+To run the spanning tree sampling algorithms described in our paper, first 
+transform your graph database of choice to a forest database using the 
+program ts. Then mine some frequent subtrees using lwg on that forest db. 
+With the patterns from the latter and new (or old) forests from the former, 
+you can now get feature representations and min-hashes and whatnot to have 
+jolly fun. 
