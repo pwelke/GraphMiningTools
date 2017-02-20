@@ -255,6 +255,7 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 	for (int v=0; v<subgraph->n; ++v) {
 		subgraph->vertices[v] = NULL;
 	}
+	dumpIntSet(subgraphs);
 	dumpGraph(gp, subgraph);
 
 	return edgeCount;
@@ -1140,3 +1141,23 @@ struct IntSet* latticeLongestPathEmbeddingForTrees(struct Graph* g, struct Evalu
 	return features;
 }
 
+
+struct IntSet* staticPathCoverEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
+
+	int nEvaluations = 0;
+	cleanEvaluationPlan(p);
+
+	for (size_t i=0; i<p.sketchSize; ++i) {
+		nEvaluations += binarySearchEvaluation(g, p, p.shrunkPermutations[i], gp);
+	}
+
+	struct IntSet* features = getIntSet();
+	for (int i=1; i<p.poset->n; ++i) {
+		if (p.poset->vertices[i]->visited == 1) {
+			addIntSortedNoDuplicates(features, i - 1);
+		}
+	}
+
+	fprintf(stderr, "%i\n", nEvaluations);
+	return features;
+}
