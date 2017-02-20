@@ -2,8 +2,8 @@ A small program to compute canonical strings for trees.
 Implemented 2015 by Pascal Welke.
 
 Input is a database in the usual format, output is one line per graph, which
-is either a canonical string of the graph if the graph is a tree, or 'No Tree'
-if the graph is not a tree.
+is either a canonical string of the graph if the graph is a tree, or 'No 
+Tree' if the graph is not a tree.
 
 Usage: cstring [options] [FILE]
 

@@ -1,5 +1,5 @@
-This program generates a database of random graphs according to the Erdos-Renyi
-model.
+This program generates a database of random graphs according to the 
+Erdos-Renyi model.
 
 Usage: ggen [ARGS] 
 or ggen [ARGS] FILE

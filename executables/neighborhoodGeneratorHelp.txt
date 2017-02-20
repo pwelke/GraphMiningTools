@@ -1,12 +1,18 @@
 Generates a new set of graphs corresponding to the 1-neighborhoods of each
 vertex in each graph of the input database.
 
+Usage: ./ngen [PARAM] [FILE]
+
+By default, or if FILE is '-', ts reads from stdin. It always outputs to
+stdout.
+
 Parameters
 
 -s SELECTOR     being
 
-    neighbors:  Only output the graph induced by the neighbors of each vertex,
-                i.e. the vertex itself is not included.
+    neighbors:  Only output the graph induced by the neighbors of each 
+                vertex, i.e. the vertex itself is not included.
 
-    disk:       Output the graph induced by the vertex and all of its neighbors.    
+    disk:       Output the graph induced by the vertex and all of its 
+                neighbors.    
 

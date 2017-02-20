@@ -16,77 +16,100 @@ Usage: ts [options] [FILE]
 By default, or if FILE is '-', ts reads from stdin. It always outputs to
 stdout.
 
-options: options (except -h, -u, -v, -w) are always followed by a value.
+Parameters: (options (except -h, -u, -v, -w) are always followed by a value.)
 
-    without parameters: display this help screen
+    -h: display this help screen
+
 
     -k v: number of trees you want to sample (default 1)
+
 
     -t v: choose maximum number of spanning trees
         of a graph for which the listing algorithm should be invoked
         (default 100)
 
+
     -s 'method': tree subset selection method
+
         wilson:  sample k spanning trees uniformly at random using Wilsons 
                  algorithm (default)
+
         kruskal: sample k spanning trees using a uniformly drawn permutation
                  of the edge set as input to Kruskals MST algorithm 
+
         listing: sample k spanning trees uniformly at random using explicit
                  enumeration of all spanning trees
+
         mix:     sample k spanning trees uniformly at random using listing,
                  if there are expected to be less than t spanning trees, and
                  wilsons algorithm otherwise
-        cactus:  sample k spanning trees uniformly at random using a specialized
-                 method if the graph is a cactus and mix otherwise.
-        partialListing: sample one spanning tree uniformly at random by 
-                        returning the ith spt for some random i between 1 and t 
-                        if expected number of spanning trees is smaller than t. 
-                        If there are expected to be more than t spanning trees, 
-                        return one sampled using wilsons algorithm.
-        bridgeForest:   return all trees that are left if the biconnected blocks
-                        of the graph are removed
-        listOrSample:   if there are expected to be less than t spanning trees,
-                        return all of them, otherwise sample k spanning trees
-                        uniformly at random using wilson
 
-    -w: Apply one iteration of Weisfeiler-Lehman labeling before doing anything 
-        else
+        cactus:  sample k spanning trees uniformly at random using a 
+                 specialized method if the graph is a cactus and mix 
+                 otherwise.
+
+        partialListing: sample one spanning tree uniformly at random by 
+                        returning the ith spt for some random i between 1 
+                        and t if expected number of spanning trees is 
+                        smaller than t. If there are expected to be more 
+                        than t spanning trees, return one sampled using 
+                        wilsons algorithm.
+
+        bridgeForest:   return all trees that are left if the biconnected 
+                        blocks of the graph are removed
+
+        listOrSample:   if there are expected to be less than t spanning 
+                        trees, return all of them, otherwise sample k 
+                        spanning trees uniformly at random using wilson
+
+
+    -w: Apply one iteration of Weisfeiler-Lehman labeling before doing 
+        anything else.
+
 
     -u: Skip the initial test if graphs are connected. Might be useful
         for bridgeForest, or if you have ensured that all input graphs are 
         connected
 
-    -d: Also process disconnected graphs. Implies -u. The selection method and 
-        choice of parameters is applied to each connected component of each 
-        graph g. Therefore, for most selection methods, k*c trees are returned
-        for each graph g, where c is the number of connected components of g.
 
-    -r 'randomSeed': specify the random seed used for the sampling methods. If 
-                     not present, it is initialized from the current system 
-                     time.
+    -d: Also process disconnected graphs. Implies -u. The selection method 
+        and choice of parameters is applied to each connected component of 
+        each graph g. Therefore, for most selection methods, k*c trees are 
+        returned for each graph g, where c is the number of connected 
+        components of g.
 
-    -v: Be verbose and print the average number of trees found per graph up to 
-        isomorphism.
+
+    -r 'randomSeed': specify the random seed used for the sampling methods. 
+                     If not present, it is initialized from the current 
+                     system time.
+
+
+    -v: Be verbose and print the average number of trees found per graph up
+        to isomorphism.
+
 
     -o 'format': choose output format
-       canonicalString: output a list of canonical strings of sampled trees for 
-                        each graph. This is the input expected by lwm (default)
-       forest / graph:  Output sampled trees as forest in the standard graph db 
-                        format. Graph number and activity of each forest are 
-                        equal to the values of the input graph.
-       tree:            Output sampled trees as a single tree in the standard 
-                        graph db format. A new vertex with label equal to the 
-                        graph id is added and connected to one vertex in each 
-                        tree in the above forest with an edge, that as well has 
-                        a label equal to the graph id. This might be useful to 
-                        feed the output to a tree mining algorithm that can 
-                        only handle tree transactions, not forest transactions. 
+
+       canonicalString: output a list of canonical strings of sampled trees 
+                        for each graph. This is the input expected by lwm 
+                        (default)
+
+       forest / graph:  Output sampled trees as forest in the standard graph 
+                        db format. Graph number and activity of each forest 
+                        are equal to the values of the input graph.
+
+       tree:            Output sampled trees as a single tree in the
+                        standard graph db format. A new vertex with label 
+                        equal to the graph id is added and connected to one 
+                        vertex in each tree in the above forest with an 
+                        edge, that as well has a label equal to the graph 
+                        id. This might be useful to feed the output to a 
+                        tree mining algorithm that can only handle tree 
+                        transactions, not forest transactions. 
+
        multiple:        Output sampled trees as forest in standard graph db
-                        format. Different to forest / graph, this choice multiplies
-                        isomorphic spanning trees to their true multiplicity, i.e.
-                        sampling k spanning trees results in k connected components
-                        for all connected graphs in the input (particularly for 
-                        trees).
-
-    -h:  display this help
-
+                        format. Different to forest / graph, this choice 
+                        multiplies isomorphic spanning trees to their true 
+                        multiplicity, i.e. sampling k spanning trees results 
+                        in k connected components for all connected graphs 
+                        in the input (particularly for  trees).
