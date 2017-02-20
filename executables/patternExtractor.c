@@ -598,7 +598,7 @@ int main(int argc, char** argv) {
 			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
 			permutations[i] = posetPermutationShrink(permutations[i], nPatterns, permutationSizes[i]);
 		}
-		evaluationPlan = buildEvaluationPlan(permutations, permutationSizes, sketchSize, patternPoset, gp);
+		evaluationPlan = buildMinHashEvaluationPlan(permutations, permutationSizes, sketchSize, patternPoset, gp);
 		break;
 	case treePatternsFast:
 	case localEasyPatternsFast:
@@ -610,24 +610,24 @@ int main(int argc, char** argv) {
 		// these methods only need the pattern poset and its reverse
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
-		evaluationPlan.F = patternPoset;
-		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
+		evaluationPlan.poset = patternPoset;
+		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
 		break;
 	case dilworthsCoverForTrees:
 		// these methods need the pattern poset, its reverse, and the static set of paths for evaluation
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
-		evaluationPlan.F = patternPoset;
-		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
-		evaluationPlan.shrunkPermutations = getPathCoverOfPoset(evaluationPlan.F, &(evaluationPlan.orderLength), gp, sgp);
+		evaluationPlan.poset = patternPoset;
+		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
+		evaluationPlan.shrunkPermutations = getPathCoverOfPoset(evaluationPlan.poset, &(evaluationPlan.orderLength), gp, sgp);
 		break;
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
 		// these methods need pattern poset, its reverse, and a set of random patterns of given size
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
-		evaluationPlan.F = patternPoset;
-		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
+		evaluationPlan.poset = patternPoset;
+		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
 		randomProjection = randomSubset(patternPoset->n, sketchSize);
 		break;
 	default:
@@ -671,16 +671,16 @@ int main(int argc, char** argv) {
 				fingerprints = computeResampledTreeFullEmbedding(g, absImportance, patterns, nPatterns, gp, sgp);
 				break;
 			case treePatternsFast:
-				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.F, gp, sgp);
+				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.poset, gp, sgp);
 				break;
 			case localEasyPatternsFast:
-				fingerprints = explicitEmbeddingForLocalEasyOperator(g, evaluationPlan.F, absImportance, gp, sgp);
+				fingerprints = explicitEmbeddingForLocalEasyOperator(g, evaluationPlan.poset, absImportance, gp, sgp);
 				break;
 			case treePatternsFastAbsImp:
-				fingerprints = explicitEmbeddingForAbsImportantTrees(g, evaluationPlan.F, absImportance, gp, sgp);
+				fingerprints = explicitEmbeddingForAbsImportantTrees(g, evaluationPlan.poset, absImportance, gp, sgp);
 				break;
 			case treePatternsFastRelImp:
-				fingerprints = explicitEmbeddingForRelImportantTrees(g, evaluationPlan.F, relImportance, gp, sgp);
+				fingerprints = explicitEmbeddingForRelImportantTrees(g, evaluationPlan.poset, relImportance, gp, sgp);
 				break;
 			case minHashTree:
 				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp);
@@ -724,7 +724,7 @@ int main(int argc, char** argv) {
 				break;
 			case dotApproxForTrees:
 			case dotApproxLocalEasy:
-				printIntArrayNoId((int*)fingerprints, evaluationPlan.F->n);
+				printIntArrayNoId((int*)fingerprints, evaluationPlan.poset->n);
 				free(fingerprints);
 				break;
 			default:

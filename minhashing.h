@@ -17,8 +17,8 @@ struct PosPair {
 };
 
 struct EvaluationPlan {
-	struct Graph* F;
-	struct Graph* reverseF;
+	struct Graph* poset;
+	struct Graph* reversePoset;
 	struct PosPair* order;
 	int** shrunkPermutations;
 	size_t orderLength;
@@ -31,7 +31,7 @@ int posetPermutationMark(int* permutation, size_t n, struct Graph* F);
 int* posetPermutationShrink(int* permutation, size_t n, size_t shrunkSize);
 
 // EVALUATION PLAN
-struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F, struct GraphPool* gp);
+struct EvaluationPlan buildMinHashEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F, struct GraphPool* gp);
 struct EvaluationPlan dumpEvaluationPlan(struct EvaluationPlan p, struct GraphPool* gp);
 
 // BUILD TREE POSET

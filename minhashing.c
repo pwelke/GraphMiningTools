@@ -122,10 +122,10 @@ struct Graph* reverseGraph(struct Graph* g, struct GraphPool* gp) {
 }
 
 
-struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F, struct GraphPool* gp) {
+struct EvaluationPlan buildMinHashEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F, struct GraphPool* gp) {
 	struct EvaluationPlan p = {0};
-	p.F = F;
-	p.reverseF = reverseGraph(F, gp);
+	p.poset = F;
+	p.reversePoset = reverseGraph(F, gp);
 	p.sketchSize = K;
 	p.shrunkPermutations = shrunkPermutations;
 
@@ -152,15 +152,11 @@ struct EvaluationPlan buildEvaluationPlan(int** shrunkPermutations, size_t* perm
 			// sort current level of the permutations based on the pattern id. This ensures that lower level
 			// patterns come before higher level patterns in each level of the order.
 			qsort_r(&(p.order[old_pos]), position - old_pos, sizeof(struct PosPair), &posPairSorter, &p);
-//			for (size_t i=old_pos; i<position; ++i) {
-//				printf("(%zu %zu: %i) ", p.order[i].level, p.order[i].permutation, p.shrunkPermutations[p.order[i].permutation][p.order[i].level]);
-//			}
-//			printf("\n");
 		}
 
 	} else {
 		fprintf(stderr, "could not allocate space for evaluation plan. this program will break now.\n");
-		p.F = NULL;
+		p.poset = NULL;
 		p.order = NULL;
 		p.shrunkPermutations = NULL;
 		p.orderLength = 0;
@@ -178,12 +174,12 @@ struct EvaluationPlan dumpEvaluationPlan(struct EvaluationPlan p, struct GraphPo
 		free(p.shrunkPermutations[i]);
 	}
 	free(p.shrunkPermutations);
-	for (int v=1; v<p.F->n; ++v) { // start from 1, as empty pattern has no graph attached
-		dumpGraph(gp, (struct Graph*)(p.F->vertices[v]->label));
-		p.F->vertices[v]->label = NULL;
+	for (int v=1; v<p.poset->n; ++v) { // start from 1, as empty pattern has no graph attached
+		dumpGraph(gp, (struct Graph*)(p.poset->vertices[v]->label));
+		p.poset->vertices[v]->label = NULL;
 	}
-	dumpGraph(gp, p.reverseF);
-	dumpGraph(gp, p.F);
+	dumpGraph(gp, p.reversePoset);
+	dumpGraph(gp, p.poset);
 	struct EvaluationPlan empty = {0};
 	return empty;
 }
@@ -303,9 +299,9 @@ struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct G
 
 
 static void cleanEvaluationPlan(struct EvaluationPlan p) {
-	for (int i=0; i<p.F->n; ++i) {
-		p.F->vertices[i]->visited = 0;
-		p.reverseF->vertices[i]->visited = 0;
+	for (int i=0; i<p.poset->n; ++i) {
+		p.poset->vertices[i]->visited = 0;
+		p.reversePoset->vertices[i]->visited = 0;
 	}
 }
 
@@ -323,7 +319,7 @@ static void rayOfLight(struct Vertex* v, int component, struct EvaluationPlan p)
 
 	/* mark vertex as visited */
 	v->visited = component;
-	p.F->vertices[v->number]->visited = component;
+	p.poset->vertices[v->number]->visited = component;
 
 
 	/*recursive call for all neighbors that are not visited so far */
@@ -346,9 +342,9 @@ static void rayOfLight(struct Vertex* v, int component, struct EvaluationPlan p)
  */
 static void updateEvaluationPlan(struct EvaluationPlan p, int patternId, char match) {
 	if (match) {
-		rayOfLight(p.reverseF->vertices[patternId], 1, p);
+		rayOfLight(p.reversePoset->vertices[patternId], 1, p);
 	} else {
-		markConnectedComponent(p.F->vertices[patternId], -1);
+		markConnectedComponent(p.poset->vertices[patternId], -1);
 	}
 }
 
@@ -382,17 +378,17 @@ int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphP
 		}
 
 		// check if we already evaluated the embedding operator for this pattern or found a subpattern that had no match
-		if (p.F->vertices[currentGraphNumber]->visited != 0) {
+		if (p.poset->vertices[currentGraphNumber]->visited != 0) {
 			// either the pattern with id currentGraphNumber was evaluated positively and we hence have found the
 			// min value for the current permutation or we need to continue
-			if (p.F->vertices[currentGraphNumber]->visited == 1) {
+			if (p.poset->vertices[currentGraphNumber]->visited == 1) {
 				sketch[current.permutation] = current.level;
 			}
 			continue;
 		}
 
 		// evaluate the embedding operator
-		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+		struct Graph* currentGraph = (struct Graph*)(p.poset->vertices[currentGraphNumber]->label);
 		char match = isSubtree(g, currentGraph, gp);
 		++nEvaluations;
 
@@ -427,17 +423,17 @@ int* fastMinHashForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, i
 		}
 
 		// check if we already evaluated the embedding operator for this pattern or found a subpattern that had no match
-		if (p.F->vertices[currentGraphNumber]->visited != 0) {
+		if (p.poset->vertices[currentGraphNumber]->visited != 0) {
 			// either the pattern with id currentGraphNumber was evaluated positively and we hence have found the
 			// min value for the current permutation or we need to continue
-			if (p.F->vertices[currentGraphNumber]->visited == 1) {
+			if (p.poset->vertices[currentGraphNumber]->visited == 1) {
 				sketch[current.permutation] = current.level;
 			}
 			continue;
 		}
 
 		// evaluate the embedding operator
-		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+		struct Graph* currentGraph = (struct Graph*)(p.poset->vertices[currentGraphNumber]->label);
 		char match = isImportantSubtreeAbsolute(g, currentGraph, importance, gp);
 		++nEvaluations;
 
@@ -472,17 +468,17 @@ int* fastMinHashForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, d
 		}
 
 		// check if we already evaluated the embedding operator for this pattern or found a subpattern that had no match
-		if (p.F->vertices[currentGraphNumber]->visited != 0) {
+		if (p.poset->vertices[currentGraphNumber]->visited != 0) {
 			// either the pattern with id currentGraphNumber was evaluated positively and we hence have found the
 			// min value for the current permutation or we need to continue
-			if (p.F->vertices[currentGraphNumber]->visited == 1) {
+			if (p.poset->vertices[currentGraphNumber]->visited == 1) {
 				sketch[current.permutation] = current.level;
 			}
 			continue;
 		}
 
 		// evaluate the embedding operator
-		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+		struct Graph* currentGraph = (struct Graph*)(p.poset->vertices[currentGraphNumber]->label);
 		char match = isImportantSubtreeRelative(g, currentGraph, importance, gp);
 		++nEvaluations;
 
@@ -517,17 +513,17 @@ int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphP
 		}
 
 		// check if we already evaluated the embedding operator for this pattern or found a subpattern that had no match
-		if (p.F->vertices[currentGraphNumber]->visited != 0) {
+		if (p.poset->vertices[currentGraphNumber]->visited != 0) {
 			// either the pattern with id currentGraphNumber was evaluated positively and we hence have found the
 			// min value for the current permutation or we need to continue
-			if (p.F->vertices[currentGraphNumber]->visited == 1) {
+			if (p.poset->vertices[currentGraphNumber]->visited == 1) {
 				sketch[current.permutation] = current.level;
 			}
 			continue;
 		}
 
 		// evaluate the embedding operator
-		struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+		struct Graph* currentGraph = (struct Graph*)(p.poset->vertices[currentGraphNumber]->label);
 		char match = andorEmbedding(g, currentGraph, gp);
 		++nEvaluations;
 
@@ -763,23 +759,23 @@ int* fullEmbeddingProjectionApproximationForTrees(struct Graph* g, struct Evalua
 	for (int i=0; i<projectionSize; ++i) {
 		// if we don't know the value we need to compute it.
 		int currentGraphNumber = projection[i];
-		if (p.F->vertices[currentGraphNumber]->visited == 0) {
+		if (p.poset->vertices[currentGraphNumber]->visited == 0) {
 			// evaluate the embedding operator
-			struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+			struct Graph* currentGraph = (struct Graph*)(p.poset->vertices[currentGraphNumber]->label);
 			char match = isSubtree(g, currentGraph, gp);
 			++nEvaluations;
 			updateEvaluationPlan(p, currentGraphNumber, match);
 		}
 	}
 
-	int* approximateEmbedding = malloc((p.F->n - 1) * sizeof(int));
+	int* approximateEmbedding = malloc((p.poset->n - 1) * sizeof(int));
 	if (!approximateEmbedding) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
 		return NULL;
 	}
 
-	for (int i=1; i<p.F->n; ++i) {
-		approximateEmbedding[i-1] = p.F->vertices[i]->visited; // init sketch values to 'infty'
+	for (int i=1; i<p.poset->n; ++i) {
+		approximateEmbedding[i-1] = p.poset->vertices[i]->visited; // init sketch values to 'infty'
 	}
 
 //	for (int i=1; i<p.F->n; ++i) {
@@ -817,9 +813,9 @@ int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct Evalu
 	for (int i=0; i<projectionSize; ++i) {
 		// if we don't know the value we need to compute it.
 		int currentGraphNumber = projection[i];
-		if (p.F->vertices[currentGraphNumber]->visited == 0) {
+		if (p.poset->vertices[currentGraphNumber]->visited == 0) {
 			// evaluate the embedding operator
-			struct Graph* pattern = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+			struct Graph* pattern = (struct Graph*)(p.poset->vertices[currentGraphNumber]->label);
 			char match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
 			wipeCharacteristicsForLocalEasy(sptTree);
 			++nEvaluations;
@@ -829,14 +825,14 @@ int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct Evalu
 
 	dumpSpanningtreeTree(sptTree, gp);
 
-	int* approximateEmbedding = malloc((p.F->n - 1) * sizeof(int));
+	int* approximateEmbedding = malloc((p.poset->n - 1) * sizeof(int));
 	if (!approximateEmbedding) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
 		return NULL;
 	}
 
-	for (int i=1; i<p.F->n; ++i) {
-		approximateEmbedding[i-1] = p.F->vertices[i]->visited; // init sketch values to 'infty'
+	for (int i=1; i<p.poset->n; ++i) {
+		approximateEmbedding[i-1] = p.poset->vertices[i]->visited; // init sketch values to 'infty'
 	}
 
 
@@ -873,10 +869,10 @@ int* randomProjectionEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p,
 
 		// if we don't know the value we need to compute it.
 		int currentGraphNumber = projection[i];
-		if (p.F->vertices[currentGraphNumber]->visited == 0) {
+		if (p.poset->vertices[currentGraphNumber]->visited == 0) {
 
 			// evaluate the embedding operator
-			struct Graph* currentGraph = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+			struct Graph* currentGraph = (struct Graph*)(p.poset->vertices[currentGraphNumber]->label);
 			char match = isSubtree(g, currentGraph, gp);
 
 			// update output
@@ -914,7 +910,7 @@ int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p
 	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
 
 	// alloc output array
-	int* approximateEmbedding = malloc((p.F->n - 1) * sizeof(int));
+	int* approximateEmbedding = malloc((p.poset->n - 1) * sizeof(int));
 	if (!approximateEmbedding) {
 		fprintf(stderr, "Could not allocate memory for sketch. This is a bad thing.\n");
 		return NULL;
@@ -924,10 +920,10 @@ int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p
 
 		// if we don't know the value we need to compute it.
 		int currentGraphNumber = projection[i];
-		if (p.F->vertices[currentGraphNumber]->visited == 0) {
+		if (p.poset->vertices[currentGraphNumber]->visited == 0) {
 
 			// evaluate the embedding operator
-			struct Graph* pattern = (struct Graph*)(p.F->vertices[currentGraphNumber]->label);
+			struct Graph* pattern = (struct Graph*)(p.poset->vertices[currentGraphNumber]->label);
 			char match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
 			wipeCharacteristicsForLocalEasy(sptTree);
 
@@ -984,13 +980,13 @@ struct IntSet* dfsDownwardEmbeddingForTrees(struct Graph* g, struct EvaluationPl
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
-	for (int i=1; i<p.F->n; ++i) {
-		nEvaluations += dfsRaySearch(g, p, p.F->vertices[i], gp);
+	for (int i=1; i<p.poset->n; ++i) {
+		nEvaluations += dfsRaySearch(g, p, p.poset->vertices[i], gp);
 	}
 
 	struct IntSet* features = getIntSet();
-	for (int i=1; i<p.F->n; ++i) {
-		if (p.F->vertices[i]->visited == 1) {
+	for (int i=1; i<p.poset->n; ++i) {
+		if (p.poset->vertices[i]->visited == 1) {
 			addIntSortedNoDuplicates(features, i - 1);
 		}
 	}
@@ -1076,7 +1072,7 @@ static int binarySearchEvaluation(struct Graph* g, struct EvaluationPlan p, int*
 	while (minIdx <= maxIdx) {
 		int currentIdx = (minIdx + maxIdx) / 2;
 
-		struct Graph* pattern = (struct Graph*)(p.F->vertices[path[currentIdx]]->label);
+		struct Graph* pattern = (struct Graph*)(p.poset->vertices[path[currentIdx]]->label);
 		char match = isSubtree(g, pattern, gp);
 		++nEvaluations;
 		updateEvaluationPlan(p, path[currentIdx], match);
@@ -1097,9 +1093,9 @@ struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPl
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
-	for (int i=1; i<p.F->n; ++i) {
-		if (p.F->vertices[i]->visited == 0) {
-			int* path = getPathInDAG(p.F->vertices[i]);
+	for (int i=1; i<p.poset->n; ++i) {
+		if (p.poset->vertices[i]->visited == 0) {
+			int* path = getPathInDAG(p.poset->vertices[i]);
 //			fprintf(stderr, "%i\n", path[0]-1);
 			nEvaluations += binarySearchEvaluation(g, p, path, gp);
 			free(path);
@@ -1108,8 +1104,8 @@ struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPl
 	}
 
 	struct IntSet* features = getIntSet();
-	for (int i=1; i<p.F->n; ++i) {
-		if (p.F->vertices[i]->visited == 1) {
+	for (int i=1; i<p.poset->n; ++i) {
+		if (p.poset->vertices[i]->visited == 1) {
 			addIntSortedNoDuplicates(features, i - 1);
 		}
 	}
@@ -1123,9 +1119,9 @@ struct IntSet* latticeLongestPathEmbeddingForTrees(struct Graph* g, struct Evalu
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
-	for (int i=1; i<p.F->n; ++i) {
-		if (p.F->vertices[i]->visited == 0) {
-			int* path = getLongestPathInDAG(p.F->vertices[i], p.F, sgp);
+	for (int i=1; i<p.poset->n; ++i) {
+		if (p.poset->vertices[i]->visited == 0) {
+			int* path = getLongestPathInDAG(p.poset->vertices[i], p.poset, sgp);
 //			fprintf(stderr, "%i\n", path[0]-1);
 			nEvaluations += binarySearchEvaluation(g, p, path, gp);
 			free(path);
@@ -1134,8 +1130,8 @@ struct IntSet* latticeLongestPathEmbeddingForTrees(struct Graph* g, struct Evalu
 	}
 
 	struct IntSet* features = getIntSet();
-	for (int i=1; i<p.F->n; ++i) {
-		if (p.F->vertices[i]->visited == 1) {
+	for (int i=1; i<p.poset->n; ++i) {
+		if (p.poset->vertices[i]->visited == 1) {
 			addIntSortedNoDuplicates(features, i - 1);
 		}
 	}
