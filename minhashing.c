@@ -208,6 +208,8 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 	setVertexNumber(subgraph, pattern->n - 1);
 	subgraph->m = subgraph->n - 1;
 
+	struct IntSet* subgraphs = getIntSet();
+
 	for (int v=0; v<pattern->n; ++v) {
 		// if the removed vertex is a leaf, we test if the resulting subtree is contained in the lower level
 		if (isLeaf(pattern->vertices[v]) == 1) {
@@ -227,22 +229,25 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 
 			// compute canonical string of subtree and get its position in F
 			struct ShallowGraph* subString = canonicalStringOfTree(subgraph, sgp);
-			int subtreeID = getID(searchtree, subString);
+			addIntSortedNoDuplicates(subgraphs, getID(searchtree, subString));
 			dumpShallowGraph(sgp, subString);
 
 			// restore law and order in current (and invalidate subgraph)
 			addEdge(edge->startPoint, edge);
+		}
+	}
 
-			if (subtreeID != -1) {
-				struct VertexList* e = getVertexList(gp->listPool);
-				e->startPoint = F->vertices[subtreeID];
-				e->endPoint = F->vertices[pattern->number];
-				addEdge(e->startPoint, e);
-				F->m += 1;
-				++edgeCount;
-			} else {
-				fprintf(stderr, "subtree not found in searchtree. this should not happen\n");
-			}
+	// to filter out duplicates, we add the edges from a list just now.
+	for (struct IntElement* graphID=subgraphs->first; graphID!=NULL; graphID=graphID->next) {
+		if (graphID->value != -1) {
+			struct VertexList* e = getVertexList(gp->listPool);
+			e->startPoint = F->vertices[graphID->value];
+			e->endPoint = F->vertices[pattern->number];
+			addEdge(e->startPoint, e);
+			F->m += 1;
+			++edgeCount;
+		} else {
+			fprintf(stderr, "subtree not found in searchtree. this should not happen if you provided a pattern set that is closed wrt. subgraph iso.\n");
 		}
 	}
 
