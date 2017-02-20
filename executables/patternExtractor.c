@@ -314,32 +314,32 @@ int* randomSubset(int n, int k) {
 }
 
 
-static void printPatternPosetAidsFormat(struct Graph* g, FILE* out) {
-	int i;
-	// print header line
-	fprintf(out, "# %i %i %i %i\n", g->number, g->activity, g->n, g->m);
-
-	// print vertex labels
-	fputs("-1 ", out);
-	for (i=1; i<g->n; ++i) {
-		fprintf(out, "%i ", ((struct Graph*)g->vertices[i]->label)->number);
-	}
-	fputc('\n', out);
-
-	// print edges
-	for (i=0; i<g->n; ++i) {
-		struct VertexList* e;
-		for (e=g->vertices[i]->neighborhood; e!=NULL; e=e->next) {
-			if (e->startPoint->number < e->endPoint->number) {
-				fprintf(out, "%i %i subgraph ", e->startPoint->number + 1, e->endPoint->number + 1);
-			}
-		}
-	}
-	fputc('\n', out);
-	fputc('$', out);
-	fputc('\n', out);
-	fflush(out);
-}
+//static void printPatternPosetAidsFormat(struct Graph* g, FILE* out) {
+//	int i;
+//	// print header line
+//	fprintf(out, "# %i %i %i %i\n", g->number, g->activity, g->n, g->m);
+//
+//	// print vertex labels
+//	fputs("-1 ", out);
+//	for (i=1; i<g->n; ++i) {
+//		fprintf(out, "%i ", ((struct Graph*)g->vertices[i]->label)->number);
+//	}
+//	fputc('\n', out);
+//
+//	// print edges
+//	for (i=0; i<g->n; ++i) {
+//		struct VertexList* e;
+//		for (e=g->vertices[i]->neighborhood; e!=NULL; e=e->next) {
+//			if (e->startPoint->number < e->endPoint->number) {
+//				fprintf(out, "%i %i subgraph ", e->startPoint->number + 1, e->endPoint->number + 1);
+//			}
+//		}
+//	}
+//	fputc('\n', out);
+//	fputc('$', out);
+//	fputc('\n', out);
+//	fflush(out);
+//}
 
 
 int main(int argc, char** argv) {
@@ -589,10 +589,10 @@ int main(int argc, char** argv) {
 	case minHashAbsImportant:
 	case minHashRelImportant:
 	case minHashAndOr:
-		permutations = malloc(sketchSize * sizeof(int*));
-		size_t* permutationSizes = malloc(sketchSize * sizeof(size_t));
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
+		permutations = malloc(sketchSize * sizeof(int*));
+		size_t* permutationSizes = malloc(sketchSize * sizeof(size_t));
 		for (size_t i=0; i<sketchSize; ++i) {
 			permutations[i] = getRandomPermutation(nPatterns);
 			permutationSizes[i] = posetPermutationMark(permutations[i], nPatterns, patternPoset);
@@ -607,28 +607,28 @@ int main(int argc, char** argv) {
 	case dfsForTrees:
 	case latticePathForTrees:
 	case latticeLongestPathForTrees:
-	case dilworthsCoverForTrees:
 		// these methods only need the pattern poset and its reverse
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
 		evaluationPlan.F = patternPoset;
 		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
 		break;
+	case dilworthsCoverForTrees:
+		// these methods need the pattern poset, its reverse, and the static set of paths for evaluation
+		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
+		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
+		evaluationPlan.F = patternPoset;
+		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
+		evaluationPlan.shrunkPermutations = getPathCoverOfPoset(evaluationPlan.F, &(evaluationPlan.orderLength), gp, sgp);
+		break;
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
 		// these methods need pattern poset, its reverse, and a set of random patterns of given size
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
-
 		evaluationPlan.F = patternPoset;
 		evaluationPlan.reverseF = reverseGraph(patternPoset, gp);
-
 		randomProjection = randomSubset(patternPoset->n, sketchSize);
-//		//debug
-//		fprintf(stderr, "projection: [");
-//		for (size_t i=0; i<sketchSize; ++i) { fprintf(stderr, "%i,", randomProjection[i]); }
-//		fprintf(stderr, "]\n");
-//
 		break;
 	default:
 		break; // do nothing for other methods
@@ -649,26 +649,6 @@ int main(int argc, char** argv) {
 		createStdinIterator(gp);
 	}
 
-
-	// TODO remove this debug stuff
-	{
-		int nPaths = 0;
-		int** paths = NULL;
-		switch (method) {
-		case dilworthsCoverForTrees:
-			printPatternPosetAidsFormat(evaluationPlan.F, stdout);
-			paths = getPathCoverOfPoset(evaluationPlan.F, &nPaths, gp, sgp);
-			for (int i=0; i<nPaths; ++i) {
-				for (int j=1; j<paths[i][0]; ++j) {
-					fprintf(stderr, "%i ", paths[i][j]);
-				}
-				fputc('\n', stderr);
-			}
-			break;
-		default:
-			break;
-		}
-	}
 	/* iterate over all graphs in the database */
 	while ((g = iterateFile())) {
 		/* if there was an error reading some graph the returned n will be -1 */
