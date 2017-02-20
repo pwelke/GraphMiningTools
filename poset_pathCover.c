@@ -139,11 +139,12 @@ static int* getLongestPathInFlowInstance(struct Vertex* v, struct Graph* flowIns
 	// alloc space for path and store vertex ids
 	int* path = malloc(pathLength * sizeof(int));
 	path[0] = pathLength;
+	path[1] = v->number / 2;
 
 	// to obtain a path in the original flowInstance, we keep only those vertices that have even ->number and convert them back
 	// to original numbers by dividing by two.
 	pathLength -= 1;
-	for (struct Vertex* x=highestVertex; pathLength > 0; x=flowInstance->vertices[x->lowPoint]) {
+	for (struct Vertex* x=highestVertex; pathLength > 1; x=flowInstance->vertices[x->lowPoint]) {
 		if (x->number % 2 == 0) {
 			path[pathLength] = x->number / 2;
 			--pathLength;
