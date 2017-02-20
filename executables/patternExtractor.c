@@ -619,7 +619,7 @@ int main(int argc, char** argv) {
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
 		evaluationPlan.poset = patternPoset;
 		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
-		evaluationPlan.shrunkPermutations = getPathCoverOfPoset(evaluationPlan.poset, &(evaluationPlan.orderLength), gp, sgp);
+		evaluationPlan.shrunkPermutations = getPathCoverOfPoset(evaluationPlan.poset, &(evaluationPlan.sketchSize), gp, sgp);
 		break;
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
@@ -710,7 +710,7 @@ int main(int argc, char** argv) {
 				fingerprints = latticeLongestPathEmbeddingForTrees(g, evaluationPlan, gp, sgp);
 				break;
 			case dilworthsCoverForTrees:
-				// do nothing, for now
+				fingerprints = staticPathCoverEmbeddingForTrees(g, evaluationPlan, gp);
 				break;
 			}
 			// output
@@ -756,6 +756,9 @@ int main(int argc, char** argv) {
 	case dfsForTrees:
 	case latticePathForTrees:
 	case latticeLongestPathForTrees:
+		dumpEvaluationPlan(evaluationPlan, gp);
+		free(randomProjection);
+		break;
 	case dilworthsCoverForTrees:
 		dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
