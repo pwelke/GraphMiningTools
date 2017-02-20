@@ -161,7 +161,7 @@ static int* getLongestPathInFlowInstance(struct Vertex* v, struct Graph* flowIns
  * Also assumes that the poset starts with an artificial vertex at position 0 that points to the smallest elements, but
  * is not a part of the poset.
  */
-int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	struct Graph* flowInstance = createVertexCoverFlowInstanceOfPoset(g, gp);
 
@@ -211,9 +211,6 @@ int** getPathCoverOfPoset(struct Graph* g, int* nPaths, struct GraphPool* gp, st
 			e->endPoint->visited -= 1;
 		}
 	}
-
-	printGraph(flowInstance);
-	fflush(stdout);
 
 	// how many paths are there?
 	*nPaths = 0;
