@@ -33,10 +33,12 @@ int* posetPermutationShrink(int* permutation, size_t n, size_t shrunkSize);
 // EVALUATION PLAN
 struct EvaluationPlan buildMinHashEvaluationPlan(int** shrunkPermutations, size_t* permutationSizes, size_t K, struct Graph* F, struct GraphPool* gp);
 struct EvaluationPlan dumpEvaluationPlan(struct EvaluationPlan p, struct GraphPool* gp);
+void cleanEvaluationPlan(struct EvaluationPlan p);
 
 // BUILD TREE POSET
 struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct Graph* reverseGraph(struct Graph* g, struct GraphPool* gp);
+void updateEvaluationPlan(struct EvaluationPlan p, int patternId, char match);
 
 // COMPUTATION OF MINHASH EMBEDDINGS
 int* fastMinHashForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
@@ -49,12 +51,6 @@ int* fullEmbeddingProjectionApproximationForTrees(struct Graph* g, struct Evalua
 int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 int* randomProjectionEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, struct GraphPool* gp);
 int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-
-// FAST COMPUTATION OF EXACT EMBEDDINGS
-struct IntSet* dfsDownwardEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
-struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
-struct IntSet* latticeLongestPathEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct IntSet* staticPathCoverEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
 
 // FOR COMPARISON: EXACT COMPUTATION OF EMBEDDING	 USING THE PATTERN POSET
 struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struct GraphPool* gp, struct ShallowGraphPool* sgp);\
