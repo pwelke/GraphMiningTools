@@ -308,25 +308,42 @@ void cleanEvaluationPlan(struct EvaluationPlan p) {
 
 
 /**
-Traverses the reverse graph of the poset graph F and marks all vertices reachable from v with the number given
-by the argument component.
+Traverses the reverse graph of the poset graph F and marks all vertices reachable from v as matches.
 
 Hence, v needs to be a vertex in the reverse graph p.reverseF !
-
-Careful: To avoid infinite runtime, the method tests if a visited vertex has ->visited == component.
-Thus, either initialize ->visited's  with some value < 0 or start component counting with 1.
  */
-static void rayOfLight(struct Vertex* v, int component, struct EvaluationPlan p) {
+static void rayOfLight(struct Vertex* v, struct EvaluationPlan p) {
 
 	/* mark vertex as visited */
-	v->visited = component;
-	p.poset->vertices[v->number]->visited = component;
+	v->visited = 1;
+	p.poset->vertices[v->number]->visited = 1;
 
 
 	/*recursive call for all neighbors that are not visited so far */
 	for (struct VertexList* index = v->neighborhood; index; index = index->next) {
-		if (index->endPoint->visited != component) {
-			rayOfLight(index->endPoint, component, p);
+		if (index->endPoint->visited != 1) {
+			rayOfLight(index->endPoint, p);
+		}
+	}
+}
+
+
+/**
+Traverses the pattern poset and marks all vertices reachable from v as non-matches.
+
+Hence, v needs to be a vertex in the graph p.reversePoset !
+ */
+static void rayOfDoom(struct Vertex* v, struct EvaluationPlan p) {
+
+	/* mark vertex as visited */
+	v->visited = -1;
+	p.reversePoset->vertices[v->number]->visited = -1;
+
+
+	/*recursive call for all neighbors that are not visited so far */
+	for (struct VertexList* index = v->neighborhood; index; index = index->next) {
+		if (index->endPoint->visited != -1) {
+			rayOfDoom(index->endPoint, p);
 		}
 	}
 }
@@ -343,9 +360,9 @@ static void rayOfLight(struct Vertex* v, int component, struct EvaluationPlan p)
  */
 void updateEvaluationPlan(struct EvaluationPlan p, int patternId, char match) {
 	if (match) {
-		rayOfLight(p.reversePoset->vertices[patternId], 1, p);
+		rayOfLight(p.reversePoset->vertices[patternId], p);
 	} else {
-		markConnectedComponent(p.poset->vertices[patternId], -1);
+		rayOfDoom(p.poset->vertices[patternId], p);
 	}
 }
 
