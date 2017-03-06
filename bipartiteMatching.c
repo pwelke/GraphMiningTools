@@ -1,7 +1,11 @@
 #include <stdio.h>
+#include <limits.h>
+#include <malloc.h>
 
 #include "graph.h"
 #include "bipartiteMatching.h"
+#include "vertexQueue.h"
+#include "intMath.h"
 
 
 /**
@@ -17,6 +21,7 @@
  * - e->flag = capacity - e'->flag = flow on e
  *
  */
+
 
 
 /**
@@ -35,6 +40,122 @@ void addFlow(struct VertexList* e, int flow) {
 	e->flag += flow;
 	((struct VertexList*)e->label)->flag -= flow;
 }
+
+
+
+
+static int pr_vertexBecomesActive(struct Vertex* v, struct Vertex* s, struct Vertex* t) {
+	int excessIsZero = v->visited == 0;
+	return excessIsZero && (v != s) && (v != t);
+}
+
+static void pr_push(struct VertexList* e, struct Vertex* s, struct Vertex* t, struct ShallowGraph* activeVertices, struct ShallowGraphPool* sgp) {
+	// compute pushable flow
+	int flow = min(e->startPoint->visited, e->used - e->flag);
+
+	// add endPoint to list of active vertices, if it becomes active now
+	if (pr_vertexBecomesActive(e->endPoint, s, t)) {
+		addToVertexQueue(e->endPoint, activeVertices, sgp);
+	}
+
+	// augment preflow by flow
+	addFlow(e, flow);
+	e->startPoint->visited -= flow;
+	e->endPoint->visited += flow;
+}
+
+static void pr_relabel(struct Vertex* v) {
+	int closestToTarget = INT_MAX;
+	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+		if ((e->endPoint->d < closestToTarget) && (e->used - e->flag > 0)) {
+			closestToTarget = e->endPoint->d;
+		}
+	}
+	v->d = closestToTarget + 1;
+}
+
+static void pr_init(struct Graph* g, struct Vertex* s, struct ShallowGraph* activeVertices, struct ShallowGraphPool* sgp) {
+//	for (int vi=0; vi<g->n; ++vi) {
+//		struct Vertex* v = g->vertices[vi];
+//		if (v != s) {
+//			// set distance label to zero
+//			v->d = 0;
+//			// set excess of vertex to zero
+//			v->visited = 0;
+//
+//			// set preflow of out edges to 0
+//			for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+//				e->flag = 0;
+//			}
+//		}
+//	}
+
+	// set distance label to n
+	s->d = g->n;
+
+	for (struct VertexList* e=s->neighborhood; e!=NULL; e=e->next) {
+		// set preflow of out edges to max
+		addFlow(e, e->used);
+		// add excess to s and endPoint
+		e->endPoint->visited += e->flag;
+		s->visited -= e->flag;
+		addToVertexQueue(e->endPoint, activeVertices, sgp);
+	}
+}
+
+static int pr_isAllowedEdge(struct VertexList* e) {
+	int isForward = e->startPoint->d == e->endPoint->d + 1;
+	int notSaturated = e->used - e->flag > 0;
+	return isForward && notSaturated;
+}
+
+
+/**
+ * Goldberg and Tarjans Push-Relabel Algorithm.
+ * Implementation follows Korte, Vygen: Combinatorial Optimization, Chapter 8.5
+ */
+void pushRelabel(struct Graph* g, struct Vertex* s, struct Vertex* t, struct ShallowGraphPool* sgp) {
+
+	struct ShallowGraph* activeVertices = getShallowGraph(sgp);
+
+	pr_init(g, s, activeVertices, sgp);
+
+//	FILE* f = fopen("flowInstance_init.dot", "w");
+//	printFlowInstanceDotFormat(g, f);
+//	fclose(f);
+//
+//	int i=0;
+//	char filename [50];
+	for (struct Vertex* active=peekFromVertexQueue(activeVertices, sgp); active!=NULL; active=peekFromVertexQueue(activeVertices, sgp)) {
+		char foundAllowedEdge = 0;
+		for (struct VertexList* e=active->neighborhood; e!=NULL; e=e->next) {
+			if (pr_isAllowedEdge(e)) {
+				pr_push(e, s, t, activeVertices, sgp);
+				foundAllowedEdge = 1;
+			}
+		}
+		if (!foundAllowedEdge) {
+			pr_relabel(active);
+		}
+
+//		sprintf(filename, "flowInstance_step%i.dot", i);
+//		FILE* f = fopen(filename, "w");
+//		printFlowInstanceDotFormat(g, f);
+//		fclose(f);
+//		++i;
+//		if (i>1000) {
+//			break;
+//		}
+
+		if (active->visited == 0) {
+			popFromVertexQueue(activeVertices, sgp);
+		}
+	}
+	dumpShallowGraph(sgp, activeVertices);
+}
+
+
+
 
 
 /**

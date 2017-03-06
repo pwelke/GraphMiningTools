@@ -1,6 +1,9 @@
 #ifndef BIPARTITE_MATCHING_H_
 #define BIPARTITE_MATCHING_H_
 
+
+void pushRelabel(struct Graph* g, struct Vertex* s, struct Vertex* t, struct ShallowGraphPool* sgp);
+
 int bipartiteMatchingFastAndDirty(struct Graph* g, struct GraphPool* gp);
 int bipartiteMatchingEvenMoreDirty(struct Graph* g);
 char bipartiteMatchingTerminateEarly(struct Graph* B);
