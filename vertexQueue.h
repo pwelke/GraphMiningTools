@@ -12,5 +12,6 @@
 
 void addToVertexQueue(struct Vertex* v, struct ShallowGraph* border, struct ShallowGraphPool* sgp);
 struct Vertex* popFromVertexQueue(struct ShallowGraph* border, struct ShallowGraphPool* sgp);
+struct Vertex* peekFromVertexQueue(struct ShallowGraph* queue, struct ShallowGraphPool* sgp);
 
 #endif /* VERTEXQUEUE_H_ */
