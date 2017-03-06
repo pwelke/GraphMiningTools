@@ -32,6 +32,7 @@ void setFlag(struct VertexList* e, int flag) {
 	((struct VertexList*)e->label)->flag = 1 - flag;
 }
 
+
 /**
 Add flow to edge flow and subtract flow from residual edge flow.
 Somebody else is responsible of checking whether this operation is valid.
@@ -42,12 +43,11 @@ void addFlow(struct VertexList* e, int flow) {
 }
 
 
-
-
 static int pr_vertexBecomesActive(struct Vertex* v, struct Vertex* s, struct Vertex* t) {
 	int excessIsZero = v->visited == 0;
 	return excessIsZero && (v != s) && (v != t);
 }
+
 
 static void pr_push(struct VertexList* e, struct Vertex* s, struct Vertex* t, struct ShallowGraph* activeVertices, struct ShallowGraphPool* sgp) {
 	// compute pushable flow
@@ -64,31 +64,25 @@ static void pr_push(struct VertexList* e, struct Vertex* s, struct Vertex* t, st
 	e->endPoint->visited += flow;
 }
 
-static void pr_relabel(struct Vertex* v) {
-	int closestToTarget = INT_MAX;
+
+static int pr_relabel(struct Vertex* v) {
+	int newDistance = INT_MAX;
 	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
-		if ((e->endPoint->d < closestToTarget) && (e->used - e->flag > 0)) {
-			closestToTarget = e->endPoint->d;
+		if ((e->endPoint->d < newDistance) && (e->used - e->flag > 0)) {
+			newDistance = e->endPoint->d + 1;
 		}
 	}
-	v->d = closestToTarget + 1;
+	v->d = newDistance;
+	return newDistance;
 }
 
-static void pr_init(struct Graph* g, struct Vertex* s, struct ShallowGraph* activeVertices, struct ShallowGraphPool* sgp) {
-//	for (int vi=0; vi<g->n; ++vi) {
-//		struct Vertex* v = g->vertices[vi];
-//		if (v != s) {
-//			// set distance label to zero
-//			v->d = 0;
-//			// set excess of vertex to zero
-//			v->visited = 0;
-//
-//			// set preflow of out edges to 0
-//			for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
-//				e->flag = 0;
-//			}
-//		}
-//	}
+
+static struct ShallowGraph** pr_init(struct Graph* g, struct Vertex* s, struct ShallowGraphPool* sgp) {
+
+	struct ShallowGraph** activeVertices = malloc((2 * g->n - 1) * sizeof(struct ShallowGraph*));
+	for (int i=0; i<2 * g->n - 1; ++i) {
+		activeVertices[i] = getShallowGraph(sgp);
+	}
 
 	// set distance label to n
 	s->d = g->n;
@@ -99,9 +93,11 @@ static void pr_init(struct Graph* g, struct Vertex* s, struct ShallowGraph* acti
 		// add excess to s and endPoint
 		e->endPoint->visited += e->flag;
 		s->visited -= e->flag;
-		addToVertexQueue(e->endPoint, activeVertices, sgp);
+		addToVertexQueue(e->endPoint, activeVertices[0], sgp);
 	}
+	return activeVertices;
 }
+
 
 static int pr_isAllowedEdge(struct VertexList* e) {
 	int isForward = e->startPoint->d == e->endPoint->d + 1;
@@ -116,46 +112,38 @@ static int pr_isAllowedEdge(struct VertexList* e) {
  */
 void pushRelabel(struct Graph* g, struct Vertex* s, struct Vertex* t, struct ShallowGraphPool* sgp) {
 
-	struct ShallowGraph* activeVertices = getShallowGraph(sgp);
+	struct ShallowGraph** activeVertices = pr_init(g, s, sgp);
 
-	pr_init(g, s, activeVertices, sgp);
+	int i = 0;
+	for (struct Vertex* active=popFromVertexQueue(activeVertices[i], sgp); active!=NULL; active=popFromVertexQueue(activeVertices, sgp)) {
 
-//	FILE* f = fopen("flowInstance_init.dot", "w");
-//	printFlowInstanceDotFormat(g, f);
-//	fclose(f);
-//
-//	int i=0;
-//	char filename [50];
-	for (struct Vertex* active=peekFromVertexQueue(activeVertices, sgp); active!=NULL; active=peekFromVertexQueue(activeVertices, sgp)) {
+		// look for allowed edges and push as much flow as possible
 		char foundAllowedEdge = 0;
 		for (struct VertexList* e=active->neighborhood; e!=NULL; e=e->next) {
 			if (pr_isAllowedEdge(e)) {
 				pr_push(e, s, t, activeVertices, sgp);
 				foundAllowedEdge = 1;
+
+				// if vertex lost its 'active' state, remove it from queue
+				if (active->visited == 0) {
+					break;
+				}
 			}
 		}
+
+		// if there are no allowed edges, relabel v
 		if (!foundAllowedEdge) {
-			pr_relabel(active);
-		}
-
-//		sprintf(filename, "flowInstance_step%i.dot", i);
-//		FILE* f = fopen(filename, "w");
-//		printFlowInstanceDotFormat(g, f);
-//		fclose(f);
-//		++i;
-//		if (i>1000) {
-//			break;
-//		}
-
-		if (active->visited == 0) {
-			popFromVertexQueue(activeVertices, sgp);
+			i = pr_relabel(active);
+			addToVertexQueue(active, activeVertices[i], sgp);
 		}
 	}
-	dumpShallowGraph(sgp, activeVertices);
+
+	// garbage collection
+	for (int i=0; i<2 * g->n - 1; ++i) {
+		dumpShallowGraph(sgp, activeVertices[i]);
+	}
+	free(activeVertices);
 }
-
-
-
 
 
 /**
