@@ -14,6 +14,7 @@
 int numberOfReachableVertices(struct Vertex* v, struct ShallowGraphPool* sgp);
 void computeAllReachabilityCounts(struct Graph* g, struct ShallowGraphPool* sgp);
 int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+int** getPathCoverOfPosetPR(struct Graph* g, size_t* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 // FAST COMPUTATION OF EXACT EMBEDDINGS
 struct IntSet* dfsDownwardEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp);
