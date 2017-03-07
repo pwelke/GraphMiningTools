@@ -49,13 +49,13 @@ static int pr_vertexBecomesActive(struct Vertex* v, struct Vertex* s, struct Ver
 }
 
 
-static void pr_push(struct VertexList* e, struct Vertex* s, struct Vertex* t, struct ShallowGraph* activeVertices, struct ShallowGraphPool* sgp) {
+static void pr_push(struct VertexList* e, struct Vertex* s, struct Vertex* t, struct ShallowGraph** activeVertices, struct ShallowGraphPool* sgp) {
 	// compute pushable flow
 	int flow = min(e->startPoint->visited, e->used - e->flag);
 
 	// add endPoint to list of active vertices, if it becomes active now
 	if (pr_vertexBecomesActive(e->endPoint, s, t)) {
-		addToVertexQueue(e->endPoint, activeVertices, sgp);
+		addToVertexQueue(e->endPoint, activeVertices[e->endPoint->d], sgp);
 	}
 
 	// augment preflow by flow
@@ -107,6 +107,59 @@ static int pr_isAllowedEdge(struct VertexList* e) {
 
 
 /**
+ * Return the largest index such that the list of active vertices with that distance label is not empty.
+ * If there are no active vertices left with distance label >= 1, the return value will be 0 and point
+ * either to a full or an empty list. This results in correct behavior.
+ */
+static int pr_findSmallestActiveIndex(struct ShallowGraph** activeVertices, int i) {
+	int j = i-1;
+	for ( ; j>0; --j) {
+		if (peekFromVertexQueue(activeVertices[j]) != NULL) {
+			break;
+		}
+	}
+	return j;
+}
+
+int pr_sanityCheck(struct Graph* g, struct Vertex* s, struct Vertex* t, FILE* out) {
+	int sOuttIn = s->visited + t->visited;
+
+	int excessViolated = 0;
+	for (int vi=0; vi<g->n; ++vi) {
+		struct Vertex* v = g->vertices[vi];
+		if ((v != s) && (v != t)) {
+			if (v->visited != 0) {
+				++excessViolated;
+			}
+		}
+	}
+
+	if (out) {
+		fprintf(out, "excess s: %i, excess t:%i, violations in between: %i\n", s->visited, t->visited, excessViolated);
+	}
+
+	return !sOuttIn && !excessViolated;
+}
+
+static int pr_checkActiveArray(struct ShallowGraph** activeVertices, int nLists, FILE* out) {
+	int forgottenVertices = 0;
+	for (int i=0; i<nLists; ++i) {
+		if (peekFromVertexQueue(activeVertices[i])) {
+			forgottenVertices += activeVertices[i]->m;
+			if (out) {
+				fprintf(out, "Level %i: Vertex %i\n", i, peekFromVertexQueue(activeVertices[i])->number);
+			}
+		}
+	}
+	if (out) {
+		fprintf(out, "total of forgotten vertices: %i\n", forgottenVertices);
+	}
+	return forgottenVertices;
+}
+
+
+
+/**
  * Goldberg and Tarjans Push-Relabel Algorithm.
  * Implementation follows Korte, Vygen: Combinatorial Optimization, Chapter 8.5
  */
@@ -114,8 +167,16 @@ void pushRelabel(struct Graph* g, struct Vertex* s, struct Vertex* t, struct Sha
 
 	struct ShallowGraph** activeVertices = pr_init(g, s, sgp);
 
+//	int debug = 0;
+//	char filename [50];
+
 	int i = 0;
-	for (struct Vertex* active=popFromVertexQueue(activeVertices[i], sgp); active!=NULL; active=popFromVertexQueue(activeVertices, sgp)) {
+	for (struct Vertex* active=popFromVertexQueue(activeVertices[i], sgp); active!=NULL; active=popFromVertexQueue(activeVertices[i], sgp)) {
+
+//		int activeId = active->number;
+//		if (activeId == 80) {
+//			printf("!");
+//		}
 
 		// look for allowed edges and push as much flow as possible
 		char foundAllowedEdge = 0;
@@ -124,19 +185,36 @@ void pushRelabel(struct Graph* g, struct Vertex* s, struct Vertex* t, struct Sha
 				pr_push(e, s, t, activeVertices, sgp);
 				foundAllowedEdge = 1;
 
-				// if vertex lost its 'active' state, remove it from queue
+				// if vertex lost its 'active' state, stop looping
 				if (active->visited == 0) {
 					break;
 				}
 			}
 		}
 
-		// if there are no allowed edges, relabel v
+		// if there are no allowed edges (left), relabel v
 		if (!foundAllowedEdge) {
 			i = pr_relabel(active);
 			addToVertexQueue(active, activeVertices[i], sgp);
+		} else {
+			if (active->visited != 0) {
+				addToVertexQueue(active, activeVertices[i], sgp);
+			}
 		}
+
+//		sprintf(filename, "flowInstance_step%i.dot", debug);
+//		FILE* f = fopen(filename, "w");
+//		printFlowInstanceDotFormat(g, f);
+//		fclose(f);
+//		++debug;
+
+		if (peekFromVertexQueue(activeVertices[i]) == NULL) {
+			i = pr_findSmallestActiveIndex(activeVertices, i);
+		}
+
 	}
+
+//	pr_checkActiveArray(activeVertices, 2 * g->n - 1, stderr);
 
 	// garbage collection
 	for (int i=0; i<2 * g->n - 1; ++i) {
