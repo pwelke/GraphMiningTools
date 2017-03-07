@@ -654,6 +654,7 @@ int main(int argc, char** argv) {
 		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
 		evaluationPlan.shrunkPermutations = getPathCoverOfPoset(evaluationPlan.poset, &(evaluationPlan.sketchSize), gp, sgp);
 		fprintf(stderr, "number of paths in cover: %zu\n", evaluationPlan.sketchSize);
+		fprintf(stderr, "number of uncovered vertices: %i\n", checkPathCover(evaluationPlan.poset, evaluationPlan.shrunkPermutations, evaluationPlan.sketchSize) - 1);
 		fflush(stderr);
 		break;
 	case dilworthsCoverDryrun:
@@ -666,6 +667,7 @@ int main(int argc, char** argv) {
 		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
 		evaluationPlan.shrunkPermutations = getPathCoverOfPosetPR(evaluationPlan.poset, &(evaluationPlan.sketchSize), gp, sgp);
 		fprintf(stderr, "number of paths in cover: %zu\n", evaluationPlan.sketchSize);
+		fprintf(stderr, "number of uncovered vertices: %i\n", checkPathCover(evaluationPlan.poset, evaluationPlan.shrunkPermutations, evaluationPlan.sketchSize) - 1);
 		fflush(stderr);
 		break;
 	case dotApproxForTrees:
