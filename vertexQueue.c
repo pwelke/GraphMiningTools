@@ -27,7 +27,7 @@ struct Vertex* popFromVertexQueue(struct ShallowGraph* queue, struct ShallowGrap
 	}
 }
 
-struct Vertex* peekFromVertexQueue(struct ShallowGraph* queue, struct ShallowGraphPool* sgp) {
+struct Vertex* peekFromVertexQueue(struct ShallowGraph* queue) {
 	struct VertexList* e = queue->edges;
 	if (e != NULL) {
 		return e->endPoint;
