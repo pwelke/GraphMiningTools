@@ -163,7 +163,7 @@ static int pr_checkActiveArray(struct ShallowGraph** activeVertices, int nLists,
  * Goldberg and Tarjans Push-Relabel Algorithm.
  * Implementation follows Korte, Vygen: Combinatorial Optimization, Chapter 8.5
  */
-void pushRelabel(struct Graph* g, struct Vertex* s, struct Vertex* t, struct ShallowGraphPool* sgp) {
+void pushRelabelMaxFlow(struct Graph* g, struct Vertex* s, struct Vertex* t, struct ShallowGraphPool* sgp) {
 
 	struct ShallowGraph** activeVertices = pr_init(g, s, sgp);
 

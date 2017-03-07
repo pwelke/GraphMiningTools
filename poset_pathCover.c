@@ -126,12 +126,8 @@ static int* getLongestPathInFlowInstance(struct Vertex* v, struct Graph* flowIns
 		}
 	}
 
-//	fprintf(stderr, "\nstart: %i, end: %i\n", v->number, highestVertex->number);
-
-//	fprintf(stderr, "remove flow: ");
 	// remove path from graph by deleting flow on edges and fixing excess at start and endpoint of path
 	for (struct Vertex* x=highestVertex; x->lowPoint!=-1; x=flowInstance->vertices[x->lowPoint]) {
-//		fprintf(stderr, "%i ", x->number);
 		for (struct VertexList* e=flowInstance->vertices[x->lowPoint]->neighborhood; e!=NULL; e=e->next) {
 			if (e->endPoint == x) {
 				--e->flag;
@@ -139,7 +135,6 @@ static int* getLongestPathInFlowInstance(struct Vertex* v, struct Graph* flowIns
 			}
 		}
 	}
-//	fprintf(stderr, "\n");
 	--v->visited;
 	++highestVertex->visited;
 
@@ -153,8 +148,6 @@ static int* getLongestPathInFlowInstance(struct Vertex* v, struct Graph* flowIns
 			++arrayLength;
 		}
 	}
-//	fprintf(stderr, "number of original graph vertices: %i\n", arrayLength);
-
 
 	// alloc space for path and store vertex ids
 	int* path = malloc(arrayLength * sizeof(int));
@@ -164,23 +157,12 @@ static int* getLongestPathInFlowInstance(struct Vertex* v, struct Graph* flowIns
 	// to obtain a path in the original flowInstance, we keep only those vertices that have even ->number and convert them back
 	// to original numbers by dividing by two.
 	arrayLength -= 1;
-//	fprintf(stderr, "putting path into array: ");
 	for (struct Vertex* x=highestVertex; arrayLength > 1; x=flowInstance->vertices[x->lowPoint]) {
 		if (x->number % 2 == 0) {
 			path[arrayLength] = x->number / 2;
 			--arrayLength;
-//			fprintf(stderr, "%i -> %i, ", x->number, x->number / 2);
-		} else {
-//			fprintf(stderr, "%i, ", x->number);
 		}
 	}
-//	fprintf(stderr, "\n returned path: ");
-//
-//	for (int i=1; i<path[0]; ++i) {
-//		fprintf(stderr, "%i ", path[i]);
-//	}
-//	fputs("\n\n", stderr);
-//	printPathArray(path, stderr);
 
 	return path;
 }
@@ -251,6 +233,7 @@ int checkPathCover(struct Graph* g, int** pathset, size_t nPaths) {
 
 }
 
+
 /**
  *
  * Assumes that edges in the original poset are guaranteed to go from smaller vertex->number to larger vertex->number.
@@ -308,10 +291,6 @@ int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp,
 		}
 	}
 
-//	FILE* f = fopen("multiedges.dot", "w");
-//	printFlowInstanceDotFormat(flowInstance, f);
-//	fclose(f);
-
 	// get minimum number of paths that cover all vertices
 	countPossiblePaths(flowInstance, nPaths);
 
@@ -340,13 +319,7 @@ int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp,
 int** getPathCoverOfPosetPR(struct Graph* g, size_t* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	struct Graph* flowInstance = createVertexCoverFlowInstanceOfPoset(g, gp);
-
-	pushRelabel(flowInstance, flowInstance->vertices[0], flowInstance->vertices[1], sgp);
-
-//	pr_sanityCheck(flowInstance, flowInstance->vertices[0], flowInstance->vertices[1], stderr);
-//	FILE* f = fopen("flowInstance.dot", "w");
-//	printFlowInstanceDotFormat(flowInstance, f);
-//	fclose(f);
+	pushRelabelMaxFlow(flowInstance, flowInstance->vertices[0], flowInstance->vertices[1], sgp);
 
 	// add one flow value to those edges that correspond to vertices
 	for (int v=2; v<flowInstance->n; v+=2) {
@@ -391,10 +364,6 @@ int** getPathCoverOfPosetPR(struct Graph* g, size_t* nPaths, struct GraphPool* g
 		}
 	}
 
-//	f = fopen("multiedges.dot", "w");
-//	printFlowInstanceDotFormat(flowInstance, f);
-//	fclose(f);
-
 	// get minimum number of paths that cover all vertices
 	countPossiblePaths(flowInstance, nPaths);
 
@@ -405,21 +374,13 @@ int** getPathCoverOfPosetPR(struct Graph* g, size_t* nPaths, struct GraphPool* g
 		struct Vertex* vertex = flowInstance->vertices[v];
 		while (vertex->visited > 0) {
 			paths[i] = getLongestPathInFlowInstance(vertex, flowInstance, sgp);
-//			printPathArray(paths[i], stderr);
 			++i;
-//			size_t currentNPaths = 0;
-//			countPossiblePaths(flowInstance, &currentNPaths);
-//			fprintf(stderr, "currentPaths: %zu\n", currentNPaths);
-//			FILE* f = fopen("flowInstance.dot", "w");
-//			printFlowInstanceDotFormat(flowInstance, f);
-//			fclose(f);
 		}
 	}
 
 	dumpGraph(gp, flowInstance);
 	return paths;
 }
-
 
 
 static int dfsRaySearch(struct Graph* g, struct EvaluationPlan p, struct Vertex* currentPattern, struct GraphPool* gp) {
@@ -439,6 +400,7 @@ static int dfsRaySearch(struct Graph* g, struct EvaluationPlan p, struct Vertex*
 	}
 	return nEvaluations;
 }
+
 
 static int dfsRaySearchLE(struct SpanningtreeTree* spTree, struct EvaluationPlan p, struct Vertex* currentPattern, struct GraphPool* gp) {
 	int nEvaluations = 0;
@@ -482,6 +444,7 @@ static int* getPathInDAG(struct Vertex* v) {
 
 	return path;
 }
+
 
 static int* getLongestPathInDAG(struct Vertex* v, struct Graph* poset, struct ShallowGraphPool* sgp) {
 
@@ -533,9 +496,6 @@ static int binarySearchEvaluation(struct Graph* g, struct EvaluationPlan p, int*
 	int minIdx = 1;
 	int maxIdx = path[0] - 1;
 
-//	fprintf(stderr, "evaluating path: ");
-//	printPathArray(path, stderr);
-//	fprintf(stderr, "evaluations: ");
 	while (minIdx <= maxIdx) {
 		int currentIdx = (minIdx + maxIdx) / 2;
 		char match;
@@ -547,7 +507,6 @@ static int binarySearchEvaluation(struct Graph* g, struct EvaluationPlan p, int*
 		} else {
 			match = p.poset->vertices[path[currentIdx]]->visited == 1 ? 1 : 0;
 		}
-//		fprintf(stderr, "%i : %i, ", path[currentIdx], match);
 
 		if (match) {
 			minIdx = currentIdx + 1;
@@ -555,11 +514,10 @@ static int binarySearchEvaluation(struct Graph* g, struct EvaluationPlan p, int*
 			maxIdx = currentIdx - 1;
 		}
 	}
-//	fprintf(stderr, "\n");
-//	fflush(stderr);
 
 	return nEvaluations;
 }
+
 
 static int binarySearchEvaluationLE(struct SpanningtreeTree* spTree, struct EvaluationPlan p, int* path, struct GraphPool* gp) {
 	int nEvaluations = 0;
@@ -629,6 +587,7 @@ struct IntSet* dfsDownwardEmbeddingForTrees(struct Graph* g, struct EvaluationPl
 	return patternPosetInfoToFeatureSet(p);
 }
 
+
 struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp) {
 
 	int nEvaluations = 0;
@@ -645,6 +604,7 @@ struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPl
 	fprintf(stderr, "%i\n", nEvaluations);
 	return patternPosetInfoToFeatureSet(p);
 }
+
 
 struct IntSet* latticeLongestPathEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
@@ -728,6 +688,7 @@ struct IntSet* latticePathEmbeddingForLocalEasy(struct Graph* g, struct Evaluati
 	fprintf(stderr, "%i\n", nEvaluations);
 	return patternPosetInfoToFeatureSet(p);
 }
+
 
 struct IntSet* latticeLongestPathEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int sampleSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
