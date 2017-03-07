@@ -201,7 +201,11 @@ void printFlowInstanceDotFormat(struct Graph* g, FILE* out) {
 	fputs("digraph anonymous {\n", out);
 	// write vertices
 	for (int v=0; v<g->n; ++v) {
-		fprintf(out, "%i [label=\"%i: %i/%i\"];\n", v, v, g->vertices[v]->visited, g->vertices[v]->d);
+		if (g->vertices[v]->visited == 0) {
+			fprintf(out, "%i [label=\"%i: %i/%i\"];\n", v, v, g->vertices[v]->visited, g->vertices[v]->d);
+		} else {
+			fprintf(out, "%i [label=\"%i: %i/%i\", color=green, penwidth=3];\n", v, v, g->vertices[v]->visited, g->vertices[v]->d);
+		}
 	}
 	// write edges
 	for (int v=0; v<g->n; ++v) {
@@ -220,6 +224,31 @@ void printFlowInstanceDotFormat(struct Graph* g, FILE* out) {
 		}
 	}
 	fputs("}\n", out);
+}
+
+
+/**
+ * Check whether the given set of paths covers g. Returns the number of uncovered vertices.
+ */
+int checkPathCover(struct Graph* g, int** pathset, size_t nPaths) {
+
+	for (int v=0; v<g->n; ++v) {
+		g->vertices[v]->visited = 0;
+	}
+
+	for (size_t i=0; i<nPaths; ++i) {
+		for (int j=1; j<pathset[i][0]; ++j) {
+			g->vertices[pathset[i][j]]->visited = 1;
+		}
+	}
+
+	int covered = 0;
+	for (int v=0; v<g->n; ++v) {
+		covered += g->vertices[v]->visited;
+	}
+
+	return g->n - covered;
+
 }
 
 /**
@@ -279,6 +308,10 @@ int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp,
 		}
 	}
 
+//	FILE* f = fopen("multiedges.dot", "w");
+//	printFlowInstanceDotFormat(flowInstance, f);
+//	fclose(f);
+
 	// get minimum number of paths that cover all vertices
 	countPossiblePaths(flowInstance, nPaths);
 
@@ -309,6 +342,11 @@ int** getPathCoverOfPosetPR(struct Graph* g, size_t* nPaths, struct GraphPool* g
 	struct Graph* flowInstance = createVertexCoverFlowInstanceOfPoset(g, gp);
 
 	pushRelabel(flowInstance, flowInstance->vertices[0], flowInstance->vertices[1], sgp);
+
+//	pr_sanityCheck(flowInstance, flowInstance->vertices[0], flowInstance->vertices[1], stderr);
+//	FILE* f = fopen("flowInstance.dot", "w");
+//	printFlowInstanceDotFormat(flowInstance, f);
+//	fclose(f);
 
 	// add one flow value to those edges that correspond to vertices
 	for (int v=2; v<flowInstance->n; v+=2) {
@@ -353,7 +391,7 @@ int** getPathCoverOfPosetPR(struct Graph* g, size_t* nPaths, struct GraphPool* g
 		}
 	}
 
-//	FILE* f = fopen("multiedges.dot", "w");
+//	f = fopen("multiedges.dot", "w");
 //	printFlowInstanceDotFormat(flowInstance, f);
 //	fclose(f);
 
