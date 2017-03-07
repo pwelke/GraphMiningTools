@@ -235,12 +235,17 @@ int checkPathCover(struct Graph* g, int** pathset, size_t nPaths) {
 
 
 /**
+ * Given a poset as directed graph, this algorithm returns a minimum number of paths covering all vertices in the poset.
+ *
+ * This implementation follows Schrijver, Chapter 14.5a, Thm. 14.7 and Corr. 14.7b. It uses an augmenting path algorithm
+ * to find the required maximum flow. It seems to be slower than the one below that uses Goldberg and Tarjans push relabel
+ * algorithm for max flow.
  *
  * Assumes that edges in the original poset are guaranteed to go from smaller vertex->number to larger vertex->number.
  * Also assumes that the poset starts with an artificial vertex at position 0 that points to the smallest elements, but
  * is not a part of the poset.
  */
-int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int** getPathCoverOfPosetUsingAugmentingPaths(struct Graph* g, size_t* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	struct Graph* flowInstance = createVertexCoverFlowInstanceOfPoset(g, gp);
 
@@ -311,12 +316,16 @@ int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp,
 
 
 /**
+ * Given a poset as directed graph, this algorithm returns a minimum number of paths covering all vertices in the poset.
+ *
+ * This implementation follows Schrijver, Chapter 14.5a, Thm. 14.7 and Corr. 14.7b. It uses the push relabel algorithm
+ * of Goldberg and Tarjan.
  *
  * Assumes that edges in the original poset are guaranteed to go from smaller vertex->number to larger vertex->number.
  * Also assumes that the poset starts with an artificial vertex at position 0 that points to the smallest elements, but
  * is not a part of the poset.
  */
-int** getPathCoverOfPosetPR(struct Graph* g, size_t* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	struct Graph* flowInstance = createVertexCoverFlowInstanceOfPoset(g, gp);
 	pushRelabelMaxFlow(flowInstance, flowInstance->vertices[0], flowInstance->vertices[1], sgp);

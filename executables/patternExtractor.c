@@ -351,8 +351,7 @@ int main(int argc, char** argv) {
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr,
 		dotApproxForTrees, dotApproxLocalEasy,
 		dfsForTrees, latticePathForTrees, latticeLongestPathForTrees, dilworthsCoverForTrees,
-		dfsForLocalEasy, latticePathForLocalEasy, latticeLongestPathForLocalEasy, dilworthsCoverForLocalEasy,
-		dilworthsCoverDryrun
+		dfsForLocalEasy, latticePathForLocalEasy, latticeLongestPathForLocalEasy, dilworthsCoverForLocalEasy
 	} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
@@ -510,10 +509,6 @@ int main(int argc, char** argv) {
 				method = dilworthsCoverForLocalEasy;
 				break;
 			}
-			if (strcmp(optarg, "dilworthsCoverDryrun") == 0) {
-				method = dilworthsCoverDryrun;
-				break;
-			}
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -580,7 +575,6 @@ int main(int argc, char** argv) {
 	case latticePathForLocalEasy:
 	case latticeLongestPathForLocalEasy:
 	case dilworthsCoverForLocalEasy:
-	case dilworthsCoverDryrun:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -653,22 +647,6 @@ int main(int argc, char** argv) {
 		evaluationPlan.poset = patternPoset;
 		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
 		evaluationPlan.shrunkPermutations = getPathCoverOfPoset(evaluationPlan.poset, &(evaluationPlan.sketchSize), gp, sgp);
-		fprintf(stderr, "number of paths in cover: %zu\n", evaluationPlan.sketchSize);
-		fprintf(stderr, "number of uncovered vertices: %i\n", checkPathCover(evaluationPlan.poset, evaluationPlan.shrunkPermutations, evaluationPlan.sketchSize) - 1);
-		fflush(stderr);
-		break;
-	case dilworthsCoverDryrun:
-		// these methods need the pattern poset, its reverse, and the static set of paths for evaluation
-		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
-		fprintf(stderr, "pattern poset n=%i m=%i\n", patternPoset->n, patternPoset->m);
-		fflush(stderr);
-		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
-		evaluationPlan.poset = patternPoset;
-		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
-		evaluationPlan.shrunkPermutations = getPathCoverOfPosetPR(evaluationPlan.poset, &(evaluationPlan.sketchSize), gp, sgp);
-		fprintf(stderr, "number of paths in cover: %zu\n", evaluationPlan.sketchSize);
-		fprintf(stderr, "number of uncovered vertices: %i\n", checkPathCover(evaluationPlan.poset, evaluationPlan.shrunkPermutations, evaluationPlan.sketchSize) - 1);
-		fflush(stderr);
 		break;
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
@@ -773,9 +751,6 @@ int main(int argc, char** argv) {
 			case dilworthsCoverForLocalEasy:
 				fingerprints = staticPathCoverEmbeddingForLocalEasy(g, evaluationPlan, absImportance, gp, sgp);
 				break;
-			case dilworthsCoverDryrun:
-				fingerprints = NULL;
-				break;
 			}
 			// output
 			switch (method) {
@@ -818,12 +793,16 @@ int main(int argc, char** argv) {
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
 	case dfsForTrees:
+	case dfsForLocalEasy:
 	case latticePathForTrees:
+	case latticePathForLocalEasy:
 	case latticeLongestPathForTrees:
+	case latticeLongestPathForLocalEasy:
 		dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
 		break;
 	case dilworthsCoverForTrees:
+	case dilworthsCoverForLocalEasy:
 		dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
 		break;
