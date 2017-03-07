@@ -641,8 +641,6 @@ int main(int argc, char** argv) {
 	case dilworthsCoverForLocalEasy:
 		// these methods need the pattern poset, its reverse, and the static set of paths for evaluation
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
-		fprintf(stderr, "pattern poset n=%i m=%i\n", patternPoset->n, patternPoset->m);
-		fflush(stderr);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
 		evaluationPlan.poset = patternPoset;
 		evaluationPlan.reversePoset = reverseGraph(patternPoset, gp);
