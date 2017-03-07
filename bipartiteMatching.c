@@ -20,6 +20,7 @@
  * - e->used = e'->used = capacity
  * - e->flag = capacity - e'->flag = flow on e
  *
+ *
  */
 
 
@@ -121,7 +122,8 @@ static int pr_findSmallestActiveIndex(struct ShallowGraph** activeVertices, int 
 	return j;
 }
 
-int pr_sanityCheck(struct Graph* g, struct Vertex* s, struct Vertex* t, FILE* out) {
+
+int pr_sanityOfFlow(struct Graph* g, struct Vertex* s, struct Vertex* t, FILE* out) {
 	int sOuttIn = s->visited + t->visited;
 
 	int excessViolated = 0;
@@ -141,7 +143,8 @@ int pr_sanityCheck(struct Graph* g, struct Vertex* s, struct Vertex* t, FILE* ou
 	return !sOuttIn && !excessViolated;
 }
 
-static int pr_checkActiveArray(struct ShallowGraph** activeVertices, int nLists, FILE* out) {
+
+int pr_sanityOfFinalActiveArray(struct ShallowGraph** activeVertices, int nLists, FILE* out) {
 	int forgottenVertices = 0;
 	for (int i=0; i<nLists; ++i) {
 		if (peekFromVertexQueue(activeVertices[i])) {
@@ -158,7 +161,6 @@ static int pr_checkActiveArray(struct ShallowGraph** activeVertices, int nLists,
 }
 
 
-
 /**
  * Goldberg and Tarjans Push-Relabel Algorithm.
  * Implementation follows Korte, Vygen: Combinatorial Optimization, Chapter 8.5
@@ -167,16 +169,8 @@ void pushRelabelMaxFlow(struct Graph* g, struct Vertex* s, struct Vertex* t, str
 
 	struct ShallowGraph** activeVertices = pr_init(g, s, sgp);
 
-//	int debug = 0;
-//	char filename [50];
-
 	int i = 0;
 	for (struct Vertex* active=popFromVertexQueue(activeVertices[i], sgp); active!=NULL; active=popFromVertexQueue(activeVertices[i], sgp)) {
-
-//		int activeId = active->number;
-//		if (activeId == 80) {
-//			printf("!");
-//		}
 
 		// look for allowed edges and push as much flow as possible
 		char foundAllowedEdge = 0;
@@ -202,19 +196,10 @@ void pushRelabelMaxFlow(struct Graph* g, struct Vertex* s, struct Vertex* t, str
 			}
 		}
 
-//		sprintf(filename, "flowInstance_step%i.dot", debug);
-//		FILE* f = fopen(filename, "w");
-//		printFlowInstanceDotFormat(g, f);
-//		fclose(f);
-//		++debug;
-
 		if (peekFromVertexQueue(activeVertices[i]) == NULL) {
 			i = pr_findSmallestActiveIndex(activeVertices, i);
 		}
-
 	}
-
-//	pr_checkActiveArray(activeVertices, 2 * g->n - 1, stderr);
 
 	// garbage collection
 	for (int i=0; i<2 * g->n - 1; ++i) {
