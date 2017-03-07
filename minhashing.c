@@ -234,6 +234,7 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 	}
 
 	// to filter out duplicates, we add the edges from a list just now.
+	size_t missingSubgraphs = 0;
 	for (struct IntElement* graphID=subgraphs->first; graphID!=NULL; graphID=graphID->next) {
 		if (graphID->value != -1) {
 			struct VertexList* e = getVertexList(gp->listPool);
@@ -243,7 +244,22 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 			F->m += 1;
 			++edgeCount;
 		} else {
-			fprintf(stderr, "subtree not found in searchtree. this should not happen if you provided a pattern set that is closed wrt. subgraph iso.\n");
+//			fprintf(stderr, "subtree not found in searchtree. this should not happen if you provided a pattern set that is closed wrt. subgraph iso.\n");
+			++missingSubgraphs;
+		}
+	}
+
+	if (missingSubgraphs == subgraphs->size) {
+		struct VertexList* e = getVertexList(gp->listPool);
+		e->startPoint = F->vertices[0];
+		e->endPoint = F->vertices[pattern->number];
+		addEdge(e->startPoint, e);
+		F->m += 1;
+		++edgeCount;
+		fprintf(stderr, "found minimal pattern %i with %i vertices\n", pattern->number, pattern->n);
+	} else {
+		if (missingSubgraphs > 0) {
+			fprintf(stderr, "pattern %i is not minimal, but not all subpatterns are present\n", pattern->n);
 		}
 	}
 
