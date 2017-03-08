@@ -699,7 +699,7 @@ int main(int argc, char** argv) {
 				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.poset, gp, sgp);
 				break;
 			case localEasyPatternsFast:
-				fingerprints = explicitEmbeddingForLocalEasyOperator(g, evaluationPlan.poset, absImportance, gp, sgp);
+				fingerprints = explicitEmbeddingForLocalEasyOperator(g, evaluationPlan, absImportance, gp, sgp);
 				break;
 			case treePatternsFastAbsImp:
 				fingerprints = explicitEmbeddingForAbsImportantTrees(g, evaluationPlan.poset, absImportance, gp, sgp);
