@@ -111,8 +111,9 @@ void addIntSortedWithDuplicates(struct IntSet* s, int i) {
 }
 
 /**
- * Add int value to list of ints. creates no duplicates: if you try to add an element that is already contained in the list the list size does not increase.
- * if you want duplicates, use addIntSortedWithDuplicates
+ * Add int value to list of ints. creates no duplicates: if you try to add an element
+ * that is already contained in the list the list size does not increase.
+ * If you want duplicates, use addIntSortedWithDuplicates
  */
 void addIntSortedNoDuplicates(struct IntSet* s, int i) {
 	if (s->last != NULL) {
@@ -124,7 +125,10 @@ void addIntSortedNoDuplicates(struct IntSet* s, int i) {
 			newElement->value = i;
 			s->last->next = newElement;
 			s->last = newElement;
-		} else {
+			s->size += 1;
+			return;
+		}
+		if (s->last->value > i) {
 			if (s->first->value == i) {
 				return;
 			}
@@ -133,7 +137,10 @@ void addIntSortedNoDuplicates(struct IntSet* s, int i) {
 				newElement->value = i;
 				newElement->next = s->first;
 				s->first = newElement;
-			} else {
+				s->size += 1;
+				return;
+			}
+			if (s->first->value < i) {
 				for (struct IntElement* e=s->first; e!=NULL; e=e->next) {
 					if (e->next->value == i) {
 						return;
@@ -143,7 +150,8 @@ void addIntSortedNoDuplicates(struct IntSet* s, int i) {
 						newElement->value = i;
 						newElement->next = e->next;
 						e->next = newElement;
-						break;
+						s->size += 1;
+						return;
 					}
 				}
 			}
@@ -152,8 +160,9 @@ void addIntSortedNoDuplicates(struct IntSet* s, int i) {
 		struct IntElement* newElement = getIntElement();
 		newElement->value = i;
 		s->first = s->last = newElement;
+		s->size += 1;
+		return;
 	}
-	s->size += 1;
 }
 
 void appendIntElement(struct IntSet* s, struct IntElement* e) {
