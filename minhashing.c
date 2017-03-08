@@ -225,7 +225,8 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 
 			// compute canonical string of subtree and get its position in F
 			struct ShallowGraph* subString = canonicalStringOfTree(subgraph, sgp);
-			addIntSortedNoDuplicates(subgraphs, getID(searchtree, subString));
+			int graphID = getID(searchtree, subString);
+			addIntSortedNoDuplicates(subgraphs, graphID);
 			dumpShallowGraph(sgp, subString);
 
 			// restore law and order in current (and invalidate subgraph)
@@ -278,10 +279,16 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
 }
 
 
+static int graphIdCmp(const void* a, const void* b) {
+	struct Graph* g = *(struct Graph**)a;
+	struct Graph* h = *(struct Graph**)b;
+	return g->n - h->n;
+}
+
 /**
  * Build a poset of trees given as graphs, ordered by subgraph isomorphism.
  *
- * Input: a list of graphs that are trees, ordered by number of vertices
+ * Input: a list of graphs that are trees
  * Output: a graph F where each vertex corresponds to a canonical string in
  *         the input, except vertex 0 that corresponds to the empty pattern.
  *
@@ -294,6 +301,16 @@ static int addEdgesFromSubtrees(struct Graph* pattern, struct Vertex* searchtree
  *   isomorphic to w
  */
 struct Graph* buildTreePosetFromGraphDB(struct Graph** db, int nGraphs, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	// if patterns are not ordered by number of vertices, sort db array accordingly before adding edges
+	for (int i=0; i<nGraphs-1; ++i) {
+		if (db[i]->n < db[i+1]->n) {
+			fprintf(stderr, "reordering patterns by number of vertices.\nThis changes pattern ids!\n");
+			qsort(db, nGraphs, sizeof(struct Graph*), &graphIdCmp);
+			break;
+		}
+	}
+
 	// add strings to a search tree with correct numbers
 	struct Vertex* searchTree = getVertex(gp->vertexPool);
 	for (int i=0; i<nGraphs; ++i) {
