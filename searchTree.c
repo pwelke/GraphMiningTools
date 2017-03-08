@@ -177,7 +177,11 @@ static int getIDRec(struct Vertex* root, struct VertexList* edge) {
 
 	/* if edge == NULL, we are done. check if visited > 0.  */
 	if (edge == NULL) {
-		return root->lowPoint;
+		if (root->visited > 0) {
+			return root->lowPoint;
+		} else {
+			return -1;
+		}
 	} else {
 		struct VertexList* idx;
 		for (idx=root->neighborhood; idx; idx=idx->next) {
