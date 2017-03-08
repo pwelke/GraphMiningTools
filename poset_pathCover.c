@@ -9,6 +9,7 @@
 #include "vertexQueue.h"
 #include "bipartiteMatching.h"
 #include "localEasySubtreeIsomorphism.h"
+#include "minhashing.h"
 #include "poset_pathCover.h"
 
 
@@ -394,7 +395,7 @@ int** getPathCoverOfPoset(struct Graph* g, size_t* nPaths, struct GraphPool* gp,
 
 static int dfsRaySearch(struct Graph* g, struct EvaluationPlan p, struct Vertex* currentPattern, struct GraphPool* gp) {
 	int nEvaluations = 0;
-	if (currentPattern->visited == 0) {
+	if (!embeddingValueKnown(currentPattern)) {
 		struct Graph* pattern = (struct Graph*)(currentPattern->label);
 		char match = isSubtree(g, pattern, gp);
 		++nEvaluations;
@@ -413,7 +414,7 @@ static int dfsRaySearch(struct Graph* g, struct EvaluationPlan p, struct Vertex*
 
 static int dfsRaySearchLE(struct SpanningtreeTree* spTree, struct EvaluationPlan p, struct Vertex* currentPattern, struct GraphPool* gp) {
 	int nEvaluations = 0;
-	if (currentPattern->visited == 0) {
+	if (!embeddingValueKnown(currentPattern)) {
 		struct Graph* pattern = (struct Graph*)(currentPattern->label);
 		char match = subtreeCheckForSpanningtreeTree(spTree, pattern, gp);
 		wipeCharacteristicsForLocalEasy(*spTree);
@@ -508,13 +509,13 @@ static int binarySearchEvaluation(struct Graph* g, struct EvaluationPlan p, int*
 	while (minIdx <= maxIdx) {
 		int currentIdx = (minIdx + maxIdx) / 2;
 		char match;
-		if (p.poset->vertices[path[currentIdx]]->visited == 0) {
+		if (!embeddingValueKnown(p.poset->vertices[path[currentIdx]])) {
 			struct Graph* pattern = (struct Graph*)(p.poset->vertices[path[currentIdx]]->label);
 			match = isSubtree(g, pattern, gp);
 			++nEvaluations;
 			updateEvaluationPlan(p, path[currentIdx], match);
 		} else {
-			match = p.poset->vertices[path[currentIdx]]->visited == 1 ? 1 : 0;
+			match = getMatch(p.poset->vertices[path[currentIdx]]);
 		}
 
 		if (match) {
@@ -536,14 +537,14 @@ static int binarySearchEvaluationLE(struct SpanningtreeTree* spTree, struct Eval
 	while (minIdx <= maxIdx) {
 		int currentIdx = (minIdx + maxIdx) / 2;
 		char match;
-		if (p.poset->vertices[path[currentIdx]]->visited == 0) {
+		if (!embeddingValueKnown(p.poset->vertices[path[currentIdx]])) {
 			struct Graph* pattern = (struct Graph*)(p.poset->vertices[path[currentIdx]]->label);
 			match = subtreeCheckForSpanningtreeTree(spTree, pattern, gp);
 			wipeCharacteristicsForLocalEasy(*spTree);
 			++nEvaluations;
 			updateEvaluationPlan(p, path[currentIdx], match);
 		} else {
-			match = p.poset->vertices[path[currentIdx]]->visited;
+			match = getMatch(p.poset->vertices[path[currentIdx]]);
 		}
 
 		if (match) {
@@ -554,19 +555,6 @@ static int binarySearchEvaluationLE(struct SpanningtreeTree* spTree, struct Eval
 	}
 
 	return nEvaluations;
-}
-
-
-// CREATE FEATURE SET
-
-struct IntSet* patternPosetInfoToFeatureSet(struct EvaluationPlan p) {
-	struct IntSet* features = getIntSet();
-	for (int i=1; i<p.poset->n; ++i) {
-		if (p.poset->vertices[i]->visited == 1) {
-			addIntSortedNoDuplicates(features, i - 1);
-		}
-	}
-	return features;
 }
 
 
@@ -603,7 +591,7 @@ struct IntSet* latticePathEmbeddingForTrees(struct Graph* g, struct EvaluationPl
 	cleanEvaluationPlan(p);
 
 	for (int i=1; i<p.poset->n; ++i) {
-		if (p.poset->vertices[i]->visited == 0) {
+		if (!embeddingValueKnown(p.poset->vertices[i])) {
 			int* path = getPathInDAG(p.poset->vertices[i]);
 			nEvaluations += binarySearchEvaluation(g, p, path, gp);
 			free(path);
@@ -621,7 +609,7 @@ struct IntSet* latticeLongestPathEmbeddingForTrees(struct Graph* g, struct Evalu
 	cleanEvaluationPlan(p);
 
 	for (int i=1; i<p.poset->n; ++i) {
-		if (p.poset->vertices[i]->visited == 0) {
+		if (!embeddingValueKnown(p.poset->vertices[i])) {
 			int* path = getLongestPathInDAG(p.poset->vertices[i], p.poset, sgp);
 			nEvaluations += binarySearchEvaluation(g, p, path, gp);
 			free(path);
@@ -685,7 +673,7 @@ struct IntSet* latticePathEmbeddingForLocalEasy(struct Graph* g, struct Evaluati
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 	for (int i=1; i<p.poset->n; ++i) {
-		if (p.poset->vertices[i]->visited == 0) {
+		if (!embeddingValueKnown(p.poset->vertices[i])) {
 			int* path = getPathInDAG(p.poset->vertices[i]);
 			nEvaluations += binarySearchEvaluationLE(&spTree, p, path, gp);
 			free(path);
@@ -706,7 +694,7 @@ struct IntSet* latticeLongestPathEmbeddingForLocalEasy(struct Graph* g, struct E
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 	for (int i=1; i<p.poset->n; ++i) {
-		if (p.poset->vertices[i]->visited == 0) {
+		if (!embeddingValueKnown(p.poset->vertices[i])) {
 			int* path = getLongestPathInDAG(p.poset->vertices[i], p.poset, sgp);
 			nEvaluations += binarySearchEvaluationLE(&spTree, p, path, gp);
 			free(path);

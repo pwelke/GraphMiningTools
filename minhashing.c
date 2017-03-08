@@ -340,6 +340,15 @@ void cleanEvaluationPlan(struct EvaluationPlan p) {
 }
 
 
+/** check whether the match value of pattern given by v is yet unknown */
+inline int embeddingValueKnown(struct Vertex* v) {
+	return v->visited != 0;
+}
+
+inline int getMatch(struct Vertex* v) {
+	return v->visited == 1 ? 1 : 0;
+}
+
 /**
 Traverses the reverse graph of the poset graph F and marks all vertices reachable from v as matches.
 
@@ -398,6 +407,20 @@ void updateEvaluationPlan(struct EvaluationPlan p, int patternId, char match) {
 		rayOfDoom(p.poset->vertices[patternId], p);
 	}
 }
+
+
+// CREATE FEATURE SET
+
+struct IntSet* patternPosetInfoToFeatureSet(struct EvaluationPlan p) {
+	struct IntSet* features = getIntSet();
+	for (int i=1; i<p.poset->n; ++i) {
+		if (p.poset->vertices[i]->visited == 1) {
+			addIntSortedNoDuplicates(features, i - 1);
+		}
+	}
+	return features;
+}
+
 
 
 // COMPUTATION OF MINHASHES
@@ -630,83 +653,126 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct Graph* F, struc
 }
 
 
-struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct Graph* F, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-
+struct IntSet* explicitEmbeddingForLocalEasyOperator(struct Graph* g, struct EvaluationPlan p, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int nEvaluations = 0;
-
-	//cleanup
-	for (int v=0; v<F->n; ++v) { F->vertices[v]->visited = 0; }
-
-	// init output
-	struct IntSet* features = getIntSet();
+	cleanEvaluationPlan(p);
 
 	// add minimal elements to border
 	struct ShallowGraph* border = getShallowGraph(sgp);
-	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
+	for (struct VertexList* e=p.poset->vertices[0]->neighborhood; e!=NULL; e=e->next) {
 		addToVertexQueue(e->endPoint, border, sgp);
+		e->endPoint->d = 1;
 	}
 
-	// init data structure for embedding operator
-	struct BlockTree blockTree = getBlockTreeT(g, sgp);
-	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), nLocalTrees, gp, sgp);
 
-	// bfs evaluation with pruning through the poset
-	while (border->m != 0) {
-		struct Vertex* v = popFromVertexQueue(border, sgp);
-		struct Graph* pattern = (struct Graph*)(v->label);
-		if (v->visited == 0) {
-			char match = 0;
-			if (pattern->n == 1) {
-				match = 1;
-				char* l = pattern->vertices[0]->label;
-				for (int v=0; v<g->n; ++v) {
-					// will be 0 after loop iff one label matches
-					match &= labelCmp(l, g->vertices[v]->label);
-				}
-				// invert result
-				match = !match;
-			} else {
-				match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
-				wipeCharacteristicsForLocalEasy(sptTree);
-			}
+	for (struct Vertex* v=popFromVertexQueue(border, sgp); v!=NULL; v=popFromVertexQueue(border, sgp)) {
+		v->d = 0;
 
-			// garbage collection in SpanningtreeTree
-			if (sptTree.characteristics) {
-				for (int r=0; r<sptTree.nRoots; ++r) {
-					if (sptTree.characteristics[r]) {
-						struct SubtreeIsoDataStoreElement* tmp;
-						for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[r]->first; e!=NULL; e=tmp) {
-							tmp = e->next;
-							dumpNewCube(e->data.S, e->data.g->n);
-							free(e);
-						}
-					}
-					free(sptTree.characteristics[r]);
-				}
-				free(sptTree.characteristics);
-				sptTree.characteristics = NULL;
-			}
-
-
+		char match = 0;
+		if (!embeddingValueKnown(v)) {
+			struct Graph* pattern = (struct Graph*)(v->label);
+			match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
+			wipeCharacteristicsForLocalEasy(sptTree);
 			++nEvaluations;
-			if (match) {
-				addIntSortedNoDuplicates(features, v->number - 1);
-				v->visited = 1;
-				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
-					if (e->endPoint->visited == 0) {
-						addToVertexQueue(e->endPoint, border, sgp);
-					}
+			updateEvaluationPlan(p, v->number, match);
+		} else {
+			match = getMatch(v);
+		}
+
+		// add extensions of pattern to border
+		if (match) {
+			for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+				if (e->endPoint->d == 0) {
+					addToVertexQueue(e->endPoint, border, sgp);
+					e->endPoint->d = 1;
 				}
-			} else {
-				markConnectedComponent(v, -1);
 			}
 		}
 	}
-	dumpSpanningtreeTree(sptTree, gp);
-//	fprintf(stderr, "%i\n", nEvaluations);
-	return features;
 
+	fprintf(stderr, "%i\n", nEvaluations);
+	dumpSpanningtreeTree(sptTree, gp);
+	return patternPosetInfoToFeatureSet(p);
 }
+
+//struct IntSet* explicitEmbeddingForLocalEasyOperatorX(struct Graph* g, struct Graph* F, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+//
+//	int nEvaluations = 0;
+//
+//	//cleanup
+//	for (int v=0; v<F->n; ++v) { F->vertices[v]->visited = 0; }
+//
+//	// init output
+//	struct IntSet* features = getIntSet();
+//
+//	// add minimal elements to border
+//	struct ShallowGraph* border = getShallowGraph(sgp);
+//	for (struct VertexList* e=F->vertices[0]->neighborhood; e!=NULL; e=e->next) {
+//		addToVertexQueue(e->endPoint, border, sgp);
+//	}
+//
+//	// init data structure for embedding operator
+//	struct BlockTree blockTree = getBlockTreeT(g, sgp);
+//	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+//
+//	// bfs evaluation with pruning through the poset
+//	while (border->m != 0) {
+//		struct Vertex* v = popFromVertexQueue(border, sgp);
+//		struct Graph* pattern = (struct Graph*)(v->label);
+//		if (v->visited == 0) {
+//			char match = 0;
+//			if (pattern->n == 1) {
+//				match = 1;
+//				char* l = pattern->vertices[0]->label;
+//				for (int v=0; v<g->n; ++v) {
+//					// will be 0 after loop iff one label matches
+//					match &= labelCmp(l, g->vertices[v]->label);
+//				}
+//				// invert result
+//				match = !match;
+//			} else {
+//				match = subtreeCheckForSpanningtreeTree(&sptTree, pattern, gp);
+//				wipeCharacteristicsForLocalEasy(sptTree);
+//			}
+//
+//			// garbage collection in SpanningtreeTree
+//			if (sptTree.characteristics) {
+//				for (int r=0; r<sptTree.nRoots; ++r) {
+//					if (sptTree.characteristics[r]) {
+//						struct SubtreeIsoDataStoreElement* tmp;
+//						for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[r]->first; e!=NULL; e=tmp) {
+//							tmp = e->next;
+//							dumpNewCube(e->data.S, e->data.g->n);
+//							free(e);
+//						}
+//					}
+//					free(sptTree.characteristics[r]);
+//				}
+//				free(sptTree.characteristics);
+//				sptTree.characteristics = NULL;
+//			}
+//
+//
+//			++nEvaluations;
+//			if (match) {
+//				addIntSortedNoDuplicates(features, v->number - 1);
+//				v->visited = 1;
+//				for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+//					if (e->endPoint->visited == 0) {
+//						addToVertexQueue(e->endPoint, border, sgp);
+//					}
+//				}
+//			} else {
+//				markConnectedComponent(v, -1);
+//			}
+//		}
+//	}
+//	dumpSpanningtreeTree(sptTree, gp);
+////	fprintf(stderr, "%i\n", nEvaluations);
+//	return features;
+//
+//}
 
 
 struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct Graph* F, size_t importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
