@@ -100,7 +100,7 @@ static struct ShallowGraph** pr_init(struct Graph* g, struct Vertex* s, struct S
 }
 
 
-static int pr_isAllowedEdge(struct VertexList* e) {
+inline static int pr_isAllowedEdge(const struct VertexList *const e) {
 	int isForward = e->startPoint->d == e->endPoint->d + 1;
 	int notSaturated = e->used - e->flag > 0;
 	return isForward && notSaturated;
