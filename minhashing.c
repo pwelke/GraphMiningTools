@@ -610,10 +610,10 @@ int* fastMinHashForAndOr(struct Graph* g, struct EvaluationPlan p, struct GraphP
 
 
 
-// FOR COMPARISON: EXPLICIT EVALUATION USING THE PATTERN POSET
+// FOR COMPARISON: BFS EVALUATION USING THE PATTERN POSET
 
 
-struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct IntSet* bfsEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
@@ -653,7 +653,7 @@ struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct EvaluationPlan 
 }
 
 
-struct IntSet* explicitEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct IntSet* bfsEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
@@ -697,7 +697,7 @@ struct IntSet* explicitEmbeddingForLocalEasy(struct Graph* g, struct EvaluationP
 }
 
 
-struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, size_t importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct IntSet* bfsEmbeddingForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, size_t importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
@@ -737,7 +737,7 @@ struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct Eva
 }
 
 
-struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct IntSet* bfsEmbeddingForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
 
@@ -778,7 +778,7 @@ struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct Eva
 
 
 
-// DOT PRODUCT APPROXIMATION BY RANDOM PROJECTIONS
+// DOT PRODUCT APPROXIMATION BY RANDOM PROJECTIONS ! TODO NOT PROPERLY TESTED
 
 /**
  * Given a forest g, a pattern poset p and a subset of patterns represented by a (random) projection, we want to compute an embedding of g

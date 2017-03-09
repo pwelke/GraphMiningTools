@@ -57,10 +57,10 @@ int* randomProjectionEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p,
 int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p, int* projection, int projectionSize, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 // FOR COMPARISON: EXACT COMPUTATION OF EMBEDDING	 USING THE PATTERN POSET
-struct IntSet* explicitEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp);\
-struct IntSet* explicitEmbeddingForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, size_t importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct IntSet* explicitEmbeddingForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct IntSet* explicitEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct IntSet* bfsEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, struct GraphPool* gp, struct ShallowGraphPool* sgp);\
+struct IntSet* bfsEmbeddingForAbsImportantTrees(struct Graph* g, struct EvaluationPlan p, size_t importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct IntSet* bfsEmbeddingForRelImportantTrees(struct Graph* g, struct EvaluationPlan p, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct IntSet* bfsEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 
 #endif /* MINHASHING_H_ */

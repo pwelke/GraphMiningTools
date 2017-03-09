@@ -696,16 +696,16 @@ int main(int argc, char** argv) {
 				fingerprints = computeResampledTreeFullEmbedding(g, absImportance, patterns, nPatterns, gp, sgp);
 				break;
 			case treePatternsFast:
-				fingerprints = explicitEmbeddingForTrees(g, evaluationPlan.poset, gp, sgp);
+				fingerprints = bfsEmbeddingForTrees(g, evaluationPlan, gp, sgp);
 				break;
 			case localEasyPatternsFast:
-				fingerprints = explicitEmbeddingForLocalEasyOperator(g, evaluationPlan, absImportance, gp, sgp);
+				fingerprints = bfsEmbeddingForLocalEasy(g, evaluationPlan, absImportance, gp, sgp);
 				break;
 			case treePatternsFastAbsImp:
-				fingerprints = explicitEmbeddingForAbsImportantTrees(g, evaluationPlan.poset, absImportance, gp, sgp);
+				fingerprints = bfsEmbeddingForAbsImportantTrees(g, evaluationPlan, absImportance, gp, sgp);
 				break;
 			case treePatternsFastRelImp:
-				fingerprints = explicitEmbeddingForRelImportantTrees(g, evaluationPlan.poset, relImportance, gp, sgp);
+				fingerprints = bfsEmbeddingForRelImportantTrees(g, evaluationPlan, relImportance, gp, sgp);
 				break;
 			case minHashTree:
 				fingerprints = (struct IntSet*)fastMinHashForTrees(g, evaluationPlan, gp);
