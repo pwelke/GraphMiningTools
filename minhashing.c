@@ -352,7 +352,7 @@ inline int getMatch(struct Vertex* v) {
 /**
 Traverses the reverse graph of the poset graph F and marks all vertices reachable from v as matches.
 
-Hence, v needs to be a vertex in the reverse graph p.reverseF !
+Hence, v needs to be a vertex in the reverse graph p.reversePoset !
  */
 static void rayOfLight(struct Vertex* v, struct EvaluationPlan p) {
 
@@ -373,7 +373,7 @@ static void rayOfLight(struct Vertex* v, struct EvaluationPlan p) {
 /**
 Traverses the pattern poset and marks all vertices reachable from v as non-matches.
 
-Hence, v needs to be a vertex in the graph p.reversePoset !
+Hence, v needs to be a vertex in the graph p.poset !
  */
 static void rayOfDoom(struct Vertex* v, struct EvaluationPlan p) {
 
@@ -406,6 +406,25 @@ void updateEvaluationPlan(struct EvaluationPlan p, int patternId, char match) {
 	} else {
 		rayOfDoom(p.poset->vertices[patternId], p);
 	}
+}
+
+
+int getPositiveBorderSize(struct EvaluationPlan p) {
+	int borderSize = 0;
+	for (int v=0; v<p.poset->n; ++v) {
+		int inBorder = 1;
+		for (struct VertexList* e=p.poset->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+			inBorder &= getMatch(e->endPoint);
+		}
+		borderSize += inBorder;
+	}
+	return borderSize;
+}
+
+
+int getNegativeBorderSize(struct EvaluationPlan p) {
+	int borderSize = 0;
+
 }
 
 
