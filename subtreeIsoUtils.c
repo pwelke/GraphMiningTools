@@ -85,23 +85,27 @@ Note, that the parameter root vertex will not be the vertex with the highest pos
 than one connected component.
 */
 int* getPostorder(struct Graph* g, int root) {
-	int* order = malloc(g->n * sizeof(int));
-	for (int i=0; i<g->n; ++i) {
-		g->vertices[i]->visited = -1;
-		order[i] = -1;
-	}
-
-	int nVisited = dfs(g->vertices[root], 0);
-	g->vertices[root]->lowPoint = -1;
-	for (int i=0; i<g->n; ++i) {
-		if (g->vertices[i]->visited == -1) {
-			nVisited = dfs(g->vertices[i], nVisited + 1);
-			g->vertices[i]->lowPoint = -1;
-
+	if (g->n > 0) {
+		int* order = malloc(g->n * sizeof(int));
+		for (int i=0; i<g->n; ++i) {
+			g->vertices[i]->visited = -1;
+			order[i] = -1;
 		}
-		order[g->vertices[i]->visited] = i;
+
+		int nVisited = dfs(g->vertices[root], 0);
+		g->vertices[root]->lowPoint = -1;
+		for (int i=0; i<g->n; ++i) {
+			if (g->vertices[i]->visited == -1) {
+				nVisited = dfs(g->vertices[i], nVisited + 1);
+				g->vertices[i]->lowPoint = -1;
+
+			}
+			order[g->vertices[i]->visited] = i;
+		}
+		return order;
+	} else {
+		return NULL;
 	}
-	return order;
 }
 
 
