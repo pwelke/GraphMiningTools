@@ -236,14 +236,7 @@ int main(int argc, char** argv) {
 				struct Graph* subgraph = NULL;
 
 				subgraph = subgraphSelector(g->vertices[v], gp);
-//				switch (selector) {
-//				case disk:
-//					subgraph = getDiskGraph(g->vertices[v], gp);
-//					break;
-//				case neighbors:
-//					subgraph = getNeighborhoodGraph(g->vertices[v], gp);
-//					break;
-//				}
+
 				subgraph->number = neighborhoodCount;
 				subgraph->activity = atoi(g->vertices[v]->label);
 				printGraphAidsFormat(subgraph, stdout);
