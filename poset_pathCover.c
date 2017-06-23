@@ -5,6 +5,7 @@
 #include <malloc.h>
 #include <stddef.h>
 #include <limits.h>
+#include <math.h>
 
 #include "vertexQueue.h"
 #include "bipartiteMatching.h"
@@ -557,6 +558,103 @@ static int binarySearchEvaluationLE(struct SpanningtreeTree* spTree, struct Eval
 	return nEvaluations;
 }
 
+static double* getWeightsOfPath(struct Graph* poset, int* path, int databaseSize) {
+	double* weights = malloc(path[0] * sizeof(double));
+
+	weights[0] = (double)path[0];
+	for (int i=1; i<path[0]; ++i) {
+		weights[i] = ((struct Graph*)poset->vertices[path[i]]->label)->activity / (double)databaseSize;
+	}
+	return weights;
+}
+
+/**
+ * We assume that the weights are strictly positive. This is reasonable for our use case of frequent patterns where the weights correspond
+ * to the empirical frequency on the training data set.
+ *
+ * The computed 'knowledge score' is based on the conditional probability of an element in the chain
+ * given that we know the embedding / truth value of the current pattern. The knowledge score is minimal if the
+ * conditional probability is equal to 0.5. We want to return the index that minimizes the score.
+ */
+static void wbs_getNextIdx(char isMatch, double* probabilities, size_t* currentIdx, size_t* minIdx, size_t* maxIdx) {
+
+	double probabilityOfCurrentMatch = probabilities[*currentIdx];
+	double bestKnowledgeScore = 1.0; // the value of this can be at most 0.5
+
+	if (isMatch) {
+		*minIdx = *currentIdx + 1;
+		for (size_t i=*minIdx; i<=*maxIdx; ++i) {
+			double knowledgeScore = fabs(probabilities[i] / probabilityOfCurrentMatch - 0.5);
+			if (knowledgeScore < bestKnowledgeScore) {
+				*currentIdx = i;
+				bestKnowledgeScore = knowledgeScore;
+			} // TODO if the value increases then we can stop. this is not implemented, yet.
+		}
+	} else {
+		*maxIdx = *currentIdx - 1;
+		for (size_t i=*minIdx; i<=*maxIdx; ++i) {
+			double knowledgeScore = fabs((probabilities[i] - probabilityOfCurrentMatch) / (1.0 - probabilityOfCurrentMatch) - 0.5);
+			if (knowledgeScore < bestKnowledgeScore) {
+				*currentIdx = i;
+				bestKnowledgeScore = knowledgeScore;
+			} // TODO if the value increases then we can stop. this is not implemented, yet.
+		}
+	}
+}
+
+static int weightedBinarySearchEvaluationLE(struct SpanningtreeTree* spTree, struct EvaluationPlan p, int* path, double* probabilities, struct GraphPool* gp) {
+	size_t nEvaluations = 0;
+	size_t minIdx = 1;
+	size_t maxIdx = (size_t)path[0] - 1;
+	size_t currentIdx = 0;
+
+	wbs_getNextIdx(1, probabilities, &currentIdx, &minIdx, &maxIdx);
+
+	while (minIdx <= maxIdx) {
+
+		char match;
+		if (!embeddingValueKnown(p.poset->vertices[path[currentIdx]])) {
+			struct Graph* pattern = (struct Graph*)(p.poset->vertices[path[currentIdx]]->label);
+			match = subtreeCheckForSpanningtreeTree(spTree, pattern, gp);
+			wipeCharacteristicsForLocalEasy(*spTree);
+			++nEvaluations;
+			updateEvaluationPlan(p, path[currentIdx], match);
+		} else {
+			match = getMatch(p.poset->vertices[path[currentIdx]]);
+		}
+
+		wbs_getNextIdx(1, probabilities, &currentIdx, &minIdx, &maxIdx);
+	}
+
+	return nEvaluations;
+}
+
+static int weightedBinarySearchEvaluation(struct Graph* g, struct EvaluationPlan p, int* path, double* probabilities, struct GraphPool* gp) {
+	size_t nEvaluations = 0;
+	size_t minIdx = 1;
+	size_t maxIdx = (size_t)path[0] - 1;
+	size_t currentIdx = 0;
+
+	wbs_getNextIdx(1, probabilities, &currentIdx, &minIdx, &maxIdx);
+
+	while (minIdx <= maxIdx) {
+
+		char match;
+		if (!embeddingValueKnown(p.poset->vertices[path[currentIdx]])) {
+			struct Graph* pattern = (struct Graph*)(p.poset->vertices[path[currentIdx]]->label);
+			match = isSubtree(g, pattern, gp);
+			++nEvaluations;
+			updateEvaluationPlan(p, path[currentIdx], match);
+		} else {
+			match = getMatch(p.poset->vertices[path[currentIdx]]);
+		}
+
+		wbs_getNextIdx(1, probabilities, &currentIdx, &minIdx, &maxIdx);
+	}
+
+	return nEvaluations;
+}
+
 
 // FOR SUBTREEISO EMBEDDING OPERATOR
 
@@ -628,6 +726,26 @@ struct IntSet* staticPathCoverEmbeddingForTrees(struct Graph* g, struct Evaluati
 
 	for (size_t i=0; i<p.sketchSize; ++i) {
 		nEvaluations += binarySearchEvaluation(g, p, p.shrunkPermutations[i], gp);
+	}
+
+	fprintf(stderr, "%i\n", nEvaluations);
+	return patternPosetInfoToFeatureSet(p);
+}
+
+
+struct IntSet* latticeLongestWeightedPathEmbeddingForTrees(struct Graph* g, struct EvaluationPlan p, int databaseSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	int nEvaluations = 0;
+	cleanEvaluationPlan(p);
+
+	for (int i=1; i<p.poset->n; ++i) {
+		if (!embeddingValueKnown(p.poset->vertices[i])) {
+			int* path = getLongestPathInDAG(p.poset->vertices[i], p.poset, sgp);
+			double* weights = getWeightsOfPath(p.poset, path, databaseSize);
+			nEvaluations += weightedBinarySearchEvaluation(g, p, path, weights, gp);
+			free(path);
+			free(weights);
+		}
 	}
 
 	fprintf(stderr, "%i\n", nEvaluations);
@@ -723,3 +841,27 @@ struct IntSet* staticPathCoverEmbeddingForLocalEasy(struct Graph* g, struct Eval
 	fprintf(stderr, "%i\n", nEvaluations);
 	return patternPosetInfoToFeatureSet(p);
 }
+
+
+struct IntSet* latticeLongestWeightedPathEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int sampleSize, int databaseSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, gp, sgp);
+
+	int nEvaluations = 0;
+	cleanEvaluationPlan(p);
+	for (int i=1; i<p.poset->n; ++i) {
+		if (!embeddingValueKnown(p.poset->vertices[i])) {
+			int* path = getLongestPathInDAG(p.poset->vertices[i], p.poset, sgp);
+			double* weights = getWeightsOfPath(p.poset, path, databaseSize);
+			nEvaluations += weightedBinarySearchEvaluationLE(&spTree, p, path, weights, gp);
+			free(path);
+			free(weights);
+		}
+	}
+
+	dumpSpanningtreeTree(spTree, gp);
+
+	fprintf(stderr, "%i\n", nEvaluations);
+	return patternPosetInfoToFeatureSet(p);
+}
+
