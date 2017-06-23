@@ -158,7 +158,6 @@ int main(int argc, char** argv) {
 	FILE* out = stdout;
 
 	/* user set variables to specify what needs to be done */
-	int depth = 1;
 	SubgraphSelector selector = disk;
 
 	/* parse command line arguments */
