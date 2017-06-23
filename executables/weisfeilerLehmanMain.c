@@ -10,6 +10,7 @@
 #include "../graphPrinting.h"
 #include "../searchTree.h"
 #include "../weisfeilerLehman.h"
+#include "weisfeilerLehmanMain.h"
 
 
 /**

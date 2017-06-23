@@ -116,13 +116,3 @@ int main(int argc, char** argv) {
 
 	return EXIT_SUCCESS;
 }
-
-//To compile an executable for this, we add
-//
-//	#!Makefile
-//	SIMPLETREETESTNAME = simpleTreeTest
-//	SIMPLETREETESTOBJECTS = $(OBJECTS) ./executables/simpleTreeTest.o
-//	SIMPLETREETESTHELP = ./executables/simpleTreeTestHelp.help
-//
-//	$(SIMPLETREETESTNAME): $(SIMPLETREETESTHELP) $(SIMPLETREETESTOBJECTS)
-//		@gcc -o $@ $(filter-out %.help, $^) $(CPPFLAGS)
