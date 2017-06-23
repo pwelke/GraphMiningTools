@@ -349,7 +349,6 @@ struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler
 	struct Graph* connectedComponents = listConnectedComponents(g, gp);
 
 	struct Graph* current;
-
 	for (current=connectedComponents; current!=NULL; current=current->next) {
 		struct ShallowGraph* currentResult = sampler(current, k, threshold, gp, sgp);
 
@@ -363,5 +362,8 @@ struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler
 			results = currentResult;
 		}
 	}
+
+//	TODO: BUG the following line would be necessary to avoid memory leaks, but the results shallow graphs point to the graphs in connectedComponents
+//	dumpGraphList(gp, connectedComponents);
 	return results;
 }
