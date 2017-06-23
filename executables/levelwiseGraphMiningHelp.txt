@@ -53,12 +53,22 @@ Options:
                  sampled spanning trees. Works only for forest 
                  transaction databases.
                  
+             probabilisticTreeSampling: Probabilistic Subtree Features.
+                 Works for arbitrary graph transaction 
+                 databases with polynomial delay. However, might result in
+                 false negatives due to local spanning tree sampling. Sam-
+                 pling rate can be influenced using -i. The parameter spe-
+                 cifies the number of spanning trees that are sampled for
+                 each set of v-rooted components. Hence, a higher -i results
+                 in higher recall and higher runtime. 
+                 
              localEasy: My implementation of the local easy subtree iso-
                  morphism algorithm. Works for arbitrary graph transaction 
                  databases. However, has polynomial delay only for local
                  easy graph databases.
                  
-             localEasySampling: My implementation of the local easy tree 
+             localEasySampling: Boosted Probabilistic Subtree Features. 
+                 My implementation of the local easy tree 
                  sampling algorithm. Works for arbitrary graph transaction 
                  databases with polynomial delay. However, might result in
                  false negatives due to local spanning tree sampling. Sam-

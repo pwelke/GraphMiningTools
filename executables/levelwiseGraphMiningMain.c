@@ -139,6 +139,15 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
+			if (strcmp(optarg, "probabilisticTreeSampling") == 0) {
+				initMining = &initIterativeBFSForSampledProbabilisticTree;
+				embeddingOperator = &noniterativeSubtreeCheckOperator;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
+				break;
+			}
 			if (strcmp(optarg, "localEasySampling") == 0) {
 				initMining = &initIterativeBFSForSampledLocalEasy;
 				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperator;
@@ -210,16 +219,13 @@ int main(int argc, char** argv) {
 	struct SubtreeIsoDataStoreList* supportSets = NULL;
 	struct ShallowGraph* extensionEdgeList = NULL;
 	void* dataStructures = NULL;
-//	size_t initialPatternSize = initIterativeBFSForForestDB(threshold, &initialFrequentPatterns, &supportSets, &extensionEdgeList, &dataStructures,
-//			// printing
-//			featureStream,
-//			patternStream,
-//			logStream,
-//			// pools
-//			gp,
-//			sgp);
 
-	size_t initialPatternSize = initMining(threshold, importance, &initialFrequentPatterns, &supportSets, &extensionEdgeList, &dataStructures,
+	size_t initialPatternSize = initMining(threshold, importance,
+				//output
+				&initialFrequentPatterns,
+				&supportSets,
+				&extensionEdgeList,
+				&dataStructures,
 				// printing
 				featureStream,
 				patternStream,
@@ -228,8 +234,11 @@ int main(int argc, char** argv) {
 				gp,
 				sgp);
 
-	miningStrategy(initialPatternSize, maxPatternSize, threshold, initialFrequentPatterns, supportSets, extensionEdgeList, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
-//	miningStrategy(maxPatternSize, threshold, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
+	miningStrategy(initialPatternSize, maxPatternSize, threshold, initialFrequentPatterns, supportSets, extensionEdgeList, embeddingOperator, importance,
+			//printing
+			featureStream, patternStream, logStream,
+			//pools
+			gp, sgp);
 
 	garbageCollector(dataStructures, gp, sgp);
 
