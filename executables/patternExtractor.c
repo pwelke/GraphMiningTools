@@ -351,7 +351,8 @@ int main(int argc, char** argv) {
 		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr,
 		dotApproxForTrees, dotApproxLocalEasy,
 		dfsForTrees, latticePathForTrees, latticeLongestPathForTrees, dilworthsCoverForTrees,
-		dfsForLocalEasy, latticePathForLocalEasy, latticeLongestPathForLocalEasy, dilworthsCoverForLocalEasy
+		dfsForLocalEasy, latticePathForLocalEasy, latticeLongestPathForLocalEasy, dilworthsCoverForLocalEasy,
+		weightedLongestPathForTrees
 	} ExtractionMethod;
 	typedef enum {CANONICALSTRING_INPUT, AIDS99_INPUT} InputMethod;
 
@@ -410,7 +411,7 @@ int main(int argc, char** argv) {
 			break;
 		case 'i':
 			if ((sscanf(optarg, "%lf", &relImportance) != 1) || (relImportance <= 0)) {
-				fprintf(stderr, "Hash size argument must be positive float or integer, is: %s\n", optarg);
+				fprintf(stderr, "Sample size argument must be positive float or integer, is: %s\n", optarg);
 				return EXIT_FAILURE;
 			} else {
 				absImportance = (int)relImportance;
@@ -509,6 +510,11 @@ int main(int argc, char** argv) {
 				method = dilworthsCoverForLocalEasy;
 				break;
 			}
+			if (strcmp(optarg, "weightedLongestPathForTrees") == 0) {
+				method = weightedLongestPathForTrees;
+				break;
+			}
+
 			fprintf(stderr, "Unknown extraction method: %s\n", optarg);
 			return EXIT_FAILURE;
 			break;
@@ -530,6 +536,7 @@ int main(int argc, char** argv) {
 	case dfsForTrees:
 	case latticePathForTrees:
 	case latticeLongestPathForTrees:
+	case weightedLongestPathForTrees:
 		if (absImportance == 0) {
 			fprintf(stderr, "Absolute importance threshold should be positive, but is %zu\n", absImportance);
 			return EXIT_FAILURE;
@@ -575,6 +582,7 @@ int main(int argc, char** argv) {
 	case latticePathForLocalEasy:
 	case latticeLongestPathForLocalEasy:
 	case dilworthsCoverForLocalEasy:
+	case weightedLongestPathForTrees:
 		if (patternFile == NULL) {
 			fprintf(stderr, "No pattern file specified! Please do so using -a or -c\n");
 			return EXIT_FAILURE;
@@ -631,6 +639,7 @@ int main(int argc, char** argv) {
 	case dfsForLocalEasy:
 	case latticePathForLocalEasy:
 	case latticeLongestPathForLocalEasy:
+	case weightedLongestPathForTrees:
 		// these methods only need the pattern poset and its reverse
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
@@ -749,6 +758,8 @@ int main(int argc, char** argv) {
 			case dilworthsCoverForLocalEasy:
 				fingerprints = staticPathCoverEmbeddingForLocalEasy(g, evaluationPlan, absImportance, gp, sgp);
 				break;
+			case weightedLongestPathForTrees:
+				fingerprints = latticeLongestWeightedPathEmbeddingForTrees(g, evaluationPlan, absImportance, gp, sgp);
 			}
 			// output
 			switch (method) {
@@ -796,6 +807,7 @@ int main(int argc, char** argv) {
 	case latticePathForLocalEasy:
 	case latticeLongestPathForTrees:
 	case latticeLongestPathForLocalEasy:
+	case weightedLongestPathForTrees:
 		dumpEvaluationPlan(evaluationPlan, gp);
 		free(randomProjection);
 		break;
