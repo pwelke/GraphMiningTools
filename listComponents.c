@@ -237,6 +237,7 @@ struct Graph* listConnectedComponents(struct Graph* g, struct GraphPool* gp) {
 			++componentNumber;
 		}
 	}
+	dumpGraph(gp, copy);
 	return components;
 }
 
