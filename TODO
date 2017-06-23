@@ -1,5 +1,6 @@
 TODO
 
+- [ ]  fix bug in sampleSubtrees.c
 - [ ]  buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
 - [X]  speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
 - [X]  separate sampling methods from treeSamplingMain.c into a lib file
