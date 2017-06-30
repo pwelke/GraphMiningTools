@@ -39,13 +39,29 @@ struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDat
 }
 
 
-struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperatorWithResampling(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
 	result.S = NULL;
 
 	result.foundIso = isProbabilisticLocalSampleSubtree(result.g, result.h, (int)importance, gp, sgp);
+	return result;
+}
+
+
+struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void) importance;
+	(void) sgp;
+
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.S = NULL;
+
+	struct SpanningtreeTree* sptTree = (struct SpanningtreeTree*)(result.postorder);
+//	result.foundIso = isProbabilisticLocalSampleSubtree(result.g, result.h, (int)importance, gp, sgp);
+	result.foundIso = subtreeCheckForSpanningtreeTree(sptTree, h, gp);
+	wipeCharacteristicsForLocalEasy(*sptTree);
 	return result;
 }
 

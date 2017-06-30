@@ -157,6 +157,15 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
 				break;
 			}
+			if (strcmp(optarg, "localEasyResampling") == 0) {
+				initMining = &initIterativeBFSForSampledLocalEasy;
+				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperatorWithResampling;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
+				break;
+			}
 			if (strcmp(optarg, "localEasy") == 0) {
 				initMining = &initIterativeBFSForExactLocalEasy;
 				embeddingOperator = &localEasySubtreeCheckOperator;
