@@ -502,7 +502,7 @@ void computeCharacteristics(struct SubtreeIsoDataStore* current, struct SubtreeI
 
 	// is there a subgraph iso here?
 	if (sizeofMatching == nNeighbors) {
-		addCharacteristic(current, u, u, w);
+//		addCharacteristic(current, u, u, w); // in early termination we do not need to keep the books correct here
 		current->foundIso = 1;
 
 		returnCachedGraph(cachedB);
