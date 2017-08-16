@@ -43,13 +43,20 @@ struct Graph* getCachedGraph(int size, struct CachedGraph* cache) {
 	}
 }
 
-
+/**
+ * "Return a cached graph to the cache".
+ * That is, remove all edges and wipe its vertices, such that it can be used as if it were a newly created graph.
+ *
+ * This method is extremely hot in the localEasy* embedding operators, hence we try to avoid multiple dereferenceings of the same pointers.
+ */
 void returnCachedGraph(struct CachedGraph* cache) {
-	int w;
-	for (w=0; w<cache->g->n; ++w) {
-		dumpVertexListRecursively(cache->gp->listPool, cache->g->vertices[w]->neighborhood);
-		wipeVertex(cache->g->vertices[w]);
-		cache->g->vertices[w]->number = w;
+	struct Vertex** vertices = cache->g->vertices;
+	struct ListPool* lp = cache->gp->listPool;
+	int n = cache->g->n;
+	for (int wi=0; wi<n; ++wi) {
+		struct Vertex* w = vertices[wi];
+		dumpVertexListRecursively(lp, w->neighborhood);
+		wipeVertexButKeepNumber(w);
 	}
 	cache->inUse = 0;
 }

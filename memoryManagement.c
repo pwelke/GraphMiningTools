@@ -1,5 +1,6 @@
 #include <malloc.h>
 #include "graph.h"
+#include "memoryManagement.h"
 
 const int MEM_DEBUG = 0;
 
@@ -223,6 +224,19 @@ void wipeVertex(struct Vertex* v) {
 	v->next = NULL;
 	v->neighborhood = NULL;
 	v->number = 0;
+	v->visited = 0;
+	v->isStringMaster = 0;
+	v->lowPoint = 0;
+	v->d = 0;
+}
+
+/**
+Set all variables in the struct to 0 or NULL, but keep the vertex number
+*/
+void wipeVertexButKeepNumber(struct Vertex* v) {
+	v->label = NULL;
+	v->next = NULL;
+	v->neighborhood = NULL;
 	v->visited = 0;
 	v->isStringMaster = 0;
 	v->lowPoint = 0;

@@ -14,6 +14,7 @@ struct VertexPool* createVertexPool(unsigned int initNumberOfElements);
 void freeVertexPool(struct VertexPool* p);
 struct Vertex* getVertex(struct VertexPool* p);
 void wipeVertex(struct Vertex* v);
+void wipeVertexButKeepNumber(struct Vertex* v);
 void dumpVertex(struct VertexPool* p, struct Vertex* v);
 
 struct ShallowGraphPool* createShallowGraphPool(unsigned int initNumberOfElements, struct ListPool* lp);
