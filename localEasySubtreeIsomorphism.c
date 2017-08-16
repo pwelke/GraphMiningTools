@@ -506,7 +506,6 @@ void computeCharacteristics(struct SubtreeIsoDataStore* current, struct SubtreeI
 		current->foundIso = 1;
 
 		returnCachedGraph(cachedB);
-		dumpCachedGraph(cachedB);
 		return; // early termination when subtree iso is found
 	}
 
@@ -544,7 +543,7 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 			if ((w->d == -1) || (w->number == 0)) {
 				computeCharacteristics(current, NULL, cachedB, u, w, NULL, gp);
 				if (current->foundIso) {
-					//dumpCachedGraph(cachedB);
+					dumpCachedGraph(cachedB);
 					return;
 				}
 
@@ -555,7 +554,7 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 					struct Vertex* wBelow = e->data.g->vertices[0];
 					computeCharacteristics(current, &(e->data), cachedB, u, w, wBelow, gp);
 					if (current->foundIso) {
-						//dumpCachedGraph(cachedB);
+						dumpCachedGraph(cachedB);
 						return;
 					}
 				}
