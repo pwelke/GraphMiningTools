@@ -491,11 +491,11 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 			 * In contrast to normal spanning tree sampling, here we can only filter identical trees (seen as edge sets)
 			 * and not trees up to isomorphism, as two isomorphic but different local spanning trees might result in different
 			 * (and hence possibly nonisomorphic) global spanning trees, when combined. */
-			int count = 0; for (struct ShallowGraph* g=shallowSpanningtrees; g!=NULL; g=g->next) ++count;
-			printf("Current local Spanning Trees: %i, later ", count);
+//			int count = 0; for (struct ShallowGraph* g=shallowSpanningtrees; g!=NULL; g=g->next) ++count;
+//			printf("Current local Spanning Trees: %i, later ", count);
 			shallowSpanningtrees = filterDuplicateSpanningTrees(shallowSpanningtrees, sgp);
-			count = 0; for (struct ShallowGraph* g=shallowSpanningtrees; g!=NULL; g=g->next) ++count;
-			printf("%i\n", count);
+//			count = 0; for (struct ShallowGraph* g=shallowSpanningtrees; g!=NULL; g=g->next) ++count;
+//			printf("%i\n", count);
 		} else {
 			// if the mergedGraph is a tree, we use it directly
 			shallowSpanningtrees = getGraphEdges(mergedGraph, sgp);
