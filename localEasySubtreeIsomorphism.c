@@ -258,6 +258,209 @@ void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree) {
 }
 
 
+/**
+ * Defines a total order on undirected, labeled edges.
+ */
+int compareEdgesAbsolute(const struct VertexList* e, const struct VertexList* f) {
+	int es, ee, fs, fe = 0;
+	if (e->startPoint->number < e->endPoint->number) {
+		es = e->startPoint->number;
+		ee = e->endPoint->number;
+	} else {
+		es = e->endPoint->number;
+		ee = e->startPoint->number;
+	}
+
+	if (f->startPoint->number < f->endPoint->number) {
+		fs = f->startPoint->number;
+		fe = f->endPoint->number;
+	} else {
+		fs = f->endPoint->number;
+		fe = f->startPoint->number;
+	}
+
+	if (es != fs) {
+		return es - fs;
+	}
+	if (ee != fe) {
+		return ee - fe;
+	}
+	return labelCmp(e->label, f->label);
+}
+
+
+/**
+ * Wrapper method for use in qsort
+ */
+int absCompEdges(const void* e1, const void* e2) {
+
+	struct VertexList* g = *((struct VertexList**)e1);
+	struct VertexList* h = *((struct VertexList**)e2);
+
+	return compareEdgesAbsolute(g, h);
+}
+
+/**
+Computes the lexicographic order of two rooted paths given by their roots \verb+ r1+ and \verb+ r2+ recursively.
+This function returns
+\[ -1 if P1 < P2 \]
+\[ 0 if P1 = P2 \]
+\[ 1 if P1 > P2 \]
+and uses the comparison of label strings as total ordering.
+The two paths are assumed to have edge labels and vertex labels are not taken into account.
+* TODO Merge the generic code here with the code in cs_Compare.
+ */
+int compareVertexListsGeneric(const struct VertexList* e1, const struct VertexList* e2, int (*compar)(const struct VertexList*, const struct VertexList*)) {
+
+	/* if this value is larger than 0 the first label is lex. larger than the second etc. */
+	int returnValue = compar(e1, e2);
+
+	/* if the two paths are identical so far wrt. labels check the next vertex on each path */
+	if (returnValue == 0) {
+
+		if ((e1->next) && (e2->next)) {
+			/* if both lists have a next, proceed recursively */
+			return compareVertexListsGeneric(e1->next, e2->next, compar);
+		} else {
+			/* if the first list is shorter, its lex. smaller */
+			if ((e1->next == NULL) && (e2->next)){
+				return -1;
+			}
+			/* if the second is shorter, this one is lex.smaller */
+			if ((e2->next == NULL) && (e1->next)){
+				return 1;
+			}
+		}
+
+		/* if none of the cases above was chosen, both paths end here and we have to return 0 as both strings
+		represented by the lists are identical */
+		return 0;
+
+	} else {
+		/* if the paths differ in the current vertices, we return the return value of the comparison function */
+		return returnValue;
+	}
+}
+
+/**
+ * Compare two shallowgraphs.
+ * This method imposes a lexicographical order on shallowgraphs seen as strings of edges.
+ * The order on edges is defined by the comparator.
+ * TODO Merge the generic code here with the code in cs_Compare.
+ */
+int compareShallowGraphs(struct ShallowGraph* g, struct ShallowGraph* h, int (*compar)(const struct VertexList*, const struct VertexList*)) {
+	return compareVertexListsGeneric(g->edges, h->edges, compar);
+}
+
+/**
+ * Compare two shallowgraphs.
+ */
+int compareShallowGraphsAbsloute(struct ShallowGraph* g, struct ShallowGraph* h) {
+	return compareVertexListsGeneric(g->edges, h->edges, &compareEdgesAbsolute);
+}
+
+
+
+int absCompShallowGraphs(const void* e1, const void* e2) {
+
+	struct ShallowGraph* g = *((struct ShallowGraph**)e1);
+	struct ShallowGraph* h = *((struct ShallowGraph**)e2);
+
+	return compareShallowGraphs(g, h, &compareEdgesAbsolute);
+}
+
+
+
+static void sortShallowGraphEdges(struct ShallowGraph* l, int (*compar)(const void*,const void*)) {
+	if (l->m > 1) {
+		// create array containing edges from l
+		struct VertexList** larray = malloc(l->m * sizeof(struct VertexList*));
+		larray[0] = l->edges;
+		for (int i=1; i<l->m; ++i) {
+			larray[i] = larray[i-1]->next;
+		}
+
+		qsort(larray, l->m, sizeof(struct VertexList*), compar);
+
+		// change order of edges in l according to qsort
+		for (int i=0; i<l->m-1; ++i) {
+			larray[i]->next = larray[i+1];
+		}
+		larray[l->m-1]->next = NULL;
+		l->edges = larray[0];
+		free(larray);
+	}
+}
+
+static struct ShallowGraph* sortListOfShallowGraphs(struct ShallowGraph* l, size_t length, int (*compar)(const void*,const void*)) {
+	if (length > 1) {
+		// create array containing edges from l
+		struct ShallowGraph** larray = malloc(length * sizeof(struct VertexList*));
+		larray[0] = l;
+		for (size_t i=1; i<length; ++i) {
+			larray[i] = larray[i-1]->next;
+		}
+
+		qsort(larray, length, sizeof(struct VertexList*), compar);
+
+		// change order of edges in l according to qsort
+		for (size_t i=0; i<length-1; ++i) {
+			larray[i]->next = larray[i+1];
+		}
+		larray[length-1]->next = NULL;
+		l = larray[0];
+		free(larray);
+	}
+	return l;
+}
+
+
+/**
+ * Filter a sorted list of shallow graphs for duplicate elements defined by comparator.
+ * l is consumed and should not be referenced later, as the first element might be dumped in the process.
+ */
+struct ShallowGraph* filterSortedSpanningTreeList(struct ShallowGraph* l, int (*compar)(struct ShallowGraph*, struct ShallowGraph*), struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* result = NULL;
+	struct ShallowGraph* garbage = NULL;
+	for (struct ShallowGraph* g=l; g!=NULL; /* increment is done below */) {
+		if (g->next != NULL) {
+			struct ShallowGraph* next = g->next;
+			if (compar(g, g->next) == 0) {
+				g->next = garbage;
+				garbage = g;
+			} else {
+				g->next = result;
+				result = g;
+			}
+			g = next;
+		} else {
+			// the last element should always be in the result.
+			g->next = result;
+			result = g;
+			g = NULL;
+		}
+	}
+	dumpShallowGraphCycle(sgp, garbage);
+	return result;
+}
+
+
+struct ShallowGraph* filterDuplicateSpanningTrees(struct ShallowGraph* sptrees, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* filteredResult = NULL;
+
+	// sort edges in spanning trees, count number of spts
+	size_t length = 0;
+	for (struct ShallowGraph* l=sptrees; l!=NULL; l=l->next) {
+		sortShallowGraphEdges(l, &absCompEdges);
+		++length;
+	}
+
+	filteredResult = sortListOfShallowGraphs(sptrees, length, &absCompShallowGraphs);
+	filteredResult = filterSortedSpanningTreeList(filteredResult, &compareShallowGraphsAbsloute, sgp);
+
+	return filteredResult;
+}
+
 
 /**
  * blockTree is consumed
@@ -283,7 +486,16 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 				spt->next = shallowSpanningtrees;
 				shallowSpanningtrees = spt;
 			}
-			// TODO filter duplicate spanning trees
+
+			/* Duplicate spanning trees are filtered here.
+			 * In contrast to normal spanning tree sampling, here we can only filter identical trees (seen as edge sets)
+			 * and not trees up to isomorphism, as two isomorphic but different local spanning trees might result in different
+			 * (and hence possibly nonisomorphic) global spanning trees, when combined. */
+			int count = 0; for (struct ShallowGraph* g=shallowSpanningtrees; g!=NULL; g=g->next) ++count;
+			printf("Current local Spanning Trees: %i, later ", count);
+			shallowSpanningtrees = filterDuplicateSpanningTrees(shallowSpanningtrees, sgp);
+			count = 0; for (struct ShallowGraph* g=shallowSpanningtrees; g!=NULL; g=g->next) ++count;
+			printf("%i\n", count);
 		} else {
 			// if the mergedGraph is a tree, we use it directly
 			shallowSpanningtrees = getGraphEdges(mergedGraph, sgp);
