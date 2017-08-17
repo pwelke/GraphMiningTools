@@ -83,7 +83,7 @@ int compareVertexLists(const struct VertexList* e1, const struct VertexList* e2)
 
 /**
 Compare two strings represented by ShallowGraphs to each other. 
-Return behaviour should match that of string.h's strcmp() function */
+Return behavior should match that of string.h's strcmp() function */
 int compareCanonicalStrings(const struct ShallowGraph *g1, const struct ShallowGraph *g2) {
 	return compareVertexLists(g1->edges, g2->edges);
 }
