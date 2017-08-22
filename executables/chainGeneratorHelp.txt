@@ -1,0 +1,17 @@
+This program generates a database of random graphs that are chains of 
+cycles, each connected to the next on a single articulation vertex.
+
+Usage: cgen [ARGS] 
+or cgen [ARGS] FILE
+
+the first reads from stdin.
+
+Parameters:
+  -N int:    specify number of generated graphs (default 100)
+  -a int:    lower bound on number of cycles in each graph (default 1)
+  -b int:    upper bound on number of cycles in each graph (default 50)
+  -c int:    number of different vertex labels. If this value is smaller
+             than 1, label each vertex by its number. (default -1)
+  -d int:    number of different edge labels (default 1)
+  -m int:    number of vertices in each cycle
+  -s int:    random seed (default 100)

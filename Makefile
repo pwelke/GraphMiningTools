@@ -83,6 +83,12 @@ GENOBJECTS = $(OBJECTS) ./executables/generator.o
 GENHELP = ./executables/generatorHelp.help
 $(GENNAME): $(GENHELP) $(GENOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
+	
+CGENNAME = cgen
+CGENOBJECTS = $(OBJECTS) ./executables/chainGenerator.o
+CGENHELP = ./executables/chainGeneratorHelp.help
+$(CGENNAME): $(CGENHELP) $(CGENOBJECTS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
 NGENNAME = ngen
 NGENOBJECTS = $(OBJECTS) ./executables/neighborhoodGenerator.o
