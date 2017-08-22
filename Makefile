@@ -128,7 +128,7 @@ $(L2UNAME): $(L2UHELP) $(L2UOBJECTS)
 
 
 
-ALLTARGETS = $(L2UNAME) $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME) $(GFCNAME)
+ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME) $(GFCNAME)
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity

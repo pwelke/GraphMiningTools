@@ -8,6 +8,7 @@
 #include "../graph.h"
 #include "../loading.h"
 #include "../graphPrinting.h"
+#include "chainGenerator.h"
 
 
 
