@@ -1,4 +1,5 @@
-This program returns some extracted features for each graph in a db.
+This program returns a feature vector for each graph in a db.
+It can extract different types of patterns.
 
 Usage: ./gpe [OPTIONS] [FILE]
 
@@ -145,7 +146,7 @@ Options:
                            binary search for each path and graph in the db 
                            to obtain a worst case runtime that only depends 
                            on the pattern set, and not on the support of 
-                           thepatterns in the db.
+                           the patterns in the db.
 
 
 -k INT:                    Specify the number of permutations used by the 
@@ -172,9 +173,7 @@ Options:
                            to current system time.
                            
 
-To run the spanning tree sampling algorithms described in our paper, first 
-transform your graph database of choice to a forest database using the 
-program ts. Then mine some frequent subtrees using lwg on that forest db. 
-With the patterns from the latter and new (or old) forests from the former, 
-you can now get feature representations and min-hashes and whatnot to have 
-jolly fun. 
+To run the spanning tree sampling algorithms described in our paper, mine 
+some frequent subtrees from some graph db. 
+With the patterns and new (or old) graphs, you can now get feature
+representations and min-hashes and whatnot to have jolly fun. 
