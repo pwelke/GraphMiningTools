@@ -47,6 +47,7 @@ typedef enum {
 	numberOfBridgeTrees,
 	numberOfSimpleCycles,
 	numberOfNonIsoCycles,
+	numberOfBiconnectedComponents,
 	numberOfConnectedComponents,
 	numberOfVertices,
 	numberOfEdges,

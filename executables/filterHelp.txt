@@ -69,6 +69,7 @@ options: options (except -h) are always followed by a value.
         numberOfBridgeTrees   number of edges in the graph that are 
                               bridges. I.e. count the number of 
                               biconnected components with only one edge.
+        nomberOfBiconnectedComponents  number of biconnected components.
         numberOfConnectedComponents   number of connected components
         numberOfVertices   number of vertices in the graph
         numberOfEdges      number of edges in the graph
