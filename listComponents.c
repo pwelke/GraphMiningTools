@@ -122,6 +122,20 @@ int getMinCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
 }
 
 
+/**
+Count the number of biconnected components that are not a bridge.
+*/
+int getNumberOfBiconnectedComponents(struct Graph* g, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
+	int compNumber = 0;
+	for (struct ShallowGraph* comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+			++compNumber;
+	}
+	/* cleanup */
+	dumpShallowGraphCycle(sgp, biconnectedComponents);
+	return compNumber;
+}
+
 
 /**
 Count the number of biconnected components that are not a bridge.
