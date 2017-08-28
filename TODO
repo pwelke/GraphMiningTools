@@ -10,7 +10,7 @@ TODO
 - [X]  extract weisfeiler lehman from treesampling into new executable
 - [ ]  make optimized vertex and edge counting methods work with importance embedding operator
 - [ ]  countSpanningtrees (and most likely listSpanningTrees seem to not work) There is some memory issue.
-- [ ]  getSampledSpanningtreeTree() should filter duplicate sampled spanning trees.
+- [X]  getSampledSpanningtreeTree() should filter duplicate sampled spanning trees.
 - [ ]  an option to mine only frequent paths in lwg
 
 THEORY
