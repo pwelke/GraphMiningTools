@@ -91,6 +91,11 @@ struct ShallowGraph* getRepresentativeVertices(struct Graph* g, struct ShallowGr
 char isConnected(struct Graph* g) {
 	int v;
 
+	/* the empty graph is connected: for all pairs of vertices (there are none) there is a path :) */
+	if (g->n == 0) {
+		return 1;
+	}
+
 	for (v=0; v<g->n; ++v) {
 		g->vertices[v]->lowPoint = -1;
 	}
