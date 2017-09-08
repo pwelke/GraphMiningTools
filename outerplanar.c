@@ -38,8 +38,8 @@ Thus, n - 1 == m - numberOfBlocks.
 */
 char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
 
-	/* the empty graph, singleton vertices, and graphs without edges are cactus graphs (possibly forests of cacti >) */
-	if (g->m <= 1) {
+	/* the empty graph and singleton vertices are cactus graphs */
+	if (g->n <= 1) {
 		return 1;
 	}
 

@@ -21,10 +21,18 @@ Check if a given connected cactus graph is traceable.
 Assumes the input graph to be a connected cactus graph
 */
 char isThisCactusTraceable(struct Graph* g, struct ShallowGraphPool* sgp) {
-	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
-	int* criticality = computeCriticality(biconnectedComponents, g->n);
+	struct ShallowGraph* biconnectedComponents;
+	int* criticality;
 	int v; 
 	struct ShallowGraph* c;
+
+	/* the empty graph and singleton vertices are traceable cactus graphs */
+	if (g->n <= 1) {
+		return 1;
+	}
+
+	biconnectedComponents = listBiconnectedComponents(g, sgp);
+	criticality = computeCriticality(biconnectedComponents, g->n);
 
 	// test if every vertex has criticality at most 2
 	for (v=0; v<g->n; ++v) {
