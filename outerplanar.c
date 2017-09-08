@@ -37,6 +37,12 @@ biconnected component that is not a bridge) is a simple cycle.
 Thus, n - 1 == m - numberOfBlocks.
 */
 char isCactus(struct Graph* g, struct ShallowGraphPool* sgp) {
+
+	/* the empty graph, singleton vertices, and graphs without edges are cactus graphs (possibly forests of cacti >) */
+	if (g->m <= 1) {
+		return 1;
+	}
+
 	if (isConnected(g)) {
 		struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 		struct ShallowGraph* comp;

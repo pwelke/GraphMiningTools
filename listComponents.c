@@ -388,6 +388,8 @@ Input:
 
 tarjans algorithm to find biconnected components is applied to each connected component of the graph once,
 yielding a runtime of O(m+n).
+
+This algorithm requires g to contain at least one edge.
  */
 struct ShallowGraph* listBiconnectedComponents(struct Graph* g, struct ShallowGraphPool *gp) {
 	int i;
