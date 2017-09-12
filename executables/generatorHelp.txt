@@ -17,4 +17,4 @@ Parameters:
              each graph, such that the expected number of edges is m*n, 
              where n is the number of vertices, randomly chosen between 
              a and b. (default: do not use this)
-  -s int:    random seed (default 100)
+  -s int:    random seed (default current system time)

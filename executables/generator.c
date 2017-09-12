@@ -4,6 +4,7 @@
 #include <string.h>
 #include <limits.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "../graph.h"
 #include "../loading.h"
@@ -103,7 +104,7 @@ int main(int argc, char** argv) {
 	int nEdgeLabels = 1;
 	double edgeProbability = 0.5;
 	double edgeMultiplicity = -1;
-	int randomSeed = 100;
+	int randomSeed = time(NULL);
 
 	/* parse command line arguments */
 	int arg;
