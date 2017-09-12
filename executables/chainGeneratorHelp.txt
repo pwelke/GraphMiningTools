@@ -13,5 +13,6 @@ Parameters:
   -c int:    number of different vertex labels. If this value is smaller
              than 1, label each vertex by its number. (default -1)
   -d int:    number of different edge labels (default 1)
-  -m int:    number of vertices in each cycle
-  -s int:    random seed (default 100)
+  -m int:    number of vertices in each cycle (default 5)
+  -p double: probability of existence of diagonal edges (default 0.0)
+  -s int:    random seed (default current system time)
