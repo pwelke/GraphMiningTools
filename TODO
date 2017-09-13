@@ -12,6 +12,10 @@ TODO
 - [ ]  countSpanningtrees (and most likely listSpanningTrees seem to not work) There is some memory issue.
 - [X]  getSampledSpanningtreeTree() should filter duplicate sampled spanning trees.
 - [ ]  an option to mine only frequent paths in lwg
+- [ ]  Canonical String computation without recursion combined with center computation. (See Maurice Klaffehns Projektgruppe)
+- [ ]  Gaston candidate generation?
+- [ ]  different evaluation strategies: make dfs work again, implement the funny gaston dfs, implement the greedy dfs idea from the 
+       min-hashing paper for frequent subtree minig, ...
 
 THEORY
 
