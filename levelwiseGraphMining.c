@@ -200,7 +200,7 @@ int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* frequentVe
 		struct Vertex* containedVertices = getVertex(gp->vertexPool);
 
 		/* init temporary result storage if necessary */
-		int neededResultSize = g->m;
+		int neededResultSize = g->n;
 		int resultPos = 0;
 		if (neededResultSize > resultSize) {
 			if (results) {
