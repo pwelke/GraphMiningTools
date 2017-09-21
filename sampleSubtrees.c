@@ -81,6 +81,12 @@ struct ShallowGraph* xsampleSpanningTreesUsingWilson(struct Graph* g, int k, lon
 	return sampleSpanningTreesUsingWilson(g, k, sgp);
 }
 
+struct ShallowGraph* xlistSpanningTrees(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)threshold;
+	(void)k;
+	return listSpanningTrees(g, sgp, gp);
+}
+
 
 /** from http://stackoverflow.com/questions/6127503/shuffle-array-in-c, 
 but replaced their use of drand48 by rand

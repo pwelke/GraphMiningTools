@@ -23,6 +23,8 @@ struct ShallowGraph* xsampleSpanningTreesUsingPartialListingMix(struct Graph* g,
 struct ShallowGraph* xsampleSpanningTreesUsingCactusMix(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct ShallowGraph* xlistBridgeForest(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct ShallowGraph* xlistOrSampleSpanningTrees(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct ShallowGraph* xlistSpanningTrees(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+
 
 struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler)(struct Graph*, int, long int, struct GraphPool*, struct ShallowGraphPool*), 
 	struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp);
