@@ -18,3 +18,9 @@ Parameters:
              where n is the number of vertices, randomly chosen between 
              a and b. (default: do not use this)
   -s int:    random seed (default current system time)
+  -x METHOD:
+         erdosrenyi: ER Model graphs
+         
+         overlap: generate n random 2-dim points in the unit cube.
+            There exists an edge between v and w iff the euclidean distance
+            is smaller than p. (I.p., if p >= sqrt(2), then g is connected.) 
