@@ -596,11 +596,23 @@ void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp)
 }
 
 
+static int countNontrivialRoots(struct SpanningtreeTree sptTree) {
+	int count = 0;
+	for (int i=0; i<sptTree.nRoots; ++i) {
+		if (sptTree.localSpanningTrees[i]->next) {
+			++count;
+		}
+	}
+	return count;
+}
+
+
 void printSptTree(struct SpanningtreeTree sptTree) {
 	printf("\nbase graph:\n");
 	printGraph(sptTree.g);
 
 	printf("\nnRoots: %i\n", sptTree.nRoots);
+	printf("nNonTrivialRoots: %i\n", countNontrivialRoots(sptTree));
 
 	printf("local spanning trees:\n");
 	for (int v=0; v<sptTree.nRoots; ++v) {
