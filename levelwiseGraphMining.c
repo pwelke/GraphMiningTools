@@ -95,6 +95,57 @@ int getSpanningTreeSamplesOfDB(struct Graph*** db, int k, struct GraphPool* gp, 
 		(*db)[i] = h;
 		++i;
 	}
+
+//	fprintf(stderr, "getSpanningTreeSamplesOfDB\n");
+//	for (int x=0; x<i; ++x) {
+//		printGraphAidsFormat((*db)[x], stderr);
+//	}
+
+	return i;
+}
+
+
+int getAllSpanningTreesOfDB(struct Graph*** db, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Graph* g = NULL;
+	int dbSize = 0;
+	int i = 0;
+
+	while ((g = iterateFile())) {
+		struct Graph* h = NULL;
+		// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
+		struct ShallowGraph* sample = runForEachConnectedComponent(&xlistSpanningTrees, g, k, k, gp, sgp);
+		for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
+			if (tree->m != 0) {
+				struct Graph* tmp = shallowGraphToGraph(tree, gp);
+				tmp->next = h;
+				h = tmp;
+			}
+		}
+		dumpShallowGraphCycle(sgp, sample);
+
+		h = mergeGraphs(h, gp);
+		h->number = g->number;
+		h->activity = g->activity;
+
+		// avoid memory leaks, access to freed memory, and free unused stuff
+		hardCopyGraphLabels(h);
+		dumpGraph(gp, g);
+
+		/* make space for storing graphs in array */
+		if (dbSize <= i) {
+			dbSize = dbSize == 0 ? 128 : dbSize * 2;
+			*db = realloc(*db, dbSize * sizeof (struct Graph*));
+		}
+		/* store graph */
+		(*db)[i] = h;
+		++i;
+	}
+
+//	fprintf(stderr, "getSpanningTreeSamplesOfDB\n");
+//	for (int x=0; x<i; ++x) {
+//		printGraphAidsFormat((*db)[x], stderr);
+//	}
+
 	return i;
 }
 
@@ -148,6 +199,12 @@ int getNonisomorphicSpanningTreeSamplesOfDB(struct Graph*** db, int k, struct Gr
 		(*db)[i] = h;
 		++i;
 	}
+
+//	fprintf(stderr, "getNonisomorphicSpanningTreeSamplesOfDB\n");
+//	for (int x=0; x<i; ++x) {
+//		printGraphAidsFormat((*db)[x], stderr);
+//	}
+
 	return i;
 }
 
@@ -1050,6 +1107,62 @@ size_t initIterativeBFSForForestDB(// input
 }
 
 
+/**
+ * Very inefficient variant of exact frequent subtree mining by representing a
+ * graph by the set of all of its spanning trees
+ */
+size_t initIterativeBFSForAllGlobalTreeEnumerationExactMining(// input
+		size_t threshold,
+		double importance,
+		// output
+		struct Vertex** initialFrequentPatterns,
+		struct SubtreeIsoDataStoreList** supportSets,
+		struct ShallowGraph** extensionEdgeList,
+		void** dataStructures,
+		// printing
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		// pools
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
+
+	struct Graph** db = NULL;
+	int nGraphs = getAllSpanningTreesOfDB(&db, (int)importance, gp, sgp);
+	int** postorders = getPostorders(db, nGraphs);
+
+	struct Vertex* frequentVertices;
+	struct Vertex* frequentEdges;
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+
+	/* convert frequentEdges to ShallowGraph of extension edges */
+	struct Graph* extensionEdgesVertexStore = NULL;
+	struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
+	dumpSearchTree(gp, frequentEdges);
+
+	// levelwise search for patterns with one vertex:
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
+	printStringsInSearchTree(frequentVertices, patternStream, sgp);
+	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
+
+	// store pointers for final garbage collection
+	struct IterativeBfsForForestsDataStructures* x = malloc(sizeof(struct IterativeBfsForForestsDataStructures));
+	x->db = db;
+	x->postorders = postorders;
+	x->nGraphs = nGraphs;
+	x->extensionEdges = extensionEdges;
+	x->extensionEdgesVertexStore = extensionEdgesVertexStore;
+	x->initialFrequentPatterns = frequentVertices;
+
+	// 'return'
+	*initialFrequentPatterns = frequentVertices;
+	*supportSets = frequentVerticesSupportSets;
+	*extensionEdgeList = extensionEdges;
+	*dataStructures = x;
+	return 1; // returned patterns have 1 vertex
+}
+
+
 size_t initIterativeBFSForSampledProbabilisticTree(// input
 		size_t threshold,
 		double importance,
@@ -1244,6 +1357,11 @@ size_t initIterativeBFSForSampledLocalEasy(// input
 		struct BlockTree blockTree = getBlockTreeT(db[i], sgp);
 		sptTrees[i] = getSampledSpanningtreeTree(blockTree, (int)importance, gp, sgp);
 	}
+
+//	fprintf(stderr, "initIterativeBFSForSampledLocalEasy\n");
+//	for (size_t i=0; i<nGraphs; ++i) {
+//		printSptTree(sptTrees[i]);
+//	}
 
 	struct Vertex* frequentVertices;
 	struct Vertex* frequentEdges;

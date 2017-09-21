@@ -148,6 +148,15 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
+			if (strcmp(optarg, "exactGlobalTreeEnumeration") == 0) {
+				initMining = &initIterativeBFSForAllGlobalTreeEnumerationExactMining;
+				embeddingOperator = &noniterativeSubtreeCheckOperator;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
+				break;
+			}
 			if (strcmp(optarg, "localEasySampling") == 0) {
 				initMining = &initIterativeBFSForSampledLocalEasy;
 				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperator;

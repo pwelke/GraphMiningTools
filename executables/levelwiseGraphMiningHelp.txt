@@ -62,6 +62,13 @@ Options:
                  each set of v-rooted components. Hence, a higher -i results
                  in higher recall and higher runtime. 
                  
+             exactGlobalTreeEnumeration: Frequent Subtree Features.
+                 Works for 'not too complex' graph transaction databases.
+                 That is, this algorithm enumerates all global spanning
+                 trees of each graph and checks for subtree isomorphism
+                 of a pattern in the complete spanning tree forest.
+                 This is mainly a debug endeavor...
+                 
              localEasy: My implementation of the local easy subtree iso-
                  morphism algorithm. Works for arbitrary graph transaction 
                  databases. However, has polynomial delay only for local
