@@ -141,6 +141,9 @@ int getNumberOfBiconnectedComponents(struct Graph* g, struct ShallowGraphPool* s
 Count the number of biconnected components that are not a bridge.
 */
 int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp) {
+	if (g->m == 0) {
+		return 0;
+	}
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
 	struct ShallowGraph* comp;
 	int compNumber = 0;
