@@ -60,17 +60,22 @@ options: options (except -h) are always followed by a value.
         spanningTreeListing   exact number of spanning trees, or -1 if there 
                               are more than A spanningTrees (default 100). A 
                               can be set via the option -a A
+        nonisomorphicSpanningTrees: exact number of isomorphism classes of
+                              the spanning trees of each graph. Works by 
+                              listing all spanning trees and happily taking
+                              forever if there are too many of them.
+                              Works for connected graphs.
         numberOfSimpleCycles  total number of simple cycles
                               in the graph
         numberOfNonIsoCycles  number of nonisomorphic cycles
                               in the graph
-        numberOfBlocks     number of biconnected blocks
-        numberOfBridges    number of bridges in a graph
+        numberOfBlocks        number of biconnected blocks
+        numberOfBridges       number of bridges in a graph
         numberOfBridgeTrees   number of edges in the graph that are 
                               bridges. I.e. count the number of 
                               biconnected components with only one edge.
         nomberOfBiconnectedComponents  number of biconnected components.
-        numberOfConnectedComponents   number of connected components
+        numberOfConnectedComponents    number of connected components
         numberOfVertices   number of vertices in the graph
         numberOfEdges      number of edges in the graph
         maxCycleDegree     maximum cycle degree of a graph

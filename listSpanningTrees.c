@@ -2,6 +2,8 @@
 #include <limits.h>
 #include <malloc.h>
 
+#include "searchTree.h"
+#include "cs_Tree.h"
 #include "listComponents.h"
 #include "listSpanningTrees.h"
 
@@ -433,4 +435,31 @@ long int countSpanningTrees(struct Graph* original, long int maxBound, struct Sh
 	dumpGraph(gp, partialTree);
 
 	return result;
+}
+
+
+int countNonisomorphicSpanningTrees(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int i = 0;
+
+	struct Vertex* searchTree = getVertex(gp->vertexPool);
+
+	// list the spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees
+	struct ShallowGraph* sample = listSpanningTrees(g, sgp, gp);
+	for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
+		if (tree->m != 0) {
+			struct Graph* tmp = shallowGraphToGraph(tree, gp);
+			struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
+			addToSearchTree(searchTree, cString, gp, sgp);
+			/* garbage collection */
+			dumpGraph(gp, tmp);
+		}
+	}
+
+	// this is the number of isomorphism classes
+	i = searchTree->d;
+
+	dumpShallowGraphCycle(sgp, sample);
+	dumpSearchTree(gp, searchTree);
+
+	return i;
 }

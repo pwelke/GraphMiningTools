@@ -124,6 +124,10 @@ int main(int argc, char** argv) {
 				filter = spanningTreeListing;
 				break;
 			}
+			if (strcmp(optarg, "nonisomorphicSpanningTrees") == 0) {
+				filter = nonisomorphicSpanningTrees;
+				break;
+			}
 			if (strcmp(optarg, "numberOfBlocks") == 0) {
 				filter = numberOfBlocks;
 				break;
@@ -369,6 +373,9 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case spanningTreeListing:
 		measure = countSpanningTrees(g, additionalParameter, sgp, gp);
+		break;
+	case nonisomorphicSpanningTrees:
+		measure = countNonisomorphicSpanningTrees(g, gp, sgp);
 		break;
 	case numberOfBlocks:
 		measure = getNumberOfBlocks(g, sgp);			

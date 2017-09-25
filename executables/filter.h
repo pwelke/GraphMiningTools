@@ -42,6 +42,7 @@ typedef enum {
 	/* numerical properties */
 	spanningTreeEstimate,
 	spanningTreeListing,
+	nonisomorphicSpanningTrees,
 	numberOfBlocks,
 	numberOfBridges,
 	numberOfBridgeTrees,
