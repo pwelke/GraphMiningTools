@@ -1,18 +1,13 @@
-#include <stdio.h>
-#include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <limits.h>
 #include <getopt.h>
 #include <time.h>
 
 #include "../graph.h"
-#include "../loading.h"
 #include "../graphPrinting.h"
+#include "../randomGraphGenerators.h"
 #include "chainGenerator.h"
-
-
-
 
 
 /**
@@ -32,47 +27,6 @@ static int printHelp() {
 		fprintf(stderr, "Could not read help file\n");
 		return EXIT_FAILURE;
 	}
-}
-
-static void randomVertexLabels(struct Graph* g, int nVertexLabels) {
-	int i;
-	for (i=0; i<g->n; ++i) {
-		g->vertices[i]->label = intLabel(rand() % nVertexLabels);
-		g->vertices[i]->isStringMaster = 1;
-	}
-}
-
-
-struct Graph* blockChainGenerator(int nBlocks, int blockSize, int nVertexLabels, int nEdgeLabels, double diagonalProbability, struct GraphPool* gp) {
-
-	// create empty graph of correct size
-	int nVertices = nBlocks * blockSize - nBlocks + 1;
-	struct Graph* g = createGraph(nVertices, gp);
-
-	// add vertex labels
-	if (nVertexLabels < 1) {
-		for (int v=0; v<nVertices; ++v) {
-			g->vertices[v]->label = intLabel(v);
-			g->vertices[v]->isStringMaster = 1;
-		}
-	} else {
-		randomVertexLabels(g, nVertexLabels);
-	}
-
-	// add cycle edges
-	for (int blockStart=0; blockStart<nVertices-1; blockStart+=blockSize-1) {
-		for (int v=blockStart; v<blockStart+blockSize; ++v) {
-			for (int w=v+1; w<blockStart+blockSize; ++w) {
-				if ((w - v == 1) || (rand() / ((double)RAND_MAX) <= diagonalProbability)) {
-					addEdgeBetweenVertices(v, w, intLabel(rand() % nEdgeLabels), g, gp);
-				}
-			}
-		}
-		if (!isIncident(g->vertices[blockStart], g->vertices[blockStart+blockSize-1])) {
-			addEdgeBetweenVertices(blockStart, blockStart+blockSize-1, intLabel(rand() % nEdgeLabels), g, gp);
-		}
-	}
-	return g;
 }
 
 

@@ -1,106 +1,12 @@
-#include <stdio.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <getopt.h>
 #include <time.h>
-#include <math.h>
 
 #include "../graph.h"
 #include "../loading.h"
 #include "../graphPrinting.h"
-
-
-
-struct Graph* erdosRenyi(int n, double p, struct GraphPool* gp) {
-	int i;
-	int j;
-	struct Graph* g = createGraph(n, gp);
-	for (i=0; i<n; ++i) {
-		for (j=i+1; j<n; ++j) {
-			double value = rand() / (RAND_MAX + 1.0);
-			if (value < p) {
-				addEdgeBetweenVertices(i, j, NULL, g, gp);
-			}
-		}
-	}
-	return g;
-}
-
-//struct Graph* BarabasiAlbert(int n, struct GraphPool* gp) {
-//	struct Graph* g = createGraph(n, gp);
-//	addEdgeBetweenVertices(0, 1, NULL, g, gp);
-//	g->vertices[0]->d = 1;
-//	g->vertices[1]->d = 1;
-//	for (int v=2; v<n; ++v) {
-//		// TODO
-//	}
-//}
-
-static double euclideanDistance(int vx, int vy, int wx, int wy) {
-	double xdiff = ((double)abs(vx - wx)) / RAND_MAX;
-	double ydiff = ((double)abs(vy - wy)) / RAND_MAX;
-	return sqrt(xdiff * xdiff + ydiff * ydiff);
-}
-
-static double euclideanDistanceWrap(int v, int w, struct Graph* g) {
-	return euclideanDistance(g->vertices[v]->d, g->vertices[v]->lowPoint, g->vertices[w]->d, g->vertices[w]->lowPoint);
-}
-
-
-
-struct Graph* randomOverlapGraph(int n, double d, struct GraphPool* gp) {
-	struct Graph* g = createGraph(n, gp);
-
-	// every vertex is a two-dimensional point
-	for (int v=0; v<n; ++v) {
-		g->vertices[v]->d = rand();
-		g->vertices[v]->lowPoint = rand();
-		g->vertices[v]->label = intLabel(1);
-	}
-
-	for (int v=0; v<n; ++v) {
-		for (int w=v+1; w<n; ++w) {
-			if (euclideanDistanceWrap(v, w, g) < d) {
-				addEdgeBetweenVertices(v, w, intLabel(1), g, gp);
-			}
-		}
-	}
-	return g;
-}
-
-
-static void randomVertexLabels(struct Graph* g, int nVertexLabels) {
-	int i;
-	for (i=0; i<g->n; ++i) {
-		g->vertices[i]->label = intLabel(rand() % nVertexLabels);
-		g->vertices[i]->isStringMaster = 1;
-	}
-}
-
-
-struct Graph* erdosRenyiWithLabels(int n, double p, int nVertexLabels, int nEdgeLabels, struct GraphPool* gp) {
-	int i;
-	int j;
-	struct Graph* g = createGraph(n, gp);
-	randomVertexLabels(g, nVertexLabels);
-
-	for (i=0; i<n; ++i) {
-		for (j=i+1; j<n; ++j) {
-			double value = rand() / (RAND_MAX + 1.0);
-			if (value < p) {
-				// add a labeled edge and set one of the two resulting vertex lists as string master.
-				addEdgeBetweenVertices(i, j, intLabel(rand() % nEdgeLabels), g, gp);
-				g->vertices[i]->neighborhood->isStringMaster = 1;
-			}
-		}
-	}
-	return g;
-}
-
-
-
+#include "../randomGraphGenerators.h"
 
 
 /**
@@ -123,7 +29,7 @@ static int printHelp() {
 }
 
 typedef enum {
-	overlap, erdosrenyi, barabasialbert
+	overlap, erdosrenyi, barabasialbert, chains, iterativeOverlap, barabasialpha
 } Generator;
 
 /**
@@ -222,6 +128,14 @@ int main(int argc, char** argv) {
 				generator = barabasialbert;
 				break;
 			}
+			if (strcmp(optarg, "barabasialpha") == 0) {
+				generator = barabasialpha;
+				break;
+			}
+			if (strcmp(optarg, "chains") == 0) {
+				generator = chains;
+				break;
+			}
 			fprintf(stderr, "Unknown random generator: %s\n", optarg);
 			return EXIT_FAILURE;
 		case '?':
@@ -240,23 +154,58 @@ int main(int argc, char** argv) {
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(1, vp, lp);
 
+	struct Graph* g = NULL;
+
 	/* iterate over all graphs in the database */
 	for (i=0; i<numberOfGeneratedGraphs; ++i) {
-		struct Graph* g;
 		int n = rand() % (upperBoundVertices - lowerBoundVertices) + lowerBoundVertices;
 		/* calculate p, if m option was given */
 		if ((edgeMultiplicity > 0) && (n > 1)) {
 			edgeProbability = ( 2.0 * edgeMultiplicity ) / (n - 1.0);
 		}
 		switch (generator) {
+		struct Graph* core = NULL;
 		case erdosrenyi:
 			g = erdosRenyiWithLabels(n, edgeProbability, nVertexLabels, nEdgeLabels, gp);
 			break;
 		case overlap:
 			g = randomOverlapGraph(n, edgeProbability, gp);
+			break;
+		case iterativeOverlap:
+			if (i == 0) {
+				g = randomOverlapGraph(n, edgeProbability, gp);
+			} else {
+				moveOverlapGraph(g, 0, edgeProbability, gp);
+			}
+			break;
+		case barabasialbert:
+			core = erdosRenyiWithLabels((int)edgeProbability, 0, 1, 1, gp);
+//			core = blockChainGenerator(1, (int)edgeProbability, 1, 1, 0, gp);
+			makeMinDegree1(core, gp);
+			g = barabasiAlbert(n, (int)edgeProbability, core, gp);
+			dumpGraph(gp, core);
+			break;
+		case barabasialpha:
+			core = erdosRenyiWithLabels((int)edgeProbability, 0, 1, 1, gp);
+//			core = blockChainGenerator(1, (int)edgeProbability, 1, 1, 0, gp);
+			makeMinDegree1(core, gp);
+			g = barabasiAlpha(n, (int)edgeProbability, 0.95, core, gp);
+			dumpGraph(gp, core);
+			break;
+		case chains:
+//			g = blockChainGenerator(numberOfVertices, , nVertexLabels, nEdgeLabels, edgeProbability, gp);
+			break;
 		}
 		g->number = i+1;
 		printGraphAidsFormat(g, out);
+
+		if (generator != iterativeOverlap) {
+			dumpGraph(gp, g);
+		}
+	}
+
+	if (generator == iterativeOverlap) {
+		dumpGraph(gp, g);
 	}
 
 	/* terminate output stream */
