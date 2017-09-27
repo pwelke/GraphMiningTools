@@ -745,7 +745,7 @@ void computeCharacteristics(struct SubtreeIsoDataStore* current, struct SubtreeI
 /**
 Labeled Subtree Isomorphism Check for a single local spanning tree of some v-rooted blocks.
  */
-static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* current, struct SpanningtreeTree* sptTree, struct GraphPool* gp) {
+static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* current, struct SpanningtreeTree* sptTree, int blockDoesNotContainGlobalRoot, struct GraphPool* gp) {
 
 	struct Graph* g = current->g;
 	struct Graph* h = current->h;
@@ -753,7 +753,9 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 	struct CachedGraph* cachedB = initCachedGraph(gp, h->n);
 
 	current->foundIso = 0;
-	for (int wi=0; wi<g->n; ++wi) {
+	// TODO: can we skip the computation for w->number == 0 here and just add a special case for the global root somewhere?
+	// this should improve speed by a factor of almost 2, I guess.
+	for (int wi=0; wi<g->n-blockDoesNotContainGlobalRoot; ++wi) {
 		struct Vertex* w = g->vertices[current->postorder[wi]];
 
 		for (int ui=0; ui<h->n; ++ui) {
@@ -764,6 +766,8 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 
 			// if w is not a root, life is easy, we do not need to process all \theta \in \Theta_{vw}
 			// if w = v we just compute characteristics in the current spanning tree
+			// TODO: can we skip the computation for w->number == 0 here and just add a special case for the global root somewhere?
+			// this should improve speed by a factor of almost 2, I guess.
 			if ((w->d == -1) || (w->number == 0)) {
 				computeCharacteristics(current, NULL, cachedB, u, w, NULL, gp);
 				if (current->foundIso) {
@@ -775,6 +779,9 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 				// if w is a root unequal v
 				// loop over the spanning trees of the w-rooted components
 				for (struct SubtreeIsoDataStoreElement* e=sptTree->characteristics[w->d]->first; e!=NULL; e=e->next) {
+//					if (e->next) {
+//						fprintf(stderr, "processing multiple children at v=%i for w=%i\n", g->vertices[0]->d, w->d);
+//					}
 					struct Vertex* wBelow = e->data.g->vertices[0];
 					computeCharacteristics(current, &(e->data), cachedB, u, w, wBelow, gp);
 					if (current->foundIso) {
@@ -801,14 +808,18 @@ char subtreeCheckForSpanningtreeTree(struct SpanningtreeTree* sptTree, struct Gr
 
 	// for each root, process each spanning tree of the v rooted components and compute characteristics
 	for (int v=sptTree->nRoots-1; v>=0; --v) {
+		int blockDoesNotContainGlobalRoot = v==0 ? 0 : 1;
 		for (struct Graph* localTree=sptTree->localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
+//			if (localTree->next) {
+//				fprintf(stderr, "gotcha %i\n", v);
+//			}
 			struct SubtreeIsoDataStore info = {0};
 			info.g = localTree;
 			info.h = h;
 			info.postorder = getPostorder(localTree, 0); // 0 is the root v of localTree
 			info.S = createNewCube(info.g->n, info.h->n);
 
-			subtreeCheckForOneBlockSpanningTree(&info, sptTree, gp);
+			subtreeCheckForOneBlockSpanningTree(&info, sptTree, blockDoesNotContainGlobalRoot, gp);
 			appendSubtreeIsoDataStore(sptTree->characteristics[v], info);
 
 			free(info.postorder);
