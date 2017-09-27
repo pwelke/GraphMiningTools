@@ -753,8 +753,8 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 	struct CachedGraph* cachedB = initCachedGraph(gp, h->n);
 
 	current->foundIso = 0;
-	// TODO: can we skip the computation for w->number == 0 here and just add a special case for the global root somewhere?
-	// this should improve speed by a factor of almost 2, I guess.
+	// we can skip the computation if w = v, unless v is the global root of the graph
+	// v is the last vertex in the postorder.
 	for (int wi=0; wi<g->n-blockDoesNotContainGlobalRoot; ++wi) {
 		struct Vertex* w = g->vertices[current->postorder[wi]];
 
@@ -765,9 +765,7 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 			if (labelCmp(u->label, w->label) != 0) { continue; }
 
 			// if w is not a root, life is easy, we do not need to process all \theta \in \Theta_{vw}
-			// if w = v we just compute characteristics in the current spanning tree
-			// TODO: can we skip the computation for w->number == 0 here and just add a special case for the global root somewhere?
-			// this should improve speed by a factor of almost 2, I guess.
+			// if w = v (i.e. if it is the global root) we just compute characteristics in the current spanning tree
 			if ((w->d == -1) || (w->number == 0)) {
 				computeCharacteristics(current, NULL, cachedB, u, w, NULL, gp);
 				if (current->foundIso) {
@@ -808,11 +806,10 @@ char subtreeCheckForSpanningtreeTree(struct SpanningtreeTree* sptTree, struct Gr
 
 	// for each root, process each spanning tree of the v rooted components and compute characteristics
 	for (int v=sptTree->nRoots-1; v>=0; --v) {
+		// we need to compute characteristics for the global root, which is a special case.
 		int blockDoesNotContainGlobalRoot = v==0 ? 0 : 1;
 		for (struct Graph* localTree=sptTree->localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
-//			if (localTree->next) {
-//				fprintf(stderr, "gotcha %i\n", v);
-//			}
+
 			struct SubtreeIsoDataStore info = {0};
 			info.g = localTree;
 			info.h = h;
