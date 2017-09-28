@@ -109,9 +109,10 @@ $(PENAME): $(PEHELP) $(PEOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
 TESTNAME = test
-TESTOBJECTS = $(OBJECTS) ./executables/lowPointTest.o
+TESTOBJECTS = $(OBJECTS) ./tests/testsuite.o
 $(TESTNAME): $(TESTOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
+	@./test
 
 GFCNAME = gfc
 GFCOBJECTS = $(OBJECTS) ./executables/formatConverter.o 
@@ -125,10 +126,7 @@ L2UHELP = ./executables/labeled2unlabeledMainHelp.help
 $(L2UNAME): $(L2UHELP) $(L2UOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
-
-
-
-ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(TESTNAME) $(PENAME) $(GFCNAME)
+ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(PENAME) $(GFCNAME)
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
