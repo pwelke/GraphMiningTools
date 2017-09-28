@@ -11,6 +11,7 @@ void printGraph(struct Graph* g);
 int printShallowGraphCount(struct ShallowGraph* g, char silent);
 void printShallowGraph(struct ShallowGraph* g);
 void printLabelledShallowGraph(struct ShallowGraph* g);
-
+void printOverlapGraphDotFormat(struct Graph* g, FILE* out);
+void printGraphDotFormat(struct Graph* g, FILE* out);
 
 #endif /* GRAPH_PRINTING_H */

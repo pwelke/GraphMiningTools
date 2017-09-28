@@ -331,6 +331,22 @@ inline double euclideanDistanceWrap(const int v, const int w, struct Graph* g) {
 }
 
 
+void printOverlapGraphDotFormat(struct Graph* g, FILE* out) {
+	fprintf(out, "graph %i {\n", g->number);
+	for (int v=0; v<g->n; ++v) {
+		fprintf(out, "%i [label=%s, pos=\"%lf,%lf\", pin=true, shape=point];\n", v, g->vertices[v]->label, g->vertices[v]->d / (double)RAND_MAX, g->vertices[v]->lowPoint / (double)RAND_MAX);
+	}
+	for (int v=0; v<g->n; ++v) {
+		for (struct VertexList* e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+			if (e->startPoint->number < e->endPoint->number) {
+				fprintf(out, "%i -- %i [label=%s];\n", e->startPoint->number, e->endPoint->number, g->vertices[v]->label);
+			}
+		}
+	}
+	fprintf(out, "}\n");
+}
+
+
 /**
  * Create a graph
  */

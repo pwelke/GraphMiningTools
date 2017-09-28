@@ -266,3 +266,17 @@ char diffGraphs(char* name, struct Graph *g, struct Graph* h) {
 	fflush(stdout);
 	return diffs;
 }
+
+
+void printGraphDotFormat(struct Graph* g, FILE* out) {
+	fprintf(out, "graph %i {\n", g->number);
+	for (int v=0; v<g->n; ++v) {
+		fprintf(out, "%i [label=%s];\n", v, g->vertices[v]->label);
+	}
+	for (int v=0; v<g->n; ++v) {
+		for (struct VertexList* e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+			fprintf(out, "%i -- %i [label=%s];\n", e->startPoint->number, e->endPoint->number, g->vertices[v]->label);
+		}
+	}
+	fprintf(out, "}\n");
+}

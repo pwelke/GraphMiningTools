@@ -16,6 +16,7 @@ void randomVertexLabels(struct Graph* g, int nVertexLabels);
 void makeMinDegree1(struct Graph* g, struct GraphPool* gp);
 double euclideanDistanceWrap(const int v, const int w, struct Graph* g);
 double euclideanDistance(const int vx, const int vy, const int wx, const int wy);
+void printOverlapGraphDotFormat(struct Graph* g, FILE* out);
 
 
 
