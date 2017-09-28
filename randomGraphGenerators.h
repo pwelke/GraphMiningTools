@@ -11,9 +11,12 @@
 #include "graph.h"
 
 void generateGaussianNoise(double* z0, double* z1, double mu, double sigma);
-void generateIntegerGaussianNoise(int* z0, int* z1, double mu, double sigma);
+void generateIntegerGaussianNoise(int* z0, int* z1, double sigma);
 void randomVertexLabels(struct Graph* g, int nVertexLabels);
 void makeMinDegree1(struct Graph* g, struct GraphPool* gp);
+double euclideanDistanceWrap(const int v, const int w, struct Graph* g);
+double euclideanDistance(const int vx, const int vy, const int wx, const int wy);
+
 
 
 struct Graph* erdosRenyi(int n, double p, struct GraphPool* gp);

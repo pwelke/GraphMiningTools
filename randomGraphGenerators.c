@@ -8,6 +8,7 @@
 #include <float.h>
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
 
 #include "loading.h"
 #include "randomGraphGenerators.h"
@@ -43,11 +44,13 @@ void generateGaussianNoise(double* z0, double* z1, double mu, double sigma) {
  * We are happy that two are generated, as we are interested in moving 2-d points
  * in our geometric threshold graphs and return both values right away.
  *
+ * mu (i.e., the mean is given by the initialized values of the two double in/out variables
+ *
  * Source: https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
  *
  * Uses rand() 2 times
  */
-void generateIntegerGaussianNoise(int* z0, int* z1, double mu, double sigma) {
+void generateIntegerGaussianNoise(int* z0, int* z1, double sigma) {
 	static const double epsilon = DBL_EPSILON;
 	static const double two_pi = 2.0*3.14159265358979323846;
 
@@ -57,8 +60,8 @@ void generateIntegerGaussianNoise(int* z0, int* z1, double mu, double sigma) {
 		u2 = rand() * (1.0 / RAND_MAX);
 	} while ( u1 <= epsilon );
 
-	*z0 = (sqrt(-2.0 * log(u1)) * cos(two_pi * u2) * sigma + mu) * RAND_MAX;
-	*z1 = (sqrt(-2.0 * log(u1)) * sin(two_pi * u2) * sigma + mu) * RAND_MAX;
+	*z0 = *z0 + (sqrt(-2.0 * log(u1)) * cos(two_pi * u2) * sigma) * RAND_MAX;
+	*z1 = *z1 + (sqrt(-2.0 * log(u1)) * sin(two_pi * u2) * sigma) * RAND_MAX;
 }
 
 
@@ -312,17 +315,25 @@ struct Graph* barabasiAlbert(int n, int edgesAddedPerVertex, struct Graph* core,
 
 // RANDOM GEOMETRIC GRAPHS
 
-static inline double euclideanDistance(const int vx, const int vy, const int wx, const int wy) {
-	double xdiff = ((double)abs(vx - wx)) / RAND_MAX;
-	double ydiff = ((double)abs(vy - wy)) / RAND_MAX;
-	return sqrt(xdiff * xdiff + ydiff * ydiff);
+inline double euclideanDistance(const int vx, const int vy, const int wx, const int wy) {
+	double vxx = vx / (double)RAND_MAX;
+	double vyy = vy / (double)RAND_MAX;
+	double wxx = wx / (double)RAND_MAX;
+	double wyy = wy / (double)RAND_MAX;
+	double xdiff = vxx - wxx;
+	double ydiff = vyy - wyy;
+	double result = sqrt(xdiff * xdiff + ydiff * ydiff);
+	return result;
 }
 
-static inline double euclideanDistanceWrap(const int v, const int w, struct Graph* g) {
+inline double euclideanDistanceWrap(const int v, const int w, struct Graph* g) {
 	return euclideanDistance(g->vertices[v]->d, g->vertices[v]->lowPoint, g->vertices[w]->d, g->vertices[w]->lowPoint);
 }
 
 
+/**
+ * Create a graph
+ */
 struct Graph* randomOverlapGraph(int n, double d, struct GraphPool* gp) {
 	struct Graph* g = createGraph(n, gp);
 
@@ -344,18 +355,18 @@ struct Graph* randomOverlapGraph(int n, double d, struct GraphPool* gp) {
 }
 
 
+// Due to strangeness in A
 void moveOverlapGraph(struct Graph* g, double moveParameter, double d, struct GraphPool* gp) {
 
 	// move vertices
 	for (int v=0; v<g->n; ++v) {
-		int xmove = g->vertices[v]->d;
-		int ymove = g->vertices[v]->lowPoint;
-		generateIntegerGaussianNoise(&xmove, &ymove, 0, moveParameter);
-		xmove = xmove < 0 ? xmove * -1 : xmove;
-		ymove = ymove < 0 ? ymove * -1 : ymove;
-
-		g->vertices[v]->d = xmove;
-		g->vertices[v]->lowPoint = ymove;
+		generateIntegerGaussianNoise(&(g->vertices[v]->d), &(g->vertices[v]->lowPoint), moveParameter);
+		// mirror in unit interval
+		// stupid undefined behavior of abs(INT_MIN) requires to do it ourselves:
+		int a = g->vertices[v]->d;
+		int b = g->vertices[v]->lowPoint;
+		g->vertices[v]->d = a == INT_MIN ? RAND_MAX : a ^ INT_MIN;
+		g->vertices[v]->lowPoint = b == INT_MIN ? RAND_MAX : b ^ INT_MIN;
 	}
 
 	// dump edges
