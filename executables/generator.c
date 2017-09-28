@@ -28,8 +28,36 @@ static int printHelp() {
 	}
 }
 
+void printOverlapGraphDotFormat(struct Graph* g, FILE* out) {
+	fprintf(out, "graph %i {\n", g->number);
+	for (int v=0; v<g->n; ++v) {
+		fprintf(out, "%i [label=%s, pos=\"%lf,%lf\", pin=true, shape=point];\n", v, g->vertices[v]->label, g->vertices[v]->d / (double)RAND_MAX, g->vertices[v]->lowPoint / (double)RAND_MAX);
+	}
+	for (int v=0; v<g->n; ++v) {
+		for (struct VertexList* e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+			if (e->startPoint->number < e->endPoint->number) {
+				fprintf(out, "%i -- %i [label=%s];\n", e->startPoint->number, e->endPoint->number, g->vertices[v]->label);
+			}
+		}
+	}
+	fprintf(out, "}\n");
+}
+
+void printGraphDotFormat(struct Graph* g, FILE* out) {
+	fprintf(out, "graph %i {\n", g->number);
+	for (int v=0; v<g->n; ++v) {
+		fprintf(out, "%i [label=%s];\n", v, g->vertices[v]->label);
+	}
+	for (int v=0; v<g->n; ++v) {
+		for (struct VertexList* e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
+			fprintf(out, "%i -- %i [label=%s];\n", e->startPoint->number, e->endPoint->number, g->vertices[v]->label);
+		}
+	}
+	fprintf(out, "}\n");
+}
+
 typedef enum {
-	overlap, erdosrenyi, barabasialbert, chains, iterativeOverlap, barabasialpha
+	overlap, erdosrenyi, barabasialbert, chains, iterativeoverlap, barabasialbertalpha
 } Generator;
 
 /**
@@ -54,25 +82,21 @@ int main(int argc, char** argv) {
 	int upperBoundVertices = 50;
 	int nVertexLabels = 5;
 	int nEdgeLabels = 1;
-	double edgeProbability = 0.5;
+	double edgeInfluenceParameter = 0.5;
 	double edgeMultiplicity = -1;
 	int randomSeed = time(NULL);
 	Generator generator = erdosrenyi;
+	char outputDot = 0;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hp:s:a:b:c:d:N:m:x:";
+	const char* validArgs = "ohs:a:b:c:d:N:x:m:p:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
+		// common / global variables
 		case 'h':
 			printHelp();
 			return EXIT_SUCCESS;
-		case 'p':
-			if (sscanf(optarg, "%lf", &edgeProbability) != 1) {
-				fprintf(stderr, "value must be double, is: %s\n", optarg);
-				return EXIT_FAILURE;
-			}
-			break;
 		case 's':
 			if (sscanf(optarg, "%i", &randomSeed) != 1) {
 				fprintf(stderr, "value must be integer, is: %s\n", optarg);
@@ -109,27 +133,25 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 			break;
-		case 'm':
-			if (sscanf(optarg, "%lf", &edgeMultiplicity) != 1) {
-				fprintf(stderr, "value must be double, is: %s\n", optarg);
-				return EXIT_FAILURE;
-			} 
-			break;
 		case 'x':
 			if (strcmp(optarg, "overlap") == 0) {
 				generator = overlap;
 				break;
 			}
-			if (strcmp(optarg, "erdosrenyi") == 0) {
+			if (strcmp(optarg, "iterativeOverlap") == 0) {
+				generator = iterativeoverlap;
+				break;
+			}
+			if (strcmp(optarg, "erdosRenyi") == 0) {
 				generator = erdosrenyi;
 				break;
 			}
-			if (strcmp(optarg, "barabasialbert") == 0) {
+			if (strcmp(optarg, "barabasiAlbert") == 0) {
 				generator = barabasialbert;
 				break;
 			}
-			if (strcmp(optarg, "barabasialpha") == 0) {
-				generator = barabasialpha;
+			if (strcmp(optarg, "barabasiAlbertAlpha") == 0) {
+				generator = barabasialbertalpha;
 				break;
 			}
 			if (strcmp(optarg, "chains") == 0) {
@@ -138,7 +160,26 @@ int main(int argc, char** argv) {
 			}
 			fprintf(stderr, "Unknown random generator: %s\n", optarg);
 			return EXIT_FAILURE;
+		case 'o':
+			outputDot = 1;
+			break;
+		// multi purpose variables depending on generators
+		case 'p':
+			if (sscanf(optarg, "%lf", &edgeInfluenceParameter) != 1) {
+				fprintf(stderr, "value must be double, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
+		case 'm':
+			if (sscanf(optarg, "%lf", &edgeMultiplicity) != 1) {
+				fprintf(stderr, "value must be double, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
+
+		// unknown flag handling
 		case '?':
+			fprintf(stderr, "unknown flag: -%s\n", optarg);
 			return EXIT_FAILURE;
 			break;
 		}
@@ -160,36 +201,36 @@ int main(int argc, char** argv) {
 	for (i=0; i<numberOfGeneratedGraphs; ++i) {
 		int n = rand() % (upperBoundVertices - lowerBoundVertices) + lowerBoundVertices;
 		/* calculate p, if m option was given */
-		if ((edgeMultiplicity > 0) && (n > 1)) {
-			edgeProbability = ( 2.0 * edgeMultiplicity ) / (n - 1.0);
-		}
 		switch (generator) {
 		struct Graph* core = NULL;
 		case erdosrenyi:
-			g = erdosRenyiWithLabels(n, edgeProbability, nVertexLabels, nEdgeLabels, gp);
+			if ((edgeMultiplicity > 0) && (n > 1)) {
+				edgeInfluenceParameter = ( 2.0 * edgeMultiplicity ) / (n - 1.0);
+			}
+			g = erdosRenyiWithLabels(n, edgeInfluenceParameter, nVertexLabels, nEdgeLabels, gp);
 			break;
 		case overlap:
-			g = randomOverlapGraph(n, edgeProbability, gp);
+			g = randomOverlapGraph(n, edgeInfluenceParameter, gp);
 			break;
-		case iterativeOverlap:
+		case iterativeoverlap:
 			if (i == 0) {
-				g = randomOverlapGraph(n, edgeProbability, gp);
+				g = randomOverlapGraph(n, edgeInfluenceParameter, gp);
 			} else {
-				moveOverlapGraph(g, 0, edgeProbability, gp);
+				moveOverlapGraph(g, edgeMultiplicity, edgeInfluenceParameter, gp);
 			}
 			break;
 		case barabasialbert:
-			core = erdosRenyiWithLabels((int)edgeProbability, 0, 1, 1, gp);
+			core = erdosRenyiWithLabels((int)edgeInfluenceParameter, 0, 1, 1, gp);
 //			core = blockChainGenerator(1, (int)edgeProbability, 1, 1, 0, gp);
 			makeMinDegree1(core, gp);
-			g = barabasiAlbert(n, (int)edgeProbability, core, gp);
+			g = barabasiAlbert(n, (int)edgeInfluenceParameter, core, gp);
 			dumpGraph(gp, core);
 			break;
-		case barabasialpha:
-			core = erdosRenyiWithLabels((int)edgeProbability, 0, 1, 1, gp);
+		case barabasialbertalpha:
+			core = erdosRenyiWithLabels((int)edgeInfluenceParameter, 0, 1, 1, gp);
 //			core = blockChainGenerator(1, (int)edgeProbability, 1, 1, 0, gp);
 			makeMinDegree1(core, gp);
-			g = barabasiAlpha(n, (int)edgeProbability, 0.95, core, gp);
+			g = barabasiAlpha(n, (int)edgeInfluenceParameter, 0.95, core, gp);
 			dumpGraph(gp, core);
 			break;
 		case chains:
@@ -197,20 +238,30 @@ int main(int argc, char** argv) {
 			break;
 		}
 		g->number = i+1;
-		printGraphAidsFormat(g, out);
 
-		if (generator != iterativeOverlap) {
+		if (outputDot) {
+			if (generator == overlap || generator == iterativeoverlap) {
+				printOverlapGraphDotFormat(g, out);
+			} else {
+				printGraphDotFormat(g, out);
+			}
+		} else {
+			printGraphAidsFormat(g, out);
+		}
+
+		if (generator != iterativeoverlap) {
 			dumpGraph(gp, g);
 		}
 	}
 
-	if (generator == iterativeOverlap) {
+	if (generator == iterativeoverlap) {
 		dumpGraph(gp, g);
 	}
 
-	/* terminate output stream */
-	fprintf(out, "$\n");
-
+	if (!outputDot) {
+		/* terminate output stream */
+		fprintf(out, "$\n");
+	}
 
 	/* global garbage collection */
 	freeGraphPool(gp);
