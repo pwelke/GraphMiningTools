@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 			break;
 		case iterativeoverlap:
 			if (i == 0) {
-				g = randomOverlapGraph(n, edgeInfluenceParameter, gp);
+				g = randomOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, gp);
 			} else {
 				moveOverlapGraph(g, edgeMultiplicity, edgeInfluenceParameter, gp);
 			}

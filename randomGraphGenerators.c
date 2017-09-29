@@ -371,6 +371,30 @@ struct Graph* randomOverlapGraph(int n, double d, struct GraphPool* gp) {
 }
 
 
+/**
+ * Create a graph
+ */
+struct Graph* randomOverlapGraphWithLabels(int n, double d, int nVertexLabels, struct GraphPool* gp) {
+	struct Graph* g = createGraph(n, gp);
+
+	// every vertex is a two-dimensional point
+	for (int v=0; v<n; ++v) {
+		g->vertices[v]->d = rand();
+		g->vertices[v]->lowPoint = rand();
+		g->vertices[v]->label = intLabel(rand() % nVertexLabels);
+	}
+	// add edge iff distance is smaller than d
+	for (int v=0; v<n; ++v) {
+		for (int w=v+1; w<n; ++w) {
+			if (euclideanDistanceWrap(v, w, g) < d) {
+				addEdgeBetweenVertices(v, w, intLabel(1), g, gp);
+			}
+		}
+	}
+	return g;
+}
+
+
 // Due to strangeness in A
 void moveOverlapGraph(struct Graph* g, double moveParameter, double d, struct GraphPool* gp) {
 

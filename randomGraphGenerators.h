@@ -29,6 +29,7 @@ struct Graph* barabasiAlpha(int n, int edgesAddedPerVertex, double alpha, struct
 struct Graph* blockChainGenerator(int nBlocks, int blockSize, int nVertexLabels, int nEdgeLabels, double diagonalProbability, struct GraphPool* gp);
 
 struct Graph* randomOverlapGraph(int n, double d, struct GraphPool* gp);
+struct Graph* randomOverlapGraphWithLabels(int n, double d, int nVertexLabels, struct GraphPool* gp);
 void moveOverlapGraph(struct Graph* g, double moveParameter, double d, struct GraphPool* gp);
 
 
