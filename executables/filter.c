@@ -128,6 +128,10 @@ int main(int argc, char** argv) {
 				filter = nonisomorphicSpanningTrees;
 				break;
 			}
+			if (strcmp(optarg, "maxBlocksPerComponent") == 0) {
+				filter = maxBlocksPerComponent;
+				break;
+			}
 			if (strcmp(optarg, "numberOfBlocks") == 0) {
 				filter = numberOfBlocks;
 				break;
@@ -379,6 +383,9 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case numberOfBlocks:
 		measure = getNumberOfBlocks(g, sgp);			
+		break;
+	case maxBlocksPerComponent:
+		measure = getMaxNumberOfBlocksPerComponent(g, gp, sgp);
 		break;
 	case numberOfBridges:
 		measure = getNumberOfBridges(g, sgp);			

@@ -159,6 +159,20 @@ int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp) {
 
 
 /**
+ * Return the maximum number of (biconnected) blocks per connected component of g.
+ */
+int getMaxNumberOfBlocksPerComponent(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Graph* components = listConnectedComponents(g, gp);
+	int maxNumberOfBlocks = 0;
+	for (struct Graph* comp=components; comp!=NULL; comp=comp->next) {
+		int numberOfBlocks = getNumberOfBlocks(comp, sgp);
+		maxNumberOfBlocks = numberOfBlocks > maxNumberOfBlocks ? numberOfBlocks : maxNumberOfBlocks;
+	}
+	return maxNumberOfBlocks;
+}
+
+
+/**
 Count the number of edges in the graph that are bridges. 
 I.e. count the number of biconnected components with only one edge.
 */

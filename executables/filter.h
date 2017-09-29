@@ -43,6 +43,7 @@ typedef enum {
 	spanningTreeEstimate,
 	spanningTreeListing,
 	nonisomorphicSpanningTrees,
+	maxBlocksPerComponent,
 	numberOfBlocks,
 	numberOfBridges,
 	numberOfBridgeTrees,
