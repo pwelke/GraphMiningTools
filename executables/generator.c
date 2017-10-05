@@ -55,15 +55,16 @@ int main(int argc, char** argv) {
 	int upperBoundVertices = 50;
 	int nVertexLabels = 5;
 	int nEdgeLabels = 1;
-	double edgeInfluenceParameter = 0.5;
-	double edgeMultiplicity = -1;
+	double pParameter = 0.5;
+	double mParameter = -1;
+	double qParameter = 0.1;
 	int randomSeed = time(NULL);
 	Generator generator = erdosrenyi;
 	char outputDot = 0;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "ohs:a:b:c:d:N:x:m:p:";
+	const char* validArgs = "ohs:a:b:c:d:N:x:m:p:q:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		// common / global variables
@@ -146,14 +147,20 @@ int main(int argc, char** argv) {
 			break;
 		// multi purpose variables depending on generators
 		case 'p':
-			if (sscanf(optarg, "%lf", &edgeInfluenceParameter) != 1) {
-				fprintf(stderr, "value must be double, is: %s\n", optarg);
+			if (sscanf(optarg, "%lf", &pParameter) != 1) {
+				fprintf(stderr, "p: value must be double, is: %s\n", optarg);
 				return EXIT_FAILURE;
 			}
 			break;
 		case 'm':
-			if (sscanf(optarg, "%lf", &edgeMultiplicity) != 1) {
-				fprintf(stderr, "value must be double, is: %s\n", optarg);
+			if (sscanf(optarg, "%lf", &mParameter) != 1) {
+				fprintf(stderr, "m: value must be double, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
+		case 'q':
+			if (sscanf(optarg, "%lf", &qParameter) != 1) {
+				fprintf(stderr, "q: value must be double, is: %s\n", optarg);
 				return EXIT_FAILURE;
 			}
 			break;
@@ -185,43 +192,43 @@ int main(int argc, char** argv) {
 		switch (generator) {
 		struct Graph* core = NULL;
 		case erdosrenyi:
-			if ((edgeMultiplicity > 0) && (n > 1)) {
-				edgeInfluenceParameter = ( 2.0 * edgeMultiplicity ) / (n - 1.0);
+			if ((mParameter > 0) && (n > 1)) {
+				pParameter = ( 2.0 * mParameter ) / (n - 1.0);
 			}
-			g = erdosRenyiWithLabels(n, edgeInfluenceParameter, nVertexLabels, nEdgeLabels, gp);
+			g = erdosRenyiWithLabels(n, pParameter, nVertexLabels, nEdgeLabels, gp);
 			break;
 		case overlap:
-			g = randomOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, gp);
+			g = randomOverlapGraphWithLabels(n, pParameter, nVertexLabels, gp);
 			break;
 		case iterativeoverlap:
 			if (i == 0) {
-				g = randomOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, gp);
+				g = randomOverlapGraphWithLabels(n, pParameter, nVertexLabels, gp);
 			} else {
-				moveOverlapGraph(g, edgeMultiplicity, edgeInfluenceParameter, gp);
+				moveOverlapGraph(g, mParameter, pParameter, gp);
 			}
 			break;
 		case clusteredOverlap:
-			g = randomClusteredOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, 0.1, gp);
+			g = randomClusteredOverlapGraphWithLabels(n, pParameter, nVertexLabels, qParameter, gp);
 			break;
 		case iterativeClusteredOverlap:
 			if (i == 0) {
-				g = randomClusteredOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, 0.1, gp);
+				g = randomClusteredOverlapGraphWithLabels(n, pParameter, nVertexLabels, qParameter, gp);
 			} else {
-				moveOverlapGraph(g, edgeMultiplicity, edgeInfluenceParameter, gp);
+				moveOverlapGraph(g, mParameter, pParameter, gp);
 			}
 			break;
 		case barabasialbert:
-			core = erdosRenyiWithLabels((int)edgeInfluenceParameter, 0, 1, 1, gp);
+			core = erdosRenyiWithLabels((int)pParameter, 0, 1, 1, gp);
 //			core = blockChainGenerator(1, (int)edgeProbability, 1, 1, 0, gp);
 			makeMinDegree1(core, gp);
-			g = barabasiAlbert(n, (int)edgeInfluenceParameter, core, gp);
+			g = barabasiAlbert(n, (int)pParameter, core, gp);
 			dumpGraph(gp, core);
 			break;
 		case barabasialbertalpha:
-			core = erdosRenyiWithLabels((int)edgeInfluenceParameter, 0, 1, 1, gp);
+			core = erdosRenyiWithLabels((int)pParameter, 0, 1, 1, gp);
 //			core = blockChainGenerator(1, (int)edgeProbability, 1, 1, 0, gp);
 			makeMinDegree1(core, gp);
-			g = barabasiAlpha(n, (int)edgeInfluenceParameter, 0.95, core, gp);
+			g = barabasiAlpha(n, (int)pParameter, 0.95, core, gp);
 			dumpGraph(gp, core);
 			break;
 		case chains:
