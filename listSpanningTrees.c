@@ -38,14 +38,13 @@ void __visit(struct Vertex* v, int component, int* components) {
 struct ShallowGraph* __selectB(struct Graph* partialTree, struct ShallowGraph* rest, int* components, int n, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* B = getShallowGraph(sgp);
 	struct VertexList* e;
-	int v;
 
-	for (v=0; v<n; ++v) {
+	for (int v=0; v<n; ++v) {
 		components[v] = -1;
 	}
 
 	/* mark connected components */
-	for (v=0; v<n; ++v) {
+	for (int v=0; v<n; ++v) {
 		__visit(partialTree->vertices[v], v, components);
 	}
 
