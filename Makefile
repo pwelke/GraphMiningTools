@@ -4,12 +4,12 @@ CC = gcc
 # CC = clang
 
 # debug compiler flags
-# CPPLINKFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99 -lm
-# CPPFLAGS = -g -Wall -Wextra -pedantic -W -ggdb -std=gnu99
+# CPPLINKFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -ggdb -std=gnu99 -lm
+# CPPFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -ggdb -std=gnu99
 
 # optimized compiler flags
-CPPLINKFLAGS = -g -Wall -Wextra -pedantic -W -std=gnu99 -lm -O2 -D NDEBUG -Wl,-O1
-CPPFLAGS = -g -Wall -Wextra -pedantic -W -std=gnu99 -O2 -D NDEBUG
+CPPLINKFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -std=gnu99 -lm -O2 -D NDEBUG -Wl,-O1
+CPPFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -std=gnu99 -O2 -D NDEBUG
 
 # technicalities
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
