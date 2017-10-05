@@ -39,6 +39,10 @@ Parameters:
             -p: distance between two points that requires an edge.
             -m: standard deviation of the random movement of the points.
             -d: NOTE: d is ignored, all edges are labeled with '1'.
+         
+         clusteredOverlap:  
+         
+         iterativeClusteredOverlap
             
          barabasiAlbert:
          

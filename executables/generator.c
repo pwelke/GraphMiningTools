@@ -30,7 +30,7 @@ static int printHelp() {
 
 
 typedef enum {
-	overlap, erdosrenyi, barabasialbert, chains, iterativeoverlap, barabasialbertalpha
+	overlap, erdosrenyi, barabasialbert, chains, iterativeoverlap, barabasialbertalpha, clusteredOverlap, iterativeClusteredOverlap
 } Generator;
 
 /**
@@ -115,6 +115,14 @@ int main(int argc, char** argv) {
 				generator = iterativeoverlap;
 				break;
 			}
+			if (strcmp(optarg, "clusteredOverlap") == 0) {
+				generator = clusteredOverlap;
+				break;
+			}
+			if (strcmp(optarg, "iterativeClusteredOverlap") == 0) {
+				generator = iterativeClusteredOverlap;
+				break;
+			}
 			if (strcmp(optarg, "erdosRenyi") == 0) {
 				generator = erdosrenyi;
 				break;
@@ -183,11 +191,21 @@ int main(int argc, char** argv) {
 			g = erdosRenyiWithLabels(n, edgeInfluenceParameter, nVertexLabels, nEdgeLabels, gp);
 			break;
 		case overlap:
-			g = randomOverlapGraph(n, edgeInfluenceParameter, gp);
+			g = randomOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, gp);
 			break;
 		case iterativeoverlap:
 			if (i == 0) {
 				g = randomOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, gp);
+			} else {
+				moveOverlapGraph(g, edgeMultiplicity, edgeInfluenceParameter, gp);
+			}
+			break;
+		case clusteredOverlap:
+			g = randomClusteredOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, 0.1, gp);
+			break;
+		case iterativeClusteredOverlap:
+			if (i == 0) {
+				g = randomClusteredOverlapGraphWithLabels(n, edgeInfluenceParameter, nVertexLabels, 0.1, gp);
 			} else {
 				moveOverlapGraph(g, edgeMultiplicity, edgeInfluenceParameter, gp);
 			}
@@ -213,7 +231,7 @@ int main(int argc, char** argv) {
 		g->number = i+1;
 
 		if (outputDot) {
-			if (generator == overlap || generator == iterativeoverlap) {
+			if (generator == overlap || generator == iterativeoverlap || generator == clusteredOverlap || generator == iterativeClusteredOverlap) {
 				printOverlapGraphDotFormat(g, out);
 			} else {
 				printGraphDotFormat(g, out);
@@ -222,12 +240,12 @@ int main(int argc, char** argv) {
 			printGraphAidsFormat(g, out);
 		}
 
-		if (generator != iterativeoverlap) {
+		if (!(generator == iterativeoverlap || generator == iterativeClusteredOverlap)) {
 			dumpGraph(gp, g);
 		}
 	}
 
-	if (generator == iterativeoverlap) {
+	if ((generator == iterativeoverlap) || (generator == iterativeClusteredOverlap)) {
 		dumpGraph(gp, g);
 	}
 
