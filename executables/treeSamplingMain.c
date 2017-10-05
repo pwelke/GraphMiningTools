@@ -349,7 +349,7 @@ int main(int argc, char** argv) {
 						struct Graph* tmp;
 						tmp = treeCanonicalString2Graph(string, gp);
 						int multiplicity = string->lastEdge->endPoint->visited;
-						for (int i=1; i<multiplicity; ++i) {
+						for (int j=1; j<multiplicity; ++j) {
 							struct Graph* copy = cloneGraph(tmp, gp);
 							copy->next = forest;
 							forest = copy;
