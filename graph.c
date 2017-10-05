@@ -380,7 +380,6 @@ struct Graph* cloneInducedGraph(struct Graph* g, struct GraphPool* gp) {
 
 	setVertexNumber(copy, g->n);
 
-
 	/* copy vertices */
 	for (i=0; i<g->n; ++i) {
 		if (g->vertices[i]) {
@@ -392,16 +391,15 @@ struct Graph* cloneInducedGraph(struct Graph* g, struct GraphPool* gp) {
 	/* copy edges */
 	for (i=0; i<g->n; ++i) {
 		if (g->vertices[i]) {
-			struct VertexList* e;
-			for (e=g->vertices[i]->neighborhood; e; e=e->next) {
-				struct VertexList* tmp = getVertexList(gp->listPool);
-				tmp->endPoint = copy->vertices[e->endPoint->number];
-				tmp->startPoint = copy->vertices[e->startPoint->number];
-				tmp->label = e->label;
+			for (struct VertexList* e=g->vertices[i]->neighborhood; e; e=e->next) {
+				struct VertexList* f = getVertexList(gp->listPool);
+				f->endPoint = copy->vertices[e->endPoint->number];
+				f->startPoint = copy->vertices[e->startPoint->number];
+				f->label = e->label;
 
 				/* add the shallow copy to the new graph */
-				tmp->next = copy->vertices[e->startPoint->number]->neighborhood;
-				copy->vertices[e->startPoint->number]->neighborhood = tmp;
+				f->next = copy->vertices[e->startPoint->number]->neighborhood;
+				copy->vertices[e->startPoint->number]->neighborhood = f;
 			}
 		}
 	}
