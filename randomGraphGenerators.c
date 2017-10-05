@@ -339,7 +339,7 @@ void printOverlapGraphDotFormat(struct Graph* g, FILE* out) {
 	for (int v=0; v<g->n; ++v) {
 		for (struct VertexList* e=g->vertices[v]->neighborhood; e!=NULL; e=e->next) {
 			if (e->startPoint->number < e->endPoint->number) {
-				fprintf(out, "%i -- %i [label=%s];\n", e->startPoint->number, e->endPoint->number, g->vertices[v]->label);
+				fprintf(out, "%i -- %i;\n", e->startPoint->number, e->endPoint->number);
 			}
 		}
 	}
@@ -395,18 +395,74 @@ struct Graph* randomOverlapGraphWithLabels(int n, double d, int nVertexLabels, s
 }
 
 
+void moveVertexGaussian(struct Vertex* v, double moveParameter) {
+	generateIntegerGaussianNoise(&(v->d), &(v->lowPoint), moveParameter);
+	// mirror in unit interval
+	// stupid undefined behavior of abs(INT_MIN) requires to do it ourselves:
+	int a = v->d;
+	int b = v->lowPoint;
+	v->d = a == INT_MIN ? RAND_MAX : abs(a);
+	v->lowPoint = b == INT_MIN ? RAND_MAX : abs(b);
+}
+
+
+/**
+ * Create a graph
+ */
+struct Graph* randomClusteredOverlapGraphWithLabels(int n, double d, int nClusters, double mu, struct GraphPool* gp) {
+
+	if (nClusters > n) {
+		fprintf(stderr, "Number of clusters is larger than number of vertices: %i > %i\n", nClusters, n);
+		return NULL;
+	}
+
+	// ensure that nClusters divides number of vertices.
+	int nodesPerCluster = n / nClusters;
+	if (n != nodesPerCluster * nClusters) {
+		fprintf(stderr, "Randomly generated graph will have %i vertices instead of %i vertices\n", nodesPerCluster * nClusters, n);
+		n = nodesPerCluster * nClusters;
+	}
+
+	struct Graph* g = createGraph(n, gp);
+
+	// every vertex is a two-dimensional point
+	int i=0;
+	for (int v=0; v<nClusters; ++v) {
+		g->vertices[i]->d = rand();
+		g->vertices[i]->lowPoint = rand();
+		g->vertices[i]->label = intLabel(v);
+		g->vertices[i]->isStringMaster = 1;
+		for (int w=1; w<nodesPerCluster; ++w) {
+			g->vertices[i+w]->d = g->vertices[i]->d;
+			g->vertices[i+w]->lowPoint = g->vertices[i]->lowPoint;
+			g->vertices[i+w]->label = intLabel(v);
+			g->vertices[i+w]->isStringMaster = 1;
+			moveVertexGaussian(g->vertices[i+w], mu);
+		}
+		i += nodesPerCluster;
+	}
+
+	// add edge iff distance is smaller than d
+	for (int v=0; v<n; ++v) {
+		for (int w=v+1; w<n; ++w) {
+			if (euclideanDistanceWrap(v, w, g) < d) {
+				addEdgeBetweenVertices(v, w, intLabel(1), g, gp);
+				g->vertices[v]->neighborhood->isStringMaster = 1;
+			}
+		}
+	}
+	return g;
+}
+
+
+
+
 // Due to strangeness in A
 void moveOverlapGraph(struct Graph* g, double moveParameter, double d, struct GraphPool* gp) {
 
 	// move vertices
 	for (int v=0; v<g->n; ++v) {
-		generateIntegerGaussianNoise(&(g->vertices[v]->d), &(g->vertices[v]->lowPoint), moveParameter);
-		// mirror in unit interval
-		// stupid undefined behavior of abs(INT_MIN) requires to do it ourselves:
-		int a = g->vertices[v]->d;
-		int b = g->vertices[v]->lowPoint;
-		g->vertices[v]->d = a == INT_MIN ? RAND_MAX : a ^ INT_MIN;
-		g->vertices[v]->lowPoint = b == INT_MIN ? RAND_MAX : b ^ INT_MIN;
+		moveVertexGaussian(g->vertices[v], moveParameter);
 	}
 
 	// dump edges
@@ -421,6 +477,7 @@ void moveOverlapGraph(struct Graph* g, double moveParameter, double d, struct Gr
 		for (int w=v+1; w<g->n; ++w) {
 			if (euclideanDistanceWrap(v, w, g) < d) {
 				addEdgeBetweenVertices(v, w, intLabel(1), g, gp);
+				g->vertices[v]->neighborhood->isStringMaster = 1;
 			}
 		}
 	}

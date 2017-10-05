@@ -30,6 +30,7 @@ struct Graph* blockChainGenerator(int nBlocks, int blockSize, int nVertexLabels,
 
 struct Graph* randomOverlapGraph(int n, double d, struct GraphPool* gp);
 struct Graph* randomOverlapGraphWithLabels(int n, double d, int nVertexLabels, struct GraphPool* gp);
+struct Graph* randomClusteredOverlapGraphWithLabels(int n, double d, int nClusters, double mu, struct GraphPool* gp);
 void moveOverlapGraph(struct Graph* g, double moveParameter, double d, struct GraphPool* gp);
 
 
