@@ -871,3 +871,129 @@ char isLocalEasySubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 
 	return result;
 }
+
+
+/**
+ * Seriously, this is ugly. (hence very static and hidden from view)
+ *
+ * Create a list of shallow graphs that are the merge of the combinations of elements of the
+ * shallowgraph lists in lists.
+ * We explicitly construct these merged shallow graphs all at once, hence the space and the runtime
+ * required to run this method are both exponential. In particular: $\prod_{i=1}^{nLists}\abs{lists[i]}$
+ * elements are created. Each has the size of the union of its elements. Nice. Not.
+ */
+struct ShallowGraph* combinations(struct ShallowGraph** lists, int currentPos, int nLists, struct ShallowGraphPool* sgp) {
+
+	struct ShallowGraph* resultList = NULL;
+
+	if (currentPos == nLists-1) {
+		for (struct ShallowGraph g=lists[currentPos]; g!=NULL; g=g->next) {
+			struct ShallowGraph* tmp = cloneShallowGraph(g, sgp);
+			tmp->next = resultList;
+			resultList = tmp;
+		}
+	} else {
+		struct ShallowGraph* conquered = combinations(lists, ++currentPos, nLists, sgp);
+		for (struct ShallowGraph g=lists[currentPos]; g!=NULL; g=g->next) {
+			for (struct ShallowGraph* h=conquered; h!=NULL; h=h->next) {
+				struct ShallowGraph* tmp = cloneShallowGraph(g, sgp);
+				tmp->next = cloneShallowGraph(h, sgp);
+				tmp = mergeShallowGraphs(tmp, sgp);
+				tmp->next = resultList;
+				resultList = tmp;
+			}
+		}
+	}
+
+	return resultList;
+}
+
+
+/**
+ *
+ */
+int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySampling(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	struct BlockTree blockTree = getBlockTreeT(g, sgp);
+	int numberOfNonisomorphicSpanningForestComponents = 0;
+
+	struct ShallowGraph** localSpanningTrees = malloc(blockTree.nRoots * sizeof(struct Graph*));
+
+	for (int v=0; v<blockTree.nRoots; ++v) {
+		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
+		struct Graph* mergedGraph = blockConverter(mergedEdges, gp);
+
+		struct ShallowGraph* shallowSpanningtrees = NULL;
+		if (mergedGraph->m != mergedGraph->n-1) {
+			// sample spanning trees according to parameter
+			for (int i=0; i<k; ++i) {
+				struct ShallowGraph* spt = randomSpanningTreeAsShallowGraph(mergedGraph, sgp);
+				spt->next = shallowSpanningtrees;
+				shallowSpanningtrees = spt;
+			}
+
+			/* Duplicate spanning trees are filtered here.
+			 * In contrast to normal spanning tree sampling, here we can only filter identical trees (seen as edge sets)
+			 * and not trees up to isomorphism, as two isomorphic but different local spanning trees might result in different
+			 * (and hence possibly nonisomorphic) global spanning trees, when combined. */
+			shallowSpanningtrees = filterDuplicateSpanningTrees(shallowSpanningtrees, sgp);
+
+		} else {
+			// if the mergedGraph is a tree, we use it directly
+			shallowSpanningtrees = getGraphEdges(mergedGraph, sgp);
+		}
+
+		// maybe this is necessary
+		for (struct ShallowGraph* sp=shallowSpanningtrees; sp!=NULL; sp=sp->next) {
+			rebaseShallowGraph(sp, g);
+		}
+
+		localSpanningTrees[v] = shallowSpanningtrees;
+
+		// garbage collection TODO maybe we cannot do this here
+		dumpShallowGraph(sgp, mergedEdges);
+		dumpGraph(gp, mergedGraph);
+
+	}
+
+	struct Vertex* searchTree = getVertex(gp->vertexPool);
+
+	for
+
+
+	//garbage collection
+	free(blockTree.vRootedBlocks);
+
+	return numberOfNonisomorphicSpanningForestComponents;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
