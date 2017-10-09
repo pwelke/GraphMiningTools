@@ -29,6 +29,8 @@ struct ShallowGraph* xlistSpanningTrees(struct Graph* g, int k, long int thresho
 struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler)(struct Graph*, int, long int, struct GraphPool*, struct ShallowGraphPool*), 
 	struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
+int getNumberOfNonisomorphicSpanningForestComponentsForKSamples(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+
 void shuffle(struct VertexList** array, size_t n);
 
 #endif

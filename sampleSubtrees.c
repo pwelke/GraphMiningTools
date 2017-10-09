@@ -8,6 +8,8 @@
 #include "connectedComponents.h"
 #include "wilsonsAlgorithm.h"
 #include "kruskalsAlgorithm.h"
+#include "searchTree.h"
+#include "cs_Tree.h"
 
 #include "sampleSubtrees.h"
 
@@ -372,4 +374,39 @@ struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler
 //	TODO: BUG the following line would be necessary to avoid memory leaks, but the results shallow graphs point to the graphs in connectedComponents
 //	dumpGraphList(gp, connectedComponents);
 	return results;
+}
+
+
+/**
+ * Sample k spanning trees per connected component of g and return the number of
+ * isomorphism classes of these trees.
+ * That is, in the simplest case that g is connected: Sample k spanning trees and
+ * see how many 'different' ones you got.
+ */
+int getNumberOfNonisomorphicSpanningForestComponentsForKSamples(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int numberOfNonisomorphicSpanningTreeComponents = 0;
+
+	struct Vertex* searchTree = getVertex(gp->vertexPool);
+
+	// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
+	struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, gp, sgp);
+	for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
+		if (tree->m != 0) {
+			struct Graph* tmp = shallowGraphToGraph(tree, gp);
+			struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
+			addToSearchTree(searchTree, cString, gp, sgp);
+			/* garbage collection */
+			dumpGraph(gp, tmp);
+		}
+	}
+
+	numberOfNonisomorphicSpanningTreeComponents = searchTree->d;
+
+	// avoid memory leaks, access to freed memory, and free unused stuff
+	dumpShallowGraphCycle(sgp, sample);
+	dumpSearchTree(gp, searchTree);
+	dumpGraph(gp, g);
+
+	return numberOfNonisomorphicSpanningTreeComponents;
+
 }
