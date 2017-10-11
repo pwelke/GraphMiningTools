@@ -237,6 +237,8 @@ int markAndStoreConnectedComponent(struct Vertex *v, struct Graph* copy, int com
 
 Attention: Bad Runtime: O(n * c) where c is number of components!
 Could be implemented in O(n).
+
+v->lowPoint stores the original number of the vertex in g.
 */
 struct Graph* listConnectedComponents(struct Graph* g, struct GraphPool* gp) {
 	struct Graph* components = NULL;
