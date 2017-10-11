@@ -163,8 +163,7 @@ int getNonisomorphicSpanningTreeSamplesOfDB(struct Graph*** db, int k, struct Gr
 		for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
 			if (tree->m != 0) {
 				struct Graph* tmp = shallowGraphToGraph(tree, gp);
-				struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
-				addToSearchTree(searchTree, cString, gp, sgp);
+				addToSearchTree(searchTree, canonicalStringOfTree(tmp, sgp), gp, sgp);
 				/* garbage collection */
 				dumpGraph(gp, tmp);
 			}
