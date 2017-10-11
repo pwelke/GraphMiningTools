@@ -315,7 +315,7 @@ struct ShallowGraph* listBridgeForest(struct Graph* g, struct GraphPool* gp, str
 	struct ShallowGraph* tmp;
 	// the resulting trees need to reference the original graph g
 	for (tmp=bridgeTrees; tmp!=NULL; tmp=tmp->next) {
-		rebaseShallowGraph(tmp, g);
+		rebaseShallowGraphs(tmp, g);
 	}
 	/* garbage collection */
 	dumpGraphList(gp, forest);
@@ -350,6 +350,17 @@ struct ShallowGraph* xlistOrSampleSpanningTrees(struct Graph* g, int k, long int
 	return listOrSampleSpanningTrees(g, k, threshold, gp, sgp);
 }
 
+
+/**
+ * Run a sampling algorithm (or any other algorithm with the same interface) for each connected component of
+ * the graph and return a list of shallow graphs.
+ *
+ * Due to implementation, the sampler can assume that it is called on a connected graph, but must not
+ * alter the ->lowPoint variables of the vertices.
+ *
+ * NOTE: returning rebased shallow graphs is new as of 2017-10-08 and might interfere with old code
+ * (possibly in treeSamplingMain).
+ */
 struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler)(struct Graph*, int, long int, struct GraphPool*, struct ShallowGraphPool*), 
 	struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
@@ -371,8 +382,10 @@ struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler
 		}
 	}
 
-//	TODO: BUG the following line would be necessary to avoid memory leaks, but the results shallow graphs point to the graphs in connectedComponents
-//	dumpGraphList(gp, connectedComponents);
+	// due to this line, the returned shallow graphs are pointing to g, but this
+	// requires the sampler function to not alter the ->lowPoints of the vertices
+	rebaseShallowGraphsOnLowPoints(results, g);
+	dumpGraphList(gp, connectedComponents);
 	return results;
 }
 
@@ -393,8 +406,7 @@ int getNumberOfNonisomorphicSpanningForestComponentsForKSamples(struct Graph* g,
 	for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
 		if (tree->m != 0) {
 			struct Graph* tmp = shallowGraphToGraph(tree, gp);
-			struct ShallowGraph* cString = canonicalStringOfTree(tmp, sgp);
-			addToSearchTree(searchTree, cString, gp, sgp);
+			addToSearchTree(searchTree, canonicalStringOfTree(tmp, sgp), gp, sgp);
 			/* garbage collection */
 			dumpGraph(gp, tmp);
 		}
@@ -405,7 +417,6 @@ int getNumberOfNonisomorphicSpanningForestComponentsForKSamples(struct Graph* g,
 	// avoid memory leaks, access to freed memory, and free unused stuff
 	dumpShallowGraphCycle(sgp, sample);
 	dumpSearchTree(gp, searchTree);
-	dumpGraph(gp, g);
 
 	return numberOfNonisomorphicSpanningTreeComponents;
 
