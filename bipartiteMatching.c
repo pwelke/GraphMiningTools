@@ -202,7 +202,7 @@ void pushRelabelMaxFlow(struct Graph* g, struct Vertex* s, struct Vertex* t, str
 	}
 
 	// garbage collection
-	for (int i=0; i<2 * g->n - 1; ++i) {
+	for (i=0; i<2 * g->n - 1; ++i) {
 		dumpShallowGraph(sgp, activeVertices[i]);
 	}
 	free(activeVertices);
@@ -611,7 +611,7 @@ struct ShallowGraph* bipartiteMatching(struct Graph* h, struct GraphPool* gp, st
 
 	bipartiteMatchingFastAndDirty(g, gp);
 	matching = getMatching(g, sgp);
-	rebaseShallowGraph(matching, h); 
+	rebaseShallowGraphs(matching, h); 
 
 	/* garbage collection */
 	dumpGraph(gp, g);
