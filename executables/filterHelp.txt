@@ -38,8 +38,8 @@ options: options (except -h) are always followed by a value.
                      first 10 graphs)
         randomSample returns a random number between 0 and 1000 for each
                      graph. Can be used for sampling a subset of the 
-                     graphs. Random seed needs to be set via -a parameter
-                     (default 100)
+                     graphs. Random seed needs to be set via -r parameter
+                     (default: current system time)
              
         *labels* (labels are integer in our db format)
         label    the label of a graph, specified in the graph db
@@ -65,6 +65,12 @@ options: options (except -h) are always followed by a value.
                               listing all spanning trees and happily taking
                               forever if there are too many of them.
                               Works for connected graphs.
+        nonisomorphicSampledSpanningTrees: 
+        
+        nonisomorphicLocallySampledSpanningTrees:
+        
+        nonisomorphicLocallySampledSpanningTreesFiltered:
+        
         numberOfSimpleCycles  total number of simple cycles
                               in the graph
         numberOfNonIsoCycles  number of nonisomorphic cycles
@@ -97,7 +103,9 @@ options: options (except -h) are always followed by a value.
      -a 'value': an Integer (default 100). This value is used by some of the 
                  filters that need an additional parameter to work (e.g. 
                  spanningTreeListing)  
-
+                 
+     -r 'value': an Integer. Define the initial random seed. If the parameter
+                 is not set, use the current system time as initial random seed.
 
      -o 'style': output style of the graphs fulfilling the filter criterion
         graph, g        output format identical to input format (default)

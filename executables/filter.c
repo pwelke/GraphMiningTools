@@ -4,6 +4,7 @@
 #include <string.h>
 #include <limits.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "../graph.h"
 #include "../loading.h"
@@ -16,6 +17,8 @@
 #include "../hp_cactus.h"
 #include "../graphPrinting.h"
 #include "../localEasiness.h"
+#include "../sampleSubtrees.h"
+#include "../localEasySubtreeIsomorphism.h"
 #include "filter.h"
 
 
@@ -64,10 +67,11 @@ int main(int argc, char** argv) {
 	int value = -1;
 	/* can be set via -a. Used e.g. by spanningTreeListing filter, and randomSample*/
 	int additionalParameter = 100;
+	int randomSeed = time(NULL);
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hf:c:v:o:a:";
+	const char* validArgs = "hf:c:v:o:a:r:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -126,6 +130,18 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "nonisomorphicSpanningTrees") == 0) {
 				filter = nonisomorphicSpanningTrees;
+				break;
+			}
+			if (strcmp(optarg, "nonisomorphicSampledSpanningTrees") == 0) {
+				filter = nonisomorphicSampledSpanningTrees;
+				break;
+			}
+			if (strcmp(optarg, "nonisomorphicLocallySampledSpanningTrees") == 0) {
+				filter = nonisomorphicLocallySampledSpanningTrees;
+				break;
+			}
+			if (strcmp(optarg, "nonisomorphicLocallySampledSpanningTreesFiltered") == 0) {
+				filter = nonisomorphicLocallySampledSpanningTreesFiltered;
 				break;
 			}
 			if (strcmp(optarg, "maxBlocksPerComponent") == 0) {
@@ -239,6 +255,12 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 			break;
+		case 'r':
+			if (sscanf(optarg, "%i", &randomSeed) != 1) {
+				fprintf(stderr, "value must be integer, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			break;
 		case 'o':
 			if ((strcmp(optarg, "graph") == 0) || (strcmp(optarg, "g") == 0)) {
 				oOption = graph;
@@ -270,7 +292,7 @@ int main(int argc, char** argv) {
 	}
 
 	/* set initial random seed */
-	srand(additionalParameter);
+	srand(randomSeed);
 
 	/* init object pools */
 	lp = createListPool(10000);
@@ -380,6 +402,15 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case nonisomorphicSpanningTrees:
 		measure = countNonisomorphicSpanningTrees(g, gp, sgp);
+		break;
+	case nonisomorphicSampledSpanningTrees:
+		measure = getNumberOfNonisomorphicSpanningForestComponentsForKSamples(g, additionalParameter, gp, sgp);
+		break;
+	case nonisomorphicLocallySampledSpanningTrees:
+		measure = getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySampling(g, additionalParameter, gp, sgp);
+		break;
+	case nonisomorphicLocallySampledSpanningTreesFiltered:
+		measure = getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySamplingWithFiltering(g, additionalParameter, gp, sgp);
 		break;
 	case numberOfBlocks:
 		measure = getNumberOfBlocks(g, sgp);			
