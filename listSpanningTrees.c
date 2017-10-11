@@ -209,7 +209,7 @@ struct ShallowGraph* listSpanningTrees(struct Graph* original, struct ShallowGra
 	result->prev = NULL;
 
 	/* edges in result point to vertices in partialTree this has to be changed */
-	rebaseShallowGraph(result, original);
+	rebaseShallowGraphs(result, original);
 
 	/* garbage collection */
 	free(components);
@@ -320,7 +320,7 @@ struct ShallowGraph* listKSpanningTrees(struct Graph* original, int* k, struct S
 	// result->prev = NULL;
 
 	/* edges in result point to vertices in partialTree this has to be changed */
-	rebaseShallowGraph(result, original);
+	rebaseShallowGraphs(result, original);
 
 	/* garbage collection */
 	free(components);
