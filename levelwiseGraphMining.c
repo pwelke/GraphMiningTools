@@ -919,7 +919,7 @@ void getFrequentVerticesAndEdges(struct Graph** db, int nGraphs, size_t threshol
  * the ids of the frequent vertices in the search tree might be altered to ensure a sorted list of support sets.
  * To avoid leaks, the initial frequentVertices search tree must not be dumped until the end of all times.
  */
-struct SubtreeIsoDataStoreList* initLevelwiseMiningForForestDB(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStoreList* createSingletonPatternSupportSetsForForestDB(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	// init levelwise search data structures for patterns with one vertex
 
@@ -955,7 +955,7 @@ struct SubtreeIsoDataStoreList* initLevelwiseMiningForForestDB(struct Graph** db
  * the ids of the frequent vertices in the search tree might be altered to ensure a sorted list of support sets.
  * To avoid leaks, the initial frequentVertices search tree must not be dumped until the end of all times.
  */
-struct SubtreeIsoDataStoreList* initLevelwiseMiningForLocalEasyDB(struct SpanningtreeTree* sptTrees, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStoreList* createSingletonPatternSupportSetsForLocalEasyDB(struct SpanningtreeTree* sptTrees, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	// init levelwise search data structures for patterns with one vertex
 
@@ -1084,7 +1084,7 @@ size_t initIterativeBFSForForestDB(// input
 	dumpSearchTree(gp, frequentEdges);
 
 	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = createSingletonPatternSupportSetsForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
 	printStringsInSearchTree(frequentVertices, patternStream, sgp);
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
@@ -1140,7 +1140,7 @@ size_t initIterativeBFSForAllGlobalTreeEnumerationExactMining(// input
 	dumpSearchTree(gp, frequentEdges);
 
 	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = createSingletonPatternSupportSetsForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
 	printStringsInSearchTree(frequentVertices, patternStream, sgp);
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
@@ -1192,7 +1192,7 @@ size_t initIterativeBFSForSampledProbabilisticTree(// input
 	dumpSearchTree(gp, frequentEdges);
 
 	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = createSingletonPatternSupportSetsForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
 	printStringsInSearchTree(frequentVertices, patternStream, sgp);
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
@@ -1246,7 +1246,7 @@ size_t initBFSBase(// input
 	dumpSearchTree(gp, frequentEdges);
 
 	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = createSingletonPatternSupportSetsForForestDB(db, postorders, nGraphs, frequentVertices, gp, sgp);
 	printStringsInSearchTree(frequentVertices, patternStream, sgp);
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
@@ -1312,7 +1312,7 @@ size_t initIterativeBFSForExactLocalEasy(// input
 	free(db);
 
 	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForLocalEasyDB(sptTrees, nGraphs, frequentVertices, gp, sgp);
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = createSingletonPatternSupportSetsForLocalEasyDB(sptTrees, nGraphs, frequentVertices, gp, sgp);
 	printStringsInSearchTree(frequentVertices, patternStream, sgp);
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
@@ -1373,7 +1373,7 @@ size_t initIterativeBFSForSampledLocalEasy(// input
 	free(db);
 
 	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForLocalEasyDB(sptTrees, nGraphs, frequentVertices, gp, sgp);
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForLocalEasyDBExperimental(sptTrees, nGraphs, frequentVertices, gp, sgp);
 	printStringsInSearchTree(frequentVertices, patternStream, sgp);
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
