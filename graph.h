@@ -112,7 +112,8 @@ char isDegreeTwoVertex(struct Vertex* v);
 
 /******* ShallowGraph ******************************************/
 struct ShallowGraph* cloneShallowGraph(struct ShallowGraph* g, struct ShallowGraphPool* sgp);
-void rebaseShallowGraph(struct ShallowGraph* list, struct Graph* newBase);
+void rebaseShallowGraphs(struct ShallowGraph* list, struct Graph* newBase);
+void rebaseShallowGraphsOnLowPoints(struct ShallowGraph* list, struct Graph* newBase);
 
 void pushEdge(struct ShallowGraph *g, struct VertexList *e);
 void appendEdge(struct ShallowGraph *g, struct VertexList *e);

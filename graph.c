@@ -366,7 +366,7 @@ struct Graph* cloneGraph(struct Graph* g, struct GraphPool* gp) {
  * Deleting a vertex or an edge in g, however, results in a memory leak, as vertices
  * and edges of the copy reference the label strings of the original structures.
  *
- *
+ * v->lowPoint stores the original vertex number of v in g.
  */
 struct Graph* cloneInducedGraph(struct Graph* g, struct GraphPool* gp) {
 	struct Graph* copy = getGraph(gp);
@@ -416,6 +416,7 @@ struct Graph* cloneInducedGraph(struct Graph* g, struct GraphPool* gp) {
 	for (i=0; i<g->n; ++i) {
 		if (tmp[i]) {
 			copy->vertices[j] = tmp[i];
+			copy->vertices[j]->lowPoint = copy->vertices[j]->number;
 			copy->vertices[j]->number = j;
 			++j;
 		}
@@ -713,7 +714,7 @@ newBase with the same number. i.e.
 e->startPoint = newBase->vertices[e->startPoint->number];
 Expects list to be a list, not a cycle.
 */
-void rebaseShallowGraph(struct ShallowGraph* list, struct Graph* newBase) {
+void rebaseShallowGraphs(struct ShallowGraph* list, struct Graph* newBase) {
 	struct ShallowGraph* idx;
 	struct VertexList* e;
 
@@ -721,6 +722,26 @@ void rebaseShallowGraph(struct ShallowGraph* list, struct Graph* newBase) {
 		for (e=idx->edges; e!=NULL; e=e->next) {
 			e->startPoint = newBase->vertices[e->startPoint->number];
 			e->endPoint = newBase->vertices[e->endPoint->number];
+		}
+	}
+}
+
+
+/**
+Given a list of ShallowGraphs that have edges where the start- and endPoints
+are pointers to some graph, reset these pointers to point to the vertices of
+newBase with the numbers given by ->lowPoint, i.e.
+e->startPoint = newBase->vertices[e->startPoint->lowPoint];
+Expects list to be a list, not a cycle.
+*/
+void rebaseShallowGraphsOnLowPoints(struct ShallowGraph* list, struct Graph* newBase) {
+	struct ShallowGraph* idx;
+	struct VertexList* e;
+
+	for (idx=list; idx!=NULL; idx=idx->next) {
+		for (e=idx->edges; e!=NULL; e=e->next) {
+			e->startPoint = newBase->vertices[e->startPoint->lowPoint];
+			e->endPoint = newBase->vertices[e->endPoint->lowPoint];
 		}
 	}
 }
