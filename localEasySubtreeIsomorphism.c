@@ -16,6 +16,7 @@
 #include "graphPrinting.h"
 #include "cs_Tree.h"
 #include "searchTree.h"
+#include "sampleSubtrees.h"
 
 
 /* return the head of the list or NULL if list is empty.
@@ -467,7 +468,7 @@ struct ShallowGraph* filterDuplicateSpanningTrees(struct ShallowGraph* sptrees, 
  * blockTree is consumed
  * spanningTreesPerBlock must be >= 1
  */
-struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, char removeDuplicates, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct SpanningtreeTree sptTree = {0};
 	sptTree.g = blockTree.g;
 	sptTree.nRoots = blockTree.nRoots;
@@ -492,11 +493,9 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 			 * In contrast to normal spanning tree sampling, here we can only filter identical trees (seen as edge sets)
 			 * and not trees up to isomorphism, as two isomorphic but different local spanning trees might result in different
 			 * (and hence possibly nonisomorphic) global spanning trees, when combined. */
-//			int count = 0; for (struct ShallowGraph* g=shallowSpanningtrees; g!=NULL; g=g->next) ++count;
-//			printf("Current local Spanning Trees: %i, later ", count);
-			shallowSpanningtrees = filterDuplicateSpanningTrees(shallowSpanningtrees, sgp);
-//			count = 0; for (struct ShallowGraph* g=shallowSpanningtrees; g!=NULL; g=g->next) ++count;
-//			printf("%i\n", count);
+			if (removeDuplicates) {
+				shallowSpanningtrees = filterDuplicateSpanningTrees(shallowSpanningtrees, sgp);
+			}
 		} else {
 			// if the mergedGraph is a tree, we use it directly
 			shallowSpanningtrees = getGraphEdges(mergedGraph, sgp);
@@ -845,7 +844,7 @@ char subtreeCheckForSpanningtreeTree(struct SpanningtreeTree* sptTree, struct Gr
  */
 char isProbabilisticLocalSampleSubtree(struct Graph* g, struct Graph* h, int nLocalTrees, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
-	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, 1, gp, sgp);
 
 	char result = subtreeCheckForSpanningtreeTree(&sptTree, h, gp);
 
@@ -971,6 +970,14 @@ static struct Graph* blockConverterKeepIDs(struct ShallowGraph* edgeList, struct
 }
 
 
+static struct ShallowGraph* xcanonicalStringOfTree(struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)threshold;
+	(void)k;
+	(void)gp;
+	return canonicalStringOfTree(g, sgp);
+}
+
+
 /**
  *
  */
@@ -1020,9 +1027,9 @@ int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySampling(struct Grap
 
 	struct ShallowGraph* combinations = spanningTreeCombinations(localSpanningTrees, 0, blockTree.nRoots, sgp);
 	for (struct ShallowGraph* combination=popShallowGraph(&combinations); combination!=NULL; combination=popShallowGraph(&combinations)) {
-		struct Graph* spTree = shallowGraphToGraph(combination, gp);
-		addToSearchTree(searchTree, canonicalStringOfTree(spTree, sgp), gp, sgp);
-		dumpGraph(gp, spTree);
+		struct Graph* spForest = shallowGraphToGraph(combination, gp);
+		addToSearchTree(searchTree, runForEachConnectedComponent(&xcanonicalStringOfTree, spForest, 0, 0, 0, gp, sgp), gp, sgp);
+		dumpGraph(gp, spForest);
 		dumpShallowGraph(sgp, combination);
 	}
 
@@ -1039,6 +1046,149 @@ int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySampling(struct Grap
 	free(blockTree.vRootedBlocks);
 
 	return numberOfNonisomorphicSpanningForestComponents;
+}
+
+
+/**
+ *
+ */
+int getNumberOfSpanningTreesObtainedByLocalEasySampling(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	struct BlockTree blockTree = getBlockTreeT(g, sgp);
+	int numberOfConsideredSpanningTrees = 1;
+
+	struct ShallowGraph** localSpanningTrees = malloc(blockTree.nRoots * sizeof(struct Graph*));
+
+	for (int v=0; v<blockTree.nRoots; ++v) {
+		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
+		struct Graph* mergedGraph = blockConverterKeepIDs(mergedEdges, gp);
+
+		struct ShallowGraph* shallowSpanningtrees = NULL;
+		if (mergedGraph->m != mergedGraph->n-1) {
+			// sample spanning trees according to parameter
+			for (int i=0; i<k; ++i) {
+				struct ShallowGraph* spt = randomSpanningTreeAsShallowGraph(mergedGraph, sgp);
+				spt->next = shallowSpanningtrees;
+				shallowSpanningtrees = spt;
+			}
+
+			/* Duplicate spanning trees are NOT filtered here.
+			 * In contrast to normal spanning tree sampling, here we can only filter identical trees (seen as edge sets)
+			 * and not trees up to isomorphism, as two isomorphic but different local spanning trees might result in different
+			 * (and hence possibly nonisomorphic) global spanning trees, when combined. */
+//			shallowSpanningtrees = filterDuplicateSpanningTrees(shallowSpanningtrees, sgp);
+
+		} else {
+			// if the mergedGraph is a tree, we use it directly
+			shallowSpanningtrees = getGraphEdges(mergedGraph, sgp);
+		}
+
+		// make the shallowgraphs be subgraphs of g, not of mergedGraph
+		rebaseShallowGraphsOnLowPoints(shallowSpanningtrees, g);
+
+		localSpanningTrees[v] = shallowSpanningtrees;
+
+		// garbage collection
+		dumpShallowGraph(sgp, mergedEdges);
+		dumpGraph(gp, mergedGraph);
+
+	}
+
+	for (int i=0; i<blockTree.nRoots; ++i) {
+		int j=0;
+		for (struct ShallowGraph* localTree=localSpanningTrees[i]; localTree!=NULL; localTree=localTree->next) {
+			++j;
+		}
+
+		int tmp = numberOfConsideredSpanningTrees * j;
+		if (j != 0 && tmp / j != numberOfConsideredSpanningTrees) {
+			numberOfConsideredSpanningTrees = RAND_MAX;
+			break;
+		} else {
+			numberOfConsideredSpanningTrees = tmp;
+		}
+	}
+
+	//garbage collection
+	for (int v=0; v<blockTree.nRoots; ++v) {
+		dumpShallowGraphCycle(sgp, localSpanningTrees[v]);
+	}
+	free(localSpanningTrees);
+	free(blockTree.parents);
+	free(blockTree.roots);
+	free(blockTree.vRootedBlocks);
+
+	return numberOfConsideredSpanningTrees;
+}
+
+
+int getNumberOfSpanningTreesObtainedByLocalEasySamplingWithFiltering(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	struct BlockTree blockTree = getBlockTreeT(g, sgp);
+	int numberOfConsideredSpanningTrees = 1;
+
+	struct ShallowGraph** localSpanningTrees = malloc(blockTree.nRoots * sizeof(struct Graph*));
+
+	for (int v=0; v<blockTree.nRoots; ++v) {
+		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
+		struct Graph* mergedGraph = blockConverterKeepIDs(mergedEdges, gp);
+
+		struct ShallowGraph* shallowSpanningtrees = NULL;
+		if (mergedGraph->m != mergedGraph->n-1) {
+			// sample spanning trees according to parameter
+			for (int i=0; i<k; ++i) {
+				struct ShallowGraph* spt = randomSpanningTreeAsShallowGraph(mergedGraph, sgp);
+				spt->next = shallowSpanningtrees;
+				shallowSpanningtrees = spt;
+			}
+
+			/* Duplicate spanning trees are filtered here.
+			 * In contrast to normal spanning tree sampling, here we can only filter identical trees (seen as edge sets)
+			 * and not trees up to isomorphism, as two isomorphic but different local spanning trees might result in different
+			 * (and hence possibly nonisomorphic) global spanning trees, when combined. */
+			shallowSpanningtrees = filterDuplicateSpanningTrees(shallowSpanningtrees, sgp);
+
+		} else {
+			// if the mergedGraph is a tree, we use it directly
+			shallowSpanningtrees = getGraphEdges(mergedGraph, sgp);
+		}
+
+		// make the shallowgraphs be subgraphs of g, not of mergedGraph
+		rebaseShallowGraphsOnLowPoints(shallowSpanningtrees, g);
+
+		localSpanningTrees[v] = shallowSpanningtrees;
+
+		// garbage collection
+		dumpShallowGraph(sgp, mergedEdges);
+		dumpGraph(gp, mergedGraph);
+
+	}
+
+	for (int i=0; i<blockTree.nRoots; ++i) {
+		int j=0;
+		for (struct ShallowGraph* localTree=localSpanningTrees[i]; localTree!=NULL; localTree=localTree->next) {
+			++j;
+		}
+
+		int tmp = numberOfConsideredSpanningTrees * j;
+		if (j != 0 && tmp / j != numberOfConsideredSpanningTrees) {
+			numberOfConsideredSpanningTrees = RAND_MAX;
+			break;
+		} else {
+			numberOfConsideredSpanningTrees = tmp;
+		}
+	}
+
+	//garbage collection
+	for (int v=0; v<blockTree.nRoots; ++v) {
+		dumpShallowGraphCycle(sgp, localSpanningTrees[v]);
+	}
+	free(localSpanningTrees);
+	free(blockTree.parents);
+	free(blockTree.roots);
+	free(blockTree.vRootedBlocks);
+
+	return numberOfConsideredSpanningTrees;
 }
 
 
@@ -1091,9 +1241,9 @@ int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySamplingWithFilterin
 
 	struct ShallowGraph* combinations = spanningTreeCombinations(localSpanningTrees, 0, blockTree.nRoots, sgp);
 	for (struct ShallowGraph* combination=popShallowGraph(&combinations); combination!=NULL; combination=popShallowGraph(&combinations)) {
-		struct Graph* spTree = shallowGraphToGraph(combination, gp);
-		addToSearchTree(searchTree, canonicalStringOfTree(spTree, sgp), gp, sgp);
-		dumpGraph(gp, spTree);
+		struct Graph* spForest = shallowGraphToGraph(combination, gp);
+		addToSearchTree(searchTree, runForEachConnectedComponent(&xcanonicalStringOfTree, spForest, 0, 0, 0, gp, sgp), gp, sgp);
+		dumpGraph(gp, spForest);
 		dumpShallowGraph(sgp, combination);
 	}
 

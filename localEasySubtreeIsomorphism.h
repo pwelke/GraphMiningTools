@@ -37,7 +37,7 @@ struct SpanningtreeTree{
 struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp);
 struct Graph* blockConverter(struct ShallowGraph* edgeList, struct GraphPool* gp);
 struct Graph* spanningTreeConverter(struct ShallowGraph* localTrees, struct Graph* component, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, char removeDuplicates, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp);
 
@@ -50,5 +50,6 @@ char isLocalEasySubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp, 
 
 int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySampling(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySamplingWithFiltering(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
-
+int getNumberOfSpanningTreesObtainedByLocalEasySamplingWithFiltering(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+int getNumberOfSpanningTreesObtainedByLocalEasySampling(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 #endif
