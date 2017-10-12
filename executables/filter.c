@@ -144,6 +144,14 @@ int main(int argc, char** argv) {
 				filter = nonisomorphicLocallySampledSpanningTreesFiltered;
 				break;
 			}
+			if (strcmp(optarg, "locallySampledSpanningTrees") == 0) {
+				filter = locallySampledSpanningTrees;
+				break;
+			}
+			if (strcmp(optarg, "locallySampledSpanningTreesFiltered") == 0) {
+				filter = locallySampledSpanningTreesFiltered;
+				break;
+			}
 			if (strcmp(optarg, "maxBlocksPerComponent") == 0) {
 				filter = maxBlocksPerComponent;
 				break;
@@ -411,6 +419,12 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case nonisomorphicLocallySampledSpanningTreesFiltered:
 		measure = getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySamplingWithFiltering(g, additionalParameter, gp, sgp);
+		break;
+	case locallySampledSpanningTrees:
+		measure = getNumberOfSpanningTreesObtainedByLocalEasySampling(g, additionalParameter, gp, sgp);
+		break;
+	case locallySampledSpanningTreesFiltered:
+		measure = getNumberOfSpanningTreesObtainedByLocalEasySamplingWithFiltering(g, additionalParameter, gp, sgp);
 		break;
 	case numberOfBlocks:
 		measure = getNumberOfBlocks(g, sgp);			

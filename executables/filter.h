@@ -46,6 +46,8 @@ typedef enum {
 	nonisomorphicSampledSpanningTrees,
 	nonisomorphicLocallySampledSpanningTrees,
 	nonisomorphicLocallySampledSpanningTreesFiltered,
+	locallySampledSpanningTrees,
+	locallySampledSpanningTreesFiltered,
 	maxBlocksPerComponent,
 	numberOfBlocks,
 	numberOfBridges,
