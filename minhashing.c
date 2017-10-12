@@ -683,7 +683,7 @@ struct IntSet* bfsEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p
 		e->endPoint->d = 1;
 	}
 
-	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), nLocalTrees, gp, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), nLocalTrees, 1, gp, sgp);
 
 	for (struct Vertex* v=popFromVertexQueue(border, sgp); v!=NULL; v=popFromVertexQueue(border, sgp)) {
 		v->d = 0;
@@ -863,7 +863,7 @@ int* fullEmbeddingProjectionApproximationLocalEasy(struct Graph* g, struct Evalu
 	cleanEvaluationPlan(p);
 
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
-	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, 1, gp, sgp);
 
 	for (int i=0; i<projectionSize; ++i) {
 		// if we don't know the value we need to compute it.
@@ -961,7 +961,7 @@ int* randomProjectionEmbeddingLocalEasy(struct Graph* g, struct EvaluationPlan p
 	cleanEvaluationPlan(p);
 
 	struct BlockTree blockTree = getBlockTreeT(g, sgp);
-	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, gp, sgp);
+	struct SpanningtreeTree sptTree = getSampledSpanningtreeTree(blockTree, nLocalTrees, 1, gp, sgp);
 
 	// alloc output array
 	int* approximateEmbedding = malloc((p.poset->n - 1) * sizeof(int));

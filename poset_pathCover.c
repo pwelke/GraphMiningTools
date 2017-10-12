@@ -769,7 +769,7 @@ struct IntSet* latticeLongestWeightedPathEmbeddingForTrees(struct Graph* g, stru
  */
 struct IntSet* dfsDownwardEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int sampleSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
-	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, gp, sgp);
+	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, 1, gp, sgp);
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
@@ -786,7 +786,7 @@ struct IntSet* dfsDownwardEmbeddingForLocalEasy(struct Graph* g, struct Evaluati
 
 struct IntSet* latticePathEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int sampleSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
-	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, gp, sgp);
+	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, 1, gp, sgp);
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
@@ -807,7 +807,7 @@ struct IntSet* latticePathEmbeddingForLocalEasy(struct Graph* g, struct Evaluati
 
 struct IntSet* latticeLongestPathEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int sampleSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
-	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, gp, sgp);
+	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, 1, gp, sgp);
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
@@ -828,7 +828,7 @@ struct IntSet* latticeLongestPathEmbeddingForLocalEasy(struct Graph* g, struct E
 
 struct IntSet* staticPathCoverEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int sampleSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
-	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, gp, sgp);
+	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, 1, gp, sgp);
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
@@ -845,7 +845,7 @@ struct IntSet* staticPathCoverEmbeddingForLocalEasy(struct Graph* g, struct Eval
 
 struct IntSet* latticeLongestWeightedPathEmbeddingForLocalEasy(struct Graph* g, struct EvaluationPlan p, int sampleSize, int databaseSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
-	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, gp, sgp);
+	struct SpanningtreeTree spTree = getSampledSpanningtreeTree(getBlockTreeT(g, sgp), sampleSize, 1, gp, sgp);
 
 	int nEvaluations = 0;
 	cleanEvaluationPlan(p);
