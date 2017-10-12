@@ -166,6 +166,24 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
 				break;
 			}
+			if (strcmp(optarg, "localEasySamplingSlow") == 0) {
+				initMining = &initIterativeBFSForSampledLocalEasySlow;
+				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperatorIndependent;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
+				break;
+			}
+			if (strcmp(optarg, "localEasySamplingIndependent") == 0) {
+				initMining = &initIterativeBFSForSampledLocalEasySlow;
+				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperatorIndependent;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
+				break;
+			}
 			if (strcmp(optarg, "localEasyResampling") == 0) {
 				initMining = &initIterativeBFSForSampledLocalEasy;
 				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperatorWithResampling;

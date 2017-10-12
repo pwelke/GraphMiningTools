@@ -98,6 +98,10 @@ Options:
                  the embedding operator, a (possibly) novel sample of local
                  spanning trees is drawn. This likely destroys the apriori-
                  property of the embedding operator.
+                 
+             localEasySamplingSlow:
+             
+             localEasySamplingIndependent:
           
 -r VALUE:        Initialize the random number generator with seed VALUE. If
                  not specified, random generator is seeded according to 
