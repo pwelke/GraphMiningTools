@@ -353,16 +353,20 @@ struct ShallowGraph* xlistOrSampleSpanningTrees(struct Graph* g, int k, long int
 
 /**
  * Run a sampling algorithm (or any other algorithm with the same interface) for each connected component of
- * the graph and return a list of shallow graphs.
+ * the graph and return a list of shallow graphs on g (if rebase = 1).
+ *
+ * If rebase = 0, then the vertices in the returned shallowgraphs point to a nonexisting graph. Do this
+ * only if you are sure what you are doing (e.g., if you call a canonical string algorithm that returns
+ * a shallow graph without vertex pointers).
  *
  * Due to implementation, the sampler can assume that it is called on a connected graph, but must not
- * alter the ->lowPoint variables of the vertices.
+ * alter the ->lowPoint variables of the vertices if rebase=1.
  *
  * NOTE: returning rebased shallow graphs is new as of 2017-10-08 and might interfere with old code
  * (possibly in treeSamplingMain).
  */
 struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler)(struct Graph*, int, long int, struct GraphPool*, struct ShallowGraphPool*), 
-	struct Graph* g, int k, long int threshold, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct Graph* g, int k, long int threshold, char rebase, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	struct ShallowGraph* results = NULL;
 	struct Graph* connectedComponents = listConnectedComponents(g, gp);
@@ -384,7 +388,7 @@ struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler
 
 	// due to this line, the returned shallow graphs are pointing to g, but this
 	// requires the sampler function to not alter the ->lowPoints of the vertices
-	rebaseShallowGraphsOnLowPoints(results, g);
+	if (rebase) { rebaseShallowGraphsOnLowPoints(results, g); }
 	dumpGraphList(gp, connectedComponents);
 	return results;
 }
@@ -402,7 +406,7 @@ int getNumberOfNonisomorphicSpanningForestComponentsForKSamples(struct Graph* g,
 	struct Vertex* searchTree = getVertex(gp->vertexPool);
 
 	// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
-	struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, gp, sgp);
+	struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
 	for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
 		if (tree->m != 0) {
 			struct Graph* tmp = shallowGraphToGraph(tree, gp);
