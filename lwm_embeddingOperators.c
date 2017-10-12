@@ -65,6 +65,71 @@ struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperator(str
 	return result;
 }
 
+/**
+ * We assume that each block in sptTree has exactly k sampled spanning trees (k may be 1).
+ * We create k sptTrees where each is the projection of sptTree to the k'th sampled spanning
+ * tree for each block, combined with the spanning tree of the bridges of g.
+ */
+struct SpanningtreeTree* expandSpanningtreeTree(int* k, struct SpanningtreeTree* sptTree, struct GraphPool* gp) {
+	// find k
+	*k = 0;
+	for (int i=0; i<sptTree->nRoots; ++i) {
+		int nLocalTrees = 0;
+		for (struct Graph* localTree=sptTree->localSpanningTrees[i]; localTree!=NULL; localTree=localTree->next) {
+			++nLocalTrees;
+		}
+		if (nLocalTrees > *k) {
+			*k = nLocalTrees;
+		}
+	}
+
+	struct SpanningtreeTree* results = malloc(*k * sizeof(struct SpanningtreeTree));
+	for (int j=0; j<*k; ++j) {
+		results[j] = *sptTree;
+		results[j].localSpanningTrees = malloc(sptTree->nRoots * sizeof(struct Graph*));
+	}
+
+	for (int i=0; i<sptTree->nRoots; ++i) {
+		if (sptTree->localSpanningTrees[i]->next == NULL) {
+			// clone bridge part k times
+			for (int j=0; j<*k; ++j) {
+				results[j].localSpanningTrees[i] = cloneGraph(sptTree->localSpanningTrees[i], gp);
+			}
+		} else {
+			// copy each component once
+			int j=0;
+			for (struct Graph* localTree=sptTree->localSpanningTrees[i]; localTree!=NULL; localTree=localTree->next) {
+				results[j].localSpanningTrees[i] = cloneGraph(localTree, gp);
+				++j;
+			}
+		}
+	}
+	return results;
+}
+
+struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperatorIndependent(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void) importance;
+	(void) sgp;
+
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.S = NULL;
+
+	int k = 0;
+	struct SpanningtreeTree* sptTree = (struct SpanningtreeTree*)(result.postorder);
+	struct SpanningtreeTree* expanded = expandSpanningtreeTree(&k, sptTree, gp);
+	for (int i=0; i<k; ++i) {
+		result.foundIso = subtreeCheckForSpanningtreeTree(&(expanded[i]), h, gp);
+		if (result.foundIso) break;
+	}
+	for (int j=0; j<k; ++j) {
+		dumpSpanningtreeTree(expanded[j], gp);
+	}
+	free(expanded);
+//	wipeCharacteristicsForLocalEasy(*sptTree);
+	return result;
+}
+
 
 struct SubtreeIsoDataStore noniterativeLocalEasySubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)importance; // unused

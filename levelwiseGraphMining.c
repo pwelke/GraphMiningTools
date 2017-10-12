@@ -68,7 +68,7 @@ int getSpanningTreeSamplesOfDB(struct Graph*** db, int k, struct GraphPool* gp, 
 	while ((g = iterateFile())) {
 		struct Graph* h = NULL;
 		// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
-		struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, gp, sgp);
+		struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
 		for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
 			if (tree->m != 0) {
 				struct Graph* tmp = shallowGraphToGraph(tree, gp);
@@ -113,7 +113,7 @@ int getAllSpanningTreesOfDB(struct Graph*** db, int k, struct GraphPool* gp, str
 	while ((g = iterateFile())) {
 		struct Graph* h = NULL;
 		// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
-		struct ShallowGraph* sample = runForEachConnectedComponent(&xlistSpanningTrees, g, k, k, gp, sgp);
+		struct ShallowGraph* sample = runForEachConnectedComponent(&xlistSpanningTrees, g, k, k, 1, gp, sgp);
 		for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
 			if (tree->m != 0) {
 				struct Graph* tmp = shallowGraphToGraph(tree, gp);
@@ -159,7 +159,7 @@ int getNonisomorphicSpanningTreeSamplesOfDB(struct Graph*** db, int k, struct Gr
 		struct Vertex* searchTree = getVertex(gp->vertexPool);
 
 		// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
-		struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, gp, sgp);
+		struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
 		for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
 			if (tree->m != 0) {
 				struct Graph* tmp = shallowGraphToGraph(tree, gp);
@@ -470,95 +470,168 @@ struct SubtreeIsoDataStoreList* initIterativeDFS(struct Graph** db, size_t nGrap
 /**
  * Input handling, parsing of database and call of opk feature extraction method.
  */
-void iterativeDFSMain(size_t maxPatternSize,
-		              size_t threshold,
-					  // embedding operator function pointer,
-					 struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
-					 double importance,
-					 FILE* featureStream,
-					 FILE* patternStream,
-					 FILE* logStream,
-					 struct GraphPool* gp,
-					 struct ShallowGraphPool* sgp) {
+//void iterativeDFSMainOld(size_t startPatternSize,
+//					  size_t maxPatternSize,
+//		              size_t threshold,
+//					  struct Vertex* initialFrequentPatterns,
+//					  struct SubtreeIsoDataStoreList* supportSets,
+//					  struct ShallowGraph* extensionEdges,
+//					  // embedding operator function pointer,
+//					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
+//					  double importance,
+//					  FILE* featureStream,
+//					  FILE* patternStream,
+//					  FILE* logStream,
+//					  struct GraphPool* gp,
+//					  struct ShallowGraphPool* sgp) {
+//
+//	struct Vertex* frequentVertices = getVertex(gp->vertexPool);
+//
+//	struct Graph** db = NULL;
+//	int nGraphs = 128;
+//	int tmpResultSetSize = 0;
+//
+//	/* init data structures */
+//	nGraphs = getDB(&db);
+//	destroyFileIterator(); // graphs are in memory now
+//
+//
+//	if (maxPatternSize > 0) {
+//		/* get frequent vertices */
+//		tmpResultSetSize = getFrequentVertices(db, nGraphs, frequentVertices, gp);
+//		filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureStream, gp);
+//
+//		/* output frequent vertices */
+//		fprintf(patternStream, "patterns size 0\n");
+//		printStringsInSearchTree(frequentVertices, patternStream, sgp);
+//		fprintf(logStream, "Frequent patterns in level 1: %i\n", frequentVertices->d); fflush(logStream);
+//	}
+//
+//	if (maxPatternSize > 1) {
+//		/* get frequent edges: first edge id is given by number of frequent vertices */
+//		struct Vertex* frequentEdges = getVertex(gp->vertexPool);
+//		offsetSearchTreeIds(frequentEdges, frequentVertices->lowPoint);
+//		getFrequentEdges(db, nGraphs, tmpResultSetSize, frequentEdges, gp);
+//		filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureStream, gp);
+//
+//		/* output frequent edges */
+//		fprintf(patternStream, "patterns size 1\n");
+//		printStringsInSearchTree(frequentEdges, patternStream, sgp);
+//
+//		/* convert frequentEdges to ShallowGraph */
+//		struct Graph* extensionEdgesVertexStore = NULL;
+//		struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
+//		fprintf(logStream, "Frequent patterns in level 2: %i\n", frequentEdges->d); fflush(logStream);
+//
+//		// DFS
+//		struct Vertex* processedPatterns = getVertex(gp->vertexPool);
+//
+//		struct Graph* candidate = createGraph(2, gp);
+//		addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
+//
+//		for (struct VertexList* e=extensionEdges->edges; e!=NULL; e=e->next) {
+//			candidate->vertices[0]->label = e->startPoint->label;
+//			candidate->vertices[1]->label = e->endPoint->label;
+//			candidate->vertices[0]->neighborhood->label = e->label;
+//			candidate->vertices[1]->neighborhood->label = e->label;
+//
+//			fprintf(stdout, "==\n==\nPROCESSING NEXT EDGE:\n");
+//			struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
+//			printCanonicalString(cString, stdout);
+//
+//			if (!containsString(processedPatterns, cString)) {
+//				struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, -1, gp);
+//				addToSearchTree(processedPatterns, cString, gp, sgp);
+//				iterativeDFS(edgeSupport, threshold, maxPatternSize, extensionEdges, processedPatterns, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
+//				dumpSubtreeIsoDataStoreListWithPostorder(edgeSupport, gp);
+//			} else {
+//				dumpShallowGraph(sgp, cString);
+//			}
+//		}
+//		dumpGraph(gp, candidate);
+//		dumpShallowGraphCycle(sgp, extensionEdges);
+//		dumpGraph(gp, extensionEdgesVertexStore);
+//		dumpSearchTree(gp, frequentEdges);
+//		dumpSearchTree(gp, processedPatterns);
+//	}
+//
+//	dumpSearchTree(gp, frequentVertices);
+////	dumpCube();
+//
+//	for (int i=0; i<nGraphs; ++i) {
+//		dumpGraph(gp, db[i]);
+//	}
+//	free(db);
+//}
 
-	struct Vertex* frequentVertices = getVertex(gp->vertexPool);
 
-	struct Graph** db = NULL;
-	int nGraphs = 128;
-	int tmpResultSetSize = 0;
-
-	/* init data structures */
-	nGraphs = getDB(&db);
-	destroyFileIterator(); // graphs are in memory now
-
-
-	if (maxPatternSize > 0) {
-		/* get frequent vertices */
-		tmpResultSetSize = getFrequentVertices(db, nGraphs, frequentVertices, gp);
-		filterSearchTreeP(frequentVertices, threshold, frequentVertices, featureStream, gp);
-
-		/* output frequent vertices */
-		fprintf(patternStream, "patterns size 0\n");
-		printStringsInSearchTree(frequentVertices, patternStream, sgp);
-		fprintf(logStream, "Frequent patterns in level 1: %i\n", frequentVertices->d); fflush(logStream);
-	}
-
-	if (maxPatternSize > 1) {
-		/* get frequent edges: first edge id is given by number of frequent vertices */
-		struct Vertex* frequentEdges = getVertex(gp->vertexPool);
-		offsetSearchTreeIds(frequentEdges, frequentVertices->lowPoint);
-		getFrequentEdges(db, nGraphs, tmpResultSetSize, frequentEdges, gp);
-		filterSearchTreeP(frequentEdges, threshold, frequentEdges, featureStream, gp);
-
-		/* output frequent edges */
-		fprintf(patternStream, "patterns size 1\n");
-		printStringsInSearchTree(frequentEdges, patternStream, sgp);
-
-		/* convert frequentEdges to ShallowGraph */
-		struct Graph* extensionEdgesVertexStore = NULL;
-		struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
-		fprintf(logStream, "Frequent patterns in level 2: %i\n", frequentEdges->d); fflush(logStream);
-
-		// DFS
-		struct Vertex* processedPatterns = getVertex(gp->vertexPool);
-
-		struct Graph* candidate = createGraph(2, gp);
-		addEdgeBetweenVertices(0, 1, NULL, candidate, gp);
-
-		for (struct VertexList* e=extensionEdges->edges; e!=NULL; e=e->next) {
-			candidate->vertices[0]->label = e->startPoint->label;
-			candidate->vertices[1]->label = e->endPoint->label;
-			candidate->vertices[0]->neighborhood->label = e->label;
-			candidate->vertices[1]->neighborhood->label = e->label;
-
-			fprintf(stdout, "==\n==\nPROCESSING NEXT EDGE:\n");
-			struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
-			printCanonicalString(cString, stdout);
-
-			if (!containsString(processedPatterns, cString)) {
-				struct SubtreeIsoDataStoreList* edgeSupport = initIterativeDFS(db, nGraphs, e, -1, gp);
-				addToSearchTree(processedPatterns, cString, gp, sgp);
-				iterativeDFS(edgeSupport, threshold, maxPatternSize, extensionEdges, processedPatterns, embeddingOperator, importance, featureStream, patternStream, logStream, gp, sgp);
-				dumpSubtreeIsoDataStoreListWithPostorder(edgeSupport, gp);
-			} else {
-				dumpShallowGraph(sgp, cString);
-			}
-		}
-		dumpGraph(gp, candidate);
-		dumpShallowGraphCycle(sgp, extensionEdges);
-		dumpGraph(gp, extensionEdgesVertexStore);
-		dumpSearchTree(gp, frequentEdges);
-		dumpSearchTree(gp, processedPatterns);
-	}
-
-	dumpSearchTree(gp, frequentVertices);
-//	dumpCube();
-
-	for (int i=0; i<nGraphs; ++i) {
-		dumpGraph(gp, db[i]);
-	}
-	free(db);
-}
+//void iterativeDFSMain(size_t startPatternSize,
+//					  size_t maxPatternSize,
+//		              size_t threshold,
+//					  struct Vertex* initialFrequentPatterns,
+//					  struct SubtreeIsoDataStoreList* supportSets,
+//					  struct ShallowGraph* extensionEdges,
+//					  // embedding operator function pointer,
+//					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
+//					  double importance,
+//					  FILE* featureStream,
+//					  FILE* patternStream,
+//					  FILE* logStream,
+//					  struct GraphPool* gp,
+//					  struct ShallowGraphPool* sgp) {
+//
+//	// depth first search for patterns with more than one vertex:
+//	struct Vertex* patternSearchTree = initialFrequentPatterns;
+////	struct Vertex* previousLevelSearchTree = shallowCopySearchTree(initialFrequentPatterns, gp);
+//	struct SubtreeIsoDataStoreList* previousLevelSupportSets = supportSets;
+////	struct Vertex* currentLevelSearchTree = previousLevelSearchTree; // initialization for garbage collection in case of maxPatternSize == 1
+//	struct SubtreeIsoDataStoreList* currentLevelSupportSets = previousLevelSupportSets; // initialization for garbage collection in case of maxPatternSize == 1
+//
+//	maintain a searchtree of all frequent patterns
+//	maintain a searchtree of all generated infrequent patterns
+//
+//	for all single patterns h
+//		call dfs (h, support, freq patterns, infreq patterns, etal.)
+//
+//
+//	for (struct SubtreeIsoDataStoreList* support) {
+////		fprintf(logStream, "Processing patterns with %zu vertices:\n", p); fflush(logStream);
+////		currentLevelSearchTree = getVertex(gp->vertexPool);
+//		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
+//
+//		currentLevelSupportSets = iterativeBFSOneLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
+//
+//		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
+//		printSubtreeIsoDataStoreListsSparse(currentLevelSupportSets, featureStream);
+//
+//		// garbage collection:
+//		// what is now all previousLevel... data structures will not be used at all in the next iteration
+//		dumpSearchTree(gp, previousLevelSearchTree);
+//		while (previousLevelSupportSets) {
+//			struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
+//			// ...hence, we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
+//			dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
+//			previousLevelSupportSets = tmp;
+//		}
+//
+//		// previous level = current level
+//		previousLevelSearchTree = currentLevelSearchTree;
+//		previousLevelSupportSets = currentLevelSupportSets;
+//	}
+//
+////	madness(currentLevelSupportSets, currentLevelSearchTree, extensionEdges, maxPatternSize, threshold, &previousLevelSupportSets, &previousLevelSearchTree, featureStream, patternStream, logStream, gp, sgp);
+//
+//	// garbage collection
+//	dumpSearchTree(gp, previousLevelSearchTree);
+//
+//	while (previousLevelSupportSets) {
+//		struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
+//		// we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
+//		dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
+//		previousLevelSupportSets = tmp;
+//	}
+//
+//}
 
 
 void filterInfrequentCandidates(// input
@@ -826,19 +899,6 @@ struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 	return actualSupportLists;
 }
 
-//
-//struct SubtreeIsoDataStoreList* initIterativeBFSForEdges(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId) {
-//	struct SubtreeIsoDataStoreList* actualSupport = getSubtreeIsoDataStoreList();
-//	for (size_t i=0; i<nGraphs; ++i) {
-//		struct SubtreeIsoDataStore base = {0};
-//		base.g = db[i];
-//		base.postorder = postoderDB[i];
-//		struct SubtreeIsoDataStore data = initIterativeSubtreeCheckForEdge(base, h);
-//		data.h->number = patternId;
-//		appendSubtreeIsoDataStore(actualSupport, data);
-//	}
-//	return actualSupport;
-//}
 
 struct SubtreeIsoDataStoreList* initIterativeBFSForVertices(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId) {
 	struct SubtreeIsoDataStoreList* actualSupport = getSubtreeIsoDataStoreList();
@@ -1333,6 +1393,9 @@ size_t initIterativeBFSForExactLocalEasy(// input
 }
 
 
+/**
+ * In this method, we remove duplicate sampled local spanning trees.
+ */
 size_t initIterativeBFSForSampledLocalEasy(// input
 		size_t threshold,
 		double importance,
@@ -1354,7 +1417,7 @@ size_t initIterativeBFSForSampledLocalEasy(// input
 	struct SpanningtreeTree* sptTrees = malloc(nGraphs * sizeof(struct SpanningtreeTree));
 	for (size_t i=0; i<nGraphs; ++i) {
 		struct BlockTree blockTree = getBlockTreeT(db[i], sgp);
-		sptTrees[i] = getSampledSpanningtreeTree(blockTree, (int)importance, gp, sgp);
+		sptTrees[i] = getSampledSpanningtreeTree(blockTree, (int)importance, 1, gp, sgp);
 	}
 
 //	fprintf(stderr, "initIterativeBFSForSampledLocalEasy\n");
@@ -1373,7 +1436,7 @@ size_t initIterativeBFSForSampledLocalEasy(// input
 	free(db);
 
 	// levelwise search for patterns with one vertex:
-	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = initLevelwiseMiningForLocalEasyDBExperimental(sptTrees, nGraphs, frequentVertices, gp, sgp);
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = createSingletonPatternSupportSetsForLocalEasyDB(sptTrees, nGraphs, frequentVertices, gp, sgp);
 	printStringsInSearchTree(frequentVertices, patternStream, sgp);
 	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
 
@@ -1392,6 +1455,71 @@ size_t initIterativeBFSForSampledLocalEasy(// input
 	*dataStructures = x;
 	return 1; // returned patterns have 1 vertex
 }
+
+
+/**
+ * In this method, we keep duplicate sampled local spanning trees
+ */
+size_t initIterativeBFSForSampledLocalEasySlow(// input
+		size_t threshold,
+		double importance,
+		// output
+		struct Vertex** initialFrequentPatterns,
+		struct SubtreeIsoDataStoreList** supportSets,
+		struct ShallowGraph** extensionEdgeList,
+		void** dataStructures,
+		// printing
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		// pools
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
+
+	struct Graph** db = NULL;
+	size_t nGraphs = getDB(&db);
+	struct SpanningtreeTree* sptTrees = malloc(nGraphs * sizeof(struct SpanningtreeTree));
+	for (size_t i=0; i<nGraphs; ++i) {
+		struct BlockTree blockTree = getBlockTreeT(db[i], sgp);
+		sptTrees[i] = getSampledSpanningtreeTree(blockTree, (int)importance, 0, gp, sgp);
+	}
+
+//	fprintf(stderr, "initIterativeBFSForSampledLocalEasy\n");
+//	for (size_t i=0; i<nGraphs; ++i) {
+//		printSptTree(sptTrees[i]);
+//	}
+
+	struct Vertex* frequentVertices;
+	struct Vertex* frequentEdges;
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+
+	/* convert frequentEdges to ShallowGraph of extension edges */
+	struct Graph* extensionEdgesVertexStore = NULL;
+	struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
+	dumpSearchTree(gp, frequentEdges);
+	free(db);
+
+	// levelwise search for patterns with one vertex:
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = createSingletonPatternSupportSetsForLocalEasyDB(sptTrees, nGraphs, frequentVertices, gp, sgp);
+	printStringsInSearchTree(frequentVertices, patternStream, sgp);
+	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
+
+	// store pointers for final garbage collection
+	struct IterativeBfsForLocalEasyDataStructures* x = malloc(sizeof(struct IterativeBfsForLocalEasyDataStructures));
+	x->nGraphs = nGraphs;
+	x->extensionEdges = extensionEdges;
+	x->extensionEdgesVertexStore = extensionEdgesVertexStore;
+	x->initialFrequentPatterns = frequentVertices;
+	x->sptTrees = sptTrees;
+
+	// 'return'
+	*initialFrequentPatterns = frequentVertices;
+	*supportSets = frequentVerticesSupportSets;
+	*extensionEdgeList = extensionEdges;
+	*dataStructures = x;
+	return 1; // returned patterns have 1 vertex
+}
+
 
 void iterativeBFSMain(size_t startPatternSize,
 					  size_t maxPatternSize,
