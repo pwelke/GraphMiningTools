@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "localEasyResampling") == 0) {
 				initMining = &initIterativeBFSForSampledLocalEasy;
-				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperatorWithResampling;
+				embeddingOperator = &localEasySubtreeCheckOperatorWithResampling;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}

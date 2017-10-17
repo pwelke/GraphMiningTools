@@ -46,7 +46,7 @@ struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataSt
 }
 
 
-struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperatorWithResampling(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore localEasySubtreeCheckOperatorWithResampling(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
