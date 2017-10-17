@@ -3,6 +3,11 @@
 
 #include "subtreeIsoDataStoreList.h"
 
+struct PostorderList{
+	int* postorder;
+	struct PostorderList* next;
+};
+
 /*
  want a tree on roots.
  edges should go from parent to child
@@ -28,8 +33,7 @@ struct SpanningtreeTree{
 	struct Vertex** parents;
 	struct Graph** localSpanningTrees;
 	struct SubtreeIsoDataStoreList** characteristics;
-//	struct Graph** blocks;
-//	struct ShallowGraph** blockSpanningTrees;
+	struct PostorderList** localPostorders;
 	int nRoots;
 };
 

@@ -464,6 +464,10 @@ struct ShallowGraph* filterDuplicateSpanningTrees(struct ShallowGraph* sptrees, 
 }
 
 
+static struct PostorderList* __getPOL() {
+	return malloc(sizeof(struct PostorderList));
+}
+
 /**
  * blockTree is consumed
  * spanningTreesPerBlock must be >= 1
@@ -475,6 +479,7 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 	sptTree.roots = blockTree.roots;
 	sptTree.parents = blockTree.parents;
 	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct Graph*));
+	sptTree.localPostorders = malloc(sptTree.nRoots * sizeof(struct PostorderList*));
 
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
@@ -502,11 +507,17 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 		}
 		sptTree.localSpanningTrees[v] = spanningTreeConverter(shallowSpanningtrees, mergedGraph, gp, sgp);
 
+		sptTree.localPostorders[v] = NULL;
+		for (struct Graph* localSpanningTree=sptTree.localSpanningTrees[v]; localSpanningTree!=NULL; localSpanningTree=localSpanningTree->next) {
+			struct PostorderList* tmp = __getPOL();
+			tmp->postorder = getPostorder(localSpanningTree, 0);
+			tmp->next = sptTree.localPostorders[v];
+			sptTree.localPostorders[v] = tmp;
+		}
+
 		// garbage collection
 		dumpShallowGraph(sgp, mergedEdges);
 		dumpGraph(gp, mergedGraph);
-
-
 	}
 
 	initCharacteristicsArrayForLocalEasy(&sptTree);
@@ -529,6 +540,7 @@ struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, stru
 	sptTree.roots = blockTree.roots;
 	sptTree.parents = blockTree.parents;
 	sptTree.localSpanningTrees = malloc(sptTree.nRoots * sizeof(struct Graph*));
+	sptTree.localPostorders = malloc(sptTree.nRoots * sizeof(struct PostorderList*));
 
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		struct ShallowGraph* mergedEdges = mergeShallowGraphs(blockTree.vRootedBlocks[v], sgp);
@@ -537,6 +549,13 @@ struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, stru
 
 		struct ShallowGraph* shallowSpanningtrees = listSpanningTrees(mergedGraph, sgp, gp);
 		sptTree.localSpanningTrees[v] = spanningTreeConverter(shallowSpanningtrees, mergedGraph, gp, sgp);
+
+		for (struct Graph* localSpanningTree=sptTree.localSpanningTrees[v]; localSpanningTree!=NULL; localSpanningTree=localSpanningTree->next) {
+			struct PostorderList* tmp = __getPOL();
+			tmp->postorder = getPostorder(localSpanningTree, 0);
+			tmp->next = sptTree.localPostorders[v];
+			sptTree.localPostorders[v] = tmp;
+		}
 
 		// garbage collection
 		dumpShallowGraph(sgp, mergedEdges);
@@ -586,10 +605,21 @@ void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp)
 			}
 			free(sptTree.characteristics[v]);
 		}
+		if (sptTree.localPostorders) {
+			if (sptTree.localPostorders[v]) {
+				struct PostorderList* tmp;
+				for (struct PostorderList* l=sptTree.localPostorders[v]; l!=NULL; l=tmp) {
+					tmp = l->next;
+					free(l->postorder);
+					free(l);
+				}
+			}
+		}
 	}
 	free(sptTree.parents);
 	free(sptTree.roots);
 	free(sptTree.localSpanningTrees);
+	free(sptTree.localPostorders);
 	if (sptTree.characteristics) {
 		free(sptTree.characteristics);
 	}
@@ -750,6 +780,7 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 	struct Graph* g = current->g;
 	struct Graph* h = current->h;
 
+
 	struct CachedGraph* cachedB = initCachedGraph(gp, h->n);
 
 	current->foundIso = 0;
@@ -808,19 +839,25 @@ char subtreeCheckForSpanningtreeTree(struct SpanningtreeTree* sptTree, struct Gr
 	for (int v=sptTree->nRoots-1; v>=0; --v) {
 		// we need to compute characteristics for the global root, which is a special case.
 		int blockDoesNotContainGlobalRoot = v==0 ? 0 : 1;
-		for (struct Graph* localTree=sptTree->localSpanningTrees[v]; localTree!=NULL; localTree=localTree->next) {
+
+		struct Graph* localTree;
+		struct PostorderList* localPostorder;
+		for (localTree=sptTree->localSpanningTrees[v], localPostorder=sptTree->localPostorders[v];
+				localTree!=NULL;
+				localTree=localTree->next, localPostorder=localPostorder->next) {
 
 			struct SubtreeIsoDataStore info = {0};
 			info.g = localTree;
 			info.h = h;
-			info.postorder = getPostorder(localTree, 0); // 0 is the root v of localTree
+//			info.postorder = getPostorder(localTree, 0); // 0 is the root v of localTree
+			info.postorder = localPostorder->postorder;
 			info.S = createNewCube(info.g->n, info.h->n);
 
 			subtreeCheckForOneBlockSpanningTree(&info, sptTree, blockDoesNotContainGlobalRoot, gp);
 			appendSubtreeIsoDataStore(sptTree->characteristics[v], info);
 
-			free(info.postorder);
-			info.postorder = NULL;
+//			free(info.postorder);
+//			info.postorder = NULL;
 
 			if (info.foundIso) {
 				return 1;
