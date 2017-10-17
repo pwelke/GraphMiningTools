@@ -87,6 +87,10 @@ struct SpanningtreeTree* expandSpanningtreeTree(int* k, struct SpanningtreeTree*
 	for (int j=0; j<*k; ++j) {
 		results[j] = *sptTree;
 		results[j].localSpanningTrees = malloc(sptTree->nRoots * sizeof(struct Graph*));
+		results[j].characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStoreList*));
+		for (int i=0; i<sptTree->nRoots; ++i) {
+			results[j].characteristics[i] = getSubtreeIsoDataStoreList();
+		}
 	}
 
 	for (int i=0; i<sptTree->nRoots; ++i) {
@@ -115,14 +119,22 @@ struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperatorInde
 	result.h = h;
 	result.S = NULL;
 
+	printf("pattern:\n");
+	printGraphAidsFormat(h, stdout);
+
 	int k = 0;
 	struct SpanningtreeTree* sptTree = (struct SpanningtreeTree*)(result.postorder);
 	struct SpanningtreeTree* expanded = expandSpanningtreeTree(&k, sptTree, gp);
-	for (int i=0; i<k; ++i) {
-		result.foundIso = subtreeCheckForSpanningtreeTree(&(expanded[i]), h, gp);
+	printf("%i spanningtreetrees:\n", k);
+	for (int j=0; j<k; ++j) {
+		printSptTree(expanded[j]);
+		result.foundIso = subtreeCheckForSpanningtreeTree(&(expanded[j]), h, gp);
+		printf("found iso: %i\n", result.foundIso);
 		if (result.foundIso) break;
 	}
 	for (int j=0; j<k; ++j) {
+		expanded[j].parents = NULL;
+		expanded[j].roots = NULL;
 		dumpSpanningtreeTree(expanded[j], gp);
 	}
 	free(expanded);
