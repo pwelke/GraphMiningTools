@@ -42,8 +42,6 @@ int main(int argc, char** argv) {
 	struct ShallowGraphPool *sgp;
 	struct GraphPool *gp;
 
-	/* pointer to the current graph which is returned by the input iterator */
-
 	/* user input handling variables */
 	int threshold = 1000;
 	unsigned int maxPatternSize = 20;
