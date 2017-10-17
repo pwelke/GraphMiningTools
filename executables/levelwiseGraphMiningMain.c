@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	void (*garbageCollector)(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) = &garbageCollectBFSBase;
 
 	// embedding operator
-	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &noniterativeSubtreeCheckOperator;
+	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &subtreeCheckOperator;
 
 	// other
 	double importance = 0.5;
@@ -109,6 +109,19 @@ int main(int argc, char** argv) {
 			fprintf(stderr, "Unknown mining technique: %s\n", optarg);
 			return EXIT_FAILURE;
 		case 'e':
+			// operators for forest transaction databases
+			if (strcmp(optarg, "subtree") == 0) {
+				initMining = &initIterativeBFSForForestDB;
+				embeddingOperator = &subtreeCheckOperator;
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
+				break;
+			}
+			if (strcmp(optarg, "iterative") == 0) {
+				initMining = &initIterativeBFSForForestDB;
+				embeddingOperator = &iterativeSubtreeCheckOperator;
+				garbageCollector = &garbageCollectIterativeBFSForForestDB;
+				break;
+			}
 			if (strcmp(optarg, "relImp") == 0) {
 				initMining = &initIterativeBFSForForestDB;
 				embeddingOperator = &relativeImportanceOperator;
@@ -127,39 +140,34 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
-			if (strcmp(optarg, "subtree") == 0) {
-				initMining = &initIterativeBFSForForestDB;
-				embeddingOperator = &noniterativeSubtreeCheckOperator;
-				garbageCollector = &garbageCollectIterativeBFSForForestDB;
-				break;
-			}
-			if (strcmp(optarg, "iterative") == 0) {
-				initMining = &initIterativeBFSForForestDB;
-				embeddingOperator = &iterativeSubtreeCheckOperator;
+			// operators for arbitrary graph transaction databases
+			if (strcmp(optarg, "exactGlobalTreeEnumeration") == 0) {
+				initMining = &initIterativeBFSForAllGlobalTreeEnumerationExactMining;
+				embeddingOperator = &subtreeCheckOperator;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
 				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
 			if (strcmp(optarg, "probabilisticTreeSampling") == 0) {
 				initMining = &initIterativeBFSForSampledProbabilisticTree;
-				embeddingOperator = &noniterativeSubtreeCheckOperator;
+				embeddingOperator = &subtreeCheckOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
 				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
-			if (strcmp(optarg, "exactGlobalTreeEnumeration") == 0) {
-				initMining = &initIterativeBFSForAllGlobalTreeEnumerationExactMining;
-				embeddingOperator = &noniterativeSubtreeCheckOperator;
-				if ((int)importance <= 0) {
-					importance = 1;
-				}
-				garbageCollector = &garbageCollectIterativeBFSForForestDB;
+			if (strcmp(optarg, "localEasy") == 0) {
+				initMining = &initIterativeBFSForExactLocalEasy;
+				embeddingOperator = &localEasySubtreeCheckOperator;
+				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
 				break;
 			}
 			if (strcmp(optarg, "localEasySampling") == 0) {
 				initMining = &initIterativeBFSForSampledLocalEasy;
-				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperator;
+				embeddingOperator = &localEasySubtreeCheckOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
@@ -186,16 +194,10 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "localEasyResampling") == 0) {
 				initMining = &initIterativeBFSForSampledLocalEasy;
-				embeddingOperator = &noniterativeLocalEasySamplingSubtreeCheckOperatorWithResampling;
+				embeddingOperator = &localEasySubtreeCheckOperatorWithResampling;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
-				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
-				break;
-			}
-			if (strcmp(optarg, "localEasy") == 0) {
-				initMining = &initIterativeBFSForExactLocalEasy;
-				embeddingOperator = &localEasySubtreeCheckOperator;
 				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
 				break;
 			}
