@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	void (*garbageCollector)(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) = &garbageCollectBFSBase;
 
 	// embedding operator
-	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &noniterativeSubtreeCheckOperator;
+	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &subtreeCheckOperator;
 
 	// other
 	double importance = 0.5;
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "subtree") == 0) {
 				initMining = &initIterativeBFSForForestDB;
-				embeddingOperator = &noniterativeSubtreeCheckOperator;
+				embeddingOperator = &subtreeCheckOperator;
 				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "probabilisticTreeSampling") == 0) {
 				initMining = &initIterativeBFSForSampledProbabilisticTree;
-				embeddingOperator = &noniterativeSubtreeCheckOperator;
+				embeddingOperator = &subtreeCheckOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "exactGlobalTreeEnumeration") == 0) {
 				initMining = &initIterativeBFSForAllGlobalTreeEnumerationExactMining;
-				embeddingOperator = &noniterativeSubtreeCheckOperator;
+				embeddingOperator = &subtreeCheckOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}

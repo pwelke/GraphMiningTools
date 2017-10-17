@@ -32,10 +32,17 @@ void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patt
 
 // WRAPPERS FOR DIFFERENT EMBEDDING OPERATORS
 
-struct SubtreeIsoDataStore noniterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore subtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	(void)importance; // unused
 	return noniterativeSubtreeCheck(data, h, gp);
+}
+
+
+struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)sgp; // unused
+	(void)importance; // unused
+	return iterativeSubtreeCheck(data, h, gp);
 }
 
 
@@ -77,6 +84,7 @@ struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore
 	return result;
 }
 
+
 struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	struct SubtreeIsoDataStore result = data;
@@ -86,6 +94,7 @@ struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore
 	return result;
 }
 
+
 struct SubtreeIsoDataStore andorEmbeddingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	(void)importance; // unused
@@ -94,10 +103,4 @@ struct SubtreeIsoDataStore andorEmbeddingOperator(struct SubtreeIsoDataStore dat
 	result.S = NULL;
 	result.foundIso = andorEmbedding(result.g, result.h, gp);
 	return result;
-}
-
-struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	(void)sgp; // unused
-	(void)importance; // unused
-	return iterativeSubtreeCheck(data, h, gp);
 }
