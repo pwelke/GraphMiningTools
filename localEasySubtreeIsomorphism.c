@@ -473,7 +473,7 @@ static struct PostorderList* __getPOL() {
  * spanningTreesPerBlock must be >= 1
  */
 struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, int spanningTreesPerBlock, char removeDuplicates, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct SpanningtreeTree sptTree = {0};
+	struct SpanningtreeTree sptTree = {0,0,0,0,0,0,0};
 	sptTree.g = blockTree.g;
 	sptTree.nRoots = blockTree.nRoots;
 	sptTree.roots = blockTree.roots;
@@ -840,13 +840,13 @@ char subtreeCheckForSpanningtreeTree(struct SpanningtreeTree* sptTree, struct Gr
 		// we need to compute characteristics for the global root, which is a special case.
 		int blockDoesNotContainGlobalRoot = v==0 ? 0 : 1;
 
-		struct Graph* localTree;
-		struct PostorderList* localPostorder;
+		struct Graph* localTree = NULL;
+		struct PostorderList* localPostorder = NULL;
 		for (localTree=sptTree->localSpanningTrees[v], localPostorder=sptTree->localPostorders[v];
 				localTree!=NULL;
 				localTree=localTree->next, localPostorder=localPostorder->next) {
 
-			struct SubtreeIsoDataStore info = {0};
+			struct SubtreeIsoDataStore info = {0,0,0,0,0};
 			info.g = localTree;
 			info.h = h;
 //			info.postorder = getPostorder(localTree, 0); // 0 is the root v of localTree
