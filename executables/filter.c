@@ -152,6 +152,26 @@ int main(int argc, char** argv) {
 				filter = locallySampledSpanningTreesFiltered;
 				break;
 			}
+			if (strcmp(optarg, "nonisomorphicSampledSpanningTreesNormalized") == 0) {
+				filter = nonisomorphicSampledSpanningTreesNormalized;
+				break;
+			}
+			if (strcmp(optarg, "nonisomorphicLocallySampledSpanningTreesNormalized") == 0) {
+				filter = nonisomorphicLocallySampledSpanningTreesNormalized;
+				break;
+			}
+			if (strcmp(optarg, "nonisomorphicLocallySampledSpanningTreesFilteredNormalized") == 0) {
+				filter = nonisomorphicLocallySampledSpanningTreesFilteredNormalized;
+				break;
+			}
+			if (strcmp(optarg, "locallySampledSpanningTreesNormalized") == 0) {
+				filter = locallySampledSpanningTreesNormalized;
+				break;
+			}
+			if (strcmp(optarg, "locallySampledSpanningTreesFilteredNormalized") == 0) {
+				filter = locallySampledSpanningTreesFilteredNormalized;
+				break;
+			}
 			if (strcmp(optarg, "maxBlocksPerComponent") == 0) {
 				filter = maxBlocksPerComponent;
 				break;
@@ -426,6 +446,28 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 	case locallySampledSpanningTreesFiltered:
 		measure = getNumberOfSpanningTreesObtainedByLocalEasySamplingWithFiltering(g, additionalParameter, gp, sgp);
 		break;
+
+	case nonisomorphicSampledSpanningTreesNormalized:
+		measure = getNumberOfNonisomorphicSpanningForestComponentsForKSamples(g, additionalParameter, gp, sgp);
+		measure /= getAndMarkConnectedComponents(g);
+		break;
+	case nonisomorphicLocallySampledSpanningTreesNormalized:
+		measure = getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySampling(g, additionalParameter, gp, sgp);
+		measure /= getAndMarkConnectedComponents(g);
+		break;
+	case nonisomorphicLocallySampledSpanningTreesFilteredNormalized:
+		measure = getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySamplingWithFiltering(g, additionalParameter, gp, sgp);
+		measure /= getAndMarkConnectedComponents(g);
+		break;
+	case locallySampledSpanningTreesNormalized:
+		measure = getNumberOfSpanningTreesObtainedByLocalEasySampling(g, additionalParameter, gp, sgp);
+		measure /= getAndMarkConnectedComponents(g);
+		break;
+	case locallySampledSpanningTreesFilteredNormalized:
+		measure = getNumberOfSpanningTreesObtainedByLocalEasySamplingWithFiltering(g, additionalParameter, gp, sgp);
+		measure /= getAndMarkConnectedComponents(g);
+		break;
+
 	case numberOfBlocks:
 		measure = getNumberOfBlocks(g, sgp);			
 		break;
