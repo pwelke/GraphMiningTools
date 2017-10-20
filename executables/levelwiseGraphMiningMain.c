@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
 			}
 			break;
 		case 'o':
-			patternFile = optarg;
+			patternFile = copyString(optarg);
 			break;
 		case '?':
 			return EXIT_FAILURE;
@@ -248,7 +248,12 @@ int main(int argc, char** argv) {
 
 	if (patternFile != NULL) {
 		patternStream = fopen(patternFile, "w");
-		fprintf(logStream, "Write patterns to file: %s\n", patternFile);
+		if (patternStream) {
+			fprintf(logStream, "Write patterns to file: %s\n", patternFile);
+		} else {
+			fprintf(logStream, "Could not open file for writing: %s\nTerminating\n", patternFile);
+			return EXIT_FAILURE;
+		}
 	}
 
 	struct Vertex* initialFrequentPatterns = NULL;
@@ -282,6 +287,7 @@ int main(int argc, char** argv) {
 
 	if (patternFile != NULL) {
 		fclose(patternStream);
+		free(patternFile);
 	}
 
 	/* global garbage collection */
