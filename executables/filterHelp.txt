@@ -77,8 +77,10 @@ options: options (except -h) are always followed by a value.
                               of nonisomorphic spanning trees of all connected
                               components.
                               
-        nonisomorphicSampledSpanningTreesNormalized: Same as above, but normalized
-                              by the number of connected components of g.
+        nonisomorphicSampledSpanningTreesNormalized: Same as above, but 
+                              normalized by the number of connected components
+                              of g. Note that this method always rounds down
+                              the result.
                               
         nonisomorphicLocallySampledSpanningTrees: Draw -a spanning trees for
                               each biconnected block of g and return the 
@@ -91,16 +93,19 @@ options: options (except -h) are always followed by a value.
                               components.
                               
 	    nonisomorphicLocallySampledSpanningTreesNormalized: Same as above, but 
-	                          normalized by the number of connected components of g.
+	                            normalized by the number of connected components
+                              of g. Note that this method always rounds down
+                              the result.
 	                          
-        nonisomorphicLocallySampledSpanningTreesFiltered: Draw -a spanning trees
-                              for each biconnected block of g. Remove duplicate
-                              local trees (as lists of edges, not up to isomor-
-                              phism) and return the number of nonisomorphic spa-
-                              nning trees of g that can be obtained by combining 
-                              the local spanning trees in all possible ways.
-                              This method should (on average) return the same
-                              result as nonisomorphicLocallySampledSpanningTrees.
+        nonisomorphicLocallySampledSpanningTreesFiltered: Draw -a spanning
+                              trees for each biconnected block of g. Remove
+                              duplicate local trees (as lists of edges, not up
+                              to isomorphism) and return the number of 
+                              nonisomorphic spanning trees of g that can be
+                              obtained by combining the local spanning trees
+                              in all possible ways. This method should (on
+                              average) return the same result as
+                              nonisomorphicLocallySampledSpanningTrees
                               If g is disconnected, do the above for all con-
                               nected components and return the overall number
                               of nonisomorphic spanning trees of all connected
@@ -110,12 +115,15 @@ options: options (except -h) are always followed by a value.
                               spanning trees our localEasySampling algorithm 
                               considers.
                               
-	    nonisomorphicLocallySampledSpanningTreesFilteredNormalized: Same as above, but
-	                          normalized by the number of connected components of g.
+	    nonisomorphicLocallySampledSpanningTreesFilteredNormalized: Same as
+                              above, but normalized by the number of connected
+                              components of g. Note that this method always
+                              rounds down the result.
 	                          
-        locallySampledSpanningTrees: Draw Draw -a spanning trees
-                              for each biconnected block of g. Return the number 
-                              of possible combinations of the drawn spanning trees.
+        locallySampledSpanningTrees: Draw -a spanning trees for each 
+                              biconnected block of g. Return the number of
+                              possible combinations of the drawn spanning
+                              trees.
                               If g is disconnected, do the above for all con-
                               nected components and return the overall sum
                               of spanning trees of all connected components.
@@ -123,21 +131,24 @@ options: options (except -h) are always followed by a value.
                               localEasySampling algorithm implicitly considers.
                               
 	    locallySampledSpanningTreesNormalized: Same as above, but normalized
-                              by the number of connected components of g.
+                              by the number of connected components of g. Note
+                              that this method always rounds down the result.
                               
         locallySampledSpanningTreesFiltered: Draw -a spanning trees
                               for each biconnected block of g. Remove duplicate
                               local trees (as lists of edges, not up to isomor-
-                              phism) and return the number of possible combinations
-                              of the drawn spanning trees.
+                              phism) and return the number of possible 
+                              combinations of the drawn spanning trees.
                               If g is disconnected, do the above for all con-
                               nected components and return the overall sum
                               of spanning trees of all connected components.
                               This tells us how many spanning trees our 
                               localEasySampling algorithm implicitly considers.
                                
-	    locallySampledSpanningTreesFilteredNormalized: Same as above, but normalized
-                              by the number of connected components of g.
+	    locallySampledSpanningTreesFilteredNormalized: Same as above, but 
+                              normalized by the number of connected components
+                              of g. Note that this method always rounds down
+                              the result.
                               
         numberOfSimpleCycles  total number of simple cycles
                               in the graph
@@ -153,7 +164,7 @@ options: options (except -h) are always followed by a value.
                               bridges. I.e. count the number of 
                               biconnected components with only one edge.
                               
-        nomberOfBiconnectedComponents  number of biconnected components.
+        numberOfBiconnectedComponents  number of biconnected components.
         
         numberOfConnectedComponents    number of connected components.
         
@@ -166,15 +177,15 @@ options: options (except -h) are always followed by a value.
         maxCycleDegree        maximum cycle degree of a graph
         minCycleDegree        minimum cycle degree of a graph
         
-        maxLocalEasiness      maximum local easiness of a graph, or -1 if there 
-                              are more than A spanningTrees in some block of
-                              the graph (default 100). A can be set via 
-                              the option -a A
+        maxLocalEasiness      maximum local easiness of a graph, or -1 if
+                              there are more than A spanningTrees in some
+                              block of the graph (default 100). A can be set
+                              via the option -a A
                               
-        minLocalEasiness       minimum local easiness of a graph, or -1 if there 
-                              are more than A spanningTrees in all blocks of
-                              the graph (default 100). A can be set via 
-                              the option -a A
+        minLocalEasiness      minimum local easiness of a graph, or -1 if
+                              there are more than A spanningTrees in all
+                              blocks of the graph (default 100). A can be set
+                              via the option -a A
                               
         maxDegree             maximum vertex degree of a graph
         minDegree             minimum vertex degree of a graph
@@ -185,7 +196,8 @@ options: options (except -h) are always followed by a value.
                  spanningTreeListing)  
                  
      -r 'value': an Integer. Define the initial random seed. If the parameter
-                 is not set, use the current system time as initial random seed.
+                 is not set, use the current system time as initial random
+                 seed.
 
      -o 'style': output style of the graphs fulfilling the filter criterion
         graph, g        output format identical to input format (default)
