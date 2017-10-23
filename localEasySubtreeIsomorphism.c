@@ -83,7 +83,7 @@ struct BlockTree getBlockTreeT(struct Graph* g, struct ShallowGraphPool* sgp) {
 	}
 
 	// create output struct
-	struct BlockTree blockTree = {0};
+	struct BlockTree blockTree = {0,0,0,0,0};
 	blockTree.g = g;
 
 	// count number of roots in g, init storage
@@ -465,7 +465,10 @@ struct ShallowGraph* filterDuplicateSpanningTrees(struct ShallowGraph* sptrees, 
 
 
 static struct PostorderList* __getPOL() {
-	return malloc(sizeof(struct PostorderList));
+	struct PostorderList* result = malloc(sizeof(struct PostorderList));
+	result->postorder = NULL;
+	result->next = NULL;
+	return result;
 }
 
 /**
@@ -508,11 +511,17 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
 		sptTree.localSpanningTrees[v] = spanningTreeConverter(shallowSpanningtrees, mergedGraph, gp, sgp);
 
 		sptTree.localPostorders[v] = NULL;
+		struct PostorderList* tail = NULL;
 		for (struct Graph* localSpanningTree=sptTree.localSpanningTrees[v]; localSpanningTree!=NULL; localSpanningTree=localSpanningTree->next) {
 			struct PostorderList* tmp = __getPOL();
 			tmp->postorder = getPostorder(localSpanningTree, 0);
-			tmp->next = sptTree.localPostorders[v];
-			sptTree.localPostorders[v] = tmp;
+			if (sptTree.localPostorders[v] == NULL) {
+				sptTree.localPostorders[v] = tail = tmp;
+			} else {
+				// append at the end of the list
+				tail->next = tmp;
+				tail = tmp;
+			}
 		}
 
 		// garbage collection
@@ -534,7 +543,7 @@ struct SpanningtreeTree getSampledSpanningtreeTree(struct BlockTree blockTree, i
  * spanningTreesPerBlock must be >= 1
  */
 struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	struct SpanningtreeTree sptTree = {0};
+	struct SpanningtreeTree sptTree = {0,0,0,0,0,0,0};
 	sptTree.g = blockTree.g;
 	sptTree.nRoots = blockTree.nRoots;
 	sptTree.roots = blockTree.roots;
@@ -550,11 +559,18 @@ struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, stru
 		struct ShallowGraph* shallowSpanningtrees = listSpanningTrees(mergedGraph, sgp, gp);
 		sptTree.localSpanningTrees[v] = spanningTreeConverter(shallowSpanningtrees, mergedGraph, gp, sgp);
 
+		sptTree.localPostorders[v] = NULL;
+		struct PostorderList* tail = NULL;
 		for (struct Graph* localSpanningTree=sptTree.localSpanningTrees[v]; localSpanningTree!=NULL; localSpanningTree=localSpanningTree->next) {
 			struct PostorderList* tmp = __getPOL();
 			tmp->postorder = getPostorder(localSpanningTree, 0);
-			tmp->next = sptTree.localPostorders[v];
-			sptTree.localPostorders[v] = tmp;
+			if (sptTree.localPostorders[v] == NULL) {
+				sptTree.localPostorders[v] = tail = tmp;
+			} else {
+				// append at the end of the list
+				tail->next = tmp;
+				tail = tmp;
+			}
 		}
 
 		// garbage collection
@@ -607,7 +623,7 @@ void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp)
 		}
 		if (sptTree.localPostorders) {
 			if (sptTree.localPostorders[v]) {
-				struct PostorderList* tmp;
+				struct PostorderList* tmp = NULL;
 				for (struct PostorderList* l=sptTree.localPostorders[v]; l!=NULL; l=tmp) {
 					tmp = l->next;
 					free(l->postorder);
