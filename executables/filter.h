@@ -43,6 +43,7 @@ typedef enum {
 	spanningTreeEstimate,
 	spanningTreeListing,
 	nonisomorphicSpanningTrees,
+	sampledSpanningTreesFiltered,
 	nonisomorphicSampledSpanningTrees,
 	nonisomorphicLocallySampledSpanningTrees,
 	nonisomorphicLocallySampledSpanningTreesFiltered,

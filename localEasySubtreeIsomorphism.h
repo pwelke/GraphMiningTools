@@ -56,4 +56,6 @@ int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySampling(struct Grap
 int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySamplingWithFiltering(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 int getNumberOfSpanningTreesObtainedByLocalEasySamplingWithFiltering(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 int getNumberOfSpanningTreesObtainedByLocalEasySampling(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+
+int getNumberOfDifferentSpanningForestComponentsForKSamples(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 #endif

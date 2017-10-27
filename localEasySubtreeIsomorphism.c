@@ -1315,4 +1315,26 @@ int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySamplingWithFilterin
 	return numberOfNonisomorphicSpanningForestComponents;
 }
 
+/**
+ * Sample k spanning trees per connected component of g and return the number of
+ * different trees that come out.
+ * That is, in the simplest case that g is connected: Sample k spanning trees and
+ * see how many 'different' ones you got in the sense that they have different
+ * sets of edges.
+ */
+int getNumberOfDifferentSpanningForestComponentsForKSamples(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	int numberOfDifferentSpanningTreeComponents = 0;
 
+	// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
+	struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
+	sample = filterDuplicateSpanningTrees(sample, sgp);
+	for (struct ShallowGraph* t=sample; t!=NULL; t=t->next) {
+		++numberOfDifferentSpanningTreeComponents;
+	}
+
+	// avoid memory leaks, access to freed memory, and free unused stuff
+	dumpShallowGraphCycle(sgp, sample);
+
+	return numberOfDifferentSpanningTreeComponents;
+
+}

@@ -82,6 +82,14 @@ options: options (except -h) are always followed by a value.
                               of g. Note that this method always rounds down
                               the result.
                               
+        sampledSpanningTreesFiltered: Sample spanning trees as above, but ret-
+                              urn the number of different spanning trees in the
+                              sense that they have different edge sets. 
+                              This method counts the same objects as 
+                              locallySampledSpanningTreesNormalized below,
+                              while the raw -a parameter here would correspond
+                              to the result of locallySampledSpanningTrees.
+                              
         nonisomorphicLocallySampledSpanningTrees: Draw -a spanning trees for
                               each biconnected block of g and return the 
                               number of nonisomorphic spanning trees of g that

@@ -132,6 +132,10 @@ int main(int argc, char** argv) {
 				filter = nonisomorphicSpanningTrees;
 				break;
 			}
+			if (strcmp(optarg, "sampledSpanningTreesFiltered") == 0) {
+				filter = sampledSpanningTreesFiltered;
+				break;
+			}
 			if (strcmp(optarg, "nonisomorphicSampledSpanningTrees") == 0) {
 				filter = nonisomorphicSampledSpanningTrees;
 				break;
@@ -433,6 +437,9 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 		break;
 	case nonisomorphicSampledSpanningTrees:
 		measure = getNumberOfNonisomorphicSpanningForestComponentsForKSamples(g, additionalParameter, gp, sgp);
+		break;
+	case sampledSpanningTreesFiltered:
+		measure = getNumberOfDifferentSpanningForestComponentsForKSamples(g, additionalParameter, gp, sgp);
 		break;
 	case nonisomorphicLocallySampledSpanningTrees:
 		measure = getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySampling(g, additionalParameter, gp, sgp);
