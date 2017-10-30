@@ -265,6 +265,17 @@ void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree) {
  */
 int compareEdgesAbsolute(const struct VertexList* e, const struct VertexList* f) {
 	int es, ee, fs, fe = 0;
+//	if (e == NULL) {
+//		if (f == NULL) {
+//			return 0;
+//		} else {
+//			return -1;
+//		}
+//	} else {
+//		if (f == NULL) {
+//			return 1;
+//		}
+//	}
 	if (e->startPoint->number < e->endPoint->number) {
 		es = e->startPoint->number;
 		ee = e->endPoint->number;
@@ -351,7 +362,20 @@ int compareVertexListsGeneric(const struct VertexList* e1, const struct VertexLi
  * TODO Merge the generic code here with the code in cs_Compare.
  */
 int compareShallowGraphs(struct ShallowGraph* g, struct ShallowGraph* h, int (*compar)(const struct VertexList*, const struct VertexList*)) {
-	return compareVertexListsGeneric(g->edges, h->edges, compar);
+//	if (g->m == 0) {
+//		if (h->m == 0) {
+//			return 0;
+//		} else {
+//			return -1;
+//		}
+//	} else {
+//		if (h->m == 0) {
+//			return 1;
+//		} else {
+			return compareVertexListsGeneric(g->edges, h->edges, compar);
+//		}
+//	}
+
 }
 
 /**
@@ -441,6 +465,27 @@ struct ShallowGraph* filterSortedSpanningTreeList(struct ShallowGraph* l, int (*
 			result = g;
 			g = NULL;
 		}
+	}
+	dumpShallowGraphCycle(sgp, garbage);
+	return result;
+}
+
+
+static struct ShallowGraph* filterSingletonSpanningTrees(int* nSingletons, struct ShallowGraph* l, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* result = NULL;
+	struct ShallowGraph* garbage = NULL;
+	*nSingletons = 0;
+	for (struct ShallowGraph* g=l; g!=NULL; /* increment is done below */) {
+		struct ShallowGraph* next = g->next;
+		if (g->m == 0) {
+			g->next = garbage;
+			garbage = g;
+			++(*nSingletons);
+		} else {
+			g->next = result;
+			result = g;
+		}
+		g = next;
 	}
 	dumpShallowGraphCycle(sgp, garbage);
 	return result;
@@ -1323,10 +1368,17 @@ int getNumberOfNonisomorphicSpanningTreesObtainedByLocalEasySamplingWithFilterin
  * sets of edges.
  */
 int getNumberOfDifferentSpanningForestComponentsForKSamples(struct Graph* g, int k, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	int numberOfDifferentSpanningTreeComponents = 0;
 
-	// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
+	// sample k spanning trees
 	struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
+
+	// filter out, and count the spanning trees of singleton vertices, which are empty edge lists. (otherwise boom)
+	// there are exactly k duplicate empty spanning trees per singleton
+	int numberOfSingletons;
+	sample = filterSingletonSpanningTrees(&numberOfSingletons, sample, sgp);
+	int numberOfDifferentSpanningTreeComponents = numberOfSingletons / k;
+
+	// filter out duplicate spanning trees and count remaining ones.
 	sample = filterDuplicateSpanningTrees(sample, sgp);
 	for (struct ShallowGraph* t=sample; t!=NULL; t=t->next) {
 		++numberOfDifferentSpanningTreeComponents;
@@ -1336,5 +1388,4 @@ int getNumberOfDifferentSpanningForestComponentsForKSamples(struct Graph* g, int
 	dumpShallowGraphCycle(sgp, sample);
 
 	return numberOfDifferentSpanningTreeComponents;
-
 }
