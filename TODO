@@ -1,28 +1,34 @@
-TODO
+# TODO
 
-- [X]  why are the 'boosted' PSFs not boosting?
 - [ ]  fix bug in sampleSubtrees.c
 - [ ]  buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
-- [X]  speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
-- [X]  separate sampling methods from treeSamplingMain.c into a lib file
 - [ ]  remove countCycleDegree.c and store the only important functionality somewhere (i.e. cycle degrees of all vertices)
-- [ ]  treeEnumeration might be too slow, as we do not enumerate perfectly
-- [X]  extract weisfeiler lehman from treesampling into new executable
 - [ ]  make optimized vertex and edge counting methods work with importance embedding operator
 - [ ]  countSpanningtrees (and most likely listSpanningTrees seem to not work) There is some memory issue.
-- [X]  getSampledSpanningtreeTree() should filter duplicate sampled spanning trees.
-- [ ]  an option to mine only frequent paths in lwg
 - [ ]  Canonical String computation without recursion combined with center computation. (See Maurice Klaffehns Projektgruppe)
-- [ ]  Gaston candidate generation?
+- [ ]  tree enumeration method update
+		- [ ]  Gaston candidate generation?
+		- [ ]  treeEnumeration might be too slow, as we do not enumerate perfectly
+		- [ ]  an option to mine only frequent paths in lwg
 - [ ]  different evaluation strategies: make dfs work again, implement the funny gaston dfs, implement the greedy dfs idea from the 
        min-hashing paper for frequent subtree minig, ...
+- [ ]  boosted mining should always select a root smartly, e.g., it should not be the center vertex of a neighborhood graph, but maybe a boring non-articulation vertex in some large biconnected component
+- [ ]  build a treepattern enumerator
+		- [ ]  input is a single graph with all 'frequent'/ allowed vertex and edge labels
+		- [ ]  the embedding op is a mock that always returns yes.
 
-THEORY
+# THEORY
 
 - is it useful to choose particular roots for subgraph iso checks, e.g. canonical roots?
 
 
-DONE 
+# DONE 
+
+- [X]  why are the 'boosted' PSFs not boosting?
+- [X]  speedup of labeledSubtreeIsomorphism by merging bipartite matching inside the subtree iso
+- [X]  separate sampling methods from treeSamplingMain.c into a lib file
+- [X]  extract weisfeiler lehman from treesampling into new executable
+- [X]  getSampledSpanningtreeTree() should filter duplicate sampled spanning trees.
 
 - a unified levelwise mining executable that does 
 	- tree -> tree
