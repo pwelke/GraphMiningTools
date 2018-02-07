@@ -17,7 +17,7 @@ Parameters:
              printing. 
   
   -x METHOD:
-         erdosrenyi: ER Model graphs
+         erdosRenyi: ER Model graphs
            -p double: edge probability (default 0.5)
            -m double: (expected) edge multiplicity. If set, p will be
                      computed for each graph, such that the expected 
