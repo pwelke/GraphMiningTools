@@ -8,8 +8,8 @@ CC = gcc
 # CPPFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -ggdb -std=gnu99 -fsanitize=undefined
 
 # optimized compiler flags
-CPPLINKFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -std=gnu99 -lm -O2 -D NDEBUG -Wl,-O1
-CPPFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -std=gnu99 -O2 -D NDEBUG
+CPPLINKFLAGS = -g -Wall -Wextra -Wunreachable-code -Wshadow -Wformat=2 -pedantic -W -std=gnu99 -lm -O2 -D NDEBUG -Wl,-O1
+CPPFLAGS = -g -Wall -Wextra -Wunreachable-code -Wshadow -Wformat=2 -pedantic -W -std=gnu99 -O2 -D NDEBUG
 
 # technicalities
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
