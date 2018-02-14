@@ -21,18 +21,18 @@ static char isCycleFree(struct Graph* branching, struct VertexList* e, struct Li
 	if (rv == rw) {
 		return 0;
 	} else {
-		struct VertexList* e = getVertexList(lp);
+		struct VertexList* f = getVertexList(lp);
 		if (rv->d < rw->d) {
-			e->startPoint = rv;
-			e->endPoint = rw;
-			addEdge(rv, e);
+			f->startPoint = rv;
+			f->endPoint = rw;
+			addEdge(rv, f);
 			if (rv->d == rw->d) {
 				++rw->d;
 			}
 		} else {
-			e->startPoint = rw;
-			e->endPoint = rv;
-			addEdge(rw, e);
+			f->startPoint = rw;
+			f->endPoint = rv;
+			addEdge(rw, f);
 			if (rv->d == rw->d) {
 				++rv->d;
 			}
