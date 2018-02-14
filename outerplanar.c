@@ -582,11 +582,11 @@ struct BBTree* createBlockAndBridgeTree(struct ShallowGraph* list, struct Graph 
 		/* check if to remove the vertex. if so, dump vertex and all edges dangling at it.
 		 * The corresponding entry in bbTree->vertices will be NULL */
 		if (removeVertex) {
-			struct VertexList* e;
-			struct VertexList* tmp;
-			for (e=bbTree->vertices[i]->neighborhood; e; e=tmp) {
-				tmp = e->next;
-				dumpVertexList(gp->listPool, e);
+			struct VertexList* f;
+			struct VertexList* tmp2;
+			for (f=bbTree->vertices[i]->neighborhood; f; f=tmp2) {
+				tmp2 = f->next;
+				dumpVertexList(gp->listPool, f);
 			}
 			dumpVertex(gp->vertexPool, bbTree->vertices[i]);
 			bbTree->vertices[i] = NULL;
