@@ -348,7 +348,7 @@ int main(int argc, char** argv) {
 		localEasyPatternsFast, localEasyPatternsResampling,
 		treePatternsResampling,
 		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
-		minHashTree, minHashRelImportant, minHashAbsImportant, minHashAndOr,
+		minHashTree, minHashRelImportant, minHashAbsImportant,
 		dotApproxForTrees, dotApproxLocalEasy,
 		dfsForTrees, latticePathForTrees, latticeLongestPathForTrees, dilworthsCoverForTrees,
 		dfsForLocalEasy, latticePathForLocalEasy, latticeLongestPathForLocalEasy, dilworthsCoverForLocalEasy,
@@ -466,10 +466,6 @@ int main(int argc, char** argv) {
 				method = minHashAbsImportant;
 				break;
 			}
-			if (strcmp(optarg, "minHashAndOr") == 0) {
-				method = minHashAndOr;
-				break;
-			}
 			if (strcmp(optarg, "dotApproxForTrees") == 0) {
 				method = dotApproxForTrees;
 				break;
@@ -571,7 +567,6 @@ int main(int argc, char** argv) {
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
-	case minHashAndOr:
 	case dotApproxForTrees:
 	case dotApproxLocalEasy:
 	case dfsForTrees:
@@ -617,7 +612,6 @@ int main(int argc, char** argv) {
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
-	case minHashAndOr:
 		patternPoset = buildTreePosetFromGraphDB(patterns, nPatterns, gp, sgp);
 		free(patterns); // we do not need this array any more. the graphs are accessible from patternPoset
 		permutations = malloc(sketchSize * sizeof(int*));
@@ -725,9 +719,6 @@ int main(int argc, char** argv) {
 			case minHashRelImportant:
 				fingerprints = (struct IntSet*)fastMinHashForRelImportantTrees(g, evaluationPlan, relImportance, gp);
 				break;
-			case minHashAndOr:
-				fingerprints = (struct IntSet*)fastMinHashForAndOr(g, evaluationPlan, gp);
-				break;
 			case dotApproxForTrees:
 				fingerprints = (struct IntSet*)fullEmbeddingProjectionApproximationForTrees(g, evaluationPlan, randomProjection, absImportance, gp);
 				break;
@@ -766,7 +757,6 @@ int main(int argc, char** argv) {
 			case minHashTree:
 			case minHashAbsImportant:
 			case minHashRelImportant:
-			case minHashAndOr:
 				printIntArrayNoId((int*)fingerprints, evaluationPlan.sketchSize);
 				free(fingerprints);
 				break;
@@ -792,7 +782,6 @@ int main(int argc, char** argv) {
 	case minHashTree:
 	case minHashAbsImportant:
 	case minHashRelImportant:
-	case minHashAndOr:
 	case treePatternsFast:
 	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:

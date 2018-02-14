@@ -98,11 +98,6 @@ Options:
                            be specified via -i (default 0.5). The current 
                            version only works for  tree patterns and forest 
                            databases. 
-    
-    minHashAndOr:          Same as above with embedding operator being a 
-                           funky gap amplificator. Only works for exactly 16 
-                           sampled trees per graph. Hat tip to the input 
-                           agnostic algorithm guy that cries in vain.  
                            
     dotApproxForTrees:     Given a forest database (as above) and some tree 
                            patterns, compute an approximation of the 

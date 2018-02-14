@@ -132,12 +132,6 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectIterativeBFSForForestDB;
 				break;
 			}
-			if (strcmp(optarg, "andOr") == 0) {
-				initMining = &initIterativeBFSForForestDB;
-				embeddingOperator = &andorEmbeddingOperator;
-				garbageCollector = &garbageCollectIterativeBFSForForestDB;
-				break;
-			}
 			// operators for arbitrary graph transaction databases
 			if (strcmp(optarg, "exactGlobalTreeEnumeration") == 0) {
 				initMining = &initIterativeBFSForAllGlobalTreeEnumerationExactMining;

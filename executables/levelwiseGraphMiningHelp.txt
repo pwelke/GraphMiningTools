@@ -49,10 +49,6 @@ Options:
                  of connected components of a graph to match it. Works 
                  only for forest transaction databases.
                  
-             andOr:  and or gap amplification. only works for exactly 16
-                 sampled spanning trees. Works only for forest 
-                 transaction databases.
-                 
              probabilisticTreeSampling: Probabilistic Subtree Features.
                  Works for arbitrary graph transaction 
                  databases with polynomial delay. However, might result in
