@@ -188,9 +188,10 @@ int main(int argc, char** argv) {
 	/* iterate over all graphs in the database */
 	for (i=0; i<numberOfGeneratedGraphs; ++i) {
 		int n = rand() % (upperBoundVertices - lowerBoundVertices) + lowerBoundVertices;
+
 		/* calculate p, if m option was given */
 		switch (generator) {
-		struct Graph* core = NULL;
+		struct Graph* core;
 		case erdosrenyi:
 			if ((mParameter > 0) && (n > 1)) {
 				pParameter = ( 2.0 * mParameter ) / (n - 1.0);

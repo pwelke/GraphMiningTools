@@ -606,7 +606,7 @@ int main(int argc, char** argv) {
 	int* randomProjection = NULL;
 	switch (method) {
 	// local variables
-	struct Graph* patternPoset = NULL;
+	struct Graph* patternPoset;
 	int** permutations;
 	// cases
 	case minHashTree:
