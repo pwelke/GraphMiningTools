@@ -24,12 +24,6 @@ TPKHELP =
 $(TPKNAME): $(TPKHELP) $(TPKOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
-LWMNAME = lwm
-LWMOBJECTS = $(OBJECTS) ./executables/levelwiseTreesetMiningMain.o
-LWMHELP = ./executables/levelwiseTreesetMiningMainHelp.help
-$(LWMNAME): $(LWMHELP) $(LWMOBJECTS)
-	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
-
 LWGNAME = lwg
 LWGOBJECTS = $(OBJECTS) ./executables/levelwiseGraphMiningMain.o
 LWGHELP = ./executables/levelwiseGraphMiningHelp.help
@@ -126,7 +120,7 @@ L2UHELP = ./executables/labeled2unlabeledMainHelp.help
 $(L2UNAME): $(L2UHELP) $(L2UOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
-ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(LWMNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(PENAME) $(GFCNAME)
+ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(PENAME) $(GFCNAME)
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
