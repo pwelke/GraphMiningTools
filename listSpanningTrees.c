@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <limits.h>
-#include <malloc.h>
 
 #include "searchTree.h"
 #include "cs_Tree.h"

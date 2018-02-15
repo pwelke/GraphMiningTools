@@ -1,5 +1,6 @@
 #include <stddef.h>
-#include <malloc.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "graph.h"
 #include "cachedGraph.h"

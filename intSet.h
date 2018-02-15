@@ -1,6 +1,8 @@
 #ifndef _INTSET_H_
 #define _INTSET_H_
 
+#include <stdio.h>
+
 struct IntElement{
 	int value;
 	struct IntElement* next;

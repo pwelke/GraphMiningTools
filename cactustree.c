@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <malloc.h>
 #include <limits.h>
+#include <stdio.h>
 
 #include "graph.h"
 #include "listComponents.h"

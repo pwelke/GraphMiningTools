@@ -2,7 +2,7 @@
  * Implementation of an algorithm to find a minimum number of paths covering all vertices in a poset.
  */
 
-#include <malloc.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <limits.h>
 #include <math.h>

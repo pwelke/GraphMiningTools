@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <malloc.h>
 #include "wilsonsAlgorithm.h"
 #include "graphPrinting.h" 
 

@@ -1,6 +1,6 @@
 /** Compute the Hamiltonian path of a cactus graph or decide that there is none. */
 
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "graph.h"
 #include "listComponents.h"

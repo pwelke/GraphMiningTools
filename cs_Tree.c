@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <malloc.h>
 
 #include "listComponents.h"
 #include "cs_Parsing.h"

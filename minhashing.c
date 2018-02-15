@@ -2,7 +2,6 @@
 #define _GNU_SOURCE
 
 #include <stdlib.h>
-#include <malloc.h>
 
 #include "graph.h"
 #include "searchTree.h"

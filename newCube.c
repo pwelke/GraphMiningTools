@@ -1,7 +1,7 @@
 #include "newCube.h"
 
 #include <assert.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 
 

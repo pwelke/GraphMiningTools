@@ -6,6 +6,7 @@
  */
 
 #include <stddef.h>
+#include <stdlib.h>
 
 #include "subtreeIsoUtils.h"
 #include "subtreeIsomorphism.h"

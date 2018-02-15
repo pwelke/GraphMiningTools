@@ -8,8 +8,6 @@
 #ifndef NEWCUBE_H_
 #define NEWCUBE_H_
 
-#include <malloc.h>
-
 #include "bitSet.h"
 #include "graph.h"
 #include "inttypes.h"

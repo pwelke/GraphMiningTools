@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "graph.h"
 #include "cs_Parsing.h"

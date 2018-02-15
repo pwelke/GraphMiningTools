@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <malloc.h>
 
 #include "../listComponents.h"
 #include "../loading.h"

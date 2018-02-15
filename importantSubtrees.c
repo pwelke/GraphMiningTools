@@ -1,6 +1,6 @@
 
 #include <stddef.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <assert.h>
 
 #include "graph.h"

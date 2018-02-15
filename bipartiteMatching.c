@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <limits.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "graph.h"
 #include "bipartiteMatching.h"
