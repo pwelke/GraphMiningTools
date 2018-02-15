@@ -1,5 +1,7 @@
+#include <stdio.h>
+
 #include "graph.h"
-#include "stdio.h"
+#include "connectedComponents.h"
 
 struct ShallowGraph* getComp(struct Vertex* v, int compNumber, struct ShallowGraph* comp, struct ListPool* lp) {
 	struct VertexList* e;
