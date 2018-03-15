@@ -71,7 +71,7 @@ the label of the endpoint defines the label of the ne vertex added
 
 TODO there is speedup to gain here. The appending at the moment runs in o(#candidates * n).
  */
-struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
+struct Graph* extendPatternAllWays(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
 	struct Graph* rho = NULL;
 	struct VertexList* e;
 	for (e=candidateEdges->edges; e!=NULL; e=e->next) {
@@ -83,7 +83,58 @@ struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges
 				h->next = rho;
 				rho = h;
 			}
-		}	
+		}
+	}
+	return rho;
+}
+
+
+/**
+Take a tree and add any edge in the candidate set to the leaves and their neighbors.
+This is a speedup compared to the extendPatternAllWays() method, as it is complete (i.e., all trees are
+reachable from the empty tree by consecutive extension) but some 'inner' vertices are not extended on.
+
+candidateEdges is expected to contain edges that have a nonNULL ->startPoint and ->endPoint.
+The label of startPoint determines, which vertex can be used for appending the edge,
+the label of the endpoint defines the label of the ne vertex added
+
+TODO there is speedup to gain here. The appending at the moment runs in o(#candidates * #leaves).
+ */
+struct Graph* extendPattern(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
+
+//struct Graph* extendPatternAtLeaves(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp) {
+	struct Graph* rho = NULL;
+
+	// init visited flags
+	for (int v=0; v<g->n; ++v) {
+		g->vertices[v]->visited = 0;
+	}
+
+	// mark leaves and neighbors of leaves
+	for (int v=0; v<g->n; ++v) {
+		if (isLeaf(g->vertices[v])) {
+			g->vertices[v]->visited = 1;
+			g->vertices[v]->neighborhood->endPoint->visited = 1;
+		}
+	}
+
+	// special case: singleton vertex should be extended, as well (even though it is not a leaf)
+	if (g->n == 1) {
+		g->vertices[0]->visited = 1;
+	}
+
+	// add refinement edges only at leaves and neighbors of leaves
+	for (int v=0; v<g->n; ++v) {
+		if (g->vertices[v]->visited) {
+			for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
+				/* if the labels are compatible */
+				if (strcmp(g->vertices[v]->label, e->startPoint->label) == 0) {
+					struct Graph* h = refinementGraph(g, v, e, gp);
+					h->next = rho;
+					rho = h;
+				}
+			}
+		}
 	}
 	return rho;
 }
