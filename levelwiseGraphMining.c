@@ -731,7 +731,8 @@ void extendPreviousLevel(// input
 
 	struct Vertex* currentLevelCandidateSearchTree = getVertex(gp->vertexPool);
 
-	int nAllExtensionsPreApriori = 0;
+	int nAllGeneratedExtensions = 0;
+	int nAllUniqueGeneratedExtensions = 0;
 	int nAllExtensionsPostApriori = 0;
 	int nAllExtensionsPostIntersectionFilter = 0;
 	int nAddedToOutput = 0;
@@ -750,7 +751,7 @@ void extendPreviousLevel(// input
 
 		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
 			// count number of generated extensions
-			++nAllExtensionsPreApriori;
+			++nAllGeneratedExtensions;
 
 			/* filter out patterns that were already enumerated as the extension of some other pattern
 				and are in the search tree */
@@ -762,6 +763,7 @@ void extendPreviousLevel(// input
 			if (previousNumberOfDistinctPatterns == currentLevelCandidateSearchTree->d) {
 				aprioriParentIdSet = NULL;
 			} else {
+				++nAllUniqueGeneratedExtensions;
 				aprioriParentIdSet = aprioriCheckExtensionReturnList(extension, previousLevelSearchTree, gp, sgp);
 			}
 
@@ -801,9 +803,13 @@ void extendPreviousLevel(// input
 	}
 
 	dumpSearchTree(gp, currentLevelCandidateSearchTree);
-	fprintf(logStream, "generated extensions: %i\napriori filtered extensions: %i\nintersection filtered extensions: %i\n", nAllExtensionsPreApriori, nAllExtensionsPostApriori, nAllExtensionsPostIntersectionFilter);
+	fprintf(logStream, "generated extensions: %i\n"
+			"unique extensions: %i\n"
+			"apriori filtered extensions: %i\n"
+			"intersection filtered extensions: %i\n",
+			nAllGeneratedExtensions, nAllUniqueGeneratedExtensions, nAllExtensionsPostApriori, nAllExtensionsPostIntersectionFilter);
 
-	assert(nAddedToOutput + nDumped == nAllExtensionsPreApriori);
+	assert(nAddedToOutput + nDumped == nAllGeneratedExtensions);
 }
 
 
@@ -1632,3 +1638,124 @@ void garbageCollectIterativeBFSForLocalEasy(void** y, struct GraphPool* gp, stru
 	free(dataStructures->sptTrees);
 	free(dataStructures);
 }
+
+
+static struct SubtreeIsoDataStoreList* initPatternEnumerationForVertices(struct Graph** spanningTreesDB, size_t nGraphs, struct Graph* h, int patternId) {
+	struct SubtreeIsoDataStoreList* actualSupport = getSubtreeIsoDataStoreList();
+	h->number = patternId;
+	for (size_t i=0; i<nGraphs; ++i) {
+		struct SubtreeIsoDataStore data = {0};
+		data.g = spanningTreesDB[i];
+		data.h = h;
+		data.postorder = NULL;
+		data.foundIso = 1;
+		appendSubtreeIsoDataStore(actualSupport, data);
+	}
+	return actualSupport;
+}
+
+
+/**
+ * create data structures for levelwise mining for subtree and iterative subtree embedding operator
+ * for all frequent vertices in the db.
+ * the ids of the frequent vertices in the search tree might be altered to ensure a sorted list of support sets.
+ * To avoid leaks, the initial frequentVertices search tree must not be dumped until the end of all times.
+ */
+static struct SubtreeIsoDataStoreList* createSingletonPatternSupportSetsForPatternEnumeration(struct Graph** db, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)sgp; // unused
+	// init levelwise search data structures for patterns with one vertex
+
+	// data structures for iterative levelwise search
+	struct SubtreeIsoDataStoreList* vertexSupportSets = NULL;
+	struct SubtreeIsoDataStoreList* vertexSupportSetsTail = NULL;
+
+	int id = 1;
+	for (struct VertexList* e=frequentVertices->neighborhood; e!=NULL; e=e->next) {
+
+		struct Graph* candidate = createGraph(1, gp);
+		candidate->vertices[0]->label = e->label;
+		e->endPoint->lowPoint = id;
+
+		struct SubtreeIsoDataStoreList* vertexSupport = initPatternEnumerationForVertices(db, nGraphs, candidate, id);
+
+		if (vertexSupportSetsTail != NULL) {
+			vertexSupportSetsTail->next = vertexSupport;
+			vertexSupportSetsTail = vertexSupport;
+		} else {
+			vertexSupportSets = vertexSupport;
+			vertexSupportSetsTail = vertexSupport;
+		}
+		++id;
+	}
+	return vertexSupportSets;
+}
+
+
+size_t initIterativeBFSForPatternEnumeration(// input
+		size_t threshold,
+		double importance,
+		// output
+		struct Vertex** initialFrequentPatterns,
+		struct SubtreeIsoDataStoreList** supportSets,
+		struct ShallowGraph** extensionEdgeList,
+		void** dataStructures,
+		// printing
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		// pools
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
+
+	(void)importance; // unused
+
+	struct Graph** db = NULL;
+	int nGraphs = getDB(&db);
+
+	struct Vertex* frequentVertices;
+	struct Vertex* frequentEdges;
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+
+	/* convert frequentEdges to ShallowGraph of extension edges */
+	struct Graph* extensionEdgesVertexStore = NULL;
+	struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
+	dumpSearchTree(gp, frequentEdges);
+
+	// levelwise search for patterns with one vertex:
+	struct SubtreeIsoDataStoreList* frequentVerticesSupportSets = createSingletonPatternSupportSetsForPatternEnumeration(db, nGraphs, frequentVertices, gp, sgp);
+	printStringsInSearchTree(frequentVertices, patternStream, sgp);
+	printSubtreeIsoDataStoreListsSparse(frequentVerticesSupportSets, featureStream);
+
+	// store pointers for final garbage collection
+	struct IterativeBfsForForestsDataStructures* x = malloc(sizeof(struct IterativeBfsForForestsDataStructures));
+	x->db = db;
+	x->nGraphs = nGraphs;
+	x->extensionEdges = extensionEdges;
+	x->extensionEdgesVertexStore = extensionEdgesVertexStore;
+	x->initialFrequentPatterns = frequentVertices;
+
+	// 'return'
+	*initialFrequentPatterns = frequentVertices;
+	*supportSets = frequentVerticesSupportSets;
+	*extensionEdgeList = extensionEdges;
+	*dataStructures = x;
+	return 1; // returned patterns have 1 vertex
+}
+
+
+
+void garbageCollectIterativeBFSForPatternEnumeration(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct IterativeBfsForForestsDataStructures* dataStructures = (struct IterativeBfsForForestsDataStructures*)y;
+
+	dumpSearchTree(gp, dataStructures->initialFrequentPatterns);
+	dumpShallowGraphCycle(sgp, dataStructures->extensionEdges);
+	dumpGraph(gp, dataStructures->extensionEdgesVertexStore);
+
+	for (int i=0; i<dataStructures->nGraphs; ++i) {
+		dumpGraph(gp, dataStructures->db[i]);
+	}
+
+	free(dataStructures->db);
+	free(dataStructures);
+}
+

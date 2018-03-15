@@ -193,6 +193,13 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectIterativeBFSForLocalEasy;
 				break;
 			}
+
+			if (strcmp(optarg, "treeEnumeration") == 0) {
+				initMining = &initIterativeBFSForPatternEnumeration;
+				embeddingOperator = &alwaysReturnTrue;
+				garbageCollector = &garbageCollectIterativeBFSForPatternEnumeration;
+				break;
+			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
 			return EXIT_FAILURE;
 		case 'i':

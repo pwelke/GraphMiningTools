@@ -144,6 +144,27 @@ struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore
 }
 
 
+/**
+ * Embedding operator for
+ * any object h
+ * any transaction data
+ *
+ * that always returns true.
+ *
+ * It is intended e.g. for enumeration of all tree patterns up to isomorphism.
+ */
+struct SubtreeIsoDataStore alwaysReturnTrue(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)importance; // unused
+	(void)sgp; // unused
+	(void)gp; // unused
+	struct SubtreeIsoDataStore result = data;
+	result.h = h;
+	result.S = NULL;
+	result.foundIso = 1;
+	return result;
+}
+
+
 
 // EXPERIMENTAL
 
