@@ -409,7 +409,7 @@ void iterativeDFS(struct SubtreeIsoDataStoreList* candidateSupport,
 	struct Graph* refinements = NULL;
 	if (candidate->n < maxPatternSize) {
 		// crazy ineffective but not bottleneck right now.
-		refinements = extendPattern(candidate, frequentEdges, gp);
+		refinements = extendPatternOnLeaves(candidate, frequentEdges, gp);
 		refinements = basicFilter(refinements, processedPatterns, gp, sgp); // adds all refinements, valid or not, to processedPatterns
 	}
 
@@ -746,7 +746,7 @@ void extendPreviousLevel(// input
 		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
 
 		// extend frequent pattern
-		struct Graph* listOfExtensions = extendPattern(frequentPattern, extensionEdges, gp);
+		struct Graph* listOfExtensions = extendPatternOnLeaves(frequentPattern, extensionEdges, gp);
 //		struct Graph* listOfExtensions = extendPatternByLargerEdgesTMP(frequentPattern, extensionEdges, gp);
 
 		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
