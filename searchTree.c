@@ -127,10 +127,11 @@ static char addStringToSearchTreeSetDRec(struct Vertex* root, struct VertexList*
 	}
 }
 
-
 /**
- * Recursively add a string represented by a list of edges to a search tree given by its root. Set ->d value of last vertex in that 
- * string in the search tree.
+ * Add a string to a searchtree multiple times.
+ *
+ * Recursively add a string represented by a list of edges to a search tree given by its root.
+ * Add visited to the ->visited of the string in the search tree.
  * The string is consumed
  * This method DOES NOT INCREASE the current number of strings contained in the search tree.
  * You have to maintain the correct number of strings in the search tree yourself.
@@ -138,6 +139,57 @@ static char addStringToSearchTreeSetDRec(struct Vertex* root, struct VertexList*
  */
 char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int d, struct GraphPool* p) {
 	char isNew = addStringToSearchTreeSetDRec(root, edge, d, root->lowPoint + 1, p);
+	root->lowPoint += isNew;
+	return isNew;
+}
+
+
+static char addStringToSearchTreeSetVisitedRec(struct Vertex* root, struct VertexList* edge, int visited, int id, struct GraphPool* p) {
+
+	/* if edge == NULL, stop recursion, remember, that some string ends here */
+	if (edge == NULL) {
+		root->visited += visited;
+		if (root->visited == visited) {
+			root->lowPoint = id;
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		struct VertexList* idx;
+		for (idx=root->neighborhood; idx; idx=idx->next) {
+			/* if the next label is already in the tree, continue recursively */
+			if (strcmp(idx->label, edge->label) == 0) {
+				char isNew = addStringToSearchTreeSetVisitedRec(idx->endPoint, edge->next, visited, id, p);
+				/* edges dangling at edge are consumed or dumped by the following recursion steps */
+				edge->next = NULL;
+				dumpVertexList(p->listPool, edge);
+				return isNew;
+			}
+		}
+
+		/* otherwise add the current edge to the tree and continue recursively */
+		idx = edge->next;
+		edge->startPoint = root;
+		edge->endPoint = getVertex(p->vertexPool);
+		addEdge(root, edge);
+		return addStringToSearchTreeSetVisitedRec(edge->endPoint, idx, visited, id, p);
+	}
+}
+
+
+/**
+ * Add a string to a searchtree multiple times.
+ *
+ * Recursively add a string represented by a list of edges to a search tree given by its root.
+ * Add visited to the ->visited of the string in the search tree.
+ * The string is consumed
+ * This method DOES NOT INCREASE the current number of strings contained in the search tree.
+ * You have to maintain the correct number of strings in the search tree yourself.
+ * However, it returns 1, if the string was not contained in the trie before and 0 otherwise.
+ */
+char addStringToSearchTreeSetVisited(struct Vertex* root, struct VertexList* edge, int visited, struct GraphPool* p) {
+	char isNew = addStringToSearchTreeSetVisitedRec(root, edge, visited, root->lowPoint + 1, p);
 	root->lowPoint += isNew;
 	return isNew;
 }
@@ -262,6 +314,35 @@ struct Vertex* addToSearchTree(struct Vertex* root, struct ShallowGraph* strings
 		root->d += addStringToSearchTree(root, idx->edges, gp);
 		root->number += 1;
 
+		idx->edges = NULL;
+	}
+
+	dumpShallowGraphCycle(sgp, strings);
+
+	return root;
+}
+
+
+/**
+This function adds a NULL terminated list of ShallowGraphs to a search tree likeish structure
+given by its root. The list is consumed and dumped.
+
+The multiplicity of each string in strings must be indicated by string->data and will be added to the
+->visited of the string in the search tree and to root->number to indicate the number of elements
+in the multiset represented by the search tree.
+
+The resulting structure is a tree rooted at the return value where a path from the root
+to some vertex v in the tree represents v->visited many strings.
+
+root->number gives the size of strings, root->d gives the number of unique elements in strings.
+
+ */
+struct Vertex* addMultiSetToSearchTree(struct Vertex* root, struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph *idx;
+
+	for (idx=strings; idx; idx=idx->next) {
+		root->d += addStringToSearchTreeSetVisited(root, idx->edges, idx->data, gp);
+		root->number += idx->data;
 		idx->edges = NULL;
 	}
 

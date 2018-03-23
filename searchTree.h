@@ -18,6 +18,7 @@ int compInfoComparison(const void* e1, const void* e2);
 struct Vertex* buildSearchTree(struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 char addStringToSearchTree(struct Vertex* root, struct VertexList* edge, struct GraphPool* p);
 char addStringToSearchTreeSetD(struct Vertex* root, struct VertexList* edge, int d, struct GraphPool* p);
+char addStringToSearchTreeSetVisited(struct Vertex* root, struct VertexList* edge, int visited, struct GraphPool* p);
 void dumpSearchTree(struct GraphPool* p, struct Vertex* root);
 void printSearchTree(struct Vertex* root, int level);
 void printStringsInSearchTree(struct Vertex* root, FILE* stream, struct ShallowGraphPool* sgp);
@@ -26,14 +27,14 @@ int streamBuildSearchTree(FILE* stream, struct Vertex* root, int bufferSize, str
 int containsString(struct Vertex* root, struct ShallowGraph* string);
 int getID(struct Vertex* root, struct ShallowGraph* string);
 
-
 struct ShallowGraph* listStringsInSearchTree(struct Vertex* root, struct ShallowGraphPool* sgp);
 
 struct ShallowGraph* streamReadPatterns(FILE* stream, int bufferSize, int* number, struct ShallowGraphPool* sgp);
 struct ShallowGraph* streamReadPatternsAndTheirNumber(FILE* stream, int bufferSize, int* number, int* nPatterns, struct ShallowGraphPool* sgp);
 
-
 struct Vertex* addToSearchTree(struct Vertex* root, struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct Vertex* addMultiSetToSearchTree(struct Vertex* root, struct ShallowGraph* strings, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+
 void mergeSearchTrees(struct Vertex* globalTree, struct Vertex* localTree, int divisor, struct compInfo* results, int* pos, struct Vertex* trueRoot, int depth, struct GraphPool* p);
 void shallowMergeSearchTrees(struct Vertex* globalTree, struct Vertex* localTree, int divisor, struct compInfo* results, int* pos, struct Vertex* trueRoot, int depth, struct GraphPool* p);
 void resetToUnique(struct Vertex* root);
