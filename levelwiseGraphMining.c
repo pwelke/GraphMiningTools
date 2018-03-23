@@ -746,6 +746,7 @@ void extendPreviousLevel(// input
 		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
 
 		// extend frequent pattern
+//		struct Graph* listOfExtensions = extendPatternOnOuterShells(frequentPattern, extensionEdges, gp, sgp);
 		struct Graph* listOfExtensions = extendPatternOnLeaves(frequentPattern, extensionEdges, gp);
 //		struct Graph* listOfExtensions = extendPatternByLargerEdgesTMP(frequentPattern, extensionEdges, gp);
 
@@ -863,7 +864,7 @@ struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 			dumpSubtreeIsoDataStoreList(currentActualSupport);
 		} else {
 			// mark h as frequent
-			candidate->activity = 1;
+			candidate->activity = currentActualSupport->size;
 			// add to output list, maintaining order. necessary
 			if (actualSupportListsTail) {
 				actualSupportListsTail->next = currentActualSupport;
@@ -895,7 +896,8 @@ struct SubtreeIsoDataStoreList* iterativeBFSOneLevel(// input
 		} else {
 			++nAllFrequentExtensions;
 			struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
-			addToSearchTree(*currentLevelSearchTree, cString, gp, sgp);
+			cString->data = candidate->activity;
+			addMultiSetToSearchTree(*currentLevelSearchTree, cString, gp, sgp);
 			candidate->number = (*currentLevelSearchTree)->lowPoint;
 		}
 		candidate = tmp;
