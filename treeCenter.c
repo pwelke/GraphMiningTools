@@ -3,6 +3,7 @@
 
 #include "cs_Compare.h"
 #include "cs_Tree.h"
+#include "vertexQueue.h"
 #include "treeCenter.h"
 
 /**
@@ -155,4 +156,44 @@ int* treeCenter(struct Graph* tree) {
 		__moveCenter(tree->vertices[0], tree->vertices[0] /*NULL*/, 0, 0, centers);	
 	}
 	return centers;
+}
+
+
+/**
+ * Compute the distances of the vertices in tree to center and store them in ->lowPoints.
+ * The algorithm uses (and initializes) ->lowPoint's of vertices in tree and ->used's of
+ * VertexLists. Its runtime is O(n).
+ * It returns the largest distance to the center, i.e.,
+ * \[ \max_{v \in V(G)} \min_{c \in C(G)} d(v, c) \]
+ * where C(G) is the set of center vertices of the input tree g.
+ */
+int computeDistanceToCenter(struct Graph* g, struct ShallowGraphPool* sgp) {
+
+	struct ShallowGraph* queue = getShallowGraph(sgp);
+
+	int* center = treeCenter(g);
+	for (int i=1; i<center[0]; ++i) {
+		addToVertexQueue(g->vertices[center[i]], queue, sgp);
+		g->vertices[center[i]]->lowPoint = 0;
+	}
+	free(center);
+
+	for (int v=0; v<g->n; ++v) {
+		g->vertices[v]->lowPoint = -1;
+	}
+
+	int depth = 0;
+	for (struct Vertex* v=popFromVertexQueue(queue, sgp); v!=NULL; v=popFromVertexQueue(queue, sgp)) {
+		depth = v->lowPoint + 1;
+		for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+			if (e->endPoint->lowPoint == -1) {
+				e->endPoint->lowPoint = depth;
+				addToVertexQueue(e->endPoint, queue, sgp);
+			}
+		}
+	}
+	dumpShallowGraph(sgp, queue);
+
+	// depth is set too high by the last loop over the leaves
+	return depth - 1;
 }

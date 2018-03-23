@@ -4,5 +4,6 @@
 #include "graph.h"
 
 int* treeCenter(struct Graph* tree);
+int computeDistanceToCenter(struct Graph* g, struct ShallowGraphPool* sgp);
 
 #endif
