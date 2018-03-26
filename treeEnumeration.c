@@ -7,10 +7,10 @@
 #include "searchTree.h"
 #include "bloomFilter.h"
 #include "subtreeIsoUtils.h"
-#include "treeEnumeration.h"
 #include "outerplanar.h"
 #include "intSet.h"
-
+#include "treeCenter.h"
+#include "treeEnumeration.h"
 
 /**
  Creates a hard copy of g with g->n + 1 vertices and g->m + 1 edges that has a new vertex that is a
@@ -67,7 +67,7 @@ struct Graph* refinementGraph(struct Graph* g, int v, struct VertexList* newEdge
 Take a tree and add any edge in the candidate set to each vertex in the graph in turn.
 candidateEdges is expected to contain edges that have a nonNULL ->startPoint and ->endPoint.
 The label of startPoint determines, which vertex can be used for appending the edge, 
-the label of the endpoint defines the label of the ne vertex added
+the label of the endpoint defines the label of the new vertex added
 
 TODO there is speedup to gain here. The appending at the moment runs in o(#candidates * n).
  */
@@ -96,7 +96,7 @@ reachable from the empty tree by consecutive extension) but some 'inner' vertice
 
 candidateEdges is expected to contain edges that have a nonNULL ->startPoint and ->endPoint.
 The label of startPoint determines, which vertex can be used for appending the edge,
-the label of the endpoint defines the label of the ne vertex added
+the label of the endpoint defines the label of the new vertex added
 
 TODO there is speedup to gain here. The appending at the moment runs in o(#candidates * #leaves).
  */
@@ -137,6 +137,46 @@ struct Graph* extendPatternOnLeaves(struct Graph* g, struct ShallowGraph* candid
 	}
 	return rho;
 }
+
+
+
+
+/**
+Take a tree and add any edge in the candidate set to the vertices on the outermost two shells.
+By a 'shell' we mean a set of vertices that have the same distance from the center of the pattern tree.
+This is a speedup compared to the extendPatternOnLeaves() method, as it is complete (i.e., all trees are
+reachable from the empty tree by consecutive extension) but some 'inner' leaves and their neighbors are
+not extended on.
+
+candidateEdges is expected to contain edges that have a nonNULL ->startPoint and ->endPoint.
+The label of startPoint determines, which vertex can be used for appending the edge,
+the label of the endpoint defines the label of the new vertex added
+
+TODO there is speedup to gain here. The appending at the moment runs in o(#candidates * #vertices in outer two shells).
+ */
+struct Graph* extendPatternOnOuterShells(struct Graph* g, struct ShallowGraph* candidateEdges, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+
+	struct Graph* rho = NULL;
+
+	// if v->lowPoint >= outershell then we extend on v
+	int outerShell = computeDistanceToCenter(g, sgp) - 1;
+
+	// add refinement edges only at outer shell vertices
+	for (int v=0; v<g->n; ++v) {
+		if (g->vertices[v]->lowPoint >= outerShell) {
+			for (struct VertexList* e=candidateEdges->edges; e!=NULL; e=e->next) {
+				/* if the labels are compatible */
+				if (strcmp(g->vertices[v]->label, e->startPoint->label) == 0) {
+					struct Graph* h = refinementGraph(g, v, e, gp);
+					h->next = rho;
+					rho = h;
+				}
+			}
+		}
+	}
+	return rho;
+}
+
 
 
 /**
