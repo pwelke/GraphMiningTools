@@ -6,7 +6,8 @@
 
 #include "../lwm_embeddingOperators.h"
 #include "../lwm_initAndCollect.h"
-#include "../levelwiseGraphMining.h"
+#include "../lwm_miningAndExtension.h"
+
 #include "levelwiseGraphMiningMain.h"
 
 const char DEBUG_INFO = 1;
