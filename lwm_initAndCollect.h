@@ -8,7 +8,7 @@
 #ifndef LWM_INITANDCOLLECT_H_
 #define LWM_INITANDCOLLECT_H_
 
-#include "subtreeIsoDataStoreList.h"
+#include "supportSet.h"
 
 //int** getPostorders(struct Graph** db, int nGraphs);
 int getDB(struct Graph*** db);

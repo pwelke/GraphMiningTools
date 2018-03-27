@@ -1,7 +1,7 @@
 #ifndef LOCAL_EASY_SUBTREE_ISO
 #define LOCAL_EASY_SUBTREE_ISO
 
-#include "subtreeIsoDataStoreList.h"
+#include "supportSet.h"
 
 struct PostorderList{
 	int* postorder;

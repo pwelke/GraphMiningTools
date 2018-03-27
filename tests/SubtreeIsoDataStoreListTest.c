@@ -6,7 +6,8 @@
  */
 
 #include <assert.h>
-#include "../subtreeIsoDataStoreList.h"
+
+#include "../supportSet.h"
 
 
 struct SupportSet* createMockLists(struct GraphPool* gp) {
