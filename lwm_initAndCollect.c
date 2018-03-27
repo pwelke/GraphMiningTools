@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "graph.h"
-#include "searchTree.h"
 #include "loading.h"
 #include "outerplanar.h"
 
@@ -17,11 +16,7 @@
 #include "cs_Parsing.h"
 #include "cs_Tree.h"
 
-//#include "treeEnumeration.h"
 #include "sampleSubtrees.h"
-#include "levelwiseTreePatternMining.h"
-//#include "bitSet.h"
-//#include "graphPrinting.h"
 
 #include "subtreeIsoUtils.h"
 #include "localEasySubtreeIsomorphism.h"
@@ -527,6 +522,78 @@ static struct SubtreeIsoDataStoreList* createSingletonPatternSupportSetsForLocal
 		++id;
 	}
 	return vertexSupportSets;
+}
+
+
+/**
+Create a list of single-edge ShallowGraphs from a search tree containing single edge canonical strings.
+Note that this method creates a hardcopy of the edges, strings and vertices.
+Hence, it requires a pointer to a struct Graph* newVertices variable where it stores a newly created graph that holds all the new vertices.
+To avoid memory leaks, this graph needs to be dumped together with the struct ShallowGraph* result of this method.
+*/
+static struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct Graph** newVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	struct ShallowGraph* result = getShallowGraph(sgp);
+	struct VertexList* e;
+	struct Vertex* createdVertices = NULL;
+	int nVertices = 0;
+	int i;
+	struct Vertex* tmp;
+
+	for (e=frequentEdges->neighborhood; e!=NULL; e=e->next) {
+		struct Vertex* v = getVertex(gp->vertexPool);
+		struct VertexList* f;
+		v->label = e->label;
+		/* store newly created vertex in a list */
+		v->next = createdVertices;
+		createdVertices = v;
+		++nVertices;
+
+		for (f=e->endPoint->neighborhood->endPoint->neighborhood; f!=NULL; f=f->next) {
+			struct VertexList* g;
+			for (g=f->endPoint->neighborhood; g!=NULL; g=g->next) {
+				struct VertexList* new = getVertexList(sgp->listPool);
+				new->startPoint = v;
+				new->label = f->label;
+				new->endPoint = getVertex(gp->vertexPool);
+				new->endPoint->label = g->label;
+				pushEdge(result, new);
+				/* if the edge has not identical vertex labels at both vertices,
+				add the reverse edge to the output */
+				if (strcmp(v->label, new->endPoint->label) != 0) {
+					pushEdge(result, inverseEdge(new, sgp->listPool));
+				}
+				/* store newly created vertex in a list */
+				new->endPoint->next = createdVertices;
+				createdVertices = new->endPoint;
+				++nVertices;
+			}
+		}
+	}
+
+	/* to avoid memory leaks, make hardcopies of the labels */
+	for (e=result->edges; e!=NULL; e=e->next) {
+		if (!e->isStringMaster) {
+			e->isStringMaster = 1;
+			e->label = copyString(e->label);
+		}
+		if (!e->startPoint->isStringMaster) {
+			e->startPoint->isStringMaster = 1;
+			e->startPoint->label = copyString(e->startPoint->label);
+		}
+		if (!e->endPoint->isStringMaster) {
+			e->endPoint->isStringMaster = 1;
+			e->endPoint->label = copyString(e->endPoint->label);
+		}
+	}
+
+	/* to avoid memory leaks, make a graph containing all newly created vertices and return it*/
+	*newVertices = getGraph(gp);
+	setVertexNumber(*newVertices, nVertices);
+	for (i=0, tmp=createdVertices; i<nVertices; ++i, tmp=tmp->next) {
+		(*newVertices)->vertices[i] = tmp;
+	}
+
+	return result;
 }
 
 
