@@ -1,3 +1,5 @@
+#include "deprecated/levelwiseTreePatternMining.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +12,6 @@
 #include "cs_Tree.h"
 #include "searchTree.h"
 #include "bloomFilter.h"
-#include "levelwiseTreePatternMining.h"
 
 static struct VertexList* getCanonicalStringOfEdge(struct VertexList* e, struct ListPool* lp) {
 	struct VertexList* cString;
