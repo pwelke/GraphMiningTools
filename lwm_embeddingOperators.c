@@ -214,7 +214,7 @@ static struct SpanningtreeTree* expandSpanningtreeTree(int* k, struct Spanningtr
 	return results;
 }
 
-struct SubtreeIsoDataStore noniterativeLocalEasySamplingSubtreeCheckOperatorIndependent(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore localEasySamplingSubtreeCheckOperatorIndependent(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void) importance;
 	(void) sgp;
 
