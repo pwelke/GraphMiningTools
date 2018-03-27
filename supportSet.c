@@ -5,12 +5,13 @@
  *      Author: pascal
  */
 
+#include "supportSet.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
 #include "intSet.h"
-#include "subtreeIsoDataStoreList.h"
 
 /**
  * A SupportSet contains information that is needed for the iterativeSubtreeIsomorphism algorithm.

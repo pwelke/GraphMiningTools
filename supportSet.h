@@ -5,8 +5,8 @@
  *      Author: pascal
  */
 
-#ifndef SUBTREEISODATASTORELIST_H_
-#define SUBTREEISODATASTORELIST_H_
+#ifndef SUPPORTSET_H_
+#define SUPPORTSET_H_
 
 #include "graph.h"
 #include "iterativeSubtreeIsomorphism.h"
@@ -51,4 +51,4 @@ struct SupportSet* getSupportSetsOfPatterns(struct SupportSet* allSupportSets, s
 struct SupportSet* shallowCopySupportSet(struct SupportSet* a);
 struct SupportSet* supportSetChangeHead(struct SupportSet* parentSupportSets, int parentIdToKeep);
 
-#endif /* SUBTREEISODATASTORELIST_H_ */
+#endif /* SUPPORTSET_H_ */
