@@ -918,6 +918,8 @@ struct SubtreeIsoDataStoreList* initIterativeBFSForVertices(struct Graph** db, i
 		struct SubtreeIsoDataStore data = initIterativeSubtreeCheckForSingleton(base, h);
 		if (data.foundIso) {
 			appendSubtreeIsoDataStore(actualSupport, data);
+		} else {
+			dumpNewCube(data.S, data.g->n);
 		}
 	}
 	return actualSupport;
