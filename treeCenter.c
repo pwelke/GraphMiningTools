@@ -171,17 +171,22 @@ int computeDistanceToCenter(struct Graph* g, struct ShallowGraphPool* sgp) {
 
 	struct ShallowGraph* queue = getShallowGraph(sgp);
 
+	// copmute tree center
 	int* center = treeCenter(g);
+
+	// clean the ->lowpoints
+	for (int v=0; v<g->n; ++v) {
+		g->vertices[v]->lowPoint = -1;
+	}
+
+	// init the queue with (bi)center
 	for (int i=1; i<center[0]; ++i) {
 		addToVertexQueue(g->vertices[center[i]], queue, sgp);
 		g->vertices[center[i]]->lowPoint = 0;
 	}
 	free(center);
 
-	for (int v=0; v<g->n; ++v) {
-		g->vertices[v]->lowPoint = -1;
-	}
-
+	// do bfs, mark vertices according to their distance to the (bi)center
 	int depth = 0;
 	for (struct Vertex* v=popFromVertexQueue(queue, sgp); v!=NULL; v=popFromVertexQueue(queue, sgp)) {
 		depth = v->lowPoint + 1;
@@ -194,6 +199,6 @@ int computeDistanceToCenter(struct Graph* g, struct ShallowGraphPool* sgp) {
 	}
 	dumpShallowGraph(sgp, queue);
 
-	// depth is set too high by the last loop over the leaves
+	// depth is set too high by the last loop over the leaves in the outer shell
 	return depth - 1;
 }
