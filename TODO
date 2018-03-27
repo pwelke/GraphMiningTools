@@ -1,5 +1,16 @@
 # TODO
 
+
+## Refactoring
+- [ ] rename SubtreeIsoDataStore* to SupportSet-something
+      - [ ] rename internal pointers accordingly to hide implementation details
+      - [ ] make iterativeSubtreeIso data store pointer void* to show that this is a general storage thingie. 
+
+
+## General
+
+- [X]  lwg pattern output file should contain their frequency in the database in the first column 
+       (currently only the case for singleton patterns)
 - [ ]  fix bug in sampleSubtrees.c
 - [ ]  buffered canonicalString method that uses a preallocated array of ShallowGraph* for the qsort step
 - [ ]  remove countCycleDegree.c and store the only important functionality somewhere (i.e. cycle degrees of all vertices)
@@ -9,17 +20,23 @@
 - [ ]  tree enumeration method update
 		- [ ]  Gaston candidate generation?
 		- [ ]  treeEnumeration might be too slow, as we do not enumerate perfectly
-		- [ ]  an option to mine only frequent paths in lwg
-- [ ]  different evaluation strategies: make dfs work again, implement the funny gaston dfs, implement the greedy dfs idea from the 
-       min-hashing paper for frequent subtree minig, ...
+		- [ ]  an option to mine only frequent paths in lwg -> see treeEnumeration.c/generateCandidatePathSet
+		- [ ]  is my canonical string method suited to be used for a good enumeration method: e.g., extend a given pattern only such that the resulting cString only gets changed 'at the end'?
+		
+- [ ]  different evaluation strategies: 
+       - make dfs work again, 
+       - implement the funny gaston dfs, 
+       - implement the greedy dfs idea from the min-hashing paper for frequent subtree minig, ...
 - [ ]  boosted mining should always select a root smartly, e.g., it should not be the center vertex of a neighborhood graph, but maybe a boring non-articulation vertex in some large biconnected component
 - [ ]  build a treepattern enumerator
 		- [ ]  input is a single graph with all 'frequent'/ allowed vertex and edge labels
 		- [ ]  the embedding op is a mock that always returns yes.
 
-# THEORY
+
+## THEORY
 
 - is it useful to choose particular roots for subgraph iso checks, e.g. canonical roots?
+
 
 
 # DONE 
