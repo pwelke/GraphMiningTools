@@ -52,10 +52,10 @@ int main(int argc, char** argv) {
 	srand(time(NULL));
 
 	// initializator for the mining
-	size_t (*initMining)(size_t, double, struct Vertex**, struct SubtreeIsoDataStoreList**, struct ShallowGraph**, void**, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &initFrequentTreeMiningForForestDB;
+	size_t (*initMining)(size_t, double, struct Vertex**, struct SupportSet**, struct ShallowGraph**, void**, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &initFrequentTreeMiningForForestDB;
 
 	// mining strategy
-	void (*miningStrategy)(size_t, size_t, size_t, struct Vertex*, struct SubtreeIsoDataStoreList*, struct ShallowGraph*, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &BFSStrategy;
+	void (*miningStrategy)(size_t, size_t, size_t, struct Vertex*, struct SupportSet*, struct ShallowGraph*, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &BFSStrategy;
 
 	// garbage collector after mining
 	void (*garbageCollector)(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) = &garbageCollectFrequentTreeMiningForForestDB;
@@ -260,7 +260,7 @@ int main(int argc, char** argv) {
 	}
 
 	struct Vertex* initialFrequentPatterns = NULL;
-	struct SubtreeIsoDataStoreList* supportSets = NULL;
+	struct SupportSet* supportSets = NULL;
 	struct ShallowGraph* extensionEdgeList = NULL;
 	void* dataStructures = NULL;
 

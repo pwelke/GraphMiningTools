@@ -19,7 +19,7 @@
 
 
 /**
- * Get a SubtreeIsoDataStoreList for each IntSet in the input.
+ * Get a SupportSet for each IntSet in the input.
  *
  * This method intersects all support sets of the parent patterns of a pattern p and
  * returns a list of data structures that the iterative subtree iso algorithm can use
@@ -28,23 +28,23 @@
  * This implementation returns the data structures (cubes and pointers to the parent)
  * of the parent that has id parentIdToKeep.
  */
-struct SubtreeIsoDataStoreList* getCandidateSupportSuperSet(struct IntSet* parentIds, struct SubtreeIsoDataStoreList* previousLevelSupportLists, int parentIdToKeep) {
+struct SupportSet* getCandidateSupportSuperSet(struct IntSet* parentIds, struct SupportSet* previousLevelSupportLists, int parentIdToKeep) {
 	assert(parentIds != NULL);
 	assert(previousLevelSupportLists != NULL);
 	assert(containsInt(parentIds, parentIdToKeep));
 
 	// obtain support sets of parents
-	struct SubtreeIsoDataStoreList* parentSupportSets = getSupportSetsOfPatterns(previousLevelSupportLists, parentIds);
+	struct SupportSet* parentSupportSets = getSupportSetsOfPatterns(previousLevelSupportLists, parentIds);
 
 	// move desired parent support set to head of list to keep the correct subtreeIsoDataStores
-	parentSupportSets = subtreeIsoDataStoreChangeHead(parentSupportSets, parentIdToKeep);
+	parentSupportSets = supportSetChangeHead(parentSupportSets, parentIdToKeep);
 
 	// compute a candidate support set that is the intersection of the support sets of the apriori parents of the extension
-	struct SubtreeIsoDataStoreList* candidateSupportSuperSet = intersectSupportSets(parentSupportSets);
+	struct SupportSet* candidateSupportSuperSet = intersectSupportSets(parentSupportSets);
 
 	// garbage collection
 	while (parentSupportSets) {
-		struct SubtreeIsoDataStoreList* tmp = parentSupportSets->next;
+		struct SupportSet* tmp = parentSupportSets->next;
 		free(parentSupportSets);
 		parentSupportSets = tmp;
 	}
@@ -54,12 +54,12 @@ struct SubtreeIsoDataStoreList* getCandidateSupportSuperSet(struct IntSet* paren
 
 
 void extendPreviousLevel(// input
-		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		struct ShallowGraph* extensionEdges,
 		size_t threshold,
 		// output
-		struct SubtreeIsoDataStoreList** resultCandidateSupportSuperSets,
+		struct SupportSet** resultCandidateSupportSuperSets,
 		struct Graph** resultCandidates,
 		FILE* logStream,
 		// memory management
@@ -86,7 +86,7 @@ void extendPreviousLevel(// input
 	// filter these extensions using an apriori property
 	// for each extension, compute a list of ids of their apriori parents
 
-	for (struct SubtreeIsoDataStoreList* frequentPatternSupportList=previousLevelSupportLists; frequentPatternSupportList!=NULL; frequentPatternSupportList=frequentPatternSupportList->next) {
+	for (struct SupportSet* frequentPatternSupportList=previousLevelSupportLists; frequentPatternSupportList!=NULL; frequentPatternSupportList=frequentPatternSupportList->next) {
 		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
 
 		// extend frequent pattern
@@ -117,7 +117,7 @@ void extendPreviousLevel(// input
 				 ++nAllExtensionsPostApriori;
 
 				// get (hopefully small) superset of the support set of the extension
-				struct SubtreeIsoDataStoreList* extensionSupportSuperSet = getCandidateSupportSuperSet(aprioriParentIdSet, previousLevelSupportLists, frequentPattern->number);
+				struct SupportSet* extensionSupportSuperSet = getCandidateSupportSuperSet(aprioriParentIdSet, previousLevelSupportLists, frequentPattern->number);
 				dumpIntSet(aprioriParentIdSet);
 
 				// check if support superset is larger than the threshold
@@ -135,7 +135,7 @@ void extendPreviousLevel(// input
 				} else {
 					// dump extension and support superset
 					dumpGraph(gp, extension);
-					dumpSubtreeIsoDataStoreListCopy(extensionSupportSuperSet);
+					dumpSupportSetCopy(extensionSupportSuperSet);
 
 					++nDumped;
 				}
@@ -158,8 +158,8 @@ void extendPreviousLevel(// input
 }
 
 
-struct SubtreeIsoDataStoreList* BFSgetNextLevel(// input
-		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+struct SupportSet* BFSgetNextLevel(// input
+		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		size_t threshold,
 		struct ShallowGraph* frequentEdges,
@@ -176,7 +176,7 @@ struct SubtreeIsoDataStoreList* BFSgetNextLevel(// input
 	assert(previousLevelSearchTree != NULL);
 	assert(frequentEdges != NULL);
 
-	struct SubtreeIsoDataStoreList* currentLevelCandidateSupportSets;
+	struct SupportSet* currentLevelCandidateSupportSets;
 	struct Graph* currentLevelCandidates;
 
 	extendPreviousLevel(previousLevelSupportLists, previousLevelSearchTree, frequentEdges, threshold,
@@ -184,19 +184,19 @@ struct SubtreeIsoDataStoreList* BFSgetNextLevel(// input
 			gp, sgp);
 
 	//iterate over all patterns in candidateSupports
-	struct SubtreeIsoDataStoreList* actualSupportLists = NULL;
-	struct SubtreeIsoDataStoreList* actualSupportListsTail = NULL;
-	struct SubtreeIsoDataStoreList* candidateSupport = NULL;
+	struct SupportSet* actualSupportLists = NULL;
+	struct SupportSet* actualSupportListsTail = NULL;
+	struct SupportSet* candidateSupport = NULL;
 	struct Graph* candidate = NULL;
 	for (candidateSupport=currentLevelCandidateSupportSets, candidate=currentLevelCandidates; candidateSupport!=NULL; candidateSupport=candidateSupport->next, candidate=candidate->next) {
-		struct SubtreeIsoDataStoreList* currentActualSupport = getSubtreeIsoDataStoreList();
+		struct SupportSet* currentActualSupport = getSupportSet();
 		//iterate over all graphs in the support
-		for (struct SubtreeIsoDataStoreElement* e=candidateSupport->first; e!=NULL; e=e->next) {
+		for (struct SupportSetElement* e=candidateSupport->first; e!=NULL; e=e->next) {
 			// create actual support list for candidate pattern
 			struct SubtreeIsoDataStore result = embeddingOperator(e->data, candidate, importance, gp, sgp);
 
 			if (result.foundIso) {
-				appendSubtreeIsoDataStore(currentActualSupport, result);
+				appendSupportSetData(currentActualSupport, result);
 			} else {
 				dumpNewCube(result.S, result.g->n);
 			}
@@ -205,7 +205,7 @@ struct SubtreeIsoDataStoreList* BFSgetNextLevel(// input
 		if (currentActualSupport->size < threshold) {
 			// mark h as infrequent
 			candidate->activity = 0;
-			dumpSubtreeIsoDataStoreList(currentActualSupport);
+			dumpSupportSet(currentActualSupport);
 		} else {
 			// mark h as frequent
 			candidate->activity = currentActualSupport->size;
@@ -223,8 +223,8 @@ struct SubtreeIsoDataStoreList* BFSgetNextLevel(// input
 	// garbage collection
 	candidateSupport = currentLevelCandidateSupportSets;
 	while (candidateSupport) {
-		struct SubtreeIsoDataStoreList* tmp = candidateSupport->next;
-		dumpSubtreeIsoDataStoreListCopy(candidateSupport);
+		struct SupportSet* tmp = candidateSupport->next;
+		dumpSupportSetCopy(candidateSupport);
 		candidateSupport = tmp;
 	}
 
@@ -256,7 +256,7 @@ void BFSStrategy(size_t startPatternSize,
 					  size_t maxPatternSize,
 		              size_t threshold,
 					  struct Vertex* initialFrequentPatterns,
-					  struct SubtreeIsoDataStoreList* supportSets,
+					  struct SupportSet* supportSets,
 					  struct ShallowGraph* extensionEdges,
 					  // embedding operator function pointer,
 					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
@@ -269,9 +269,9 @@ void BFSStrategy(size_t startPatternSize,
 
 	// levelwise search for patterns with more than one vertex:
 	struct Vertex* previousLevelSearchTree = shallowCopySearchTree(initialFrequentPatterns, gp);
-	struct SubtreeIsoDataStoreList* previousLevelSupportSets = supportSets;
+	struct SupportSet* previousLevelSupportSets = supportSets;
 	struct Vertex* currentLevelSearchTree = previousLevelSearchTree; // initialization for garbage collection in case of maxPatternSize == 1
-	struct SubtreeIsoDataStoreList* currentLevelSupportSets = previousLevelSupportSets; // initialization for garbage collection in case of maxPatternSize == 1
+	struct SupportSet* currentLevelSupportSets = previousLevelSupportSets; // initialization for garbage collection in case of maxPatternSize == 1
 
 	for (size_t p=startPatternSize+1; (p<=maxPatternSize) && (previousLevelSearchTree->number>0); ++p) {
 		fprintf(logStream, "Processing patterns with %zu vertices:\n", p); fflush(logStream);
@@ -281,15 +281,15 @@ void BFSStrategy(size_t startPatternSize,
 		currentLevelSupportSets = BFSgetNextLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
 
 		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
-		printSubtreeIsoDataStoreListsSparse(currentLevelSupportSets, featureStream);
+		printSupportSetsSparse(currentLevelSupportSets, featureStream);
 
 		// garbage collection:
 		// what is now all previousLevel... data structures will not be used at all in the next iteration
 		dumpSearchTree(gp, previousLevelSearchTree);
 		while (previousLevelSupportSets) {
-			struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
+			struct SupportSet* tmp = previousLevelSupportSets->next;
 			// ...hence, we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
-			dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
+			dumpSupportSetWithPattern(previousLevelSupportSets, gp);
 			previousLevelSupportSets = tmp;
 		}
 
@@ -304,9 +304,9 @@ void BFSStrategy(size_t startPatternSize,
 	dumpSearchTree(gp, previousLevelSearchTree);
 
 	while (previousLevelSupportSets) {
-		struct SubtreeIsoDataStoreList* tmp = previousLevelSupportSets->next;
+		struct SupportSet* tmp = previousLevelSupportSets->next;
 		// we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
-		dumpSubtreeIsoDataStoreListWithH(previousLevelSupportSets, gp);
+		dumpSupportSetWithPattern(previousLevelSupportSets, gp);
 		previousLevelSupportSets = tmp;
 	}
 }

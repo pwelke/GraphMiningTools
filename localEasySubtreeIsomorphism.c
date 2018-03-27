@@ -252,9 +252,9 @@ struct Graph* spanningTreeConverter(struct ShallowGraph* localTrees, struct Grap
 
 // init characteristics array
 void initCharacteristicsArrayForLocalEasy(struct SpanningtreeTree* sptTree) {
-	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStoreList*));
+	sptTree->characteristics = malloc(sptTree->nRoots * sizeof(struct SupportSet*));
 	for (int v=0; v<sptTree->nRoots; ++v) {
-		sptTree->characteristics[v] = getSubtreeIsoDataStoreList();
+		sptTree->characteristics[v] = getSupportSet();
 	}
 }
 
@@ -634,10 +634,10 @@ struct SpanningtreeTree getFullSpanningtreeTree(struct BlockTree blockTree, stru
 void wipeCharacteristicsForLocalEasy(struct SpanningtreeTree sptTree) {
 	if (sptTree.characteristics) {
 		for (int v=0; v<sptTree.nRoots; ++v) {
-			struct SubtreeIsoDataStoreList* list = sptTree.characteristics[v];
+			struct SupportSet* list = sptTree.characteristics[v];
 			if (list) {
-				struct SubtreeIsoDataStoreElement* tmp;
-				for (struct SubtreeIsoDataStoreElement* e=list->first; e!=NULL; e=tmp) {
+				struct SupportSetElement* tmp;
+				for (struct SupportSetElement* e=list->first; e!=NULL; e=tmp) {
 					tmp = e->next;
 					dumpNewCube(e->data.S, e->data.g->n);
 					free(e);
@@ -656,8 +656,8 @@ void dumpSpanningtreeTree(struct SpanningtreeTree sptTree, struct GraphPool* gp)
 		dumpGraphList(gp, sptTree.localSpanningTrees[v]);
 		if (sptTree.characteristics) {
 			if (sptTree.characteristics[v]) {
-				struct SubtreeIsoDataStoreElement* tmp;
-				for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=tmp) {
+				struct SupportSetElement* tmp;
+				for (struct SupportSetElement* e=sptTree.characteristics[v]->first; e!=NULL; e=tmp) {
 					tmp = e->next;
 					dumpNewCube(e->data.S, e->data.g->n);
 					free(e);
@@ -714,7 +714,7 @@ void printSptTree(struct SpanningtreeTree sptTree) {
 	for (int v=0; v<sptTree.nRoots; ++v) {
 		printf("root %i (-> %i):\n", sptTree.roots[v]->number, sptTree.parents[v]->number);
 		if (sptTree.characteristics && sptTree.characteristics[v]) {
-			for (struct SubtreeIsoDataStoreElement* e=sptTree.characteristics[v]->first; e!=NULL; e=e->next) {
+			for (struct SupportSetElement* e=sptTree.characteristics[v]->first; e!=NULL; e=e->next) {
 				printNewCubeCondensed(e->data.S, e->data.g->n, e->data.h->n, stdout);
 			}
 		} else {
@@ -867,7 +867,7 @@ static void subtreeCheckForOneBlockSpanningTree(struct SubtreeIsoDataStore* curr
 			} else {
 				// if w is a root unequal v
 				// loop over the spanning trees of the w-rooted components
-				for (struct SubtreeIsoDataStoreElement* e=sptTree->characteristics[w->d]->first; e!=NULL; e=e->next) {
+				for (struct SupportSetElement* e=sptTree->characteristics[w->d]->first; e!=NULL; e=e->next) {
 //					if (e->next) {
 //						fprintf(stderr, "processing multiple children at v=%i for w=%i\n", g->vertices[0]->d, w->d);
 //					}
@@ -914,7 +914,7 @@ char subtreeCheckForSpanningtreeTree(struct SpanningtreeTree* sptTree, struct Gr
 			info.S = createNewCube(info.g->n, info.h->n);
 
 			subtreeCheckForOneBlockSpanningTree(&info, sptTree, blockDoesNotContainGlobalRoot, gp);
-			appendSubtreeIsoDataStore(sptTree->characteristics[v], info);
+			appendSupportSetData(sptTree->characteristics[v], info);
 
 //			free(info.postorder);
 //			info.postorder = NULL;

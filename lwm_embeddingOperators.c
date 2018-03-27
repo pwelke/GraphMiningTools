@@ -190,9 +190,9 @@ static struct SpanningtreeTree* expandSpanningtreeTree(int* k, struct Spanningtr
 	for (int j=0; j<*k; ++j) {
 		results[j] = *sptTree;
 		results[j].localSpanningTrees = malloc(sptTree->nRoots * sizeof(struct Graph*));
-		results[j].characteristics = malloc(sptTree->nRoots * sizeof(struct SubtreeIsoDataStoreList*));
+		results[j].characteristics = malloc(sptTree->nRoots * sizeof(struct SupportSet*));
 		for (int i=0; i<sptTree->nRoots; ++i) {
-			results[j].characteristics[i] = getSubtreeIsoDataStoreList();
+			results[j].characteristics[i] = getSupportSet();
 		}
 	}
 

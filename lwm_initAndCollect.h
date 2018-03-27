@@ -16,9 +16,9 @@ int getDBfromCanonicalStrings(struct Graph*** db, FILE* stream, int bufferSize, 
 //int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* frequentVertices, struct GraphPool* gp);
 //void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSetSize, struct Vertex* frequentEdges, struct GraphPool* gp);
 
-//struct SubtreeIsoDataStoreList* getSupportSetsOfVertices(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId);
+//struct SupportSet* getSupportSetsOfVertices(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId);
 //void getFrequentVerticesAndEdges(struct Graph** db, int nGraphs, size_t threshold, struct Vertex** frequentVertices, struct Vertex** frequentEdges, FILE* logStream, struct GraphPool* gp);
-//struct SubtreeIsoDataStoreList* createSingletonPatternSupportSetsForForestDB(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+//struct SupportSet* createSingletonPatternSupportSetsForForestDB(struct Graph** db, int** postorders, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
 
 size_t initFrequentTreeMiningForForestDB(// input
@@ -26,7 +26,7 @@ size_t initFrequentTreeMiningForForestDB(// input
 		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
-		struct SubtreeIsoDataStoreList** supportSets,
+		struct SupportSet** supportSets,
 		struct ShallowGraph** extensionEdgeList,
 		void** dataStructures,
 		// printing
@@ -42,7 +42,7 @@ size_t initProbabilisticTreeMiningForGraphDB(// input
 		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
-		struct SubtreeIsoDataStoreList** supportSets,
+		struct SupportSet** supportSets,
 		struct ShallowGraph** extensionEdgeList,
 		void** dataStructures,
 		// printing
@@ -58,7 +58,7 @@ size_t initGlobalTreeEnumerationForGraphDB(// input
 		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
-		struct SubtreeIsoDataStoreList** supportSets,
+		struct SupportSet** supportSets,
 		struct ShallowGraph** extensionEdgeList,
 		void** dataStructures,
 		// printing
@@ -74,7 +74,7 @@ size_t initExactLocalEasyForGraphDB(// input
 		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
-		struct SubtreeIsoDataStoreList** supportSets,
+		struct SupportSet** supportSets,
 		struct ShallowGraph** extensionEdgeList,
 		void** dataStructures,
 		// printing
@@ -90,7 +90,7 @@ size_t initSampledLocalEasyForGraphDB(// input
 		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
-		struct SubtreeIsoDataStoreList** supportSets,
+		struct SupportSet** supportSets,
 		struct ShallowGraph** extensionEdgeList,
 		void** dataStructures,
 		// printing
@@ -106,7 +106,7 @@ size_t initSampledLocalEasyWithDuplicatesForGraphDB(// input
 		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
-		struct SubtreeIsoDataStoreList** supportSets,
+		struct SupportSet** supportSets,
 		struct ShallowGraph** extensionEdgeList,
 		void** dataStructures,
 		// printing
@@ -122,7 +122,7 @@ size_t initPatternEnumeration(// input
 		double importance,
 		// output
 		struct Vertex** initialFrequentPatterns,
-		struct SubtreeIsoDataStoreList** supportSets,
+		struct SupportSet** supportSets,
 		struct ShallowGraph** extensionEdgeList,
 		void** dataStructures,
 		// printing

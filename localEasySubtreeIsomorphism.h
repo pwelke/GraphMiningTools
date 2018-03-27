@@ -32,7 +32,7 @@ struct SpanningtreeTree{
 	struct Vertex** roots;
 	struct Vertex** parents;
 	struct Graph** localSpanningTrees;
-	struct SubtreeIsoDataStoreList** characteristics;
+	struct SupportSet** characteristics;
 	struct PostorderList** localPostorders;
 	int nRoots;
 };

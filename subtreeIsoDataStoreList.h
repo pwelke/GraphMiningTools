@@ -12,43 +12,43 @@
 #include "iterativeSubtreeIsomorphism.h"
 #include "intSet.h"
 
-struct SubtreeIsoDataStoreElement {
+struct SupportSetElement {
 	struct SubtreeIsoDataStore data;
-	struct SubtreeIsoDataStoreElement* next;
+	struct SupportSetElement* next;
 };
 
-struct SubtreeIsoDataStoreList {
-	struct SubtreeIsoDataStoreElement* first;
-	struct SubtreeIsoDataStoreElement* last;
-	struct SubtreeIsoDataStoreList* next;
+struct SupportSet {
+	struct SupportSetElement* first;
+	struct SupportSetElement* last;
+	struct SupportSet* next;
 	size_t size;
 	int patternId;
 };
 
-void appendSubtreeIsoDataStoreElement(struct SubtreeIsoDataStoreList* s, struct SubtreeIsoDataStoreElement* e);
-void appendSubtreeIsoDataStore(struct SubtreeIsoDataStoreList* l, struct SubtreeIsoDataStore data);
+void appendSupportSetElement(struct SupportSet* s, struct SupportSetElement* e);
+void appendSupportSetData(struct SupportSet* l, struct SubtreeIsoDataStore data);
 
-void printSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* l, FILE* out);
-void printSubtreeIsoDataStoreListSparse(struct SubtreeIsoDataStoreList* l, FILE* out);
-void printSubtreeIsoDataStoreListsSparse(struct SubtreeIsoDataStoreList* lists, FILE* out);
+void printSupportSet(struct SupportSet* l, FILE* out);
+void printSupportSetSparse(struct SupportSet* l, FILE* out);
+void printSupportSetsSparse(struct SupportSet* lists, FILE* out);
 
-struct SubtreeIsoDataStoreList* getSubtreeIsoDataStoreList();
+struct SupportSet* getSupportSet();
 
-void shallowdumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e);
-void dumpSubtreeIsoDataStoreListCopy(struct SubtreeIsoDataStoreList* s);
-void dumpSubtreeIsoDataStoreElements(struct SubtreeIsoDataStoreElement* e);
-void dumpSubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* s);
-void dumpSubtreeIsoDataStoreElementsWithPostorder(struct SubtreeIsoDataStoreElement* e, struct GraphPool* gp);
-void dumpSubtreeIsoDataStoreListWithPostorder(struct SubtreeIsoDataStoreList* s, struct GraphPool* gp);
-void dumpSubtreeIsoDataStoreListWithH(struct SubtreeIsoDataStoreList* supportSets, struct GraphPool* gp);
+void shallowdumpSupportSetElements(struct SupportSetElement* e);
+void dumpSupportSetCopy(struct SupportSet* s);
+void dumpSupportSetElements(struct SupportSetElement* e);
+void dumpSupportSet(struct SupportSet* s);
+void dumpSupportSetElementsWithPostorder(struct SupportSetElement* e, struct GraphPool* gp);
+void dumpSupportSetWithPostorder(struct SupportSet* s, struct GraphPool* gp);
+void dumpSupportSetWithPattern(struct SupportSet* supportSets, struct GraphPool* gp);
 
-struct SubtreeIsoDataStoreList* intersectTwoSupportSets(struct SubtreeIsoDataStoreList* l1, struct SubtreeIsoDataStoreList* l2);
-struct SubtreeIsoDataStoreList* intersectSupportSets(struct SubtreeIsoDataStoreList* aprioriList);
+struct SupportSet* intersectTwoSupportSets(struct SupportSet* l1, struct SupportSet* l2);
+struct SupportSet* intersectSupportSets(struct SupportSet* aprioriList);
 
-char isSortedSubtreeIsoDataStoreListOnPatterns(struct SubtreeIsoDataStoreList* l);
+char isSortedSupportSetOnPatterns(struct SupportSet* l);
 
-struct SubtreeIsoDataStoreList* getSupportSetsOfPatterns(struct SubtreeIsoDataStoreList* allSupportSets, struct IntSet* patternIds);
-struct SubtreeIsoDataStoreList* shallowCopySubtreeIsoDataStoreList(struct SubtreeIsoDataStoreList* a);
-struct SubtreeIsoDataStoreList* subtreeIsoDataStoreChangeHead(struct SubtreeIsoDataStoreList* parentSupportSets, int parentIdToKeep);
+struct SupportSet* getSupportSetsOfPatterns(struct SupportSet* allSupportSets, struct IntSet* patternIds);
+struct SupportSet* shallowCopySupportSet(struct SupportSet* a);
+struct SupportSet* supportSetChangeHead(struct SupportSet* parentSupportSets, int parentIdToKeep);
 
 #endif /* SUBTREEISODATASTORELIST_H_ */

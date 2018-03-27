@@ -10,29 +10,29 @@
 
 void filterInfrequentCandidates(// input
 		struct Graph* extensions,
-		struct SubtreeIsoDataStoreList* supports,
+		struct SupportSet* supports,
 		size_t threshold,
 		// output
 		struct Graph** filteredExtensions,
-		struct SubtreeIsoDataStoreList** filteredSupports,
+		struct SupportSet** filteredSupports,
 		// memory management
 		struct GraphPool* gp);
-struct SubtreeIsoDataStoreList* getCandidateSupportSuperSet(struct IntSet* parentIds, struct SubtreeIsoDataStoreList* previousLevelSupportLists, int parentIdToKeep);
+struct SupportSet* getCandidateSupportSuperSet(struct IntSet* parentIds, struct SupportSet* previousLevelSupportLists, int parentIdToKeep);
 void extendPreviousLevel(// input
-		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		struct ShallowGraph* extensionEdges,
 		size_t threshold,
 		// output
-		struct SubtreeIsoDataStoreList** resultCandidateSupportSuperSets,
+		struct SupportSet** resultCandidateSupportSuperSets,
 		struct Graph** resultCandidates,
 		FILE* logStream,
 		// memory management
 		struct GraphPool* gp,
 		struct ShallowGraphPool* sgp);
 
-struct SubtreeIsoDataStoreList* BFSgetNextLevel(// input
-		struct SubtreeIsoDataStoreList* previousLevelSupportLists,
+struct SupportSet* BFSgetNextLevel(// input
+		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		size_t threshold,
 		struct ShallowGraph* frequentEdges,
@@ -50,7 +50,7 @@ void BFSStrategy(size_t startPatternSize,
 					  size_t maxPatternSize,
 		              size_t threshold,
 					  struct Vertex* initialFrequentPatterns,
-					  struct SubtreeIsoDataStoreList* supportSets,
+					  struct SupportSet* supportSets,
 					  struct ShallowGraph* extensionEdges,
 					  // embedding operator function pointer,
 					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),

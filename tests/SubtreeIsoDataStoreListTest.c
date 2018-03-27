@@ -9,11 +9,11 @@
 #include "../subtreeIsoDataStoreList.h"
 
 
-struct SubtreeIsoDataStoreList* createMockLists(struct GraphPool* gp) {
+struct SupportSet* createMockLists(struct GraphPool* gp) {
 
 	int numbers[3] = {128, 163, 164};
 
-	struct SubtreeIsoDataStoreList* l1 = getSubtreeIsoDataStoreList();
+	struct SupportSet* l1 = getSupportSet();
 	struct Graph* h = getGraph(gp);
 	h->number = 1;
 
@@ -23,10 +23,10 @@ struct SubtreeIsoDataStoreList* createMockLists(struct GraphPool* gp) {
 		struct SubtreeIsoDataStore s = {0};
 		s.g = g;
 		s.h = h;
-		appendSubtreeIsoDataStore(l1, s);
+		appendSupportSetData(l1, s);
 	}
 
-	struct SubtreeIsoDataStoreList* l2 = getSubtreeIsoDataStoreList();
+	struct SupportSet* l2 = getSupportSet();
 	h = getGraph(gp);
 	h->number = 2;
 
@@ -36,7 +36,7 @@ struct SubtreeIsoDataStoreList* createMockLists(struct GraphPool* gp) {
 		struct SubtreeIsoDataStore s = {0};
 		s.g = g;
 		s.h = h;
-		appendSubtreeIsoDataStore(l2, s);
+		appendSupportSetData(l2, s);
 	}
 
 	l1->next = l2;
@@ -47,12 +47,12 @@ struct SubtreeIsoDataStoreList* createMockLists(struct GraphPool* gp) {
 int main(int argc, char **argv) {
 	struct GraphPool* gp = createGraphPool(5, createVertexPool(1), createListPool(1));
 
-	struct SubtreeIsoDataStoreList* l = createMockLists(gp);
+	struct SupportSet* l = createMockLists(gp);
 
-	printSubtreeIsoDataStoreList(l, stdout);
-	printSubtreeIsoDataStoreList(l->next, stdout);
+	printSupportSet(l, stdout);
+	printSupportSet(l->next, stdout);
 
-	struct SubtreeIsoDataStoreList* intersection = intersectSupportSets(l);
-	printSubtreeIsoDataStoreList(intersection, stdout);
+	struct SupportSet* intersection = intersectSupportSets(l);
+	printSupportSet(intersection, stdout);
 }
 
