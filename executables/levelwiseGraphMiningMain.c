@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "../lwm_embeddingOperators.h"
+#include "../lwm_initAndCollect.h"
 #include "../levelwiseGraphMining.h"
 #include "levelwiseGraphMiningMain.h"
 
@@ -197,7 +198,7 @@ int main(int argc, char** argv) {
 			if (strcmp(optarg, "treeEnumeration") == 0) {
 				initMining = &initPatternEnumeration;
 				embeddingOperator = &alwaysReturnTrue;
-				garbageCollector = &garbagePatternEnumeration;
+				garbageCollector = &garbageCollectPatternEnumeration;
 				break;
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);

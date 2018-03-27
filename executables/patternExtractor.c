@@ -6,7 +6,7 @@
 
 #include "../loading.h"
 #include "../intSet.h"
-#include "../levelwiseGraphMining.h"
+#include "../lwm_initAndCollect.h"
 #include "../subtreeIsomorphism.h"
 #include "../minhashing.h"
 #include "../localEasySubtreeIsomorphism.h"
