@@ -1,3 +1,5 @@
+#include "lwm_miningAndExtension.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +15,6 @@
 #include "lwm_embeddingOperators.h"
 //#include "lwm_initAndCollect.h"
 
-#include "levelwiseGraphMining.h"
 
 
 
