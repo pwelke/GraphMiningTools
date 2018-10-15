@@ -13,6 +13,7 @@
 #include "iterativeSubtreeIsomorphism.h"
 #include "importantSubtrees.h"
 #include "localEasySubtreeIsomorphism.h"
+#include "subtreeIsomorphismSampling.h"
 
 #include "lwm_embeddingOperators.h"
 
@@ -242,5 +243,29 @@ struct SubtreeIsoDataStore localEasySamplingSubtreeCheckOperatorIndependent(stru
 	}
 	free(expanded);
 //	wipeCharacteristicsForLocalEasy(*sptTree);
+	return result;
+}
+
+
+/**
+ * Randomized embedding operator for
+ * tree pattern h
+ * graph transaction data
+ *
+ * The algorithm repeats to try to embed
+ */
+struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)gp; // unused
+	(void)sgp; // unused
+
+	struct SubtreeIsoDataStore result = {0};
+	result.g = data.g;
+	result.h = h;
+
+	for (int i=0; i<importance; ++i) {
+		result.foundIso += subtreeIsomorphismSampler(data.g, h);
+	}
+	result.foundIso = result.foundIso > 0 ? 1 : 0;
+
 	return result;
 }

@@ -153,6 +153,15 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectFrequentTreeMiningForForestDB;
 				break;
 			}
+			if (strcmp(optarg, "probabilisticTreeSamplingFK") == 0) {
+				initMining = &initPatternEnumeration;
+				embeddingOperator = &subtreeIsomorphismSamplingOperator;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectPatternEnumeration;
+				break;
+			}
 			if (strcmp(optarg, "localEasy") == 0) {
 				initMining = &initExactLocalEasyForGraphDB;
 				embeddingOperator = &localEasySubtreeCheckOperator;
