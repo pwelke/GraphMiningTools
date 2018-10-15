@@ -252,7 +252,9 @@ struct SubtreeIsoDataStore localEasySamplingSubtreeCheckOperatorIndependent(stru
  * tree pattern h
  * graph transaction data
  *
- * The algorithm repeats to try to embed
+ * The algorithm repeats to try to embed a randomly rooted shuffled version of the tree h
+ * in some random place in the transaction graph. If it succeeds at some point, it returns 1.
+ * This is another example of an embedding operator with one-sided error.
  */
 struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)gp; // unused
@@ -263,9 +265,42 @@ struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperator(struct SubtreeIsoD
 	result.h = h;
 
 	for (int i=0; i<importance; ++i) {
-		result.foundIso += subtreeIsomorphismSampler(data.g, h);
+		result.foundIso = subtreeIsomorphismSampler(data.g, h);
+		if (result.foundIso) {
+			break;
+		}
 	}
-	result.foundIso = result.foundIso > 0 ? 1 : 0;
+
+	return result;
+}
+
+
+/**
+ * Randomized embedding operator for
+ * tree pattern h
+ * graph transaction data
+ *
+ * The algorithm repeats to try to embed a randomly rooted shuffled version of the tree h
+ * in some random place in the transaction graph. If it succeeds at some point, it returns 1.
+ * This is another example of an embedding operator with one-sided error.
+ *
+ * This variant also shuffles the neighbors of the image vertex. should result in better
+ * recall due to more randomness, but is slower.
+ */
+struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithImageShuffling(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)gp; // unused
+	(void)sgp; // unused
+
+	struct SubtreeIsoDataStore result = {0};
+	result.g = data.g;
+	result.h = h;
+
+	for (int i=0; i<importance; ++i) {
+		result.foundIso = subtreeIsomorphismSamplerWithImageShuffling(data.g, h);
+		if (result.foundIso) {
+			break;
+		}
+	}
 
 	return result;
 }

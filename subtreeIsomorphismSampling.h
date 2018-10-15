@@ -11,6 +11,7 @@
 #include "graph.h"
 
 char subtreeIsomorphismSampler(struct Graph* g, struct Graph* h);
+char subtreeIsomorphismSamplerWithImageShuffling(struct Graph* g, struct Graph* h);
 struct VertexList** shuffleNeighbors(struct Vertex* v, int degV);
 
 #endif /* SUBTREEISOMORPHISMSAMPLING_H_ */
