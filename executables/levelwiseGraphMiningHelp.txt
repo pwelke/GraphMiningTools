@@ -1,5 +1,5 @@
 This is a frequent subtree mining tool.
-Implemented by Pascal Welke 2016.
+Implemented by Pascal Welke starting in 2016.
 
 This program computes and outputs frequent subtrees according to several
 definitions of that notion and feature representations of the mined graphs.
@@ -7,104 +7,160 @@ definitions of that notion and feature representations of the mined graphs.
 usage: ./lwg [options] [FILE]
 
 If no FILE argument is given or FILE is - the program reads from stdin.
-It always prints to stdout.
+It always prints to stdout (embedding info) and stderr (statistics).
 
 
 Options:
+-h:           print this possibly helpful information.
 
--t THRESHOLD:    Minimum absolute support threshold in the graph database
+-t THRESHOLD: Minimum absolute support threshold in the graph database
 
--p PATTERNSIZE:  Maximum size (number of vertices) of patterns returned
+-p SIZE:      Maximum size (number of vertices) of patterns returned
 
--o PATTERNFILE:  output the frequent subtrees in this file
+-o FILE:      output the frequent subtrees in this file
 
--i VALUE:   Some embedding operators require a parameter that might be
-                 a float between 0.0 and 1.0 or an integer >=1, depending 
-                 on the operator.
+-i VALUE:     Some embedding operators require a parameter that might be
+              a float between 0.0 and 1.0 or an integer >=1, depending 
+              on the operator.
+              
+-r VALUE:     Initialize the random number generator with seed VALUE. If
+              not specified, random generator is seeded according to 
+              current time.
 
--m METHOD:       Choose mining method among
-             bfs: (default) mine in a levelwise fashion (like apriori). 
+
+-m METHOD:    Choose mining method among
+              
+              bfs: (default) mine in a levelwise fashion (like apriori). 
                  This results in better pruning behavior, but large memory 
                  footprint
-             dfs: mine in a depth-first fashion (like FP-growth). This 
+              dfs: mine in a depth-first fashion (like FP-growth). This 
                  results in better memory footprint, but larger run time. 
-                 
--e OPERATOR:     Choose embedding operator among
-             subtree: (default) classical subtree isomorphism algorithm.
-                 A pattern matches a graph, if it is subgraph isomorphic 
-                 to it. Works only for forest transaction databases.
-                 
-             iterative: classical subtree isomorphism algorithm in an
-                 iterative version. Uses more space than subtree, but 
-                 might increase mining speed in some cases. Works only 
-                 for forest transaction databases.
-                 
-             absImp: absolute importance threshold (specify using -i).
-                 A pattern needs to be subtree of at least i connected
-                 components of a graph to match the graph. Works only 
-                 for forest transaction databases.
-                 
-             relImp: relative importance threshold (specify using -i).
-                 A pattern needs to be subtree of at least a -i fraction
-                 of connected components of a graph to match it. Works 
-                 only for forest transaction databases.
-                 
-             probabilisticTreeSampling: Probabilistic Subtree Features.
-                 Works for arbitrary graph transaction 
-                 databases with polynomial delay. However, might result in
-                 false negatives due to local spanning tree sampling. Sam-
-                 pling rate can be influenced using -i. The parameter spe-
-                 cifies the number of spanning trees that are sampled for
-                 each set of v-rooted components. Hence, a higher -i results
-                 in higher recall and higher runtime. 
-                 
-             exactGlobalTreeEnumeration: Frequent Subtree Features.
-                 Works for 'not too complex' graph transaction databases.
-                 That is, this algorithm enumerates all global spanning
-                 trees of each graph and checks for subtree isomorphism
-                 of a pattern in the complete spanning tree forest.
-                 This is mainly a debug endeavor...
-                 
-             localEasy: My implementation of the local easy subtree iso-
-                 morphism algorithm. Works for arbitrary graph transaction 
-                 databases. However, has polynomial delay only for local
-                 easy graph databases.
-                 
-             localEasySampling: Boosted Probabilistic Subtree Features. 
-                 My implementation of the local easy tree 
-                 sampling algorithm. Works for arbitrary graph transaction 
-                 databases with polynomial delay. However, might result in
-                 false negatives due to local spanning tree sampling. Sam-
-                 pling rate can be influenced using -i. The parameter spe-
-                 cifies the number of spanning trees that are sampled for
-                 each set of v-rooted components. Hence, a higher -i results
-                 in higher recall and higher runtime. The spt-sampling takes 
-                 place only once for each transaction graph at the beginning
-                 of the mining. 
-                 
-             localEasyResampling: Boosted Probabilistic Subtree Features. 
-                 My implementation of the local easy tree 
-                 sampling algorithm. Works for arbitrary graph transaction 
-                 databases with polynomial delay. However, might result in
-                 false negatives due to local spanning tree sampling. Sam-
-                 pling rate can be influenced using -i. The parameter spe-
-                 cifies the number of spanning trees that are sampled for
-                 each set of v-rooted components. Hence, a higher -i results
-                 in higher recall and higher runtime. For each evaluation of
-                 the embedding operator, a (possibly) novel sample of local
-                 spanning trees is drawn. This likely destroys the apriori-
-                 property of the embedding operator.
-                 
-             localEasySamplingSlow:
+      
+
+-e OPERATOR:  Select the algorithm to decide whether a tree pattern 
+              matches a transaction graph.
+              Choose embedding operator among the following:
+
+         == EXACT TREE EMBEDDING OPERATORS ==
+           These operators result in the full set of frequent 
+           subtrees being output by this mining algorithm.
+         
+           subtree: (default) classical subtree isomorphism algorithm.
+             A pattern matches a graph, if it is subgraph isomorphic 
+             to it. Works only for forest transaction databases.
+             The algorithm is described in 
+             Shamir & Tsur: Faster Subtree Isomorphism.
+             Journal of Algorithms (33), 1999, pp. 267-280
              
-             localEasySamplingIndependent:
+           iterative: classical subtree isomorphism algorithm in an
+             iterative version. Uses more space than subtree, but 
+             might increase mining speed in some cases. Works only 
+             for forest transaction databases.
              
-             treeEnumeration: Enumerate all trees up to isomorphism which 
-                 can be generated from frequent vertices and edges in the
-                 input databases.
-          
--r VALUE:        Initialize the random number generator with seed VALUE. If
-                 not specified, random generator is seeded according to 
-                 current time.
-                  
--h:              print this possibly helpful information.
+           localEasy: My implementation of the local easy subtree iso-
+             morphism algorithm. Works for arbitrary graph transaction 
+             databases. However, has polynomial delay only for local
+             easy graph databases. The algorithm is described in
+             Welke, Horvath, Wrobel: Probabilistic and Exact Frequent
+             Subtree Mining in Graphs Beyond Forests. (Chapter 3)
+             Machine Learning (to appear).
+                              
+           exactGlobalTreeEnumeration: Frequent Subtree Features.
+             Works for 'not too complex' graph transaction databases.
+             That is, this algorithm enumerates all global spanning
+             trees of each graph and checks for subtree isomorphism
+             of a pattern in the complete spanning tree forest (using 
+             the subtree method above).
+             
+             
+         == STRANGE EMBEDDING OPERATORS ==
+           These operators do various stuff. The first two are 
+           stronger than subgraph isomorphism, requiring possibly
+           more than one embedding into a transaction graph to
+           match the graph. The third just enumerates all trees
+           up to isomorphism that can be created from the vertex 
+           and edge labels in the database.
+             
+           absImp: absolute importance threshold (specify using -i).
+             A pattern needs to be subtree of at least i connected
+             components of a graph to match the graph. Works only 
+             for forest transaction databases.
+             
+           relImp: relative importance threshold (specify using -i).
+             A pattern needs to be subtree of at least a -i fraction
+             of connected components of a graph to match it. Works 
+             only for forest transaction databases.
+                          
+           treeEnumeration: Enumerate all trees up to isomorphism which 
+             can be generated from frequent vertices and edges in the
+             input databases.
+         
+         
+         == INCOMPLETE EMBEDDING OPERATORS ==
+           The embedding operators in this section result in an 
+           incomplete enumeration of the set of frequent subtrees 
+           in a graph database. The pattern set returned by the mining
+           algorithm using one of these operators is always a subset of 
+           the set of all frequent subtrees of the graph database.
+           These algorithms are randomized and depend on the -r 
+           parameter for random seeding. The -i parameter influences 
+           the sampling rate and hence the runtime and the accuracy.
+           The resulting mining algorithm guarantees incremental 
+           polynomial delay.
+             
+           probabilisticTreeSampling: Probabilistic Subtree Features.
+             Works for arbitrary graph transaction databases with 
+             polynomial delay. The -i parameter specifies the number of 
+             spanning trees that are sampled for each graph in the 
+             database. The spt-sampling takes place only once for each 
+             transaction graph at the beginning of the mining. 
+             The resulting mining algorithm is described in  
+             Welke, Horvath, Wrobel: Probabilistic Frequent Subtrees 
+             for Efficient Graph Classification and Retrieval. (Chapter 3)
+             Machine Learning (107), 2018, pp. 1847-1873
+             
+           probabilisticTreeSamplingFK: Probabilistic Subtree Features,
+             based on a simplified algorithm, motivated by the ideas of 
+             Fürer & Kasiviswanathan: Approximately Counting Embeddings 
+             into Random Graphs.
+             Combinatorics, Probability & Computing (23), 2014, 
+             pp.1028-1056.         The algorithm just tries to embed 
+             the pattern tree somewhere in the graph using a combined 
+             dfs/bfs strategy. Once a pattern vertex is mapped to a 
+             transaction vertex, it will not change. Hence, the algorithm
+             finds in O(V(H)) whether a particular embedding works.
+             The maximum number of such trials for each (pattern tree, 
+             transaction graph) tuple can be set by the -i parameter, 
+             which has to be an integer. For each invocation, new random
+             choices are made. This means that this embedding operator 
+             destroys the apriori property.
+             
+           probabilisticTreeSamplingFKR: Probabilistic Subtree Features,
+             as above; difference is that there is more randomness in the
+             matching algorithm, as the neighbors of the pattern vertex
+             and the neighbors of its image are shuffled before the alg.
+             tries to assign the neighbors. The above version only shuffles
+             the neighbors of the pattern vertex, which might be not 
+             sufficient, as there is often only one such neighbor. 
+             
+           localEasySampling: Boosted Probabilistic Subtree Features. 
+             My implementation of the local easy tree sampling algorithm. 
+             The -i parameter specifies the number of local spanning trees 
+             that are sampled for each set of v-rooted components. The spt-
+             sampling takes place only once for each transaction graph at 
+             the beginning of the mining. The algorithm is described in 
+             Welke, Horvath, Wrobel: Probabilistic and Exact Frequent
+             Subtree Mining in Graphs Beyond Forests. (Chapter 4)
+             Machine Learning (to appear).
+             
+           localEasyResampling: Boosted Probabilistic Subtree Features. 
+             Difference to the above embedding operator: For each 
+             evaluation of the embedding operator, a (possibly) novel 
+             sample of local spanning trees is drawn. This destroys the 
+             apriori-property of the embedding operator.
+             
+           localEasySamplingSlow:
+         
+           localEasySamplingIndependent:
+
+ 
