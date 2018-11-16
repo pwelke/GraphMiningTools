@@ -323,3 +323,152 @@ char subtreeCheck3(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 
 	return 0;
 }
+
+
+/**
+Labeled Rooted Subtree isomorphism check.
+
+This is a variant of the subtree isomorphism algorithm (for the undirected case) described by
+
+Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism.
+
+(see also subtreeCheck3 for the implementation of the undirected case.)
+
+This variant here is probably less efficient than a specialized variant for the rooted case, but was easier to implement:
+- it checks whether a complete subtree isomorphism from h to g maps the root of h to the highest point in g.
+- if so, it returns a pointer to the vertex in g, o/w, it returns NULL.
+
+This allows to on the one hand decide whether there exists a rooted iso from h to g with given roots, and on the
+other hand, to reconstruct the mapping from h to g (or at least have a hint about it).
+
+Input:
+tree g, rooted at gRoot
+tree h, rooted at hRoot
+
+Output:
+a pointer to v \in V(g) such that there exists a rooted subtree iso from h rooted at hRoot to g rooted at gRoot that
+  maps hRoot to v, NULL otherwise.
+*/
+struct Vertex* subtreeCheckRooted(struct Graph* g, int gRoot, struct Graph* h, int hRoot, struct GraphPool* gp) {
+	/* iterators */
+	int u, v;
+
+	struct Vertex* r = g->vertices[gRoot];
+	int*** S = createCube(g->n, h->n);
+	int* postorder = getPostorder(g, r->number);
+
+	/* init the S(v,u) for v and u leaves */
+	int* gLeaves = findLeaves(g, 0);
+	/* h is not rooted, thus every vertex with one neighbor is a leaf */
+	int* hLeaves = findLeaves(h, -1);
+	for (v=1; v<gLeaves[0]; ++v) {
+		for (u=1; u<hLeaves[0]; ++u) {
+			/* check compatibility of leaf labels */
+			if (labelCmp(g->vertices[gLeaves[v]]->label, h->vertices[hLeaves[u]]->label) == 0) {
+				/* check for compatibility of edges */
+				if (labelCmp(g->vertices[gLeaves[v]]->neighborhood->label, h->vertices[hLeaves[u]]->neighborhood->label) == 0) {
+					S[gLeaves[v]][hLeaves[u]] = malloc(2 * sizeof(int));
+					/* 'header' of array stores its length */
+					S[gLeaves[v]][hLeaves[u]][0] = 2;
+					/* the number of the unique neighbor of u in h*/
+					S[gLeaves[v]][hLeaves[u]][1] = h->vertices[hLeaves[u]]->neighborhood->endPoint->number;
+				}
+			}
+		}
+	}
+	/* garbage collection for init */
+	free(gLeaves);
+	free(hLeaves);
+	gLeaves = NULL;
+	hLeaves = NULL;
+
+	for (v=0; v<g->n; ++v) {
+		struct Vertex* current = g->vertices[postorder[v]];
+		int currentDegree = degree(current);
+		if ((currentDegree > 1) || (current->number == r->number)) {
+			for (u=0; u<h->n; ++u) {
+				int i;
+				int degU = degree(h->vertices[u]);
+				if (degU <= currentDegree + 1) {
+					/* if vertex labels match */
+					if (labelCmp(h->vertices[u]->label, current->label) == 0) {
+						struct Graph* B = makeBipartiteInstance(g, current->number, h, u, S, gp);
+						int* matchings = malloc((degU + 1) * sizeof(int));
+
+						// matchings[0] = bipartiteMatchingFastAndDirty(B, gp);
+						matchings[0] = bipartiteMatchingEvenMoreDirty(B);
+
+						// have we found a subgraph isomorphism?
+						if ((matchings[0] == degU) && (u == hRoot)) {
+							free(postorder);
+							free(matchings);
+							freeCube(S, g->n, h->n);
+							dumpGraph(gp, B);
+							return g->vertices[v];
+						}
+
+						// check if it makes sense to search for critical vertices
+						if (matchings[0] == degU - 1) {
+							/* the maximum matching computed above covers all but one neighbor of u
+							we need to identify those covered neighbors that can be swapped with
+							that uncovered neighbor without decreasing the cardinality of the matching
+							these are exactly the non-critical vertices.
+
+							a vertex is critical <=> 1.) AND NOT 2.)
+							hence
+							a vertex is non-critical <=> NOT 1.) OR 2.)
+							where
+							1.) matched in the matching above
+							2.) reachable by augmenting path from the single unmatched vertex.
+							This means, all vertices reachable from the single uncovered neighbor of u (including that neighbor are non-critical.
+							*/
+							struct Vertex* uncoveredNeighbor = NULL;
+
+							// find the single uncovered neighbor of u
+							for (i=0; i<B->number; ++i) {
+								if (!isMatched(B->vertices[i])) {
+									uncoveredNeighbor = B->vertices[i];
+									break;
+								}
+							}
+
+							// mark all vertices reachable from uncoveredNeighbor by an augmenting path
+							markReachable(uncoveredNeighbor, B->number);
+
+							// add non-critical vertices to output
+							matchings[0] = degU + 1;
+							for (i=0; i<B->number; ++i) {
+								if (B->vertices[i]->visited == 1) {
+									// vertex is not critical
+									matchings[i+1] = B->vertices[i]->lowPoint;
+								} else {
+									// vertex critical
+									matchings[i+1] = -1;
+								}
+							}
+
+						} else {
+							// makes no sense to look for critical vertices as there cannot be a matching covering all but one neighbor of u
+							matchings[0] = degU + 1;
+							for (i=1; i<degU + 1; ++i) {
+								matchings[i] = -1;
+							}
+						}
+
+						// store information for further steps of the algorithm
+						S[current->number][u] = matchings;
+						// garbage collection
+						dumpGraph(gp, B);
+					}
+				}
+			}
+		}
+	}
+
+	/* garbage collection */
+	free(postorder);
+	freeCube(S, g->n, h->n);
+
+	return NULL;
+}
+
