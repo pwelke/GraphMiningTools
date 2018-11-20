@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #include "subtreeIsoUtils.h"
-#include "subtreeIsomorphism.h"
 #include "iterativeSubtreeIsomorphism.h"
 #include "importantSubtrees.h"
 #include "localEasySubtreeIsomorphism.h"
@@ -23,7 +22,7 @@ void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patt
 	for (i=0; i<nGraphs; ++i) {
 		int j;
 		for (j=0; j<nPatterns; ++j) {
-			if (subtreeCheck3(db[i], patterns[j], gp)) {
+			if (isSubtree(db[i], patterns[j], gp)) {
 				++pointers[j]->visited;
 			}
 		}
