@@ -287,7 +287,7 @@ int checkIfSubIso(struct ShallowGraph* transactionTrees, struct Graph** patternT
 					if (!features[i][pattern]) {
 						/* if pattern is contained in spanning tree */
 						// if (subtreeCheckCached(spanningTree, patternTrees[pattern], gp, subtreeCache)) {
-						if (subtreeCheck3(spanningTree, patternTrees[pattern], gp)) {
+						if (isSubtree(spanningTree, patternTrees[pattern], gp)) {
 							/* currentLevel patternstring visited +1 and continue with next pattern */
 							features[i][pattern] = 1;
 							++pointers[pattern]->visited;
@@ -349,7 +349,7 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 					/* if pattern is contained in spanning tree */
 					// if (subtreeCheckLF(spanningTree, patternTrees[pattern], gp, sgp)) {
 					// if (subtreeCheckCached(spanningTree, patternTrees[pattern], gp, subtreeCache)) {
-					if (subtreeCheck3(spanningTree, patternTrees[pattern], gp)) {
+					if (isSubtree(spanningTree, patternTrees[pattern], gp)) {
 						/* weight the found match with the multiplicity 
 						of the (spanning) tree in the original graph */
 						if (spanningTree->number == 0) {
@@ -383,7 +383,7 @@ int checkIfImportantSubIso(struct ShallowGraph* transactionTrees, struct Graph**
 Walk through the db, checking for each graph g \in db which refinements are subtrees of at least one of its spanning 
 trees. for all these refinements, the visited counter of its cString in currentLevel is increased. 
 */
-void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** refinements, 
+void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** refinements,
 					struct Vertex** pointers, int n, int threshold, int nGraphs,
 					double fraction, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp,
 					int (*embeddingOperator)(struct ShallowGraph*, struct Graph**, double, int, int, int**, struct Vertex**, struct GraphPool*)) {
