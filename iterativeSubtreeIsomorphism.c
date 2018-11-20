@@ -644,5 +644,5 @@ struct Vertex* computeRootedSubtreeEmbedding(struct Graph* g, struct Vertex* gRo
 		info.foundIso = h->n == 0 ? 1 : 0;
 	}
 
-	return info.foundIso;
+	return rootMapping;
 }
