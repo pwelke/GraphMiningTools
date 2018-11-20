@@ -547,3 +547,102 @@ char isSubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
 	return info.foundIso;
 }
 
+
+
+/**
+Iterative Labeled Subtree Isomorphism Check.
+
+Implements the labeled subtree isomorphism algorithm of
+Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism in an iterative version:
+
+Input:
+	a text    tree g
+	a pattern tree h
+	the cube that was computed for some subtree h-e and g, where e is an edge to a leaf of h
+	(object pool data structures)
+
+Output:
+	yes, if h is subgraph isomorphic to g, no otherwise
+	the cube for h and g
+
+ */
+static struct Vertex* noniterativeRootedSubtreeCheck_intern(struct SubtreeIsoDataStore* current, struct Vertex* hRoot, struct GraphPool* gp) {
+
+	struct Graph* g = current->g;
+	struct Graph* h = current->h;
+
+	struct CachedGraph* cachedB = initCachedGraph(gp, h->n);
+
+	current->foundIso = 0;
+	for (int vi=0; vi<g->n; ++vi) {
+		struct Vertex* v = g->vertices[current->postorder[vi]];
+
+		for (int ui=0; ui<h->n; ++ui) {
+			struct Vertex* u = h->vertices[ui];
+
+			// check if vertex labels match
+			if (labelCmp(u->label, v->label) != 0) { continue; }
+
+			// compute maximum matching
+			struct Graph* B = makeBipartiteInstanceFromVerticesCached(*current, cachedB, u, u, v, gp);
+			int sizeofMatching = bipartiteMatchingEvenMoreDirty(B);
+			int nNeighbors = B->number;
+
+			// is there a subgraph iso here?
+			if (sizeofMatching == nNeighbors) {
+				addCharacteristic(current, u, u, v);
+
+				if (u == hRoot) {
+					current->foundIso = 1;
+
+					returnCachedGraph(cachedB);
+					dumpCachedGraph(cachedB);
+					return v; // early termination when subtree iso is found
+				}
+			}
+
+			// compute partial subgraph isomorphisms
+			if (sizeofMatching == nNeighbors - 1) {
+				addNoncriticalVertexCharacteristics(current, B, u, v);
+			}
+
+			returnCachedGraph(cachedB);
+		}
+	}
+
+	dumpCachedGraph(cachedB);
+	return NULL;
+}
+
+
+/**
+ * This method checks whether h, rooted at hRoot, is a rooted subtree of g, rooted at gRoot.
+ * It internally uses the labeled (unrooted) subtree isomorphism algorithm of
+ * Ron Shamir, Dekel Tsur [1999]: Faster Subtree Isomorphism
+ *
+ * but checks, when an undirected subtree iso from h to g is found, whether the vertex of h that is mapped to the
+ * 'highest' vertex in g rooted at gRoot is hRoot.
+ *
+ * If there exists such a subgraph iso, then the function returns a pointer to the image vertex in g; otherwise, it returns NULL.
+ */
+struct Vertex* computeRootedSubtreeEmbedding(struct Graph* g, struct Vertex* gRoot, struct Graph* h, struct Vertex* hRoot, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore info = {0};
+	info.g = g;
+	info.h = h;
+	struct Vertex* rootMapping = NULL;
+
+
+	if (info.g->n > 0) {
+		info.postorder = getPostorder(g, gRoot->number);
+		info.S = createNewCube(info.g->n, info.h->n);
+		rootMapping = noniterativeRootedSubtreeCheck_intern(&info, hRoot, gp);
+		dumpNewCube(info.S, info.g->n);
+		free(info.postorder);
+	} else {
+		// if g is empty, then h only matches if it is empty as well.
+		// g->n == 0 is a special case that is not handled well by the subtree iso algorithm
+		info.foundIso = h->n == 0 ? 1 : 0;
+	}
+
+	return info.foundIso;
+}

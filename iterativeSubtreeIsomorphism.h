@@ -33,11 +33,15 @@ Output:
 	the cube for h and g
 
 */
-//void iterativeSubtreeCheck_intern(struct SubtreeIsoDataStore base, struct SubtreeIsoDataStore* currentPointer, struct GraphPool* gp);
 struct SubtreeIsoDataStore iterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp);
 struct SubtreeIsoDataStore noniterativeSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct GraphPool* gp);
 
 char isSubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp);
+
+
+// ROOTED SUBTREE ISOMORPHISM
+
+struct Vertex* computeRootedSubtreeEmbedding(struct Graph* g, struct Vertex* gRoot, struct Graph* h, struct Vertex* hRoot, struct GraphPool* gp);
 
 
 // INITIALIZATORS
