@@ -191,6 +191,8 @@ static struct Graph* makeBipartiteInstance(struct Graph* g, int v, struct Graph*
 
 
 /**
+ * deprecated. use isSubtree from module iterativeSubtreeIsomorphism
+ *
 Labeled Subtree isomorphism check. 
 
 Implements the version of subtree isomorphism algorithm described by
