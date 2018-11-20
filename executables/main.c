@@ -9,7 +9,6 @@
 #include "../loading.h"
 #include "../listSpanningTrees.h"
 #include "../upperBoundsForSpanningTrees.h"
-#include "../subtreeIsomorphism.h"
 #include "../graphPrinting.h"
 #include "../treeCenter.h"
 #include "../connectedComponents.h"
