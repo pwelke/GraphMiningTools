@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #include "subtreeIsoUtils.h"
-#include "subtreeIsomorphism.h"
 #include "iterativeSubtreeIsomorphism.h"
 #include "importantSubtrees.h"
 #include "localEasySubtreeIsomorphism.h"
@@ -22,17 +21,22 @@
 
 
 
-// WRAPPERS FOR DIFFERENT EMBEDDING OPERATORS
+// WRAPPERS FOR DIFFERENT ROOTED TREE EMBEDDING OPERATORS
 
 /**
  * Exact embedding Operator for
  * tree pattern h
  * forest transaction data
  */
-struct SubtreeIsoDataStore subtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore rootedSubtreeComputationOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	(void)importance; // unused
-	// TODO
-//	return noniterativeSubtreeCheck(data, h, gp);
+
+	struct Vertex* rootEmbedding = computeRootedSubtreeEmbedding(data.g, data.g->vertices[0], h, h->vertices[0], gp);
+	struct SubtreeIsoDataStore result = data;
+	result.foundIso = (rootEmbedding == NULL) ? 0 : 1;
+	result.h = h;
+
+	return result;
 }
 
