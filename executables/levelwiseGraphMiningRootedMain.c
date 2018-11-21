@@ -7,6 +7,7 @@
 #include "../lwmr_embeddingOperators.h"
 #include "../lwm_initAndCollect.h"
 #include "../lwmr_miningAndExtension.h"
+#include "../lwm_embeddingOperators.h"
 #include "levelwiseGraphMiningMain.h"
 
 const char DEBUG_INFO = 1;
@@ -16,9 +17,9 @@ const char DEBUG_INFO = 1;
  * Print --help message
  */
 int printHelp() {
-#include "levelwiseGraphMiningHelp.help"
-	unsigned char* help = executables_levelwiseGraphMiningHelp_txt;
-	int len = executables_levelwiseGraphMiningHelp_txt_len;
+#include "levelwiseGraphMiningRootedHelp.help"
+	unsigned char* help = executables_levelwiseGraphMiningRootedHelp_txt;
+	int len = executables_levelwiseGraphMiningRootedHelp_txt_len;
 	if (help != NULL) {
 		int i=0;
 		for (i=0; i<len; ++i) {
@@ -54,17 +55,18 @@ int main(int argc, char** argv) {
 	size_t (*initMining)(size_t, double, struct Vertex**, struct SupportSet**, struct ShallowGraph**, void**, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &initFrequentTreeMiningForForestDB;
 
 	// mining strategy
-	void (*miningStrategy)(size_t, size_t, size_t, struct Vertex*, struct SupportSet*, struct ShallowGraph*, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &BFSStrategy;
+	void (*miningStrategy)(size_t, size_t, size_t, struct Vertex*, struct SupportSet*, struct ShallowGraph*, struct SubtreeIsoDataStore (*)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*), double, FILE*, FILE*, FILE*, struct GraphPool*, struct ShallowGraphPool*) = &BFSStrategyRooted;
 
 	// garbage collector after mining
 	void (*garbageCollector)(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) = &garbageCollectFrequentTreeMiningForForestDB;
 
 	// embedding operator
-	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &subtreeCheckOperator;
+	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &rootedSubtreeComputationOperator;
 
 	// other
 	double importance = 0.5;
 	char* patternFile = NULL;
+	char* featureFile = NULL;
 
 	/* parse command line arguments */
 	int arg;
@@ -97,10 +99,6 @@ int main(int argc, char** argv) {
 			}
 			break;
 		case 'm':
-//			if (strcmp(optarg, "dfs") == 0) {
-//				miningStrategy = &iterativeDFSMain;
-//				break;
-//			}
 			if (strcmp(optarg, "bfs") == 0) {
 				miningStrategy = &BFSStrategyRooted;
 				break;
@@ -111,7 +109,7 @@ int main(int argc, char** argv) {
 			// operators for forest transaction databases
 			if (strcmp(optarg, "rootedTrees") == 0) {
 				initMining = &initFrequentTreeMiningForForestDB;
-				embeddingOperator = &rootedSubtreeCheckOperator;
+				embeddingOperator = &rootedSubtreeComputationOperator;
 				garbageCollector = &garbageCollectFrequentTreeMiningForForestDB;
 				break;
 			}
@@ -135,6 +133,9 @@ int main(int argc, char** argv) {
 			break;
 		case 'o':
 			patternFile = copyString(optarg);
+			break;
+		case 'f':
+			featureFile = copyString(optarg);
 			break;
 		case '?':
 			return EXIT_FAILURE;
@@ -174,7 +175,17 @@ int main(int argc, char** argv) {
 		if (patternStream) {
 			fprintf(logStream, "Write patterns to file: %s\n", patternFile);
 		} else {
-			fprintf(logStream, "Could not open file for writing: %s\nTerminating\n", patternFile);
+			fprintf(logStream, "Could not open file for writing patterns: %s\nTerminating\n", patternFile);
+			return EXIT_FAILURE;
+		}
+	}
+
+	if (featureFile != NULL) {
+		featureStream = fopen(featureFile, "w");
+		if (featureStream) {
+			fprintf(logStream, "Write patterns to file: %s\n", featureFile);
+		} else {
+			fprintf(logStream, "Could not open file for writing features : %s\nTerminating\n", featureFile);
 			return EXIT_FAILURE;
 		}
 	}
