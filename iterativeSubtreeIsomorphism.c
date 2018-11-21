@@ -646,3 +646,24 @@ struct Vertex* computeRootedSubtreeEmbedding(struct Graph* g, struct Vertex* gRo
 
 	return rootMapping;
 }
+
+
+struct SubtreeIsoDataStore noniterativeRootedSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct Vertex** rootEmbedding, struct GraphPool* gp) {
+	struct SubtreeIsoDataStore info = {0};
+	info.g = base.g;
+	info.h = h;
+	info.postorder = base.postorder;
+
+	if (info.g->n > 0) {
+		info.S = createNewCube(info.g->n, info.h->n);
+		*rootEmbedding = noniterativeRootedSubtreeCheck_intern(&info, h->vertices[0], gp);
+		dumpNewCube(info.S, info.g->n);
+	} else {
+		// if g is empty, then h only matches if it is empty as well.
+		// g->n == 0 is a special case that is not handled well by the subtree iso algorithm
+		info.foundIso = h->n == 0 ? 1 : 0;
+	}
+
+	info.S = NULL;
+	return info;
+}

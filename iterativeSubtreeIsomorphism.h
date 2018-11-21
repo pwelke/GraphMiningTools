@@ -42,7 +42,7 @@ char isSubtree(struct Graph* g, struct Graph* h, struct GraphPool* gp);
 // ROOTED SUBTREE ISOMORPHISM
 
 struct Vertex* computeRootedSubtreeEmbedding(struct Graph* g, struct Vertex* gRoot, struct Graph* h, struct Vertex* hRoot, struct GraphPool* gp);
-
+struct SubtreeIsoDataStore noniterativeRootedSubtreeCheck(struct SubtreeIsoDataStore base, struct Graph* h, struct Vertex** rootEmbedding, struct GraphPool* gp);
 
 // INITIALIZATORS
 
