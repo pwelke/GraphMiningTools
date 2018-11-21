@@ -1,0 +1,73 @@
+This is a frequent rooted subtree mining tool.
+Implemented by Pascal Welke starting in 2018.
+
+This program computes and outputs frequent *rooted* subtrees and feature
+representations of the mined graphs. The database is expected to contain
+tree transactions that are interpreted as being rooted at the first
+vertex.
+
+usage: ./lwg [options] [FILE]
+
+If no FILE argument is given or FILE is - the program reads from stdin.
+It always prints to stdout (unless specified by parameters) and 
+stderr (statistics).
+
+
+Options:
+-h:           print this possibly helpful information.
+
+-t THRESHOLD: Minimum absolute support threshold in the graph database
+
+-p SIZE:      Maximum size (number of vertices) of patterns returned
+
+-o FILE:      output the frequent subtrees in this file
+
+-f FILE:      output the feature information in this file
+
+-i VALUE:     Some embedding operators require a parameter that might be
+              a float between 0.0 and 1.0 or an integer >=1, depending 
+              on the operator.
+              
+-r VALUE:     Initialize the random number generator with seed VALUE. If
+              not specified, random generator is seeded according to 
+              current time.
+
+
+-m METHOD:    Choose mining method among
+              
+              bfs: (default) mine in a levelwise fashion (like apriori). 
+                 This results in better pruning behavior, but large memory 
+                 footprint
+      
+
+-e OPERATOR:  Select the algorithm to decide whether a tree pattern 
+              matches a transaction graph.
+              Choose embedding operator among the following:
+
+         == EXACT TREE EMBEDDING OPERATORS ==
+           These operators result in the full set of frequent 
+           rooted subtrees being output by this mining algorithm.
+         
+           rootedTrees: (default) classical subtree isomorphism algorithm.
+             A pattern matches a graph, if it is rooted subgraph isomorphic 
+             to it. That is, the transactions are interpreted as being rooted
+             at their first vertex (in the graph database file format) and the 
+             image of the root of the pattern must be the vertex in the image of 
+             the pattern with the smallest distance to the root of the transaction.
+              Works only for forest transaction databases.
+
+             
+         == STRANGE EMBEDDING OPERATORS ==
+           These operators do various stuff. The first two are 
+           stronger than subgraph isomorphism, requiring possibly
+           more than one embedding into a transaction graph to
+           match the graph. The third just enumerates all trees
+           up to isomorphism that can be created from the vertex 
+           and edge labels in the database.
+                          
+           rootedTreeEnumeration: Enumerate all trees up to isomorphism which 
+             can be generated from frequent vertices and edges in the
+             input databases.
+         
+
+ 
