@@ -32,10 +32,13 @@ struct SubtreeIsoDataStore rootedSubtreeComputationOperator(struct SubtreeIsoDat
 	(void)sgp; // unused
 	(void)importance; // unused
 
-	struct Vertex* rootEmbedding = computeRootedSubtreeEmbedding(data.g, data.g->vertices[0], h, h->vertices[0], gp);
-	struct SubtreeIsoDataStore result = data;
-	result.foundIso = (rootEmbedding == NULL) ? 0 : 1;
-	result.h = h;
+	struct Vertex* rootEmbedding = NULL;
+	struct SubtreeIsoDataStore result = noniterativeRootedSubtreeCheck(data, h, &rootEmbedding, gp);
+
+//	if (result.foundIso) {
+//		// nasty hack to output information on embeddings found (for all patterns, not only frequent ones) to stdout
+//		fprintf(stdout, "emb %i %i %i\n", h->number, data.g->number, rootEmbedding->number);
+//	}
 
 	return result;
 }

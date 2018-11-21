@@ -9,9 +9,9 @@
 #include "searchTree.h"
 #include "cs_Parsing.h"
 #include "cs_Tree.h"
-#include "treeEnumeration.h"
+#include "treeEnumerationRooted.h"
 
-#include "lwm_embeddingOperators.h"
+//#include "lwm_embeddingOperators.h"
 #include "lwmr_miningAndExtension.h"
 //#include "lwm_initAndCollect.h"
 
@@ -57,7 +57,7 @@ void extendPreviousLevelRooted(// input
 		struct Graph* frequentPattern = frequentPatternSupportList->first->data.h;
 
 		// extend frequent pattern
-		struct Graph* listOfExtensions = extendPatternOnLeaves(frequentPattern, extensionEdges, gp);
+		struct Graph* listOfExtensions = extendRootedPatternAllWays(frequentPattern, extensionEdges, gp);
 
 		for (struct Graph* extension=popGraph(&listOfExtensions); extension!=NULL; extension=popGraph(&listOfExtensions)) {
 			// count number of generated extensions
@@ -74,7 +74,7 @@ void extendPreviousLevelRooted(// input
 				aprioriParentIdSet = NULL;
 			} else {
 				++nAllUniqueGeneratedExtensions;
-				aprioriParentIdSet = aprioriCheckExtensionReturnList(extension, previousLevelSearchTree, gp, sgp);
+				aprioriParentIdSet = aprioriCheckExtensionRootedReturnList(extension, previousLevelSearchTree, gp, sgp);
 			}
 
 			if (aprioriParentIdSet) {
@@ -204,7 +204,7 @@ struct SupportSet* BFSgetNextLevelRooted(// input
 			dumpGraph(gp, candidate);
 		} else {
 			++nAllFrequentExtensions;
-			struct ShallowGraph* cString = canonicalStringOfTree(candidate, sgp);
+			struct ShallowGraph* cString = canonicalStringOfRootedTree(candidate->vertices[0], candidate->vertices[0], sgp);
 			cString->data = candidate->activity;
 			addMultiSetToSearchTree(*currentLevelSearchTree, cString, gp, sgp);
 			candidate->number = (*currentLevelSearchTree)->lowPoint;
