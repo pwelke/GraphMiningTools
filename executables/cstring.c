@@ -10,6 +10,8 @@
 #include "../cs_Tree.h"
 #include "../cs_Parsing.h"
 #include "../loading.h"
+#include "../graphPrinting.h"
+#include "../lwm_initAndCollect.h"
 #include "cstring.h"
 
 
@@ -38,6 +40,8 @@ int printHelp() {
  */
 int main(int argc, char** argv) {
 
+	typedef enum {safe, unsafe, inverse} ConversionMethod;
+
 	/* object pools */
 	struct ListPool *lp;
 	struct VertexPool *vp;
@@ -48,22 +52,30 @@ int main(int argc, char** argv) {
 	struct Graph* g = NULL;
 	int i = 0;
 
-	/* output */
+	/* pointer to graph database in case of inverse conversion */
+	struct Graph** db = NULL;
+	int nGraphs = 0;
+
+	/* input and output */
 	FILE* out = stdout;
+	FILE* input = stdin;
 
 	/* user set variables to specify what needs to be done */
-	char safe = 1;
+	ConversionMethod method = safe;
 
 	/* parse command line arguments */
 	int arg;
-	const char* validArgs = "hu";
+	const char* validArgs = "hui";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
 			printHelp();
 			return EXIT_SUCCESS;
 		case 'u':
-			safe = 0;
+			method = unsafe;
+			break;
+		case 'i':
+			method = inverse;
 			break;
 		}
 	}
@@ -74,28 +86,57 @@ int main(int argc, char** argv) {
 	sgp = createShallowGraphPool(1000, lp);
 	gp = createGraphPool(100, vp, lp);
 
-	/* initialize the stream to read graphs from 
-	   check if there is a filename present in the command line arguments 
-	   if so, open the file, if not, read from stdin */
-	if (optind < argc) {
-		char* filename = argv[optind];
-		/* if the present filename is not '-' then init a file iterator for that file name */
-		if (strcmp(filename, "-") != 0) {
-			createFileIterator(filename, gp);
+	// init
+	switch (method) {
+	case safe:
+	case unsafe:
+
+		/* initialize the stream to read graphs from
+		   check if there is a filename present in the command line arguments
+		   if so, open the file, if not, read from stdin */
+		if (optind < argc) {
+			char* filename = argv[optind];
+			/* if the present filename is not '-' then init a file iterator for that file name */
+			if (strcmp(filename, "-") != 0) {
+				createFileIterator(filename, gp);
+			} else {
+				createStdinIterator(gp);
+			}
 		} else {
 			createStdinIterator(gp);
 		}
-	} else {
-		createStdinIterator(gp);
+		break;
+
+	case inverse:
+		if (optind < argc) {
+			char* filename = argv[optind];
+			/* if the present filename is not '-' then init a file iterator for that file name */
+			if (strcmp(filename, "-") != 0) {
+				input = fopen(filename, "r");
+			} else {
+				input = stdin;
+			}
+		} else {
+			input = stdin;
+		}
+
+		/** TODO if this breaks due to large input files, change this to an iterator */
+		nGraphs = getDBfromCanonicalStrings(&db, input, 20, gp, sgp);
+		fclose(input);
+		break;
 	}
 
-	if (safe) {
+	// processing
+	switch (method) {
+
+	case safe:
 		/* iterate over all graphs in the database */
 		while ((g = iterateFile())) {
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n != -1) {
 				if (isTree(g)) {
 					struct ShallowGraph* cString = canonicalStringOfTree(g, sgp);
+					fprintf(out, "1\t%i\t", g->number);
 					printCanonicalString(cString, out);
 					dumpShallowGraph(sgp, cString);
 				} else {
@@ -113,12 +154,16 @@ int main(int argc, char** argv) {
 				free(g);
 			}
 		}
-	} else {
+		break;
+
+	case unsafe:
+
 		/* iterate over all graphs in the database */
 		while ((g = iterateFile())) {
 			/* if there was an error reading some graph the returned n will be -1 */
 			if (g->n > 0) {
 				struct ShallowGraph* cString = canonicalStringOfTree(g, sgp);
+				fprintf(out, "1\t%i\t", g->number);
 				printCanonicalString(cString, out);
 				dumpShallowGraph(sgp, cString);
 
@@ -133,10 +178,31 @@ int main(int argc, char** argv) {
 				free(g);
 			}
 		}
+		break;
+
+	case inverse:
+
+		for (i=0; i<nGraphs; ++i) {
+			printGraphAidsFormat(db[i], out);
+		}
+		fprintf(out, "$\n");
+		break;
 	}
 
 	/* global garbage collection */
-	destroyFileIterator();
+	switch (method) {
+	case safe:
+	case unsafe:
+		destroyFileIterator();
+		break;
+	case inverse:
+		for (i=0; i<nGraphs; ++i) {
+			dumpGraph(gp, db[i]);
+		}
+		free(db);
+		break;
+	}
+
 	freeGraphPool(gp);
 	freeShallowGraphPool(sgp);
 	freeListPool(lp);

@@ -1,19 +1,33 @@
 A small program to compute canonical strings for trees.
-Implemented 2015 by Pascal Welke.
+Implemented 2015,2018 by Pascal Welke.
+
+Usage: cstring [options] [FILE]
+
+By default, or if FILE is '-', cstring reads from stdin. It always outputs to
+stdout.
+
+
+Default case (without switches):
 
 Input is a database in the usual format, output is one line per graph, which
 is either a canonical string of the graph if the graph is a tree, or 'No 
 Tree' if the graph is not a tree.
 
-Usage: cstring [options] [FILE]
+The canonical string output has the same format as the pattern output of lwg. That is:
 
-By default, or if FILE is '-', gf reads from stdin. It always outputs to
-stdout.
+%i\t%i\t%s
+
+where the first integer is a count (here, always 1), the second integer is the id
+of the graph (as in the input database) and the string is the cstring or 'no tree',
+as mentioned above.
+
 
 Options:
     -h Print this help and exit
 
-    -u Unsafe: Skip the test whether a graph is a tree. Probably results in 
-               secfaults or other nasty stuff, if the database contains 
-               non-tree graphs.
+    -u Unsafe:  Skip the test whether a graph is a tree. Probably results in 
+                secfaults or other nasty stuff, if the database contains 
+                non-tree graphs.
+               
+    -i Inverse: Convert from a canonical string database to a graph database.
 
