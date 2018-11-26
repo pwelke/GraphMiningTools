@@ -30,6 +30,13 @@ LWGHELP = ./executables/levelwiseGraphMiningHelp.help
 $(LWGNAME): $(LWGHELP) $(LWGOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
+LWGRNAME = lwgr
+LWGROBJECTS = $(OBJECTS) ./executables/levelwiseGraphMiningRootedMain.o
+LWGRHELP = ./executables/levelwiseGraphMiningRootedHelp.help
+$(LWGRNAME): $(LWGRHELP) $(LWGROBJECTS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
+
+
 CPKNAME = cpk
 CPKOBJECTS = $(OBJECTS) ./executables/cpkMain.o
 CPKHELP =
@@ -66,11 +73,11 @@ TCIHELP =
 $(TCINAME): $(TCIHELP) $(TCIOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
-PERFNAME = perf
-PERFOBJECTS = $(OBJECTS) ./executables/tciPerf.o
-PERFHELP =
-$(PERFNAME): $(PERFHELP) $(PERFOBJECTS)
-	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
+#PERFNAME = perf
+#PERFOBJECTS = $(OBJECTS) ./executables/tciPerf.o
+#PERFHELP =
+#$(PERFNAME): $(PERFHELP) $(PERFOBJECTS)
+#	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
 GENNAME = ggen
 GENOBJECTS = $(OBJECTS) ./executables/generator.o
@@ -120,7 +127,8 @@ L2UHELP = ./executables/labeled2unlabeledMainHelp.help
 $(L2UNAME): $(L2UHELP) $(L2UOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
-ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(PERFNAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(PENAME) $(GFCNAME)
+ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(LWGRNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(PENAME) $(GFCNAME)
+# $(PERFNAME)
 
 # visualize the include dependencies between the source files.
 # for this, .c and .h files with the same name are interpreted as one entity
@@ -147,7 +155,7 @@ clean:
 	@rm -f *.o
 	@rm -f ./executables/*.o
 	@rm -f ./executables/*.help
-	@rm -f $(ALLTARGETS)
+	@rm -f $(ALLTARGETS) test
 
 print-%:
 	@echo $*=$($*)
