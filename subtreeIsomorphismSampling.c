@@ -79,7 +79,7 @@ static char recursiveSubtreeIsomorphismSampler(struct Vertex* parent, struct Gra
 	}
 
 	// if new neighbors were assigned, recurse to the newly assigned neighbors
-	char embeddingWorked = 0;
+	char embeddingWorked = 1;
 	for (int i=0; i<nNeighbors; ++i) {
 		struct VertexList* child = shuffledNeighbors[i];
 		if (child->flag) {
@@ -152,7 +152,7 @@ static char recursiveSubtreeIsomorphismSamplerWithShuffledImage(struct Vertex* p
 	}
 
 	// if new neighbors were assigned, recurse to the newly assigned neighbors
-	char embeddingWorked = 0;
+	char embeddingWorked = 1;
 	for (int i=0; i<nNeighbors; ++i) {
 		struct VertexList* child = shuffledNeighbors[i];
 		if (child->flag) {
