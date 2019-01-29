@@ -19,6 +19,8 @@ Options:
 
 -o FILE:      output the frequent subtrees in this file
 
+-f FILE:      output the feature information in this file
+
 -i VALUE:     Some embedding operators require a parameter that might be
               a float between 0.0 and 1.0 or an integer >=1, depending 
               on the operator.

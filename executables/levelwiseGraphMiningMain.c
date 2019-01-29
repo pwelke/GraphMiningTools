@@ -66,11 +66,12 @@ int main(int argc, char** argv) {
 	// other
 	double importance = 0.5;
 	char* patternFile = NULL;
+	char* featureFile = NULL;
 
 	/* parse command line arguments */
 	int arg;
 	int seed;
-	const char* validArgs = "ht:p:m:o:e:i:r:";
+	const char* validArgs = "ht:p:m:o:f:e:i:r:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -234,6 +235,9 @@ int main(int argc, char** argv) {
 		case 'o':
 			patternFile = copyString(optarg);
 			break;
+		case 'f':
+			featureFile = copyString(optarg);
+			break;
 		case '?':
 			return EXIT_FAILURE;
 			break;
@@ -272,7 +276,17 @@ int main(int argc, char** argv) {
 		if (patternStream) {
 			fprintf(logStream, "Write patterns to file: %s\n", patternFile);
 		} else {
-			fprintf(logStream, "Could not open file for writing: %s\nTerminating\n", patternFile);
+			fprintf(logStream, "Could not open pattern file for writing: %s\nTerminating\n", patternFile);
+			return EXIT_FAILURE;
+		}
+	}
+
+	if (featureFile != NULL) {
+		featureStream = fopen(featureFile, "w");
+		if (featureStream) {
+			fprintf(logStream, "Write patterns to file: %s\n", featureFile);
+		} else {
+			fprintf(logStream, "Could not open feature file for writing: %s\nTerminating\n", featureFile);
 			return EXIT_FAILURE;
 		}
 	}
