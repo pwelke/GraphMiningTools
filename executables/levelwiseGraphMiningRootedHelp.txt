@@ -70,4 +70,14 @@ Options:
              input databases.
          
 
+== NOTES ==
+This is a rather quick adaption of a codebase that was built for undirected graphs.
+Hence, it is not as efficient as it could be and has some funny quirks. An incomplete
+list follows now:
+
+- When reporting the number of frequent edges, in the log stream (currently stderr) the
+  number of frequent edges might differ from the number of frequent patterns of size 2.
+  This is due to the case that init step of the mining considers undirected edges. 
+  However, whenever a directed labeled edge is frequent, so is the underlying undirected 
+  edge.
  
