@@ -217,7 +217,7 @@ char subtreeIsomorphismSampler(struct Graph* g, struct Graph* h) {
 		currentRoot->visited = rootEmbedding->number + 1;
 		rootEmbedding->visited = 1;
 		// and try to embed the rest of the tree h into g accordingly
-		foundIso = recursiveSubtreeIsomorphismSamplerWithShuffledImage(currentRoot, g);
+		foundIso = recursiveSubtreeIsomorphismSampler(currentRoot, g);
 
 		// cleanup
 		cleanupSubtreeIsomorphismSampler(h, g);
