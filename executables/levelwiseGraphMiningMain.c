@@ -172,6 +172,15 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectPatternEnumeration;
 				break;
 			}
+			if (strcmp(optarg, "probabilisticTreeSamplingFKM") == 0) {
+				initMining = &initPatternEnumeration;
+				embeddingOperator = &subtreeIsomorphismSamplingOperatorWithMatching;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectPatternEnumeration;
+				break;
+			}
 			if (strcmp(optarg, "localEasy") == 0) {
 				initMining = &initExactLocalEasyForGraphDB;
 				embeddingOperator = &localEasySubtreeCheckOperator;

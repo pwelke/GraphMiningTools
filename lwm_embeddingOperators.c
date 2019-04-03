@@ -303,3 +303,34 @@ struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithImageShuffling(
 
 	return result;
 }
+
+
+/**
+ * Randomized embedding operator for
+ * tree pattern h
+ * graph transaction data
+ *
+ * The algorithm repeats to try to embed a randomly rooted shuffled version of the tree h
+ * in some random place in the transaction graph. If it succeeds at some point, it returns 1.
+ * This is another example of an embedding operator with one-sided error.
+ *
+ * This variant shuffles the neighbors of the image vertex and the neighbors of the source vertex.
+ * In addition, it computes a maximum matching (in contrast to the maximal matchings that the above two
+ * variants of the FK algorithm compute). This should result in better recall but might be slower.
+ */
+struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithMatching(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)sgp; // unused
+
+	struct SubtreeIsoDataStore result = {0};
+	result.g = data.g;
+	result.h = h;
+
+	for (int i=0; i<importance; ++i) {
+		result.foundIso = subtreeIsomorphismSamplerWithProperMatching(data.g, h, gp);
+		if (result.foundIso) {
+			break;
+		}
+	}
+
+	return result;
+}

@@ -124,13 +124,13 @@ Options:
            probabilisticTreeSamplingFK: Probabilistic Subtree Features,
              based on a simplified algorithm, motivated by the ideas of 
              Fürer & Kasiviswanathan: Approximately Counting Embeddings 
-             into Random Graphs.
-             Combinatorics, Probability & Computing (23), 2014, 
-             pp.1028-1056.         The algorithm just tries to embed 
-             the pattern tree somewhere in the graph using a combined 
-             dfs/bfs strategy. Once a pattern vertex is mapped to a 
-             transaction vertex, it will not change. Hence, the algorithm
-             finds in O(V(H)) whether a particular embedding works.
+             into Random Graphs. Combinatorics, Probability & 
+             Computing (23), 2014, pp.1028-1056.
+             The algorithm just tries to embed the pattern tree somewhere 
+             in the graph using a combined dfs/bfs strategy. Once a 
+             pattern vertex is mapped to a transaction vertex, it will 
+             not change. Hence, the algorithm finds in O(V(H)) whether 
+             a particular embedding works.
              The maximum number of such trials for each (pattern tree, 
              transaction graph) tuple can be set by the -i parameter, 
              which has to be an integer. For each invocation, new random
@@ -144,6 +144,13 @@ Options:
              tries to assign the neighbors. The above version only shuffles
              the neighbors of the pattern vertex, which might be not 
              sufficient, as there is often only one such neighbor. 
+             
+           probabilisticTreeSamplingFKM: Probabilistic Subtree Features,
+             as above; here, however, we compute a maximum matching 
+             instance for each pattern vertex to increase the recall.
+             Hence, the algorithm is more complicated to implement (if
+             you don't have a maximum bipartite matching algorithm 
+             implemented somewhere already. 
              
            localEasySampling: Boosted Probabilistic Subtree Features. 
              My implementation of the local easy tree sampling algorithm. 
