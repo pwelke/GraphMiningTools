@@ -273,7 +273,7 @@ static int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* fre
 		dumpSearchTree(gp, containedVertices);
 	}
 	if (results != NULL) {
-
+		free(results);
 	}
 	return resultSize;
 }
