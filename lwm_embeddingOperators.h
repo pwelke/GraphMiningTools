@@ -30,4 +30,5 @@ struct SubtreeIsoDataStore alwaysReturnTrue(struct SubtreeIsoDataStore data, str
 struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithImageShuffling(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithMatching(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithSampledMatching(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 #endif /* LWM_EMBEDDINGOPERATORS_H_ */

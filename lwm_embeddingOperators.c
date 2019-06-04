@@ -334,3 +334,37 @@ struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithMatching(struct
 
 	return result;
 }
+
+
+/**
+ * Randomized embedding operator for
+ * tree pattern h
+ * graph transaction data
+ *
+ * The algorithm repeats to try to embed a randomly rooted shuffled version of the tree h
+ * in some random place in the transaction graph. If it succeeds at some point, it returns 1.
+ * This is another example of an embedding operator with one-sided error.
+ *
+ * This variant sorts the neighbors of pattern vertex and transaction vertex by label and
+ * shuffles the blocks locally to obtain a maximum matching that is sampled uniformly at random
+ * from the set of all maximal matchings.
+ *
+ */
+struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithSampledMatching(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)sgp; // unused
+
+	struct SubtreeIsoDataStore result = {0};
+	result.g = data.g;
+	result.h = h;
+
+	for (int i=0; i<importance; ++i) {
+		result.foundIso = subtreeIsomorphismSamplerWithSampledMaximumMatching(data.g, h, gp);
+		if (result.foundIso) {
+			break;
+		}
+	}
+
+	return result;
+}
+
+

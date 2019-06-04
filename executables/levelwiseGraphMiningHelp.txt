@@ -152,6 +152,12 @@ Options:
              you don't have a maximum bipartite matching algorithm 
              implemented somewhere already. 
              
+           probabilisticTreeSamplingFKF: Probabilistic Subtree Features,
+             as above; here, we *sample* a *maximum* matching uniformly at
+             random for each pattern vertex. The algorithm is, again, 
+             easy to implement: The sampling process does not require us 
+             to actually implement any matching algorithm. How great is that?
+             
            localEasySampling: Boosted Probabilistic Subtree Features. 
              My implementation of the local easy tree sampling algorithm. 
              The -i parameter specifies the number of local spanning trees 
