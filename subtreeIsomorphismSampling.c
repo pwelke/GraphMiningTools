@@ -334,9 +334,10 @@ This function returns
 \[ 0 if P1 = P2 \]
 \[ positive value if P1 > P2 \]
 and uses the comparison of label strings as total ordering.
-The two paths are assumed to have edge labels and vertex labels are not taken into account.
+
+It is compatible with qsort (hence, you have to pass VertexList** pointers to this function)
  */
-static int compareEdgeLabels(const void* p1, const void* p2) {
+static int compareLabeledNeighbors(const void* p1, const void* p2) {
 	struct VertexList* e1 = *(struct VertexList**)p1;
 	struct VertexList* e2 = *(struct VertexList**)p2;
 
@@ -349,10 +350,13 @@ static int compareEdgeLabels(const void* p1, const void* p2) {
 }
 
 
+/**
+ * TODO We can get rid of this function, as it is only required for shuffleInClasses below
+ */
 int* getClassesArray(struct VertexList** neighbors, int deg) {
 	int nClasses = 1;
 	for (int i=0; i<deg-1; ++i) {
-		if (compareEdgeLabels(&(neighbors[i]), &(neighbors[i+1])) != 0) {
+		if (compareLabeledNeighbors(&(neighbors[i]), &(neighbors[i+1])) != 0) {
 			++nClasses;
 		}
 	}
@@ -360,7 +364,7 @@ int* getClassesArray(struct VertexList** neighbors, int deg) {
 	classesArray[0] = nClasses;
 	int classCounter = 1;
 	for (int i=0; i<deg-1; ++i) {
-		if (compareEdgeLabels(&(neighbors[i]), &(neighbors[i+1])) != 0) {
+		if (compareLabeledNeighbors(&(neighbors[i]), &(neighbors[i+1])) != 0) {
 			classesArray[classCounter] = i;
 		}
 	}
@@ -371,6 +375,7 @@ int* getClassesArray(struct VertexList** neighbors, int deg) {
 
 /**
  * Shuffle the image neighbors; separately in each block (i.e., swap only items that have identical vertex and edge labels)
+ * This is where the magic happens to generate maximum matchings uniformly at random for our particular situation.
  */
 static void shuffleInClasses(struct VertexList** imageNeighbors, int* imageNeighborClasses) {
 	int startIdx = 0;
@@ -396,8 +401,8 @@ static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, st
 		return NULL;
 	}
 
-	qsort(uncoveredChildren, nUncoveredChildren, sizeof(struct VertexList*), &compareEdgeLabels);
-	qsort(candidateImages, nCandidateImages, sizeof(struct VertexList*), &compareEdgeLabels);
+	qsort(uncoveredChildren, nUncoveredChildren, sizeof(struct VertexList*), &compareLabeledNeighbors);
+	qsort(candidateImages, nCandidateImages, sizeof(struct VertexList*), &compareLabeledNeighbors);
 
 	int* candidateImageClasses = getClassesArray(candidateImages, nCandidateImages);
 	shuffleInClasses(candidateImages, candidateImageClasses);
@@ -405,7 +410,7 @@ static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, st
 	int currentChild = 0;
 	int currentCandidate = 0;
 	while ((currentChild<nUncoveredChildren) && (currentCandidate<nCandidateImages)) {
-		if (compareEdgeLabels(&(uncoveredChildren[currentChild]), &(candidateImages[currentCandidate])) == 0) {
+		if (compareLabeledNeighbors(&(uncoveredChildren[currentChild]), &(candidateImages[currentCandidate])) == 0) {
 			uncoveredChildren[currentChild]->endPoint->visited = candidateImages[currentCandidate]->endPoint->number + 1;
 			candidateImages[currentCandidate]->endPoint->visited = 1;
 			++currentChild;
