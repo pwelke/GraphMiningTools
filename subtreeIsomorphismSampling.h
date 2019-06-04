@@ -13,6 +13,7 @@
 char subtreeIsomorphismSampler(struct Graph* g, struct Graph* h);
 char subtreeIsomorphismSamplerWithImageShuffling(struct Graph* g, struct Graph* h);
 char subtreeIsomorphismSamplerWithProperMatching(struct Graph* g, struct Graph* h, struct GraphPool* gp);
+char subtreeIsomorphismSamplerWithSampledMaximumMatching(struct Graph* g, struct Graph* h, struct GraphPool* gp);
 
 struct VertexList** shuffleNeighbors(struct Vertex* v, int degV);
 

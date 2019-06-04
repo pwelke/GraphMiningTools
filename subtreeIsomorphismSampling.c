@@ -299,6 +299,201 @@ static char recursiveSubtreeIsomorphismSamplerWithMatching(struct Vertex* parent
 }
 
 
+/**
+ * create an array of the elements of v->neighbors.
+ */
+struct VertexList** getUncoveredNeighborArray(struct Vertex* v, int* uncoveredDegree) {
+	*uncoveredDegree = 0;
+	for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+		if (e->endPoint->visited == 0) {
+			++(*uncoveredDegree);
+		}
+	}
+	if (*uncoveredDegree > 0) {
+		struct VertexList** edgeArray = malloc(*uncoveredDegree * sizeof(struct VertexList*));
+		int i=0;
+		for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+			if (e->endPoint->visited == 0) {
+				edgeArray[i] = e;
+				++i;
+			}
+		}
+		return edgeArray;
+	} else {
+		return NULL;
+	}
+}
+
+
+/**
+Computes the order of two edges with a label on the edge and a label on the endPoint.
+As we assume the label of the startPoints to be equal for all edges in the array, we do not check that!
+
+This function returns
+\[ negative value if P1 < P2 \]
+\[ 0 if P1 = P2 \]
+\[ positive value if P1 > P2 \]
+and uses the comparison of label strings as total ordering.
+The two paths are assumed to have edge labels and vertex labels are not taken into account.
+ */
+static int compareEdgeLabels(const void* p1, const void* p2) {
+	struct VertexList* e1 = *(struct VertexList**)p1;
+	struct VertexList* e2 = *(struct VertexList**)p2;
+
+	int cmp = labelCmp(e1->label, e2->label);
+	if (cmp == 0) {
+		return labelCmp(e1->endPoint->label, e2->endPoint->label);
+	} else {
+		return cmp;
+	}
+}
+
+
+int* getClassesArray(struct VertexList** neighbors, int deg) {
+	int nClasses = 1;
+	for (int i=0; i<deg-1; ++i) {
+		if (compareEdgeLabels(&(neighbors[i]), &(neighbors[i+1])) != 0) {
+			++nClasses;
+		}
+	}
+	int* classesArray = malloc((nClasses + 1) * sizeof(int));
+	classesArray[0] = nClasses;
+	int classCounter = 1;
+	for (int i=0; i<deg-1; ++i) {
+		if (compareEdgeLabels(&(neighbors[i]), &(neighbors[i+1])) != 0) {
+			classesArray[classCounter] = i;
+		}
+	}
+	classesArray[nClasses] = deg;
+	return classesArray;
+}
+
+
+/**
+ * Shuffle the image neighbors; separately in each block (i.e., swap only items that have identical vertex and edge labels)
+ */
+static void shuffleInClasses(struct VertexList** imageNeighbors, int* imageNeighborClasses) {
+	int startIdx = 0;
+	for (int i=1; i<imageNeighborClasses[0] + 1; ++i) {
+		int size = imageNeighborClasses[i] - startIdx;
+		shuffle(&(imageNeighbors[startIdx]), size);
+		startIdx = imageNeighborClasses[i];
+	}
+}
+
+
+static void debugPrinting(struct VertexList** array, int n, char* title) {
+	fprintf(stderr, "%s\n", title);
+	for (int i=0; i<n; ++i) {
+		struct VertexList* e = array[i];
+//		fprintf(stderr, "%i (%s - %s - %s) |->  %i (%s - %s - %s)\n" )
+		fprintf(stderr, " (%s - %s - %s %i)\n", e->startPoint->label, e->label, e->endPoint->label, e->endPoint->number);
+	}
+}
+
+static void debugMatching(struct VertexList** array1, int n1, struct VertexList** array2, int n2, char* title) {
+	fprintf(stderr, "\n%s\n", title);
+	for (int i=0; i<n1; ++i) {
+		struct VertexList* e = array1[i];
+//		fprintf(stderr, "%i (%s - %s - %s) |->  %i (%s - %s - %s)\n" )
+		fprintf(stderr, " (%s - %s - %s %i)\n", e->startPoint->label, e->label, e->endPoint->label, e->endPoint->number);
+	}
+}
+
+static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, struct Vertex* image, int* matchingSize) {
+	int dp;
+	int di;
+
+	struct VertexList** neighbors = getUncoveredNeighborArray(parent, &dp);
+	struct VertexList** imageNeighbors = getUncoveredNeighborArray(image, &di);
+
+	debugPrinting(neighbors, dp, "neighbors init");
+	debugPrinting(imageNeighbors, di, "images init");
+
+	if (dp > di) {
+		// here, there can be no matching, as there are more uncovered neighbors than candidate images
+		free(neighbors);
+		free(imageNeighbors);
+		*matchingSize = 0;
+		fprintf(stderr, "return NULL, EARLY\n");
+		return NULL;
+	}
+
+	qsort(neighbors, dp, sizeof(struct VertexList*), &compareEdgeLabels);
+	qsort(imageNeighbors, di, sizeof(struct VertexList*), &compareEdgeLabels);
+
+	int* imageNeighborClasses = getClassesArray(imageNeighbors, di);
+	shuffleInClasses(imageNeighbors, imageNeighborClasses);
+
+	int nPos = 0;
+	int iPos = 0;
+	while ((nPos<dp) && (iPos<di)) {
+		if (compareEdgeLabels(&(neighbors[nPos]), &(imageNeighbors[iPos])) == 0) {
+			neighbors[nPos]->endPoint->visited = imageNeighbors[iPos]->endPoint->number + 1;
+			imageNeighbors[iPos]->endPoint->visited = 1;
+			++nPos;
+			++iPos;
+		} else {
+			++iPos;
+		}
+	}
+
+	// garbage collection
+	free(imageNeighbors);
+	free(imageNeighborClasses);
+
+	if (nPos == dp) {
+		//matching worked
+		*matchingSize = dp;
+		shuffle(neighbors, dp);
+		fprintf(stderr, "return something\n");
+		return neighbors;
+	} else {
+		free(neighbors);
+		*matchingSize = 0;
+		fprintf(stderr, "return NULL, LATE\n");
+		return NULL;
+	}
+}
+
+
+
+/**
+ * mixed bfs/dfs strategy. embed all children of a vertex, then call recursively.
+ * similar to gaston dfs strategy in the pattern space, but for a single tree pattern
+ * in a fixed graph transaction.
+ */
+static char recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(struct Vertex* parent, struct Graph* g, struct GraphPool* gp) {
+
+	// base case: if parent is a leaf and its only neighbor is already assigned to a vertex in g, we are done
+	if (isLeaf(parent) && parent->neighborhood->endPoint->visited) { return 1; }
+
+	struct Vertex* parentImage = g->vertices[parent->visited - 1];
+
+	int matchingSize;
+	struct VertexList** maximumMatching = uniformBlockMaximumMatching(parent, parentImage, &matchingSize);
+
+	// is there a matching here covering all unmatched neighbors of parent?
+	// if not, there is no subgraph iso here
+	if (maximumMatching == NULL) {
+		return 0;
+	}
+
+	// recurse to the matched vertices
+	for (int i=0; i<matchingSize; ++i) {
+		char embeddingWorked = recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(maximumMatching[i]->endPoint, g, gp);
+		if (!embeddingWorked) {
+			free(maximumMatching);
+			return 0;
+		}
+	}
+
+	// so far, we have been successful
+	free(maximumMatching);
+	return 1;
+}
+
+
 static void cleanupSubtreeIsomorphismSampler(struct Graph* h, struct Graph* g) {
 	for (int v=0; v<h->n; ++v) {
 		int image = h->vertices[v]->visited;
@@ -468,3 +663,39 @@ char subtreeIsomorphismSamplerWithProperMatching(struct Graph* g, struct Graph* 
 }
 
 
+/**
+* The algorithm requires
+* - g->vertices[v]->visited = 0 for all v \in V(g).
+* - h to be a tree
+* - e->flag to be initialized to 0 for all edges e in h
+* - rand() to be initialized and working.
+*
+* The algorithm guarantees
+* - output != 0 iff it has found a subgraph isomorphism from h to g
+* - g->vertices[v]->visited = 0 for all v \in V(g) after termination
+*/
+char subtreeIsomorphismSamplerWithSampledMaximumMatching(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+
+	if (h->n == 10) {
+		printf("breakpoint!\n");
+	}
+
+	// we root h at a random vertex
+	struct Vertex* currentRoot = h->vertices[rand() % h->n];
+	// and select a random image vertex
+	struct Vertex* rootEmbedding = g->vertices[rand() % g->n];
+
+	char foundIso = 0;
+	if (labelCmp(currentRoot->label, rootEmbedding->label) == 0) {
+		// if the labels match, we map the root to the image
+		currentRoot->visited = rootEmbedding->number + 1;
+		rootEmbedding->visited = 1;
+		// and try to embed the rest of the tree h into g accordingly
+		foundIso = recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(currentRoot, g, gp);
+
+		// cleanup
+		cleanupSubtreeIsomorphismSampler(h, g);
+	}
+
+	return foundIso;
+}
