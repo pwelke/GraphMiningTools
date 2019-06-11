@@ -427,6 +427,8 @@ static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, st
 	if (currentChild == nUncoveredChildren) {
 		//matching worked
 		*matchingSize = nUncoveredChildren;
+		// shuffle *covered* children to randomize the dfs/bfs strategy in case we hit the same image vertex twice in different 
+		// runs of the embedding algorithm
 		shuffle(uncoveredChildren, nUncoveredChildren);
 		return uncoveredChildren; // which are now covered :)
 	} else {
