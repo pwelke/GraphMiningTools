@@ -12,10 +12,10 @@ CPPLINKFLAGS = -g -Wall -Wextra -Wunreachable-code -Wshadow -Wformat=2 -pedantic
 CPPFLAGS = -g -Wall -Wextra -Wunreachable-code -Wshadow -Wformat=2 -pedantic -W -std=gnu99 -O2 -D NDEBUG
 
 # technicalities
+OBJECTFOLDER = ./o/
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
-OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
+OBJECTS = $(patsubst %.c,$(OBJECTFOLDER)%.o,$(wildcard *.c))
 HELPFILES = $(patsubst ./executables/%.txt, ./executables/%.help, $(wildcard ./executables/*.txt))
-
 
 # specify executable names, objects, helpfiles, and compilation recipes
 TPKNAME = tpk
@@ -148,7 +148,7 @@ all: $(ALLTARGETS)
 
 help: $(HELPFILES)
 
-%.o : %.c %.h
+$(OBJECTFOLDER)%.o : %.c %.h
 	@$(CC) $(CPPFLAGS) -c $< -o $@
 
 clean:
