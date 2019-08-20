@@ -364,6 +364,8 @@ struct ShallowGraph* xlistOrSampleSpanningTrees(struct Graph* g, int k, long int
  *
  * NOTE: returning rebased shallow graphs is new as of 2017-10-08 and might interfere with old code
  * (possibly in treeSamplingMain).
+ *
+ * NOTE: This method fails if the input graph is a singleton vertex. Please handle this situation before calling this function. 
  */
 struct ShallowGraph* runForEachConnectedComponent(struct ShallowGraph* (*sampler)(struct Graph*, int, long int, struct GraphPool*, struct ShallowGraphPool*), 
 	struct Graph* g, int k, long int threshold, char rebase, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
