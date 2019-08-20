@@ -721,13 +721,13 @@ char subtreeIsomorphismSamplerWithSampledMaximumMatching(struct Graph* g, struct
 	// we root h at a random vertex
 	struct Vertex* currentRoot = h->vertices[rand() % h->n];
 	// and select a random image vertex with suitable label (if one exists)
-//	struct Vertex* rootImage = getSuitableImage(currentRoot, g, gp->listPool);
-	struct Vertex* rootImage = g->vertices[rand() % g->n];
+	struct Vertex* rootImage = getSuitableImage(currentRoot, g, gp->listPool);
+//	struct Vertex* rootImage = g->vertices[rand() % g->n];
 
 
 	char foundIso = 0;
-//	if (rootImage) {
-	if (labelCmp(currentRoot->label, rootImage->label) == 0) {
+	if (rootImage) {
+//	if (labelCmp(currentRoot->label, rootImage->label) == 0) {
 		// if there is a candidate image we map the root to the image
 		currentRoot->visited = rootImage->number + 1;
 		rootImage->visited = 1;
