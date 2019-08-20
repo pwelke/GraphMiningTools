@@ -153,6 +153,7 @@ $(OBJECTFOLDER)%.o : %.c %.h
 
 clean:
 	@rm -f *.o
+	@rm -f $(OBJECTFOLDER)*.o
 	@rm -f ./executables/*.o
 	@rm -f ./executables/*.help
 	@rm -f $(ALLTARGETS) test
