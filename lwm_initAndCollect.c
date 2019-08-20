@@ -162,7 +162,6 @@ static int getNonisomorphicSpanningTreeSamplesOfDB(struct Graph*** db, int k, st
 			// a singleton is a tree. we add it / its unique spanning tree to the search tree
 			addToSearchTree(searchTree, canonicalStringOfTree(g, sgp), gp, sgp);
 		} else {
-			fprintf(stderr, "g->number=%i ->n=%i\n", g->number, g->n);
 			// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
 			sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
 			for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
