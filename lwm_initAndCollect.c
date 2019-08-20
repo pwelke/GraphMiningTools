@@ -69,16 +69,20 @@ int getSpanningTreeSamplesOfDB(struct Graph*** db, int k, struct GraphPool* gp, 
 
 	while ((g = iterateFile())) {
 		struct Graph* h = NULL;
-		// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
-		struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
-		for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
-			if (tree->m != 0) {
-				struct Graph* tmp = shallowGraphToGraph(tree, gp);
-				tmp->next = h;
-				h = tmp;
+		if (g->n < 2) {
+			h = cloneGraph(g, gp);
+		} else {
+			// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
+			struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
+			for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
+				if (tree->m != 0) {
+					struct Graph* tmp = shallowGraphToGraph(tree, gp);
+					tmp->next = h;
+					h = tmp;
+				}
 			}
+			dumpShallowGraphCycle(sgp, sample);
 		}
-		dumpShallowGraphCycle(sgp, sample);
 
 		h = mergeGraphs(h, gp);
 		h->number = g->number;
@@ -109,16 +113,20 @@ static int getAllSpanningTreesOfDB(struct Graph*** db, int k, struct GraphPool* 
 
 	while ((g = iterateFile())) {
 		struct Graph* h = NULL;
-		// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
-		struct ShallowGraph* sample = runForEachConnectedComponent(&xlistSpanningTrees, g, k, k, 1, gp, sgp);
-		for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
-			if (tree->m != 0) {
-				struct Graph* tmp = shallowGraphToGraph(tree, gp);
-				tmp->next = h;
-				h = tmp;
+		if (g->n < 2) {
+			h = cloneGraph(g, gp);
+		} else {
+			// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
+			struct ShallowGraph* sample = runForEachConnectedComponent(&xlistSpanningTrees, g, k, k, 1, gp, sgp);
+			for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
+				if (tree->m != 0) {
+					struct Graph* tmp = shallowGraphToGraph(tree, gp);
+					tmp->next = h;
+					h = tmp;
+				}
 			}
+			dumpShallowGraphCycle(sgp, sample);
 		}
-		dumpShallowGraphCycle(sgp, sample);
 
 		h = mergeGraphs(h, gp);
 		h->number = g->number;
@@ -149,15 +157,21 @@ static int getNonisomorphicSpanningTreeSamplesOfDB(struct Graph*** db, int k, st
 
 	while ((g = iterateFile())) {
 		struct Vertex* searchTree = getVertex(gp->vertexPool);
-
-		// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
-		struct ShallowGraph* sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
-		for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
-			if (tree->m != 0) {
-				struct Graph* tmp = shallowGraphToGraph(tree, gp);
-				addToSearchTree(searchTree, canonicalStringOfTree(tmp, sgp), gp, sgp);
-				/* garbage collection */
-				dumpGraph(gp, tmp);
+		struct ShallowGraph* sample = NULL;
+		if (g->n < 2) {
+			// a singleton is a tree. we add it / its unique spanning tree to the search tree
+			addToSearchTree(searchTree, canonicalStringOfTree(g, sgp), gp, sgp);
+		} else {
+			fprintf(stderr, "g->number=%i ->n=%i\n", g->number, g->n);
+			// sample k spanning trees, canonicalize them and add them in a search tree (to avoid duplicates, i.e. isomorphic spanning trees)
+			sample = runForEachConnectedComponent(&xsampleSpanningTreesUsingWilson, g, k, k, 1, gp, sgp);
+			for (struct ShallowGraph* tree=sample; tree!=NULL; tree=tree->next) {
+				if (tree->m != 0) {
+					struct Graph* tmp = shallowGraphToGraph(tree, gp);
+					addToSearchTree(searchTree, canonicalStringOfTree(tmp, sgp), gp, sgp);
+					/* garbage collection */
+					dumpGraph(gp, tmp);
+				}
 			}
 		}
 
