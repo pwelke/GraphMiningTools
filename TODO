@@ -1,6 +1,10 @@
 # TODO
 
 
+## BUGS
+- ./gf -fcount -v6 -c'==' data/COLLAB.txt | valgrind ./lwg -p 10 -t 280 -i 10 -r 42 -e probabilisticTreeSampling 
+  results in a segfault due to some issue in the loop erased random walk sampling of spanning trees.
+
 ## Refactoring
 - [ ] rename SubtreeIsoDataStore* to SupportSet-something
       - [ ] rename internal pointers accordingly to hide implementation details
