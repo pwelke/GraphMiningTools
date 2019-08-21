@@ -214,26 +214,6 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectLocalEasyForGraphDB;
 				break;
 			}
-			if ((strcmp(optarg, "localEasySamplingSlow") == 0) ||
-				(strcmp(optarg, "bps_slow") == 0)){
-				initMining = &initSampledLocalEasyWithDuplicatesForGraphDB;
-				embeddingOperator = &localEasyOperator;
-				if ((int)importance <= 0) {
-					importance = 1;
-				}
-				garbageCollector = &garbageCollectLocalEasyForGraphDB;
-				break;
-			}
-			if ((strcmp(optarg, "localEasySamplingIndependent") == 0) ||
-				(strcmp(optarg, "bps_independent") == 0)) {
-				initMining = &initSampledLocalEasyWithDuplicatesForGraphDB;
-				embeddingOperator = &localEasySamplingSubtreeCheckOperatorIndependent;
-				if ((int)importance <= 0) {
-					importance = 1;
-				}
-				garbageCollector = &garbageCollectLocalEasyForGraphDB;
-				break;
-			}
 			if ((strcmp(optarg, "localEasyResampling") == 0) ||
 				(strcmp(optarg, "bps_resampling") == 0)) {
 				initMining = &initSampledLocalEasyForGraphDB;
@@ -244,7 +224,6 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectLocalEasyForGraphDB;
 				break;
 			}
-
 			if (strcmp(optarg, "treeEnumeration") == 0) {
 				initMining = &initPatternEnumeration;
 				embeddingOperator = &alwaysReturnTrue;

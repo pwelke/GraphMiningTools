@@ -101,22 +101,6 @@ size_t initSampledLocalEasyForGraphDB(// input
 		struct GraphPool* gp,
 		struct ShallowGraphPool* sgp);
 
-size_t initSampledLocalEasyWithDuplicatesForGraphDB(// input
-		size_t threshold,
-		double importance,
-		// output
-		struct Vertex** initialFrequentPatterns,
-		struct SupportSet** supportSets,
-		struct ShallowGraph** extensionEdgeList,
-		void** dataStructures,
-		// printing
-		FILE* featureStream,
-		FILE* patternStream,
-		FILE* logStream,
-		// pools
-		struct GraphPool* gp,
-		struct ShallowGraphPool* sgp);
-
 size_t initPatternEnumeration(// input
 		size_t threshold,
 		double importance,

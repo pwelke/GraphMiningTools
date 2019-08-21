@@ -906,66 +906,6 @@ size_t initSampledLocalEasyForGraphDB(// input
 }
 
 
-/**
- * In this method, we keep duplicate sampled local spanning trees
- */
-size_t initSampledLocalEasyWithDuplicatesForGraphDB(// input
-		size_t threshold,
-		double importance,
-		// output
-		struct Vertex** initialFrequentPatterns,
-		struct SupportSet** supportSets,
-		struct ShallowGraph** extensionEdgeList,
-		void** dataStructures,
-		// printing
-		FILE* featureStream,
-		FILE* patternStream,
-		FILE* logStream,
-		// pools
-		struct GraphPool* gp,
-		struct ShallowGraphPool* sgp) {
-
-	struct Graph** db = NULL;
-	size_t nGraphs = getDB(&db);
-	struct SpanningtreeTree* sptTrees = malloc(nGraphs * sizeof(struct SpanningtreeTree));
-	for (size_t i=0; i<nGraphs; ++i) {
-		struct BlockTree blockTree = getBlockTreeT(db[i], sgp);
-		sptTrees[i] = getSampledSpanningtreeTree(blockTree, (int)importance, 0, gp, sgp);
-	}
-
-	struct Vertex* frequentVertices;
-	struct Vertex* frequentEdges;
-	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
-
-	/* convert frequentEdges to ShallowGraph of extension edges */
-	struct Graph* extensionEdgesVertexStore = NULL;
-	struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
-	dumpSearchTree(gp, frequentEdges);
-	free(db);
-
-	// levelwise search for patterns with one vertex:
-	struct SupportSet* frequentVerticesSupportSets = createSingletonPatternSupportSetsForLocalEasyDB(sptTrees, nGraphs, frequentVertices, gp, sgp);
-	printStringsInSearchTree(frequentVertices, patternStream, sgp);
-	printSupportSetsSparse(frequentVerticesSupportSets, featureStream);
-
-	// store pointers for final garbage collection
-	struct IterativeBfsForLocalEasyDataStructures* x = malloc(sizeof(struct IterativeBfsForLocalEasyDataStructures));
-	x->nGraphs = nGraphs;
-	x->extensionEdges = extensionEdges;
-	x->extensionEdgesVertexStore = extensionEdgesVertexStore;
-	x->initialFrequentPatterns = frequentVertices;
-	x->sptTrees = sptTrees;
-
-	// 'return'
-	*initialFrequentPatterns = frequentVertices;
-	*supportSets = frequentVerticesSupportSets;
-	*extensionEdgeList = extensionEdges;
-	*dataStructures = x;
-	return 1; // returned patterns have 1 vertex
-}
-
-
-
 void garbageCollectFrequentTreeMiningForForestDB(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct IterativeBfsForForestsDataStructures* dataStructures = (struct IterativeBfsForForestsDataStructures*)y;
 

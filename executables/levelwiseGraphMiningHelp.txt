@@ -179,12 +179,6 @@ Options:
              apriori-property of the embedding operator.
              (deprecated alternative flag: localEasyResampling)
 
-           bps_slow:
-             (deprecated alternative flag: localEasySamplingSlow)
-
-           bps_independent:
-             (deprecated alternative flag: localEasySamplingIndependent)
-
 
          == STRANGE EMBEDDING OPERATORS ==
            These operators do various stuff. The first two are 
