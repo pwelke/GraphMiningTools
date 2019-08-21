@@ -19,7 +19,7 @@
  * Print --help message
  */
 static int printHelp() {
-#include "treeSamplingHelp.help"
+#include "../o/help/treeSamplingHelp.help"
 	unsigned char* help = executables_treeSamplingHelp_txt;
 	int len = executables_treeSamplingHelp_txt_len;
 	if (help != NULL) {

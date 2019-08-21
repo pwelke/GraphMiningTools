@@ -18,7 +18,7 @@
  * Print --help message
  */
 int printHelp() {
-#include "patternExtractorHelp.help"
+#include "../o/help/patternExtractorHelp.help"
 	unsigned char* help = executables_patternExtractorHelp_txt;
 	int len = executables_patternExtractorHelp_txt_len;
 	if (help != NULL) {

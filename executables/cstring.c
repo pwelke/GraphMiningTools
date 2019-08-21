@@ -19,7 +19,7 @@
  * Print --help message
  */
 int printHelp() {
-#include "cstringHelp.help"
+#include "../o/help/cstringHelp.help"
 	unsigned char* help = executables_cstringHelp_txt;
 	int len = executables_cstringHelp_txt_len;
 	if (help != NULL) {

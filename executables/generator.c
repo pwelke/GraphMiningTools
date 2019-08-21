@@ -13,7 +13,7 @@
  * Print --help message
  */
 static int printHelp() {
-#include "generatorHelp.help"
+#include "../o/help/generatorHelp.help"
 	unsigned char* help = executables_generatorHelp_txt;
 	int len = executables_generatorHelp_txt_len;
 	if (help != NULL) {

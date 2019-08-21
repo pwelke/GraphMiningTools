@@ -26,7 +26,7 @@
  * Print --help message
  */
 int printHelp() {
-#include "filterHelp.help"
+#include "../o/help/filterHelp.help"
 	unsigned char* help = executables_filterHelp_txt;
 	int len = executables_filterHelp_txt_len;
 	if (help != NULL) {

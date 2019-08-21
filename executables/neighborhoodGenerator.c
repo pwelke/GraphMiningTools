@@ -15,7 +15,7 @@
  * Print --help message
  */
 static int printHelp() {
-#include "neighborhoodGeneratorHelp.help"
+#include "../o/help/neighborhoodGeneratorHelp.help"
 	unsigned char* help = executables_neighborhoodGeneratorHelp_txt;
 	int len = executables_neighborhoodGeneratorHelp_txt_len;
 	if (help != NULL) {

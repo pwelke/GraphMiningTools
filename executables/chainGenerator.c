@@ -14,7 +14,7 @@
  * Print --help message
  */
 static int printHelp() {
-#include "chainGeneratorHelp.help"
+#include "../o/help/chainGeneratorHelp.help"
 	unsigned char* help = executables_chainGeneratorHelp_txt;
 	int len = executables_chainGeneratorHelp_txt_len;
 	if (help != NULL) {

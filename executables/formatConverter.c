@@ -11,7 +11,7 @@
  * Print --help message
  */
 int printHelp() {
-#include "formatConverterHelp.help"
+#include "../o/help/formatConverterHelp.help"
 	unsigned char* help = executables_formatConverterHelp_txt;
 	int len = executables_formatConverterHelp_txt_len;
 	if (help != NULL) {

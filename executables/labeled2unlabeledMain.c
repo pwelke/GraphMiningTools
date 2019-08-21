@@ -17,7 +17,7 @@
  * Print --help message
  */
 int printHelp() {
-#include "labeled2unlabeledMainHelp.help"
+#include "../o/help/labeled2unlabeledMainHelp.help"
 	unsigned char* help = executables_labeled2unlabeledMainHelp_txt;
 	int len = executables_labeled2unlabeledMainHelp_txt_len;
 	if (help != NULL) {

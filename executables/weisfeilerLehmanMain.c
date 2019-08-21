@@ -17,7 +17,7 @@
  * Print --help message
  */
 int printHelp() {
-#include "weisfeilerLehmanMainHelp.help"
+#include "../o/help/weisfeilerLehmanMainHelp.help"
 	unsigned char* help = executables_weisfeilerLehmanMainHelp_txt;
 	int len = executables_weisfeilerLehmanMainHelp_txt_len;
 	if (help != NULL) {

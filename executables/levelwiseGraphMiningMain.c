@@ -10,14 +10,14 @@
 
 #include "levelwiseGraphMiningMain.h"
 
-const char DEBUG_INFO = 1;
+//const char DEBUG_INFO = 1;
 
 
 /**
  * Print --help message
  */
 int printHelp() {
-#include "levelwiseGraphMiningHelp.help"
+#include "../o/help/levelwiseGraphMiningHelp.help"
 	unsigned char* help = executables_levelwiseGraphMiningHelp_txt;
 	int len = executables_levelwiseGraphMiningHelp_txt_len;
 	if (help != NULL) {

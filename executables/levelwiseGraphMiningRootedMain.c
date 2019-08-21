@@ -17,7 +17,7 @@ const char DEBUG_INFO = 1;
  * Print --help message
  */
 int printHelp() {
-#include "levelwiseGraphMiningRootedHelp.help"
+#include "../o/help/levelwiseGraphMiningRootedHelp.help"
 	unsigned char* help = executables_levelwiseGraphMiningRootedHelp_txt;
 	int len = executables_levelwiseGraphMiningRootedHelp_txt_len;
 	if (help != NULL) {
