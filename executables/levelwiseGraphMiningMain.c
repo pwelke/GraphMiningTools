@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	void (*garbageCollector)(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp) = &garbageCollectFrequentTreeMiningForForestDB;
 
 	// embedding operator
-	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &subtreeCheckOperator;
+	struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*) = &subtreeOperator;
 
 	// other
 	double importance = 0.5;
@@ -113,77 +113,85 @@ int main(int argc, char** argv) {
 			// operators for forest transaction databases
 			if (strcmp(optarg, "subtree") == 0) {
 				initMining = &initFrequentTreeMiningForForestDB;
-				embeddingOperator = &subtreeCheckOperator;
+				embeddingOperator = &subtreeOperator;
 				garbageCollector = &garbageCollectFrequentTreeMiningForForestDB;
 				break;
 			}
-			if (strcmp(optarg, "iterative") == 0) {
+			if ((strcmp(optarg, "iterative") == 0) ||
+				(strcmp(optarg, "subtree_iterative") == 0)) {
 				initMining = &initFrequentTreeMiningForForestDB;
-				embeddingOperator = &iterativeSubtreeCheckOperator;
+				embeddingOperator = &subtreeIterativeOperator;
 				garbageCollector = &garbageCollectFrequentTreeMiningForForestDB;
 				break;
 			}
-			if (strcmp(optarg, "relImp") == 0) {
+			if ((strcmp(optarg, "relImp") == 0) ||
+				(strcmp(optarg, "subtree_relimp") == 0)) {
 				initMining = &initFrequentTreeMiningForForestDB;
-				embeddingOperator = &relativeImportanceOperator;
+				embeddingOperator = &subtreeRelimpOperator;
 				garbageCollector = &garbageCollectFrequentTreeMiningForForestDB;
 				break;
 			}
-			if (strcmp(optarg, "absImp") == 0) {
+			if ((strcmp(optarg, "absImp") == 0) ||
+				(strcmp(optarg, "subtree_absimp") == 0)) {
 				initMining = &initFrequentTreeMiningForForestDB;
-				embeddingOperator = &absoluteImportanceOperator;
+				embeddingOperator = &subtreeAbsimpOperator;
 				garbageCollector = &garbageCollectFrequentTreeMiningForForestDB;
 				break;
 			}
 			// operators for arbitrary graph transaction databases
 			if (strcmp(optarg, "exactGlobalTreeEnumeration") == 0) {
 				initMining = &initGlobalTreeEnumerationForGraphDB;
-				embeddingOperator = &subtreeCheckOperator;
+				embeddingOperator = &subtreeOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
 				garbageCollector = &garbageCollectFrequentTreeMiningForForestDB;
 				break;
 			}
-			if (strcmp(optarg, "probabilisticTreeSampling") == 0) {
+			if ((strcmp(optarg, "probabilisticTreeSampling") == 0) ||
+				(strcmp(optarg, "ps") == 0)) {
 				initMining = &initProbabilisticTreeMiningForGraphDB;
-				embeddingOperator = &subtreeCheckOperator;
+				embeddingOperator = &subtreeOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
 				garbageCollector = &garbageCollectFrequentTreeMiningForForestDB;
 				break;
 			}
-			if (strcmp(optarg, "probabilisticTreeSamplingFK") == 0) {
+			if ((strcmp(optarg, "probabilisticTreeSamplingFKF") == 0) ||
+				(strcmp(optarg, "hops") == 0)) {
 				initMining = &initPatternEnumeration;
-				embeddingOperator = &subtreeIsomorphismSamplingOperator;
+				embeddingOperator = &hopsOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
 				garbageCollector = &garbageCollectPatternEnumeration;
 				break;
 			}
-			if (strcmp(optarg, "probabilisticTreeSamplingFKR") == 0) {
+			if ((strcmp(optarg, "probabilisticTreeSamplingFK") == 0) ||
+				(strcmp(optarg, "hops_simple") == 0)) {
 				initMining = &initPatternEnumeration;
-				embeddingOperator = &subtreeIsomorphismSamplingOperatorWithImageShuffling;
+				embeddingOperator = &hopsSimpleOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
 				garbageCollector = &garbageCollectPatternEnumeration;
 				break;
 			}
-			if (strcmp(optarg, "probabilisticTreeSamplingFKM") == 0) {
+			if ((strcmp(optarg, "probabilisticTreeSamplingFKR") == 0) ||
+				(strcmp(optarg, "hops_simplerandom") == 0)) {
 				initMining = &initPatternEnumeration;
-				embeddingOperator = &subtreeIsomorphismSamplingOperatorWithMatching;
+				embeddingOperator = &hopsSimplerandomOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
 				garbageCollector = &garbageCollectPatternEnumeration;
 				break;
 			}
-			if (strcmp(optarg, "probabilisticTreeSamplingFKF") == 0) {
+			if ((strcmp(optarg, "probabilisticTreeSamplingFKM") == 0) ||
+				(strcmp(optarg, "hops_simplematching") == 0)) {
 				initMining = &initPatternEnumeration;
-				embeddingOperator = &subtreeIsomorphismSamplingOperatorWithSampledMatching;
+				embeddingOperator = &hopsSimplematchingOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
@@ -192,29 +200,32 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "localEasy") == 0) {
 				initMining = &initExactLocalEasyForGraphDB;
-				embeddingOperator = &localEasySubtreeCheckOperator;
+				embeddingOperator = &localEasyOperator;
 				garbageCollector = &garbageCollectLocalEasyForGraphDB;
 				break;
 			}
-			if (strcmp(optarg, "localEasySampling") == 0) {
+			if ((strcmp(optarg, "localEasySampling") == 0) ||
+				(strcmp(optarg, "bps") == 0)) {
 				initMining = &initSampledLocalEasyForGraphDB;
-				embeddingOperator = &localEasySubtreeCheckOperator;
+				embeddingOperator = &localEasyOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
 				garbageCollector = &garbageCollectLocalEasyForGraphDB;
 				break;
 			}
-			if (strcmp(optarg, "localEasySamplingSlow") == 0) {
+			if ((strcmp(optarg, "localEasySamplingSlow") == 0) ||
+				(strcmp(optarg, "bps_slow") == 0)){
 				initMining = &initSampledLocalEasyWithDuplicatesForGraphDB;
-				embeddingOperator = &localEasySubtreeCheckOperator;
+				embeddingOperator = &localEasyOperator;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
 				garbageCollector = &garbageCollectLocalEasyForGraphDB;
 				break;
 			}
-			if (strcmp(optarg, "localEasySamplingIndependent") == 0) {
+			if ((strcmp(optarg, "localEasySamplingIndependent") == 0) ||
+				(strcmp(optarg, "bps_independent") == 0)) {
 				initMining = &initSampledLocalEasyWithDuplicatesForGraphDB;
 				embeddingOperator = &localEasySamplingSubtreeCheckOperatorIndependent;
 				if ((int)importance <= 0) {
@@ -223,7 +234,8 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectLocalEasyForGraphDB;
 				break;
 			}
-			if (strcmp(optarg, "localEasyResampling") == 0) {
+			if ((strcmp(optarg, "localEasyResampling") == 0) ||
+				(strcmp(optarg, "bps_resampling") == 0)) {
 				initMining = &initSampledLocalEasyForGraphDB;
 				embeddingOperator = &localEasySubtreeCheckOperatorWithResampling;
 				if ((int)importance <= 0) {

@@ -38,7 +38,7 @@ void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patt
  * tree pattern h
  * forest transaction data
  */
-struct SubtreeIsoDataStore subtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore subtreeOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	(void)importance; // unused
 	return noniterativeSubtreeCheck(data, h, gp);
@@ -52,7 +52,7 @@ struct SubtreeIsoDataStore subtreeCheckOperator(struct SubtreeIsoDataStore data,
  *
  * The algorithm expects data to contain information on a direct predecessor of h.
  */
-struct SubtreeIsoDataStore iterativeSubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore subtreeIterativeOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	(void)importance; // unused
 	return iterativeSubtreeCheck(data, h, gp);
@@ -86,7 +86,7 @@ struct SubtreeIsoDataStore localEasySubtreeCheckOperatorWithResampling(struct Su
  * Whether this operator is exact, or not, depends on the initialization of the local spanning tree data structure stored in data.postorder.
  * If this contains all local spanning trees, the algorithm is exact, if it only contains a subset, the algorithm has one-sided error.
  */
-struct SubtreeIsoDataStore localEasySubtreeCheckOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore localEasyOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)importance; // unused
 	(void)sgp; // unused
 
@@ -115,7 +115,7 @@ struct SubtreeIsoDataStore localEasySubtreeCheckOperator(struct SubtreeIsoDataSt
  *
  * If data is the full set of spanning trees of a graph, then this operator decides whether h is a mu-important tree in data (compare my dissertation).
  */
-struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore subtreeRelimpOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
@@ -134,7 +134,7 @@ struct SubtreeIsoDataStore relativeImportanceOperator(struct SubtreeIsoDataStore
  * This operator returns true, if the pattern h occurs in at least importance connected components of the transaction forest data.
  *
  */
-struct SubtreeIsoDataStore absoluteImportanceOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore subtreeAbsimpOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	struct SubtreeIsoDataStore result = data;
 	result.h = h;
@@ -255,7 +255,7 @@ struct SubtreeIsoDataStore localEasySamplingSubtreeCheckOperatorIndependent(stru
  * in some random place in the transaction graph. If it succeeds at some point, it returns 1.
  * This is another example of an embedding operator with one-sided error.
  */
-struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore hopsSimpleOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)gp; // unused
 	(void)sgp; // unused
 
@@ -286,7 +286,7 @@ struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperator(struct SubtreeIsoD
  * This variant also shuffles the neighbors of the image vertex. should result in better
  * recall due to more randomness, but is slower.
  */
-struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithImageShuffling(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore hopsSimplerandomOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)gp; // unused
 	(void)sgp; // unused
 
@@ -318,7 +318,7 @@ struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithImageShuffling(
  * In addition, it computes a maximum matching (in contrast to the maximal matchings that the above two
  * variants of the FK algorithm compute). This should result in better recall but might be slower.
  */
-struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithMatching(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore hopsSimplematchingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 
 	struct SubtreeIsoDataStore result = {0};
@@ -350,7 +350,7 @@ struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithMatching(struct
  * from the set of all maximal matchings.
  *
  */
-struct SubtreeIsoDataStore subtreeIsomorphismSamplingOperatorWithSampledMatching(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SubtreeIsoDataStore hopsOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 
 	struct SubtreeIsoDataStore result = {0};
