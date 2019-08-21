@@ -138,7 +138,7 @@ dependencies.png: $(EVERYTHING)
 	executables/cinclude2dot | sed 's/\.c/\.h/' | dot -Tpng -Gsize=40,40 > $@
 	eog $@
 
-move: $(ALLTARGETS)
+deploy: $(ALLTARGETS)
 	mv $(ALLTARGETS) ../experiments/bin
 
 main: $(GFNAME)
