@@ -421,12 +421,6 @@ int getPositiveBorderSize(struct EvaluationPlan p) {
 }
 
 
-int getNegativeBorderSize(struct EvaluationPlan p) {
-	int borderSize = 0;
-
-}
-
-
 // CREATE FEATURE SET
 
 struct IntSet* patternPosetInfoToFeatureSet(struct EvaluationPlan p) {
