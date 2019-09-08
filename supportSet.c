@@ -27,7 +27,10 @@ void appendSupportSetElement(struct SupportSet* s, struct SupportSetElement* e) 
 	} else {
 		s->first = s->last = e;
 	}
-	s->size += 1;
+	// // previously: count each embedding exactly once
+	// s->size += 1;
+	// count the values that the embedding operator reports
+	s->size += e->data.foundIso;
 }
 
 void appendSupportSetData(struct SupportSet* l, struct SubtreeIsoDataStore data) {
