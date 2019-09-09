@@ -5,14 +5,14 @@
 /** 
 Returns the smaller of the two input values
  */
-int min(int a, int b) {
+inline int min(int a, int b) {
 	return (a < b) ? a : b;
 }
 
 /** 
 Returns the larger of the two input values
  */
-int max(int a, int b) {
+inline int max(int a, int b) {
     return (a > b) ? a : b;
 }
 
