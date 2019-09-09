@@ -20,7 +20,7 @@
 
 #include "subtreeIsoUtils.h"
 #include "localEasySubtreeIsomorphism.h"
-
+#include "lwm_initAndCollect.h"
 
 
 /**
@@ -240,7 +240,7 @@ Find the frequent vertices in a graph db given by an array of graphs.
 The frequent vertices are stored in the search tree, the return value of this function is the size of the
 temporary data structure for merging search trees.
  */
-static int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* frequentVertices, struct GraphPool* gp) {
+static int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* frequentVertices, struct GraphPool* gp, int countOncePerGraph) {
 	int i = 0;
 	struct compInfo* results = NULL;
 	int resultSize = 0;
@@ -280,8 +280,10 @@ static int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* fre
 			containedVertices->d += addStringToSearchTree(containedVertices, cString, gp);
 			containedVertices->number += 1;
 		}
-		/* set multiplicity of patterns to 1 and add to global vertex pattern set, print to file */
-		resetToUnique(containedVertices);
+		/* set multiplicity of patterns to 1 (if we are in a normal frequency setting) and add to global vertex pattern set, print to file */
+		if (countOncePerGraph) {
+			resetToUnique(containedVertices);
+		}
 		mergeSearchTrees(frequentVertices, containedVertices, 1, results, &resultPos, frequentVertices, 0, gp);
 		dumpSearchTree(gp, containedVertices);
 	}
@@ -292,7 +294,7 @@ static int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* fre
 }
 
 
-static void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSetSize, struct Vertex* frequentEdges, struct GraphPool* gp) {
+static void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSetSize, struct Vertex* frequentEdges, struct GraphPool* gp, int countOncePerGraph) {
 	int i = 0;
 	struct compInfo* results = NULL;
 	int resultSize = 0;
@@ -377,8 +379,10 @@ static void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSet
 			}
 		}
 
-		/* set multiplicity of patterns to 1 and add to global edge pattern set */
-		resetToUnique(containedEdges);
+		/* set multiplicity of patterns to 1 (if we are in a normal frequency setting) and add to global edge pattern set */
+		if (countOncePerGraph) {
+			resetToUnique(containedEdges);
+		}
 		mergeSearchTrees(frequentEdges, containedEdges, 1, results, &resultPos, frequentEdges, 0, gp);
 		dumpSearchTree(gp, containedEdges);
 	}
@@ -449,18 +453,18 @@ static int** getPostorders(struct Graph** db, int nGraphs) {
 }
 
 
-static void getFrequentVerticesAndEdges(struct Graph** db, int nGraphs, size_t threshold, struct Vertex** frequentVertices, struct Vertex** frequentEdges, FILE* logStream, struct GraphPool* gp) {
+static void getFrequentVerticesAndEdges(struct Graph** db, int nGraphs, size_t threshold, struct Vertex** frequentVertices, struct Vertex** frequentEdges, FILE* logStream, struct GraphPool* gp, int countOncePerGraph) {
 	*frequentVertices = getVertex(gp->vertexPool);
 	*frequentEdges = getVertex(gp->vertexPool);
 
 	/* get frequent vertices */
-	int tmpResultSetSize = getFrequentVertices(db, nGraphs, *frequentVertices, gp);
+	int tmpResultSetSize = getFrequentVertices(db, nGraphs, *frequentVertices, gp, countOncePerGraph);
 	filterSearchTree(*frequentVertices, threshold, *frequentVertices, gp);
 	fprintf(logStream, "Number of frequent vertices: %i\n", (*frequentVertices)->d); fflush(logStream);
 
 	/* get frequent edges: first edge id is given by number of frequent vertices */
 	offsetSearchTreeIds(*frequentEdges, (*frequentVertices)->lowPoint);
-	getFrequentEdges(db, nGraphs, tmpResultSetSize, *frequentEdges, gp);
+	getFrequentEdges(db, nGraphs, tmpResultSetSize, *frequentEdges, gp, countOncePerGraph);
 	filterSearchTree(*frequentEdges, threshold, *frequentEdges, gp);
 	fprintf(logStream, "Number of frequent edges: %i\n", (*frequentEdges)->d); fflush(logStream);
 
@@ -643,7 +647,7 @@ size_t initFrequentTreeMiningForForestDB(// input
 
 	struct Vertex* frequentVertices;
 	struct Vertex* frequentEdges;
-	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp, 1);
 
 	/* convert frequentEdges to ShallowGraph of extension edges */
 	struct Graph* extensionEdgesVertexStore = NULL;
@@ -699,7 +703,7 @@ size_t initGlobalTreeEnumerationForGraphDB(// input
 
 	struct Vertex* frequentVertices;
 	struct Vertex* frequentEdges;
-	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp, 1);
 
 	/* convert frequentEdges to ShallowGraph of extension edges */
 	struct Graph* extensionEdgesVertexStore = NULL;
@@ -751,7 +755,7 @@ size_t initProbabilisticTreeMiningForGraphDB(// input
 
 	struct Vertex* frequentVertices;
 	struct Vertex* frequentEdges;
-	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp, 1);
 
 	/* convert frequentEdges to ShallowGraph of extension edges */
 	struct Graph* extensionEdgesVertexStore = NULL;
@@ -817,7 +821,7 @@ size_t initExactLocalEasyForGraphDB(// input
 
 	struct Vertex* frequentVertices;
 	struct Vertex* frequentEdges;
-	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp, 1);
 
 	/* convert frequentEdges to ShallowGraph of extension edges */
 	struct Graph* extensionEdgesVertexStore = NULL;
@@ -876,7 +880,7 @@ size_t initSampledLocalEasyForGraphDB(// input
 
 	struct Vertex* frequentVertices;
 	struct Vertex* frequentEdges;
-	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp, 1);
 
 	/* convert frequentEdges to ShallowGraph of extension edges */
 	struct Graph* extensionEdgesVertexStore = NULL;
@@ -1015,7 +1019,61 @@ size_t initPatternEnumeration(// input
 
 	struct Vertex* frequentVertices;
 	struct Vertex* frequentEdges;
-	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
+	int countOncePerGraph = 1;
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp, countOncePerGraph);
+
+	/* convert frequentEdges to ShallowGraph of extension edges */
+	struct Graph* extensionEdgesVertexStore = NULL;
+	struct ShallowGraph* extensionEdges = edgeSearchTree2ShallowGraph(frequentEdges, &extensionEdgesVertexStore, gp, sgp);
+	dumpSearchTree(gp, frequentEdges);
+
+	// levelwise search for patterns with one vertex:
+	struct SupportSet* frequentVerticesSupportSets = getSupportSetsOfVerticesForPatternEnumeration(db, nGraphs, frequentVertices, gp, sgp);
+	printStringsInSearchTree(frequentVertices, patternStream, sgp);
+	printSupportSetsSparse(frequentVerticesSupportSets, featureStream);
+
+	// store pointers for final garbage collection
+	struct IterativeBfsForForestsDataStructures* x = malloc(sizeof(struct IterativeBfsForForestsDataStructures));
+	x->db = db;
+	x->nGraphs = nGraphs;
+	x->extensionEdges = extensionEdges;
+	x->extensionEdgesVertexStore = extensionEdgesVertexStore;
+	x->initialFrequentPatterns = frequentVertices;
+
+	// 'return'
+	*initialFrequentPatterns = frequentVertices;
+	*supportSets = frequentVerticesSupportSets;
+	*extensionEdgeList = extensionEdges;
+	*dataStructures = x;
+	return 1; // returned patterns have 1 vertex
+}
+
+
+size_t initHopsEstimate(// input
+		size_t threshold,
+		double importance,
+		// output
+		struct Vertex** initialFrequentPatterns,
+		struct SupportSet** supportSets,
+		struct ShallowGraph** extensionEdgeList,
+		void** dataStructures,
+		// printing
+		FILE* featureStream,
+		FILE* patternStream,
+		FILE* logStream,
+		// pools
+		struct GraphPool* gp,
+		struct ShallowGraphPool* sgp) {
+
+	(void)importance; // unused
+
+	struct Graph** db = NULL;
+	int nGraphs = getDB(&db);
+
+	struct Vertex* frequentVertices;
+	struct Vertex* frequentEdges;
+	int countOncePerGraph = 0; // we need to count support differently for vertices and edges to be compatible with the support notion of hops_estimate
+	getFrequentVerticesAndEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp, countOncePerGraph);
 
 	/* convert frequentEdges to ShallowGraph of extension edges */
 	struct Graph* extensionEdgesVertexStore = NULL;
