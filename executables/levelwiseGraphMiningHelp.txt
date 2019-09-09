@@ -25,6 +25,10 @@ Options:
               a float between 0.0 and 1.0 or an integer >=1, depending 
               on the operator.
               
+-l VALUE:     Some embedding operators require yet another additional  
+              parameter that might be a float between 0.0 and 1.0 or an 
+              integer >=1, depending on the operator.              
+              
 -r VALUE:     Initialize the random number generator with seed VALUE. If
               not specified, random generator is seeded according to 
               current time.
@@ -206,4 +210,18 @@ Options:
              can be generated from frequent vertices and edges in the
              input database.
 
- 
+           hops_estimate: Probabilistic Subtree Features.
+             See description of hops embedding operator.
+             Instead of the other embedding operators here, this operator 
+             uses a different notion of frequency. That is, it computes an
+             estimate of the number of subtree isomorphisms from the pattern
+             to the text graphs and the estimated frequency is the sum of
+             these estimates over all graphs in the data base. In particular, 
+             this is useful, if the database contains one (large) graph and 
+             we want to mine 'frequent' patterns in that particular graph. 
+             
+             Welke, Seiffarth, Kamp: HOPS (to appear somewhere)
+             Fürer, Kasiviswanathan: Approximately Counting Embeddings 
+             into Random Graphs. 
+             Combinatorics, Probability & Computing 23:1028-1056, 2014
+             (deprecated alternative flag: probabilisticTreeSamplingFKF)

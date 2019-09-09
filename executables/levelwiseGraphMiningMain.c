@@ -65,13 +65,14 @@ int main(int argc, char** argv) {
 
 	// other
 	double importance = 0.5;
+	double ingraphThreshold = 1.0;
 	char* patternFile = NULL;
 	char* featureFile = NULL;
 
 	/* parse command line arguments */
 	int arg;
 	int seed;
-	const char* validArgs = "ht:p:m:o:f:e:i:r:";
+	const char* validArgs = "ht:p:m:o:f:e:i:r:l:";
 	for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
 		switch (arg) {
 		case 'h':
@@ -109,6 +110,25 @@ int main(int argc, char** argv) {
 			}
 			fprintf(stderr, "Unknown mining technique: %s\n", optarg);
 			return EXIT_FAILURE;
+		case 'i':
+			if (sscanf(optarg, "%lf", &importance) != 1) {
+				fprintf(stderr, "value must be float, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			if (importance <= 0) {
+				fprintf(stderr, "value must be larger than zero but is %lf\n", importance);
+			}
+			break;
+		case 'l':
+			if (sscanf(optarg, "%lf", &ingraphThreshold) != 1) {
+				fprintf(stderr, "value must be float, is: %s\n", optarg);
+				return EXIT_FAILURE;
+			}
+			if (ingraphThreshold <= 0) {
+				fprintf(stderr, "value must be larger than zero but is %lf\n", importance);
+			}
+			setInGraphThreshold(ingraphThreshold);
+			break;
 		case 'e':
 			// operators for forest transaction databases
 			if (strcmp(optarg, "subtree") == 0) {
@@ -162,6 +182,15 @@ int main(int argc, char** argv) {
 				(strcmp(optarg, "hops") == 0)) {
 				initMining = &initPatternEnumeration;
 				embeddingOperator = &hopsOperator;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectPatternEnumeration;
+				break;
+			}
+			if (strcmp(optarg, "hops_estimate") == 0) {
+				initMining = &initHopsEstimate;
+				embeddingOperator = &hopsOperatorEstimate;
 				if ((int)importance <= 0) {
 					importance = 1;
 				}
@@ -232,15 +261,6 @@ int main(int argc, char** argv) {
 			}
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
 			return EXIT_FAILURE;
-		case 'i':
-			if (sscanf(optarg, "%lf", &importance) != 1) {
-				fprintf(stderr, "value must be float, is: %s\n", optarg);
-				return EXIT_FAILURE;
-			}
-			if (importance <= 0) {
-				fprintf(stderr, "value must be larger than zero but is %lf\n", importance);
-			}
-			break;
 		case 'o':
 			patternFile = copyString(optarg);
 			break;

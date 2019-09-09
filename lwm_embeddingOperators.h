@@ -11,6 +11,7 @@
 #include "graph.h"
 #include "newCube.h" // for SubtreeIsoDataStore
 
+void setInGraphThreshold(double t);
 
 void stupidPatternEvaluation(struct Graph** db, int nGraphs, struct Graph** patterns, int nPatterns, struct Vertex** pointers, struct GraphPool* gp);
 
@@ -30,4 +31,5 @@ struct SubtreeIsoDataStore hopsSimpleOperator(struct SubtreeIsoDataStore data, s
 struct SubtreeIsoDataStore hopsSimplerandomOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore hopsSimplematchingOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 struct SubtreeIsoDataStore hopsOperator(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
+struct SubtreeIsoDataStore hopsOperatorEstimate(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 #endif /* LWM_EMBEDDINGOPERATORS_H_ */

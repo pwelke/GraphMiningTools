@@ -6,6 +6,7 @@
 #include "subtreeIsoUtils.h"
 #include "sampleSubtrees.h"
 #include "bipartiteMatching.h"
+#include "intMath.h"
 
 /*
  * subtreeIsomorphismSampling.c
@@ -392,9 +393,34 @@ static void shuffleInClasses(struct VertexList** imageNeighbors, int* imageNeigh
 }
 
 
+/**
+ *  Compute the number of maximum matchings in a complete bipartite graph on A + B vertices.
+    A and B are required to be nonnegative.
+    Corner Case: If at least one of the sides has zero vertices, there is one maximal matching: the empty set.
+ */
+static int n_max_matchings_complete(int A, int B) {
+
+	int a = min(A, B);
+	int b = max(A, B);
+	int c = 1;
+
+	if (a != 0) {
+		for (int i=b-a+1; i<=b; ++i) {
+			c *= i;
+		}
+	}
+
+	return c;
+}
+
+int n_max_matchings() {
+return 0;
+}
+
+
 static const void* EMPTY_MATCHING = ((void*)0x1);
 
-static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, struct Vertex* image, int* matchingSize) {
+static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, struct Vertex* image, int* matchingSize, int* n_matchings, int computeEstimate) {
 	int nUncoveredChildren;
 	int nCandidateImages;
 	struct VertexList** uncoveredChildren = getUncoveredNeighborArray(parent, &nUncoveredChildren);
@@ -428,7 +454,9 @@ static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, st
 
 	int currentChild = 0;
 	int currentCandidate = 0;
-	while ((currentChild<nUncoveredChildren) && (currentCandidate<nCandidateImages)) {
+
+	while ((currentChild < nUncoveredChildren)
+			&& (currentCandidate < nCandidateImages)) {
 		if (compareLabeledNeighbors(&(uncoveredChildren[currentChild]), &(candidateImages[currentCandidate])) == 0) {
 			uncoveredChildren[currentChild]->endPoint->visited = candidateImages[currentCandidate]->endPoint->number + 1;
 			candidateImages[currentCandidate]->endPoint->visited = 1;
@@ -437,6 +465,37 @@ static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, st
 		} else {
 			++currentCandidate;
 		}
+	}
+
+	if ((currentChild == nUncoveredChildren) && computeEstimate) {
+		//matching worked, compute number of maximum matchings
+		int A = 0;
+		int B = 0;
+		char newBlock = 1;
+		*n_matchings = 1;
+
+		currentChild = 0;
+		currentCandidate = 0;
+
+		while ((currentChild < nUncoveredChildren)
+					&& (currentCandidate < nCandidateImages)) {
+				if (compareLabeledNeighbors(&(uncoveredChildren[currentChild]), &(candidateImages[currentCandidate])) == 0) {
+					if (newBlock) {
+						newBlock = 0;
+						(*n_matchings) *= n_max_matchings_complete(A, B);
+						A = 0;
+						B = 0;
+					}
+					++currentChild;
+					++currentCandidate;
+					++A;
+					++B;
+				} else {
+					++currentCandidate;
+					++B;
+					newBlock = 1;
+				}
+			}
 	}
 
 	// garbage collection
@@ -463,12 +522,13 @@ static struct VertexList** uniformBlockMaximumMatching(struct Vertex* parent, st
  * similar to gaston dfs strategy in the pattern space, but for a single tree pattern
  * in a fixed graph transaction.
  */
-static char recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(struct Vertex* parent, struct Graph* g, struct GraphPool* gp) {
+static int recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(struct Vertex* parent, struct Graph* g, struct GraphPool* gp, int computeEstimate) {
 
 	struct Vertex* parentImage = g->vertices[parent->visited - 1];
 
 	int matchingSize;
-	struct VertexList** maximumMatching = uniformBlockMaximumMatching(parent, parentImage, &matchingSize);
+	int n_matchings = 0;
+	struct VertexList** maximumMatching = uniformBlockMaximumMatching(parent, parentImage, &matchingSize, &n_matchings, computeEstimate);
 
 	// base case: if there are no children that need to be matched, although parent is not a leaf, we are happy
 	if (maximumMatching == EMPTY_MATCHING) {
@@ -483,16 +543,22 @@ static char recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(struct 
 
 	// recurse to the matched vertices
 	for (int i=0; i<matchingSize; ++i) {
-		char embeddingWorked = recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(maximumMatching[i]->endPoint, g, gp);
+		int embeddingWorked = recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(maximumMatching[i]->endPoint, g, gp, computeEstimate);
 		if (!embeddingWorked) {
 			free(maximumMatching);
 			return 0;
+		} else {
+			n_matchings *= embeddingWorked;
 		}
 	}
 
 	// so far, we have been successful
 	free(maximumMatching);
-	return 1;
+	if (computeEstimate) {
+		return n_matchings;
+	} else {
+		return 1;
+	}
 }
 
 
@@ -647,7 +713,7 @@ char subtreeIsomorphismSamplerWithProperMatching(struct Graph* g, struct Graph* 
 	struct Vertex* currentRoot = h->vertices[rand() % h->n];
 	// and select a random image vertex
 	struct Vertex* rootImage = g->vertices[rand() % g->n];
-//	fprintf(stderr, "\nnew round: %i -> %i\n", currentRoot->number, rootEmbedding->number);
+	//	fprintf(stderr, "\nnew round: %i -> %i\n", currentRoot->number, rootEmbedding->number);
 
 	char foundIso = 0;
 	if (labelCmp(currentRoot->label, rootImage->label) == 0) {
@@ -665,8 +731,8 @@ char subtreeIsomorphismSamplerWithProperMatching(struct Graph* g, struct Graph* 
 }
 
 
-static struct Vertex* getSuitableImage(struct Vertex* root, struct Graph* g, struct ListPool* lp) {
-	int nCandidates = 0;
+static struct Vertex* getSuitableImage(struct Vertex* root, struct Graph* g, struct ListPool* lp, int* nCandidates) {
+	*nCandidates = 0;
 	struct VertexList* candidates = NULL;
 	for (int v=0; v<g->n; ++v) {
 		if (labelCmp(root->label, g->vertices[v]->label) == 0) {
@@ -675,12 +741,12 @@ static struct Vertex* getSuitableImage(struct Vertex* root, struct Graph* g, str
 			tmp->endPoint = g->vertices[v];
 
 			candidates = tmp;
-			++nCandidates;
+			++(*nCandidates);
 		}
 	}
 	struct Vertex* image = NULL;
-	if (nCandidates > 0) {
-		int index = rand() % nCandidates;
+	if (*nCandidates > 0) {
+		int index = rand() % (*nCandidates);
 		struct VertexList* e = candidates;
 		for (int i=0; i<index; ++i) {
 			e=e->next;
@@ -691,6 +757,7 @@ static struct Vertex* getSuitableImage(struct Vertex* root, struct Graph* g, str
 	}
 	return image;
 }
+
 
 /**
  * This algorithm, similar to the variants above, tries to randomly embed a given tree pattern into a given graph.
@@ -708,37 +775,42 @@ static struct Vertex* getSuitableImage(struct Vertex* root, struct Graph* g, str
  *
  * for the special case of trees, without the necessity to compute all maximum matchings for each pattern vertex.
  *
-* The algorithm requires
-* - g->vertices[v]->visited = 0 for all v \in V(g).
-* - h to be a tree
-* - e->flag to be initialized to 0 for all edges e in h
-* - rand() to be initialized and working.
-*
-* The algorithm guarantees
-* - output != 0 iff it has found a subgraph isomorphism from h to g
-* - g->vertices[v]->visited = 0 for all v \in V(g) after termination
-*/
-char subtreeIsomorphismSamplerWithSampledMaximumMatching(struct Graph* g, struct Graph* h, struct GraphPool* gp) {
+ * The algorithm requires
+ * - g->vertices[v]->visited = 0 for all v \in V(g).
+ * - h to be a tree
+ * - e->flag to be initialized to 0 for all edges e in h
+ * - rand() to be initialized and working.
+ *
+ * The algorithm guarantees
+ * - output != 0 iff it has found a subgraph isomorphism from h to g
+ * - g->vertices[v]->visited = 0 for all v \in V(g) after termination
+ */
+int subtreeIsomorphismSamplerWithSampledMaximumMatching(struct Graph* g, struct Graph* h, struct GraphPool* gp, int computeEstimate) {
 
 	// we root h at a random vertex
 	struct Vertex* currentRoot = h->vertices[rand() % h->n];
 	// and select a random image vertex with suitable label (if one exists)
-	struct Vertex* rootImage = getSuitableImage(currentRoot, g, gp->listPool);
-//	struct Vertex* rootImage = g->vertices[rand() % g->n];
+	int nRootImageCandidates;
+	struct Vertex* rootImage = getSuitableImage(currentRoot, g, gp->listPool, &nRootImageCandidates);
+	//	struct Vertex* rootImage = g->vertices[rand() % g->n];
 
 
-	char foundIso = 0;
+	int foundIso = 0;
 	if (rootImage) {
-//	if (labelCmp(currentRoot->label, rootImage->label) == 0) {
+		//	if (labelCmp(currentRoot->label, rootImage->label) == 0) {
 		// if there is a candidate image we map the root to the image
 		currentRoot->visited = rootImage->number + 1;
 		rootImage->visited = 1;
 		// and try to embed the rest of the tree h into g accordingly
-		foundIso = recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(currentRoot, g, gp);
+		foundIso = recursiveSubtreeIsomorphismSamplerWithSampledMaximumMatching(currentRoot, g, gp, computeEstimate);
 
 		// cleanup
 		cleanupSubtreeIsomorphismSampler(h, g);
 	}
 
-	return foundIso;
+	if (computeEstimate) {
+		return foundIso * nRootImageCandidates;
+	} else {
+		return foundIso;
+	}
 }

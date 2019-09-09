@@ -7,6 +7,8 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <math.h>
 
 #include "subtreeIsoUtils.h"
 #include "iterativeSubtreeIsomorphism.h"
@@ -277,7 +279,7 @@ struct SubtreeIsoDataStore hopsOperator(struct SubtreeIsoDataStore data, struct 
 	result.h = h;
 
 	for (int i=0; i<importance; ++i) {
-		result.foundIso = subtreeIsomorphismSamplerWithSampledMaximumMatching(data.g, h, gp);
+		result.foundIso = subtreeIsomorphismSamplerWithSampledMaximumMatching(data.g, h, gp, 0);
 		if (result.foundIso) {
 			break;
 		}
@@ -286,4 +288,53 @@ struct SubtreeIsoDataStore hopsOperator(struct SubtreeIsoDataStore data, struct 
 	return result;
 }
 
+
+static double inGraphThreshold = 1.0;
+
+void setInGraphThreshold(double t) {
+	inGraphThreshold = t;
+}
+
+/**
+ * Randomized embedding operator for
+ * tree pattern h
+ * graph transaction data
+ *
+ * The algorithm repeats to try to embed a randomly rooted shuffled version of the tree h
+ * in some random place in the transaction graph. It returns an estimate over the number of
+ * embeddings in the graph (possibly zero) and compares this estimate to the variable inGraphThreshold.
+ * If it is smaller, then the algorithm returns zero, otherwise the estimate.
+ *
+ * This is another example of an embedding operator with one-sided error.
+ *
+ * This variant sorts the neighbors of pattern vertex and transaction vertex by label and
+ * shuffles the blocks locally to obtain a maximum matching that is sampled uniformly at random
+ * from the set of all maximal matchings.
+ *
+ */
+struct SubtreeIsoDataStore hopsOperatorEstimate(struct SubtreeIsoDataStore data, struct Graph* h, double importance, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+	(void)sgp; // unused
+
+	struct SubtreeIsoDataStore result = {0};
+	result.g = data.g;
+	result.h = h;
+	int estimate = 0;
+
+	for (int i=0; i<importance; ++i) {
+		estimate += subtreeIsomorphismSamplerWithSampledMaximumMatching(data.g, h, gp, 1);
+		if (estimate < 0) {
+			// int overflow
+			result.foundIso = INT_MAX;
+			fprintf(stderr, "Int overflow while computing average support estimate for graph %i for iteration %i (return support INT_MAX)\n", result.g->number, i);
+			break;
+		}
+	}
+
+	result.foundIso = ceil(estimate / importance);
+	if (result.foundIso < inGraphThreshold) {
+		result.foundIso = 0;
+	}
+
+	return result;
+}
 
