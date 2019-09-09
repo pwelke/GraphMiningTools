@@ -117,23 +117,6 @@ size_t initPatternEnumeration(// input
 		struct GraphPool* gp,
 		struct ShallowGraphPool* sgp);
 
-
-size_t initHopsEstimate(// input
-		size_t threshold,
-		double importance,
-		// output
-		struct Vertex** initialFrequentPatterns,
-		struct SupportSet** supportSets,
-		struct ShallowGraph** extensionEdgeList,
-		void** dataStructures,
-		// printing
-		FILE* featureStream,
-		FILE* patternStream,
-		FILE* logStream,
-		// pools
-		struct GraphPool* gp,
-		struct ShallowGraphPool* sgp);
-
 void garbageCollectFrequentTreeMiningForForestDB(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void garbageCollectLocalEasyForGraphDB(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 void garbageCollectPatternEnumeration(void** y, struct GraphPool* gp, struct ShallowGraphPool* sgp);
