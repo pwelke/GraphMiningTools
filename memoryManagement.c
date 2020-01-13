@@ -134,6 +134,20 @@ void dumpVertexListRecursively(struct ListPool* p, struct VertexList* e) {
 	}
 }
 
+/**
+ * Given a pointer to a VertexList struct e, this method dumps all VertexList structs
+ * that are reachable from e by following the ->next pointers.
+ */
+void dumpVertexListLinearly(struct ListPool* p, struct VertexList* e) {
+	struct VertexList* tmp;
+	while (e) {
+		tmp = e->next;
+		dumpVertexList(p,e);
+		e = tmp;
+	}
+
+}
+
 
 /******************************/
 

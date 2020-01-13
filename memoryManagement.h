@@ -9,6 +9,7 @@ struct VertexList* getVertexList(struct ListPool* pool);
 void wipeVertexList(struct VertexList* e);
 void dumpVertexList(struct ListPool* p, struct VertexList* l);
 void dumpVertexListRecursively(struct ListPool* p, struct VertexList* e);
+void dumpVertexListLinearly(struct ListPool* p, struct VertexList* e);
 
 struct VertexPool* createVertexPool(unsigned int initNumberOfElements);
 void freeVertexPool(struct VertexPool* p);
