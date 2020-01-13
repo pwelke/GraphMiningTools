@@ -1,7 +1,7 @@
 
 # your choice of compiler 
-# CC = gcc
-CC = clang
+CC = gcc
+# CC = clang
 
 # debug compiler flags
 # CPPLINKFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -ggdb -std=gnu99 -lm -fsanitize=undefined
@@ -157,11 +157,12 @@ $(XOBJECTFOLDER)/%.o : ./executables/%.c ./executables/%.h
 	@$(CC) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	@rm -f *.o
 	@rm -f $(OBJECTFOLDER)/*.o
+	@rm -f $(XOBJECTFOLDER)/*.o
+	@rm -f $(COMPILEDHELPFOLDER)/*.help
+	@rm -f *.o
 	@rm -f ./executables/*.o
 	@rm -f ./executables/*.help
-	@rm -f $(COMPILEDHELPFOLDER)/*.help
 	@rm -f $(ALLTARGETS) test
 
 print-%:
