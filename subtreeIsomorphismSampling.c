@@ -753,7 +753,7 @@ static struct Vertex* getSuitableImage(struct Vertex* root, struct Graph* g, str
 		}
 		image = e->endPoint;
 		// garbage collection
-		dumpVertexListRecursively(lp, candidates);
+		dumpVertexListLinearly(lp, candidates);
 	}
 	return image;
 }
