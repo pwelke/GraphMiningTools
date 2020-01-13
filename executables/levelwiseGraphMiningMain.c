@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
 				break;
 			}
 			if (strcmp(optarg, "hops_estimate") == 0) {
-				initMining = &initHopsEstimate;
+				initMining = &initPatternEnumeration;
 				embeddingOperator = &hopsOperatorEstimate;
 				if ((int)importance <= 0) {
 					importance = 1;
