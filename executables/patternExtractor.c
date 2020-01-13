@@ -8,6 +8,7 @@
 #include "../intSet.h"
 #include "../lwm_initAndCollect.h"
 #include "../minhashing.h"
+#include "../subtreeIsomorphismSampling.h"
 #include "../localEasySubtreeIsomorphism.h"
 #include "../sampleSubtrees.h"
 #include "../poset_pathCover.h"
@@ -215,6 +216,21 @@ struct IntSet* computeSubtreeIsomorphisms(struct Graph* g, struct Graph** patter
 	return features;
 }
 
+struct IntSet* computeHOPSTrials(struct Graph* g, int nIterationsPerPattern, struct Graph** patterns, int nPatterns, struct GraphPool* gp) {
+	struct IntSet* features = getIntSet();
+
+	for (int i=0; i<nPatterns; ++i) {
+		for (int k=0; k<nIterationsPerPattern; ++k) {
+			if (subtreeIsomorphismSamplerWithSampledMaximumMatching(g, patterns[i], gp, 0)) {
+					addIntSortedNoDuplicates(features, i);
+					break;
+				}
+		}
+
+	}
+	return features;
+}
+
 struct IntSet* computeResampledLocalEasyFullEmbedding(struct Graph* g, int nLocalTrees, struct Graph** patterns, int nPatterns, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct IntSet* features = getIntSet();
 
@@ -346,6 +362,7 @@ int main(int argc, char** argv) {
 	typedef enum {triangles, bruteForceTriples,
 		localEasyPatternsFast, localEasyPatternsResampling,
 		treePatternsResampling,
+		hopsPatterns,
 		treePatterns, treePatternsFast, treePatternsFastAbsImp, treePatternsFastRelImp,
 		minHashTree, minHashRelImportant, minHashAbsImportant,
 		dotApproxForTrees, dotApproxLocalEasy,
@@ -431,6 +448,10 @@ int main(int argc, char** argv) {
 			}
 			if (strcmp(optarg, "treePatternsFast") == 0) {
 				method = treePatternsFast;
+				break;
+			}
+			if (strcmp(optarg, "hopsPatterns") == 0) {
+				method = hopsPatterns;
 				break;
 			}
 			if (strcmp(optarg, "localEasyPatternsFast") == 0) {
@@ -523,6 +544,7 @@ int main(int argc, char** argv) {
 	switch (method) {
 	case minHashAbsImportant:
 	case treePatternsFastAbsImp:
+	case hopsPatterns:
 	case localEasyPatternsFast:
 	case localEasyPatternsResampling:
 	case treePatternsResampling:
@@ -560,6 +582,7 @@ int main(int argc, char** argv) {
 	case localEasyPatternsResampling:
 	case treePatternsResampling:
 	case treePatternsFast:
+	case hopsPatterns:
 	case localEasyPatternsFast:
 	case treePatternsFastAbsImp:
 	case treePatternsFastRelImp:
@@ -700,6 +723,9 @@ int main(int argc, char** argv) {
 			case treePatternsFast:
 				fingerprints = bfsEmbeddingForTrees(g, evaluationPlan, gp, sgp);
 				break;
+			case hopsPatterns:
+				fingerprints = computeHOPSTrials(g, absImportance, patterns, nPatterns, gp);
+				break;
 			case localEasyPatternsFast:
 				fingerprints = bfsEmbeddingForLocalEasy(g, evaluationPlan, absImportance, gp, sgp);
 				break;
@@ -805,6 +831,7 @@ int main(int argc, char** argv) {
 		free(randomProjection);
 		break;
 	case treePatterns:
+	case hopsPatterns:
 	case localEasyPatternsResampling:
 	case treePatternsResampling:
 		for (size_t i=0; i<nPatterns; ++i) {
