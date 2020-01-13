@@ -1,7 +1,7 @@
 
 # your choice of compiler 
-CC = gcc
-# CC = clang
+# CC = gcc
+CC = clang
 
 # debug compiler flags
 # CPPLINKFLAGS = -g -Wall -Wextra -Wshadow -Wformat=2 -pedantic -W -ggdb -std=gnu99 -lm -fsanitize=undefined
