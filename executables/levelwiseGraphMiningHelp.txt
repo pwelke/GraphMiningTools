@@ -130,7 +130,7 @@ Options:
              The algorithm is easy to implement: The sampling process does 
              not require us to actually implement any matching algorithm. 
              How great is that?
-             Welke, Seiffarth, Kamp: HOPS (to appear somewhere)
+             Anonymous: HOPS (to appear somewhere)
              Fürer, Kasiviswanathan: Approximately Counting Embeddings 
              into Random Graphs. 
              Combinatorics, Probability & Computing 23:1028-1056, 2014
@@ -219,8 +219,7 @@ Options:
              these estimates over all graphs in the data base. In particular, 
              this is useful, if the database contains one (large) graph and 
              we want to mine 'frequent' patterns in that particular graph. 
-             
-             Welke, Seiffarth, Kamp: HOPS (to appear somewhere)
+             Anoymous: HOPS (to appear somewhere)
              Fürer, Kasiviswanathan: Approximately Counting Embeddings 
              into Random Graphs. 
              Combinatorics, Probability & Computing 23:1028-1056, 2014

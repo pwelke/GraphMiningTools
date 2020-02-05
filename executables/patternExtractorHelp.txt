@@ -41,7 +41,7 @@ Options:
                            isomorphic to the graph). This method supports 
                            forest and general graph databases but only tree 
                            patterns. 
-                           For this it uses the  HOPS embedding operator. 
+                           For this it uses the HOPS embedding operator. 
                            The number of trials per pattern can be specified 
                            via the -i parameter and must be an int >= 1.
                                                       
