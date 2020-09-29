@@ -62,6 +62,7 @@ That is, the canonical strings of two trees T, T' are identical if and only if T
 Let's have an example:
 
 ```
+4	1	2 
 3	13	2 ( 1 2 ) ( 1 6 ) 
 4	12	2 ( 1 2 ) ( 1 2 ) 
 3	92	2 ( 1 1 ) ( 1 2 ( 2 2 ( 1 2 ) ) ) ( 2 2 ( 1 1 ) ) 
@@ -80,6 +81,8 @@ There is a vertex with label 2 that is connected by an edge with label 1 to anot
 (The tree has id 13 and occurs three times in the database that was used here).
 
 The canonical string representation is recursive; an open bracket starts an edge from the current vertex and a closing bracket closes the current subtree. 
+It must always terminate with a space. 
+E.g. '2 ' is a canonical string of a tree containing a single vertex labeled 2, while '2' is an invalid string that results in a segfault in some places.
 See the drawings of the five graphs below.
 
 !(0)[0.png]
