@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
 		}
 
 		/** TODO if this breaks due to large input files, change this to an iterator */
-		nGraphs = getDBfromCanonicalStrings(&db, input, 20, gp, sgp);
+		nGraphs = getDBfromCanonicalStrings(&db, input, CS_STRING_CACHE_SIZE, gp, sgp);
 		fclose(input);
 		break;
 	}

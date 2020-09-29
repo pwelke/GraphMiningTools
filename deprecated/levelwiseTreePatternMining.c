@@ -70,7 +70,7 @@ The method expects that initPruning was called with a positive argument before a
 the number of graphs in the database.
 */
 int getVertexAndEdgeHistograms(char* fileName, double importance, struct Vertex* frequentVertices, struct Vertex* frequentEdges, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-	int bufferSize = 100;
+	int bufferSize = CS_STRING_CACHE_SIZE;
 	int i = 0;
 	FILE* stream = fopen(fileName, "r");
 	struct ShallowGraph* patterns = NULL;
@@ -387,7 +387,7 @@ void scanDBNoCache(char* fileName, struct Vertex* currentLevel, struct Graph** r
 					struct Vertex** pointers, int n, int threshold, int nGraphs,
 					double fraction, FILE* keyValueStream, struct GraphPool* gp, struct ShallowGraphPool* sgp,
 					int (*embeddingOperator)(struct ShallowGraph*, struct Graph**, double, int, int, int**, struct Vertex**, struct GraphPool*)) {
-	int bufferSize = 100;
+	int bufferSize = CS_STRING_CACHE_SIZE;
 	int i = 0;
 	FILE* stream = fopen(fileName, "r");
 	struct ShallowGraph* spanningTreeStrings = NULL;

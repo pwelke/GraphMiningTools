@@ -12,6 +12,7 @@
 #include "../localEasySubtreeIsomorphism.h"
 #include "../sampleSubtrees.h"
 #include "../poset_pathCover.h"
+#include "../cs_Parsing.h"
 #include "patternExtractor.h"
 
 
@@ -613,7 +614,7 @@ int main(int argc, char** argv) {
 				break;
 			case CANONICALSTRING_INPUT:
 				patternStream = fopen(patternFile, "r");
-				nPatterns = getDBfromCanonicalStrings(&patterns, patternStream, 20, gp, sgp);
+				nPatterns = getDBfromCanonicalStrings(&patterns, patternStream, CS_STRING_CACHE_SIZE, gp, sgp);
 				fclose(patternStream);
 				break;
 			}

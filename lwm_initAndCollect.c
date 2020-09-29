@@ -209,12 +209,12 @@ static int getNonisomorphicSpanningTreeSamplesOfDB(struct Graph*** db, int k, st
 
 
 
-int getDBfromCanonicalStrings(struct Graph*** db, FILE* stream, int bufferSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+int getDBfromCanonicalStrings(struct Graph*** db, FILE* stream, size_t bufferSize, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	int dbSize = 0;
 	int i = 0;
 	int graphId = -1;
 	int graphCount = -1;
-	char buffer[bufferSize];
+	char* buffer = malloc(bufferSize * sizeof(char));
 
 	while (fscanf(stream, "%i\t%i\t", &graphCount, &graphId) == 2) {
 		struct ShallowGraph* g = parseCString(stream, buffer, sgp);
@@ -231,6 +231,7 @@ int getDBfromCanonicalStrings(struct Graph*** db, FILE* stream, int bufferSize, 
 		dumpShallowGraph(sgp, g);
 		++i;
 	}
+	free(buffer);
 	return i;
 }
 

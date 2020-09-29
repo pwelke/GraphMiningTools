@@ -1049,7 +1049,7 @@ struct ShallowGraph* streamReadPatternsAndTheirNumber(FILE* stream, int bufferSi
 
 struct Vertex* loadSearchTree(FILE* stream, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct Vertex* root = getVertex(gp->vertexPool);
-	int bufferSize = 100;
+	int bufferSize = CS_STRING_CACHE_SIZE;
 	streamBuildSearchTree(stream, root, bufferSize, gp, sgp);
 	return root;
 }

@@ -3,6 +3,7 @@
 
 #include "cs_Parsing.h"
 
+const size_t CS_STRING_CACHE_SIZE = 2048;
 
 
 /* internalized strings for initializator and terminator edges */

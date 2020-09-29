@@ -5,6 +5,8 @@
 #include "graph.h"
 
 /* caching */
+// standard cache size for parseCString
+const size_t CS_STRING_CACHE_SIZE;
 struct VertexList* getTerminatorEdge(struct ListPool *p);
 struct VertexList* getInitialisatorEdge(struct ListPool *p);
 char getTerminatorSymbol();
