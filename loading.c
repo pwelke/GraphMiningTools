@@ -109,19 +109,22 @@ size_t* VERTEX_SIZE = NULL;
 char** EDGE_PTR = NULL;
 size_t* EDGE_SIZE = NULL;
 
+/**
+ * We allow 2048 bytes of cache for each cache that is used to read vertex labels, edge labels, and the header of a graph.
+ */
 void initCache() {
 	HEAD_SIZE = malloc(sizeof(size_t));
-	*HEAD_SIZE = 20;
+	*HEAD_SIZE = 2048;
 	HEAD_PTR = malloc(sizeof(char*));
 	*HEAD_PTR = malloc(*HEAD_SIZE * sizeof(char));
 
 	VERTEX_SIZE = malloc(sizeof(size_t));
-	*VERTEX_SIZE = 20;
+	*VERTEX_SIZE = 2048;
 	VERTEX_PTR = malloc(sizeof(char*));
 	*VERTEX_PTR = malloc(*VERTEX_SIZE * sizeof(char));
 
 	EDGE_SIZE = malloc(sizeof(size_t));
-	*EDGE_SIZE = 20;
+	*EDGE_SIZE = 2048;
 	EDGE_PTR = malloc(sizeof(char*));
 	*EDGE_PTR = malloc(*EDGE_SIZE * sizeof(char));
 }
