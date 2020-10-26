@@ -229,15 +229,9 @@ size_t initDirectedPatternEnumeration(// input
 	struct Graph** db = NULL;
 	int nGraphs = getDirectedDB(&db);
 
-	printGraph(db[0]);
-
 	struct Vertex* frequentVertices;
 	struct Vertex* frequentEdges;
 	getFrequentVerticesAndDirectedEdges(db, nGraphs, threshold, &frequentVertices, &frequentEdges, logStream, gp);
-
-	printf("\n\nfrequent Edges\n");
-	printStringsInSearchTree(frequentEdges, stdout, sgp);
-
 
 	/* convert frequentEdges to ShallowGraph of extension edges */
 	struct Graph* extensionEdgesVertexStore = NULL;
