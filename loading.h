@@ -11,6 +11,7 @@ char** aids99VertexLabelArray();
 char* aids99EdgeLabel(const unsigned int label);
 char* intLabel(const unsigned int label);
 struct Graph* iterateFile();
+struct Graph* iterateFileDirected();
 void createFileIterator(char* filename, struct GraphPool* p);
 void createStdinIterator(struct GraphPool* p);
 void destroyFileIterator();

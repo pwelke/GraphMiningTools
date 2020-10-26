@@ -55,6 +55,13 @@ Options:
              image of the root of the pattern must be the vertex in the image of 
              the pattern with the smallest distance to the root of the transaction.
               Works only for forest transaction databases.
+              
+              
+         == PROBABILISTIC TREE EMBEDDING OPERATORS ==
+           These operators result in a subset of the frequent rooted
+           subtrees being output by this mining algorithm
+           
+           rootedHops: 
 
              
          == STRANGE EMBEDDING OPERATORS ==
