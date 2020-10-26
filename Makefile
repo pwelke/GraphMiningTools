@@ -139,7 +139,7 @@ dependencies.png: $(EVERYTHING)
 	eog $@
 
 deploy: $(ALLTARGETS)
-	mv $(ALLTARGETS) ../experiments/bin
+	cp $(ALLTARGETS) ../experiments/bin
 
 main: $(GFNAME)
 	
