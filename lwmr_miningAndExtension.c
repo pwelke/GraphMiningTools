@@ -20,7 +20,7 @@
 
 
 
-void extendPreviousLevelRooted(// input
+static void _extendPreviousLevelRooted(// input
 		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		struct ShallowGraph* extensionEdges,
@@ -123,7 +123,7 @@ void extendPreviousLevelRooted(// input
 }
 
 
-struct SupportSet* BFSgetNextLevelRooted(// input
+static struct SupportSet* _BFSgetNextLevelRooted(// input
 		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		size_t threshold,
@@ -144,7 +144,7 @@ struct SupportSet* BFSgetNextLevelRooted(// input
 	struct SupportSet* currentLevelCandidateSupportSets;
 	struct Graph* currentLevelCandidates;
 
-	extendPreviousLevelRooted(previousLevelSupportLists, previousLevelSearchTree, frequentEdges, threshold,
+	_extendPreviousLevelRooted(previousLevelSupportLists, previousLevelSearchTree, frequentEdges, threshold,
 			&currentLevelCandidateSupportSets, &currentLevelCandidates, logStream,
 			gp, sgp);
 
@@ -243,7 +243,65 @@ void BFSStrategyRooted(size_t startPatternSize,
 		currentLevelSearchTree = getVertex(gp->vertexPool);
 		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
 
-		currentLevelSupportSets = BFSgetNextLevelRooted(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
+		currentLevelSupportSets = _BFSgetNextLevelRooted(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
+
+		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
+		printSupportSetsSparse(currentLevelSupportSets, featureStream);
+
+		// garbage collection:
+		// what is now all previousLevel... data structures will not be used at all in the next iteration
+		dumpSearchTree(gp, previousLevelSearchTree);
+		while (previousLevelSupportSets) {
+			struct SupportSet* tmp = previousLevelSupportSets->next;
+			// ...hence, we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
+			dumpSupportSetWithPattern(previousLevelSupportSets, gp);
+			previousLevelSupportSets = tmp;
+		}
+
+		// previous level = current level
+		previousLevelSearchTree = currentLevelSearchTree;
+		previousLevelSupportSets = currentLevelSupportSets;
+	}
+
+	// garbage collection
+	dumpSearchTree(gp, previousLevelSearchTree);
+
+	while (previousLevelSupportSets) {
+		struct SupportSet* tmp = previousLevelSupportSets->next;
+		// we also dump the pattern graphs completely, which we can't do in a DFS mining approach.
+		dumpSupportSetWithPattern(previousLevelSupportSets, gp);
+		previousLevelSupportSets = tmp;
+	}
+}
+
+
+void DFSStrategyRooted(size_t startPatternSize,
+					  size_t maxPatternSize,
+		              size_t threshold,
+					  struct Vertex* initialFrequentPatterns,
+					  struct SupportSet* supportSets,
+					  struct ShallowGraph* extensionEdges,
+					  // embedding operator function pointer,
+					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
+					  double importance,
+					  FILE* featureStream,
+					  FILE* patternStream,
+					  FILE* logStream,
+					  struct GraphPool* gp,
+					  struct ShallowGraphPool* sgp) {
+
+	// levelwise search for patterns with more than one vertex:
+	struct Vertex* previousLevelSearchTree = shallowCopySearchTree(initialFrequentPatterns, gp);
+	struct SupportSet* previousLevelSupportSets = supportSets;
+	struct Vertex* currentLevelSearchTree = previousLevelSearchTree; // initialization for garbage collection in case of maxPatternSize == 1
+	struct SupportSet* currentLevelSupportSets = previousLevelSupportSets; // initialization for garbage collection in case of maxPatternSize == 1
+
+	for (size_t p=startPatternSize+1; (p<=maxPatternSize) && (previousLevelSearchTree->number>0); ++p) {
+		fprintf(logStream, "Processing patterns with %zu vertices:\n", p); fflush(logStream);
+		currentLevelSearchTree = getVertex(gp->vertexPool);
+		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
+
+		currentLevelSupportSets = _BFSgetNextLevelRooted(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
 
 		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
 		printSupportSetsSparse(currentLevelSupportSets, featureStream);

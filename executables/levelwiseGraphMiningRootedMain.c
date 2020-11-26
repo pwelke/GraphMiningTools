@@ -106,6 +106,10 @@ int main(int argc, char** argv) {
 				miningStrategy = &BFSStrategyRooted;
 				break;
 			}
+			if (strcmp(optarg, "dfs") == 0) {
+				miningStrategy = &DFSStrategyRooted;
+				break;
+			}
 			fprintf(stderr, "Unknown mining technique: %s\n", optarg);
 			return EXIT_FAILURE;
 		case 'e':
@@ -227,7 +231,9 @@ int main(int argc, char** argv) {
 				gp,
 				sgp);
 
-	miningStrategy(initialPatternSize, maxPatternSize, threshold, initialFrequentPatterns, supportSets, extensionEdgeList, embeddingOperator, importance,
+	miningStrategy(initialPatternSize, maxPatternSize, threshold,
+			initialFrequentPatterns, supportSets, extensionEdgeList,
+			embeddingOperator, importance,
 			//printing
 			featureStream, patternStream, logStream,
 			//pools
