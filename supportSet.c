@@ -5,13 +5,12 @@
  *      Author: pascal
  */
 
-#include "supportSet.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
 #include "intSet.h"
+#include "supportSet.h"
 
 /**
  * A SupportSet contains information that is needed for the iterativeSubtreeIsomorphism algorithm.
@@ -37,6 +36,42 @@ void appendSupportSetData(struct SupportSet* l, struct SubtreeIsoDataStore data)
 	struct SupportSetElement* e = calloc(1, sizeof(struct SupportSetElement));
 	e->data = data;
 	appendSupportSetElement(l, e);
+}
+
+
+void pushSupportSetElement(struct SupportSet* s, struct SupportSetElement* e) {
+	if (s->first != NULL) {
+		e->next = s->first;
+		s->first = e;
+	} else {
+		s->first = s->last = e;
+	}
+	// // previously: count each embedding exactly once
+	// s->size += 1;
+	// count the values that the embedding operator reports
+	s->size += e->data.foundIso;
+}
+
+void pushSupportSetData(struct SupportSet* l, struct SubtreeIsoDataStore data) {
+	struct SupportSetElement* e = calloc(1, sizeof(struct SupportSetElement));
+	e->data = data;
+	pushSupportSetElement(l, e);
+}
+
+struct SupportSetElement* popSupportSetElement(struct SupportSet* s) {
+	struct SupportSetElement* e = s->first;
+	if (s->first != NULL) {
+		s->first = e->next;
+		s->size -= e->data.foundIso;
+	}
+	return e;
+}
+
+struct SubtreeIsoDataStore popSupportSetData(struct SupportSet *s) {
+	struct SupportSetElement* e = popSupportSetElement(s);
+	struct SubtreeIsoDataStore data = e->data;
+	free(e);
+	return data;
 }
 
 void printSupportSet(struct SupportSet* l, FILE* out) {
@@ -174,6 +209,7 @@ struct SupportSet* intersectSupportSets(struct SupportSet* aprioriList) {
 	return intersection;
 }
 
+
 char isSortedSupportSetOnPatterns(struct SupportSet* l) {
 	if (l->size < 2) {
 		return 1;
@@ -274,4 +310,28 @@ struct SupportSet* supportSetChangeHead(struct SupportSet* parentSupportSets, in
 	assert(parentSupportSets->first->data.h->number == parentIdToKeep);
 
 	return parentSupportSets;
+}
+
+
+/**
+ * Append a second list of Support sets to the end of a first list of Support Sets. 
+ * This is much more inefficient than necessary. Could be made constant time by doubly linking the SupportSet type.
+ */
+struct SupportSet* appendSupportSets(struct SupportSet* front, struct SupportSet* back) {
+	struct SupportSet* tmp; 
+	if (front) {
+		for (tmp=front; tmp->next != NULL; tmp=tmp->next);
+		tmp->next = back;
+	} else {
+		front = back;
+	}
+	return front;
+}
+
+
+struct SupportSet* popSupportSet(struct SupportSet** s) {
+	struct SupportSet* head = (*s);
+	(*s) = (*s)->next;
+	head->next = NULL;
+	return head;
 }
