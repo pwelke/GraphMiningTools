@@ -121,7 +121,6 @@ int main(int argc, char** argv) {
 				break;
 			}
 
-
 			// operators for arbitrary transaction databases
 			if (strcmp(optarg, "rootedHops") == 0) {
 				initMining = &initDirectedPatternEnumeration;
@@ -132,7 +131,6 @@ int main(int argc, char** argv) {
 				garbageCollector = &garbageCollectDirectedPatternEnumeration;
 				break;
 			}
-
 
 			// strange embedding operators
 			if (strcmp(optarg, "rootedTreeEnumeration") == 0) {
