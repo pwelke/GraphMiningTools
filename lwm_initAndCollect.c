@@ -21,6 +21,8 @@
 #include "subtreeIsoUtils.h"
 #include "localEasySubtreeIsomorphism.h"
 
+#include "lwm_initAndCollect.h"
+
 
 
 /**
@@ -241,7 +243,7 @@ Find the frequent vertices in a graph db given by an array of graphs.
 The frequent vertices are stored in the search tree, the return value of this function is the size of the
 temporary data structure for merging search trees.
  */
-static int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* frequentVertices, struct GraphPool* gp) {
+int getFrequentVertices(struct Graph** db, int dbSize, struct Vertex* frequentVertices, struct GraphPool* gp) {
 	int i = 0;
 	struct compInfo* results = NULL;
 	int resultSize = 0;
@@ -545,7 +547,7 @@ Note that this method creates a hardcopy of the edges, strings and vertices.
 Hence, it requires a pointer to a struct Graph* newVertices variable where it stores a newly created graph that holds all the new vertices.
 To avoid memory leaks, this graph needs to be dumped together with the struct ShallowGraph* result of this method.
 */
-static struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct Graph** newVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentEdges, struct Graph** newVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	struct ShallowGraph* result = getShallowGraph(sgp);
 	struct VertexList* e;
 	struct Vertex* createdVertices = NULL;
@@ -611,14 +613,7 @@ static struct ShallowGraph* edgeSearchTree2ShallowGraph(struct Vertex* frequentE
 }
 
 
-struct IterativeBfsForForestsDataStructures {
-	struct Graph** db;
-	int** postorders;
-	struct Vertex* initialFrequentPatterns;
-	struct ShallowGraph* extensionEdges;
-	struct Graph* extensionEdgesVertexStore;
-	int nGraphs;
-};
+
 
 size_t initFrequentTreeMiningForForestDB(// input
 		size_t threshold,
@@ -963,7 +958,7 @@ static struct SupportSet* initPatternEnumerationForVertices(struct Graph** spann
  * the ids of the frequent vertices in the search tree might be altered to ensure a sorted list of support sets.
  * To avoid leaks, the initial frequentVertices search tree must not be dumped until the end of all times.
  */
-static struct SupportSet* getSupportSetsOfVerticesForPatternEnumeration(struct Graph** db, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+struct SupportSet* getSupportSetsOfVerticesForPatternEnumeration(struct Graph** db, int nGraphs, struct Vertex* frequentVertices, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
 	(void)sgp; // unused
 	// init levelwise search data structures for patterns with one vertex
 

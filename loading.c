@@ -432,6 +432,107 @@ struct Graph* iterateFile() {
 	return g;
 }
 
+
+/* stream a directed graph from a database file of the format described in the documentation */
+struct Graph* iterateFileDirected() {
+	int i;
+	struct Graph* g = getGraph(FI_GP);
+	const char* currentPosition;
+
+	if (!FI_DATABASE) {
+		fprintf(stderr, "Could not access input stream.\n");
+		dumpGraph(FI_GP, g);
+		return NULL;
+	}
+
+	/* copy header line to local variable
+	dependent on GNU C */
+	if (getline(HEAD_PTR, HEAD_SIZE, FI_DATABASE) == -1) {
+		fprintf(stderr, "Could not read graph header from input stream.\n");
+		dumpGraph(FI_GP, g);
+		return NULL;
+	}
+
+	/* parse header */
+	if (parseHeader(&(g->number), &(g->activity), &(g->n), &(g->m)) != 4) {
+		/* if reading of header does not work anymore, check if we have reached the correct end of the stream */
+		if (**HEAD_PTR != '$') {
+			fprintf(stderr, "Invalid Graph header: %s\nparsing result: %i %i %i %i\n", *HEAD_PTR, g->number, g->activity, g->n, g->m);
+		}
+		dumpGraph(FI_GP, g);
+		return NULL;
+	}
+
+	/* read vertices */
+	if ((g->vertices = malloc(g->n * sizeof(struct Vertex*))) == NULL) {
+		fprintf(stderr, "Error allocating vertices\n");
+		dumpGraph(FI_GP, g);
+		return NULL;
+	}
+
+	/* copy vertex line to local variable
+	dependent on GNU C */
+	if (getline(VERTEX_PTR, VERTEX_SIZE, FI_DATABASE) == -1) {
+		fprintf(stderr, "Could not read vertex line from input stream.\n");
+		dumpGraph(FI_GP, g);
+		return NULL;
+	}
+
+	/* parse vertex info */
+	currentPosition = *VERTEX_PTR;
+	for (i=0; i<g->n; ++i) {
+		char* label;
+		if (grabLabel(&currentPosition, &label) != -1) {
+			g->vertices[i] = getVertex(FI_GP->vertexPool);
+			g->vertices[i]->label = label;
+			g->vertices[i]->number = i;
+			g->vertices[i]->isStringMaster = 1;
+		} else {
+			fprintf(stderr, "Error while parsing vertices\n");
+			dumpGraph(FI_GP, g);
+			return NULL;
+		}
+	}
+
+	/* copy edge line to local variable
+	dependent on GNU C */
+	if (getline(EDGE_PTR, EDGE_SIZE, FI_DATABASE) == -1) {
+		fprintf(stderr, "Could not read edge line from input stream.\n");
+		dumpGraph(FI_GP, g);
+		return NULL;
+	}
+
+	/* parse edge info */
+	currentPosition = *EDGE_PTR;
+	for (i=0; i<g->m; ++i) {
+		char* label;
+		int v,w;
+
+		if (parseEdgeNew(&currentPosition, &v, &w, &label) == 3) {
+
+			struct VertexList* e = getVertexList(FI_GP->listPool);
+
+			/* edge */
+			e->startPoint = g->vertices[v-1];
+			e->endPoint = g->vertices[w-1];
+			e->label = label;
+			e->isStringMaster = 1;
+
+			addEdge(e->startPoint, e);
+
+			/* reverse edge is not added! */
+
+		} else {
+			fprintf(stderr, "Error while parsing edges\n");
+			dumpGraph(FI_GP, g);
+			return NULL;
+		}
+	}
+	return g;
+}
+
+
+
 /* return the base 10 string representation of label in a correctly sized newly allocated buffer */
 char* intLabel(const unsigned int label) {
 	int bufferSize;

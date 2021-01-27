@@ -4,10 +4,13 @@
 #include <string.h>
 #include <time.h>
 
-#include "../lwmr_embeddingOperators.h"
 #include "../lwm_initAndCollect.h"
-#include "../lwmr_miningAndExtension.h"
 #include "../lwm_embeddingOperators.h"
+
+#include "../lwmr_embeddingOperators.h"
+#include "../lwmr_initAndCollect.h"
+#include "../lwmr_miningAndExtension.h"
+
 #include "levelwiseGraphMiningMain.h"
 
 const char DEBUG_INFO = 1;
@@ -114,12 +117,27 @@ int main(int argc, char** argv) {
 				break;
 			}
 
+
+			// operators for arbitrary transaction databases
+			if (strcmp(optarg, "rootedHops") == 0) {
+				initMining = &initDirectedPatternEnumeration;
+				embeddingOperator = &rootedHopsOperator;
+				if ((int)importance <= 0) {
+					importance = 1;
+				}
+				garbageCollector = &garbageCollectDirectedPatternEnumeration;
+				break;
+			}
+
+
+			// strange embedding operators
 			if (strcmp(optarg, "rootedTreeEnumeration") == 0) {
 				initMining = &initPatternEnumeration;
 				embeddingOperator = &alwaysReturnTrue;
 				garbageCollector = &garbageCollectPatternEnumeration;
 				break;
 			}
+
 			fprintf(stderr, "Unknown embedding operator: %s\n", optarg);
 			return EXIT_FAILURE;
 		case 'i':

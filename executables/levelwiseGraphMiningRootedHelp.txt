@@ -2,9 +2,12 @@ This is a frequent rooted subtree mining tool.
 Implemented by Pascal Welke starting in 2018.
 
 This program computes and outputs frequent *rooted* subtrees and feature
-representations of the mined graphs. The database is expected to contain
-tree transactions that are interpreted as being rooted at the first
-vertex.
+representations of the mined graphs. 
+
+** 
+ Different embedding operators might interpret the database in different 
+ ways! Please read this documentation carefully! 
+**
 
 usage: ./lwg [options] [FILE]
 
@@ -52,9 +55,31 @@ Options:
              A pattern matches a graph, if it is rooted subgraph isomorphic 
              to it. That is, the transactions are interpreted as being rooted
              at their first vertex (in the graph database file format) and the 
-             image of the root of the pattern must be the vertex in the image of 
-             the pattern with the smallest distance to the root of the transaction.
-              Works only for forest transaction databases.
+             image of the root of the pattern must be the vertex in the image 
+             of the pattern with the smallest distance to the root of the 
+             transaction. 
+             * Works only for forest transaction databases. *
+
+             The database is expected to contain tree transactions that are 
+             interpreted as being rooted at the first vertex. That is, the 
+             database may contain undirected trees as expected by the lwg
+             executable, but assumes that these trees are rooted at their 
+             vertex 1. 
+              
+              
+         == PROBABILISTIC TREE EMBEDDING OPERATORS ==
+           These operators result in a subset of the frequent rooted
+           subtrees being output by this mining algorithm
+           
+           rootedHops: Use the HOPS embedding operator to find frequent rooted
+           subtrees in databases of directed graphs. You can set the number of
+           samples to be taken by HOPS by the -i INT flag.
+           The database (!DIFFERENT TO BASICALLY EVERYWHERE ELSE!) is 
+           interpreted as a database of directed graphs. That is, if vertices 
+           u and v are connected back and forth, both edges must be recorded 
+           separately in the graph database file and the number of edges in 
+           the header of the graphs must be accordingly changed to be the 
+           number of directed edges. 
 
              
          == STRANGE EMBEDDING OPERATORS ==
@@ -71,13 +96,14 @@ Options:
          
 
 == NOTES ==
-This is a rather quick adaption of a codebase that was built for undirected graphs.
-Hence, it is not as efficient as it could be and has some funny quirks. An incomplete
-list follows now:
+This is a rather quick adaption of a codebase that was built for undirected 
+graphs. Hence, it is not as efficient as it could be and has some funny 
+quirks. An incomplete list follows now:
 
-- When reporting the number of frequent edges, in the log stream (currently stderr) the
-  number of frequent edges might differ from the number of frequent patterns of size 2.
-  This is due to the case that init step of the mining considers undirected edges. 
-  However, whenever a directed labeled edge is frequent, so is the underlying undirected 
-  edge.
+- When reporting the number of frequent edges for the rootedTrees embedding
+  operator, in the log stream (currently stderr) the number of frequent edges 
+  might differ from the number of frequent patterns of size 2.
+  This is due to the case that init step of the mining considers undirected 
+  edges. However, whenever a directed labeled edge is frequent, so is the 
+  underlying undirected edge.
  
