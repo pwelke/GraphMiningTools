@@ -49,7 +49,7 @@ int* computeCriticality(struct ShallowGraph* biconnectedComponents, int n) {
 }
 
 
-int* computeCycleDegrees(struct ShallowGraph* biconnectedComponents, int n) {
+int* computeBlockDegrees(struct ShallowGraph* biconnectedComponents, int n) {
 
 	/* store for each vertex if the current bic.comp was already counted */
 	int* occurrences = malloc(n * sizeof(int));
@@ -86,10 +86,10 @@ int* computeCycleDegrees(struct ShallowGraph* biconnectedComponents, int n) {
 }
 
 
-int getMaxCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
+int getMaxBlockDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
 	int maxDegree = -1;
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
-	int* cycleDegrees = computeCycleDegrees(biconnectedComponents, g->n);
+	int* cycleDegrees = computeBlockDegrees(biconnectedComponents, g->n);
 
 	int v;
 	for (v=0; v<g->n; ++v) {
@@ -104,10 +104,10 @@ int getMaxCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
 }
 
 
-int getMinCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
+int getMinBlockDegree(struct Graph* g, struct ShallowGraphPool* sgp) {
 	int minDegree = INT_MAX;
 	struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
-	int* cycleDegrees = computeCycleDegrees(biconnectedComponents, g->n);
+	int* cycleDegrees = computeBlockDegrees(biconnectedComponents, g->n);
 
 	int v;
 	for (v=0; v<g->n; ++v) {

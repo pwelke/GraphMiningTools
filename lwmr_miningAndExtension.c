@@ -11,30 +11,30 @@
 #include "cs_Tree.h"
 #include "treeEnumerationRooted.h"
 
-//#include "lwm_embeddingOperators.h"
 #include "lwmr_miningAndExtension.h"
-//#include "lwm_initAndCollect.h"
 
+static void _extendPreviousLevelRooted( // input
+	struct SupportSet *previousLevelSupportLists,
+	struct Vertex *previousLevelSearchTree,
+	struct Vertex *currentLevelFrequentPatterns, // used for pruning already frequent patterns. if NULL, it is ignored
+	struct ShallowGraph *extensionEdges,
+	size_t threshold,
+	char useAprioriPruning,
+	// output
+	struct SupportSet **resultCandidateSupportSuperSets,
+	struct Graph **resultCandidates,
+	FILE *logStream,
+	// memory management
+	struct GraphPool *gp,
+	struct ShallowGraphPool *sgp)
+{
 
-
-
-
-
-void extendPreviousLevelRooted(// input
-		struct SupportSet* previousLevelSupportLists,
-		struct Vertex* previousLevelSearchTree,
-		struct ShallowGraph* extensionEdges,
-		size_t threshold,
-		// output
-		struct SupportSet** resultCandidateSupportSuperSets,
-		struct Graph** resultCandidates,
-		FILE* logStream,
-		// memory management
-		struct GraphPool* gp,
-		struct ShallowGraphPool* sgp) {
 	assert(previousLevelSupportLists != NULL);
-	assert(previousLevelSearchTree != NULL);
 	assert(extensionEdges != NULL);
+
+	if (useAprioriPruning) {
+		assert(previousLevelSearchTree != NULL);
+	}
 
 
 	*resultCandidateSupportSuperSets = NULL;
@@ -44,6 +44,7 @@ void extendPreviousLevelRooted(// input
 
 	int nAllGeneratedExtensions = 0;
 	int nAllUniqueGeneratedExtensions = 0;
+	int nAllKnownExtensions = 0;
 	int nAllExtensionsPostApriori = 0;
 	int nAllExtensionsPostIntersectionFilter = 0;
 	int nAddedToOutput = 0;
@@ -63,74 +64,107 @@ void extendPreviousLevelRooted(// input
 			// count number of generated extensions
 			++nAllGeneratedExtensions;
 
-			/* filter out patterns that were already enumerated as the extension of some other pattern
+			/* filter out patterns that were already enumerated before (in currentLevelFrequentPatterns) or as the extension of some other pattern
 				and are in the search tree; here a distinction between rooted and unrooted trees takes place */
 			struct ShallowGraph* string = canonicalStringOfRootedTree(extension->vertices[0], extension->vertices[0], sgp);
+			int itIsKnown = 0;
+			if ((currentLevelFrequentPatterns)) {
+				itIsKnown = containsString(currentLevelFrequentPatterns, string);
+				if (itIsKnown) {
+					++nAllKnownExtensions;
+				}
+			}
 			int previousNumberOfDistinctPatterns = currentLevelCandidateSearchTree->d;
 			addToSearchTree(currentLevelCandidateSearchTree, string, gp, sgp);
 
-			struct IntSet* aprioriParentIdSet;
-			if (previousNumberOfDistinctPatterns == currentLevelCandidateSearchTree->d) {
-				aprioriParentIdSet = NULL;
+			if (useAprioriPruning) {
+				struct IntSet *aprioriParentIdSet;
+				if ((previousNumberOfDistinctPatterns == currentLevelCandidateSearchTree->d) || (itIsKnown)) {
+					aprioriParentIdSet = NULL;
+				} else {
+					++nAllUniqueGeneratedExtensions;
+					aprioriParentIdSet = aprioriCheckExtensionRootedReturnList(extension, previousLevelSearchTree, gp, sgp);
+				}
+
+				if (aprioriParentIdSet) {
+					// count number of apriori survivors
+					++nAllExtensionsPostApriori;
+
+					// get (hopefully small) superset of the support set of the extension
+					struct SupportSet* extensionSupportSuperSet = getCandidateSupportSuperSet(aprioriParentIdSet, previousLevelSupportLists, frequentPattern->number);
+					dumpIntSet(aprioriParentIdSet);
+
+					// check if support superset is larger than the threshold
+					if (extensionSupportSuperSet->size >= threshold) {
+						// count number of intersection/threshold survivors
+						++nAllExtensionsPostIntersectionFilter;
+
+						// add extension and support super set to list of candidates for next level
+						extension->next = *resultCandidates;
+						*resultCandidates = extension;
+						extensionSupportSuperSet->next = *resultCandidateSupportSuperSets;
+						*resultCandidateSupportSuperSets = extensionSupportSuperSet;
+
+						++nAddedToOutput;
+					} else {
+						// dump extension and support superset
+						dumpGraph(gp, extension);
+						dumpSupportSetCopy(extensionSupportSuperSet);
+
+						++nDumped;
+					}
+				} else {
+					// dump extension that does not fulfill apriori property
+					dumpGraph(gp, extension);
+					++nDumped;
+				}
 			} else {
-				++nAllUniqueGeneratedExtensions;
-				aprioriParentIdSet = aprioriCheckExtensionRootedReturnList(extension, previousLevelSearchTree, gp, sgp);
-			}
+				if ((previousNumberOfDistinctPatterns < currentLevelCandidateSearchTree->d) && (!itIsKnown)) {
+					++nAllUniqueGeneratedExtensions;
 
-			if (aprioriParentIdSet) {
-				// count number of apriori survivors
-				 ++nAllExtensionsPostApriori;
-
-				// get (hopefully small) superset of the support set of the extension
-				struct SupportSet* extensionSupportSuperSet = getCandidateSupportSuperSet(aprioriParentIdSet, previousLevelSupportLists, frequentPattern->number);
-				dumpIntSet(aprioriParentIdSet);
-
-				// check if support superset is larger than the threshold
-				if (extensionSupportSuperSet->size >= threshold) {
-					// count number of intersection/threshold survivors
-					++nAllExtensionsPostIntersectionFilter;
-
-					// add extension and support super set to list of candidates for next level
+					// add extension and support super set to list of candidates for next level 
+					// without apriori et al. filtering, we keep each unique candidate and its support superset is just the support of the parent pattern.
 					extension->next = *resultCandidates;
 					*resultCandidates = extension;
+					struct SupportSet *extensionSupportSuperSet = shallowCopySupportSet(frequentPatternSupportList);
 					extensionSupportSuperSet->next = *resultCandidateSupportSuperSets;
 					*resultCandidateSupportSuperSets = extensionSupportSuperSet;
 
 					++nAddedToOutput;
 				} else {
-					// dump extension and support superset
+					// dump extension that does not fulfill apriori property
 					dumpGraph(gp, extension);
-					dumpSupportSetCopy(extensionSupportSuperSet);
-
 					++nDumped;
 				}
-			} else {
-				// dump extension that does not fulfill apriori property
-				dumpGraph(gp, extension);
-				++nDumped;
 			}
 		}
 	}
 
 	dumpSearchTree(gp, currentLevelCandidateSearchTree);
 	fprintf(logStream, "generated extensions: %i\n"
-			"unique extensions: %i\n"
-			"apriori filtered extensions: %i\n"
-			"intersection filtered extensions: %i\n",
-			nAllGeneratedExtensions, nAllUniqueGeneratedExtensions, nAllExtensionsPostApriori, nAllExtensionsPostIntersectionFilter);
+					   "unique extensions: %i\n"
+					   "unknown extensions: %i\n"
+					   "apriori filtered extensions: %i\n"
+					   "intersection filtered extensions: %i\n",
+			nAllGeneratedExtensions, 
+			nAllUniqueGeneratedExtensions, 
+			nAllUniqueGeneratedExtensions - nAllKnownExtensions, 
+			nAllExtensionsPostApriori, 
+			nAllExtensionsPostIntersectionFilter);
 
 	assert(nAddedToOutput + nDumped == nAllGeneratedExtensions);
 }
 
-
-struct SupportSet* BFSgetNextLevelRooted(// input
+static struct SupportSet* _getNextLevelRooted(// input
 		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
+		struct Vertex* currentLevelFrequentPatterns, // used for avoiding duplicate evaluation of already identified frequent patterns
 		size_t threshold,
 		struct ShallowGraph* frequentEdges,
 		// embedding operator function pointer,
 		struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
 		double importance,
+		char useAprioriPruning,
 		// output
 		struct Vertex** currentLevelSearchTree,
 		FILE* logStream,
@@ -144,7 +178,7 @@ struct SupportSet* BFSgetNextLevelRooted(// input
 	struct SupportSet* currentLevelCandidateSupportSets;
 	struct Graph* currentLevelCandidates;
 
-	extendPreviousLevelRooted(previousLevelSupportLists, previousLevelSearchTree, frequentEdges, threshold,
+	_extendPreviousLevelRooted(previousLevelSupportLists, previousLevelSearchTree, currentLevelFrequentPatterns, frequentEdges, threshold, useAprioriPruning, 
 			&currentLevelCandidateSupportSets, &currentLevelCandidates, logStream,
 			gp, sgp);
 
@@ -153,8 +187,13 @@ struct SupportSet* BFSgetNextLevelRooted(// input
 	struct SupportSet* actualSupportListsTail = NULL;
 	struct SupportSet* candidateSupport = NULL;
 	struct Graph* candidate = NULL;
-	for (candidateSupport=currentLevelCandidateSupportSets, candidate=currentLevelCandidates; candidateSupport!=NULL; candidateSupport=candidateSupport->next, candidate=candidate->next) {
+
+	for (candidateSupport=currentLevelCandidateSupportSets, candidate=currentLevelCandidates; 
+	     candidateSupport!=NULL; 
+		 candidateSupport=candidateSupport->next, candidate=candidate->next) {
+
 		struct SupportSet* currentActualSupport = getSupportSet();
+
 		//iterate over all graphs in the support
 		for (struct SupportSetElement* e=candidateSupport->first; e!=NULL; e=e->next) {
 			// create actual support list for candidate pattern
@@ -166,6 +205,7 @@ struct SupportSet* BFSgetNextLevelRooted(// input
 				dumpNewCube(result.S, result.g->n);
 			}
 		}
+
 		// filter out candidates with support < threshold
 		if (currentActualSupport->size < threshold) {
 			// mark h as infrequent
@@ -177,24 +217,40 @@ struct SupportSet* BFSgetNextLevelRooted(// input
 			// add to output list, maintaining order. necessary
 			if (actualSupportListsTail) {
 				actualSupportListsTail->next = currentActualSupport;
-				actualSupportListsTail = currentActualSupport;
 			} else {
-				actualSupportLists = currentActualSupport;
-				actualSupportListsTail = currentActualSupport;
+				actualSupportLists = currentActualSupport;		
 			}
+			actualSupportListsTail = currentActualSupport;
 		}
 	}
 
 	// garbage collection
-	candidateSupport = currentLevelCandidateSupportSets;
-	while (candidateSupport) {
-		struct SupportSet* tmp = candidateSupport->next;
-		dumpSupportSetCopy(candidateSupport);
-		candidateSupport = tmp;
+	if (useAprioriPruning) {
+		// every candidate has its own candidate support set. dump all of them individually
+		candidateSupport = currentLevelCandidateSupportSets;
+		while (candidateSupport) {
+			struct SupportSet* tmp = candidateSupport->next;
+			candidateSupport->next = NULL;
+			dumpSupportSetCopy(candidateSupport);
+			candidateSupport = tmp;
+		}
+		fflush(stdout);
+	} else {
+		// all candidates share the same candidate support set. dump it and free the headers.
+		if (currentLevelCandidateSupportSets) {
+			candidateSupport = currentLevelCandidateSupportSets->next;
+			dumpSupportSetCopy(currentLevelCandidateSupportSets);
+			while(candidateSupport) {
+				struct SupportSet* tmp = candidateSupport->next;
+				free(candidateSupport);
+				candidateSupport = tmp;
+			}
+		}
 	}
 
 	// add frequent extensions to current level search tree output, set their numbers correctly
 	// dump those candidates that are not frequent
+	// TODO we could save reevaluating seen patterns by storing them in this or another search tree
 	int nAllFrequentExtensions = 0;
 	candidate = currentLevelCandidates;
 	while (candidate) {
@@ -232,6 +288,8 @@ void BFSStrategyRooted(size_t startPatternSize,
 					  struct GraphPool* gp,
 					  struct ShallowGraphPool* sgp) {
 
+	const char useAprioriPruning = 1;
+
 	// levelwise search for patterns with more than one vertex:
 	struct Vertex* previousLevelSearchTree = shallowCopySearchTree(initialFrequentPatterns, gp);
 	struct SupportSet* previousLevelSupportSets = supportSets;
@@ -243,7 +301,7 @@ void BFSStrategyRooted(size_t startPatternSize,
 		currentLevelSearchTree = getVertex(gp->vertexPool);
 		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
 
-		currentLevelSupportSets = BFSgetNextLevelRooted(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
+		currentLevelSupportSets = _getNextLevelRooted(previousLevelSupportSets, previousLevelSearchTree, NULL, threshold, extensionEdges, embeddingOperator, importance, useAprioriPruning, &currentLevelSearchTree, logStream, gp, sgp);
 
 		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
 		printSupportSetsSparse(currentLevelSupportSets, featureStream);
@@ -272,4 +330,93 @@ void BFSStrategyRooted(size_t startPatternSize,
 		dumpSupportSetWithPattern(previousLevelSupportSets, gp);
 		previousLevelSupportSets = tmp;
 	}
+}
+
+
+void DFSStrategyRooted(size_t startPatternSize,
+					  size_t maxPatternSize,
+		              size_t threshold,
+					  struct Vertex* initialFrequentPatterns,
+					  struct SupportSet* supportSets,
+					  struct ShallowGraph* extensionEdges,
+					  // embedding operator function pointer,
+					  struct SubtreeIsoDataStore (*embeddingOperator)(struct SubtreeIsoDataStore, struct Graph*, double, struct GraphPool*, struct ShallowGraphPool*),
+					  double importance,
+					  FILE* featureStream,
+					  FILE* patternStream,
+					  FILE* logStream,
+					  struct GraphPool* gp,
+					  struct ShallowGraphPool* sgp) {
+
+	const char dontUseApriori = 0;
+
+	// init an array of searchtrees, one for each level
+	// this should speed up the alg but will increase memory consumption in the long run
+	struct Vertex** levelSearchTrees = malloc(maxPatternSize * sizeof(struct Vertex*));
+	for (size_t i=0; i<maxPatternSize; ++i) {
+		if (i != startPatternSize - 1) {
+			levelSearchTrees[i] = getVertex(gp->vertexPool);
+		} else {
+			levelSearchTrees[i] = initialFrequentPatterns;
+		}
+	}
+
+	// the frontier of candidate patterns
+	struct SupportSet* candidateSupportSetStack = supportSets;
+	size_t patternID = initialFrequentPatterns->lowPoint;
+
+	while (candidateSupportSetStack) {
+
+		// support set of current pattern, pattern, and pattern size
+		struct SupportSet* currentPatternSupport = popSupportSet(&candidateSupportSetStack);
+		struct Graph *currentPattern = currentPatternSupport->first->data.h;
+		size_t currentPatternSize = currentPattern->n;
+
+		// we extend all patterns that have at most maxPatternSize - 1 vertices
+		if (currentPatternSize < maxPatternSize) {
+
+			// logging
+			fprintf(logStream, "Processing pattern %i with %zu vertices:\n", currentPattern->number, currentPatternSize);
+			fflush(logStream);
+
+			// extend current pattern and check frequencies
+			struct Vertex* newFrequentPatternSearchTree = getVertex(gp->vertexPool);
+			offsetSearchTreeIds(newFrequentPatternSearchTree, patternID);
+			// TODO add infrequent patterns to some other search tree and output.
+			struct SupportSet *newSupportSets = _getNextLevelRooted(currentPatternSupport, levelSearchTrees[currentPatternSize - 1], levelSearchTrees[currentPatternSize], threshold, extensionEdges, embeddingOperator, importance, dontUseApriori, &newFrequentPatternSearchTree, logStream, gp, sgp);
+			patternID = newFrequentPatternSearchTree->lowPoint;
+
+			// print frequent patterns
+			printStringsInSearchTree(newFrequentPatternSearchTree, patternStream, sgp);
+			printSupportSetsSparse(newSupportSets, featureStream);
+
+			// add patterns to frequent pattern list and support sets to frontier
+			mergeSearchTrees(levelSearchTrees[currentPatternSize], 
+							 newFrequentPatternSearchTree, 
+							 1, 
+							 NULL, // &searchTreeHelper, don't need results here 
+							 0, // &searchTreePosition, don't need results here
+							 levelSearchTrees[currentPatternSize], 
+							 0, 
+							 gp);
+			dumpSearchTree(gp, newFrequentPatternSearchTree);
+			candidateSupportSetStack = appendSupportSets(newSupportSets, candidateSupportSetStack);
+		} else {
+			// dump support of the pattern, as this is not done by the extension
+			dumpSupportSetCopy(currentPatternSupport);
+			dumpGraph(gp, currentPattern);
+		}
+		if (currentPatternSize == 1) {
+			// dumpSupportSet(currentPatternSupport);
+			dumpGraph(gp, currentPattern);
+		}
+	}
+
+	// garbage collection: TODO
+	for (size_t i = 0; i < maxPatternSize; ++i) {
+		if (i != startPatternSize - 1) {
+			dumpSearchTree(gp, levelSearchTrees[i]);
+		}
+	}
+	free(levelSearchTrees);
 }

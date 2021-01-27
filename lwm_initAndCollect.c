@@ -394,7 +394,7 @@ static void getFrequentEdges(struct Graph** db, int dbSize, int initialResultSet
 
 
 
-static struct SupportSet* getSupportSetsOfVertices(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId) {
+static struct SupportSet* getSupportSetOfVertex(struct Graph** db, int** postoderDB, size_t nGraphs, struct Graph* h, int patternId) {
 	struct SupportSet* actualSupport = getSupportSet();
 	h->number = patternId;
 	for (size_t i=0; i<nGraphs; ++i) {
@@ -490,7 +490,7 @@ static struct SupportSet* createSingletonPatternSupportSetsForForestDB(struct Gr
 		candidate->vertices[0]->label = e->label;
 		e->endPoint->lowPoint = id;
 
-		struct SupportSet* vertexSupport = getSupportSetsOfVertices(db, postorders, nGraphs, candidate, id);
+		struct SupportSet* vertexSupport = getSupportSetOfVertex(db, postorders, nGraphs, candidate, id);
 
 		if (vertexSupportSetsTail != NULL) {
 			vertexSupportSetsTail->next = vertexSupport;

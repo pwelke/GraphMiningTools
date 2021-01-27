@@ -14,11 +14,11 @@ int getNumberOfBlocks(struct Graph* g, struct ShallowGraphPool* sgp);
 int getNumberOfBiconnectedComponents(struct Graph* g, struct ShallowGraphPool* sgp);
 int getMaxNumberOfBlocksPerComponent(struct Graph* g, struct GraphPool* gp, struct ShallowGraphPool* sgp);
 
-int* computeCycleDegrees(struct ShallowGraph* biconnectedComponents, int n);
+int* computeBlockDegrees(struct ShallowGraph* biconnectedComponents, int n);
 int* computeCriticality(struct ShallowGraph* biconnectedComponents, int n);
 
-int getMaxCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp);
-int getMinCycleDegree(struct Graph* g, struct ShallowGraphPool* sgp);
+int getMaxBlockDegree(struct Graph* g, struct ShallowGraphPool* sgp);
+int getMinBlockDegree(struct Graph* g, struct ShallowGraphPool* sgp);
 
 struct Graph* partitionIntoForestAndCycles(struct ShallowGraph* list, struct Graph* original, struct GraphPool* p, struct ShallowGraphPool* gp);
 struct ShallowGraph* listBiconnectedComponents(struct Graph* g, struct ShallowGraphPool* gp);

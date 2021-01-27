@@ -7,8 +7,8 @@
 
 #include "../graph.h"
 #include "../outerplanar.h"
-#include "../cs_Tree.h"
 #include "../cs_Parsing.h"
+#include "../cs_Tree.h"
 #include "../loading.h"
 #include "../graphPrinting.h"
 #include "../lwm_initAndCollect.h"

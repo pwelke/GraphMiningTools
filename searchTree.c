@@ -353,7 +353,13 @@ struct Vertex* addMultiSetToSearchTree(struct Vertex* root, struct ShallowGraph*
 
 
 /*
- * updates search tree structure.
+ * Updates search tree structure of globalTree with the contents of localTree. localTree is not changed.
+ * 
+ * - ->visited values of strings in localTree will be (int)divided by divisor 
+ * - results can collect a list of (id count depth) triples of the elements in localTree and must be of proper size.
+ *   However, results may be NULL, in which case no such list is created.
+ * - for all typical calls to this method you must set trueRoot = globalTree and depth = 0
+ * 
  * labels of strings are stored in edges, the labels are hardcopied to allow global Index construction
  * the endPoint vertex of an edge stores:
  * - possible extensions of the string in ->neighborhood

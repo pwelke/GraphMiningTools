@@ -182,9 +182,11 @@ options: options (except -h) are always followed by a value.
         numberOfVertices      number of vertices in the graph
         numberOfEdges         number of edges in the graph
         
-        maxCycleDegree        maximum cycle degree of a graph
-        minCycleDegree        minimum cycle degree of a graph
-        
+        maxBlockDegree        maximum block degree of a graph
+                              (alternative deprecated name: maxCycleDegree)
+        minBlockDegree        minimum block degree of a graph
+                              (alternative deprecated name: minCycleDegree)
+                                      
         maxLocalEasiness      maximum local easiness of a graph, or -1 if
                               there are more than A spanningTrees in some
                               block of the graph (default 100). A can be set

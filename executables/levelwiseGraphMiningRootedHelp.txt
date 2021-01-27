@@ -41,6 +41,8 @@ Options:
               bfs: (default) mine in a levelwise fashion (like apriori). 
                  This results in better pruning behavior, but large memory 
                  footprint
+              dfs: mine depth-first. This results in better memory footprint
+                 but reduces pruning efficiency.
       
 
 -e OPERATOR:  Select the algorithm to decide whether a tree pattern 

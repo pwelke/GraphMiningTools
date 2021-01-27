@@ -28,13 +28,19 @@ struct SupportSet {
 void appendSupportSetElement(struct SupportSet* s, struct SupportSetElement* e);
 void appendSupportSetData(struct SupportSet* l, struct SubtreeIsoDataStore data);
 
-void printSupportSet(struct SupportSet* l, FILE* out);
+void pushSupportSetElement(struct SupportSet* s, struct SupportSetElement* e);
+void pushSupportSetData(struct SupportSet* l, struct SubtreeIsoDataStore data);
+
+struct SupportSetElement* popSupportSetElement(struct SupportSet* s);
+struct SubtreeIsoDataStore popSupportSetData(struct SupportSet *s);
+
+void printSupportSet(struct SupportSet *l, FILE *out);
 void printSupportSetSparse(struct SupportSet* l, FILE* out);
 void printSupportSetsSparse(struct SupportSet* lists, FILE* out);
 
 struct SupportSet* getSupportSet();
 
-void shallowdumpSupportSetElements(struct SupportSetElement* e);
+void shallowdumpSupportSetElements(struct SupportSetElement *e);
 void dumpSupportSetCopy(struct SupportSet* s);
 void dumpSupportSetElements(struct SupportSetElement* e);
 void dumpSupportSet(struct SupportSet* s);
@@ -50,5 +56,8 @@ char isSortedSupportSetOnPatterns(struct SupportSet* l);
 struct SupportSet* getSupportSetsOfPatterns(struct SupportSet* allSupportSets, struct IntSet* patternIds);
 struct SupportSet* shallowCopySupportSet(struct SupportSet* a);
 struct SupportSet* supportSetChangeHead(struct SupportSet* parentSupportSets, int parentIdToKeep);
+
+struct SupportSet *appendSupportSets(struct SupportSet *front, struct SupportSet *back);
+struct SupportSet *popSupportSet(struct SupportSet **s);
 
 #endif /* SUPPORTSET_H_ */

@@ -216,12 +216,14 @@ int main(int argc, char** argv) {
 				filter = numberOfEdges;
 				break;
 			}
-			if (strcmp(optarg, "maxCycleDegree") == 0) {
-				filter = maxCycleDegree;
+			if ((strcmp(optarg, "maxCycleDegree") == 0) ||
+				(strcmp(optarg, "maxBlockDegree") == 0)) {
+				filter = maxBlockDegree;
 				break;
 			}
-			if (strcmp(optarg, "minCycleDegree") == 0) {
-				filter = minCycleDegree;
+			if ((strcmp(optarg, "minCycleDegree") == 0) ||
+				(strcmp(optarg, "minBlockDegree") == 0)) {
+				filter = minBlockDegree;
 				break;
 			}
 			if (strcmp(optarg, "minLocalEasiness") == 0) {
@@ -511,11 +513,11 @@ void processGraph(int i, struct Graph* g, Filter filter, Comparator comparator, 
 	case minDegree:
 		measure = getMinDegree(g);
 		break;
-	case maxCycleDegree:
-		measure = getMaxCycleDegree(g, sgp);
+	case maxBlockDegree:
+		measure = getMaxBlockDegree(g, sgp);
 		break;
-	case minCycleDegree:
-		measure = getMinCycleDegree(g, sgp);
+	case minBlockDegree:
+		measure = getMinBlockDegree(g, sgp);
 		break;
 	case maxLocalEasiness:
 		measure = getMaxLocalEasiness(g, additionalParameter, gp, sgp);

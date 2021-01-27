@@ -53,7 +53,7 @@ struct SupportSet* getCandidateSupportSuperSet(struct IntSet* parentIds, struct 
 }
 
 
-void extendPreviousLevel(// input
+static void _extendPreviousLevel(// input
 		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		struct ShallowGraph* extensionEdges,
@@ -158,7 +158,7 @@ void extendPreviousLevel(// input
 }
 
 
-struct SupportSet* BFSgetNextLevel(// input
+static struct SupportSet* _BFSgetNextLevel(// input
 		struct SupportSet* previousLevelSupportLists,
 		struct Vertex* previousLevelSearchTree,
 		size_t threshold,
@@ -179,7 +179,7 @@ struct SupportSet* BFSgetNextLevel(// input
 	struct SupportSet* currentLevelCandidateSupportSets;
 	struct Graph* currentLevelCandidates;
 
-	extendPreviousLevel(previousLevelSupportLists, previousLevelSearchTree, frequentEdges, threshold,
+	_extendPreviousLevel(previousLevelSupportLists, previousLevelSearchTree, frequentEdges, threshold,
 			&currentLevelCandidateSupportSets, &currentLevelCandidates, logStream,
 			gp, sgp);
 
@@ -278,7 +278,7 @@ void BFSStrategy(size_t startPatternSize,
 		currentLevelSearchTree = getVertex(gp->vertexPool);
 		offsetSearchTreeIds(currentLevelSearchTree, previousLevelSearchTree->lowPoint);
 
-		currentLevelSupportSets = BFSgetNextLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
+		currentLevelSupportSets = _BFSgetNextLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
 
 		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
 		printSupportSetsSparse(currentLevelSupportSets, featureStream);
