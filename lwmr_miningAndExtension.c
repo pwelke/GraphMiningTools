@@ -216,12 +216,14 @@ static struct SupportSet* _getNextLevelRooted(// input
 		fflush(stdout);
 	} else {
 		// all candidates share the same candidate support set. dump it and free the headers.
-		candidateSupport = currentLevelCandidateSupportSets->next;
-		dumpSupportSetCopy(currentLevelCandidateSupportSets);
-		while(candidateSupport) {
-			struct SupportSet* tmp = candidateSupport->next;
-			free(candidateSupport);
-			candidateSupport = tmp;
+		if (currentLevelCandidateSupportSets) {
+			candidateSupport = currentLevelCandidateSupportSets->next;
+			dumpSupportSetCopy(currentLevelCandidateSupportSets);
+			while(candidateSupport) {
+				struct SupportSet* tmp = candidateSupport->next;
+				free(candidateSupport);
+				candidateSupport = tmp;
+			}
 		}
 	}
 
