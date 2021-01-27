@@ -383,7 +383,10 @@ void DFSStrategyRooted(size_t startPatternSize,
 			
 		}
 
-		// dump support set of currentCandidate is done by _BFSgetNextLevelRooted()
+		// dump support set of currentCandidate is done by _getNextLevelRooted(), except for pattern size 1, i.e. singleton patterns
+		if (currentPatternSize == 1) {
+			dumpSupportSetWithPattern(currentPatternSupport, gp);
+		}
 	}
 
 	// garbage collection: TODO
