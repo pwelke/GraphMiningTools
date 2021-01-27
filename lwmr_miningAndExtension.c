@@ -195,11 +195,10 @@ static struct SupportSet* _getNextLevelRooted(// input
 			// add to output list, maintaining order. necessary
 			if (actualSupportListsTail) {
 				actualSupportListsTail->next = currentActualSupport;
-				actualSupportListsTail = currentActualSupport;
 			} else {
-				actualSupportLists = currentActualSupport;
-				actualSupportListsTail = currentActualSupport;
+				actualSupportLists = currentActualSupport;		
 			}
+			actualSupportListsTail = currentActualSupport;
 		}
 	}
 
@@ -381,12 +380,15 @@ void DFSStrategyRooted(size_t startPatternSize,
 			dumpSearchTree(gp, newFrequentPatternSearchTree);
 			candidateSupportSetStack = appendSupportSets(newSupportSets, candidateSupportSetStack);
 			
-		}
-
-		// dump support set of currentCandidate is done by _getNextLevelRooted(), except for pattern size 1, i.e. singleton patterns
-		if (currentPatternSize == 1) {
+		} else {
+			// dump support of the pattern, as this is not done by the extension
 			dumpSupportSetWithPattern(currentPatternSupport, gp);
 		}
+
+		// // dump support set of currentCandidate is done by _getNextLevelRooted(), except for pattern size 1, i.e. singleton patterns
+		// if (currentPatternSize == 1) {
+		// 	dumpSupportSetWithPattern(currentPatternSupport, gp);
+		// }
 	}
 
 	// garbage collection: TODO
