@@ -16,7 +16,7 @@ OBJECTFOLDER = ./o
 XOBJECTFOLDER = ./o/executables
 COMPILEDHELPFOLDER = ./o/help
 EVERYTHING = $(wildcard *.c) $(wildcard ./executables/*.c)
-OBJECTS = $(patsubst %.c,$(OBJECTFOLDER)/%.o,$(wildcard *.c))
+OBJECTS = $(patsubst %.c,$(OBJECTFOLDER)/%.o,$(wildcard *.c)) 
 HELPFILES = $(patsubst ./executables/%.txt, $(COMPILEDHELPFOLDER)/%.help, $(wildcard ./executables/*.txt))
 
 # specify executable names, objects, helpfiles, and compilation recipes
@@ -145,24 +145,35 @@ main: $(GFNAME)
 	
 all: $(ALLTARGETS)
 
-$(COMPILEDHELPFOLDER)/%.help: ./executables/%.txt
+$(COMPILEDHELPFOLDER)/%.help: ./executables/%.txt $(COMPILEDHELPFOLDER)
 	@xxd -i $< > $@
+
+$(COMPILEDHELPFOLDER):
+	@mkdir --parents $(COMPILEDHELPFOLDER)
 
 help: $(HELPFILES)
 
-$(OBJECTFOLDER)/%.o : %.c %.h
+$(OBJECTFOLDER)/%.o : %.c %.h $(OBJECTFOLDER)
 	@$(CC) $(CPPFLAGS) -c $< -o $@
 
-$(XOBJECTFOLDER)/%.o : ./executables/%.c ./executables/%.h
+$(OBJECTFOLDER):
+	@mkdir --parents $(OBJECTFOLDER)
+
+$(XOBJECTFOLDER)/%.o : ./executables/%.c ./executables/%.h $(XOBJECTFOLDER)
 	@$(CC) $(CPPFLAGS) -c $< -o $@
+
+$(XOBJECTFOLDER):
+	@mkdir --parents $(XOBJECTFOLDER)
 
 clean:
-	@rm -f $(OBJECTFOLDER)/*.o
-	@rm -f $(XOBJECTFOLDER)/*.o
-	@rm -f $(COMPILEDHELPFOLDER)/*.help
-	@rm -f *.o
-	@rm -f ./executables/*.o
-	@rm -f ./executables/*.help
+# 	@rm -f $(OBJECTFOLDER)/*.o
+	@rm -rf $(XOBJECTFOLDER)
+	@rm -rf $(COMPILEDHELPFOLDER)
+	@rm -rf $(OBJECTFOLDER)
+
+# 	@rm -f *.o
+# 	@rm -f ./executables/*.o
+# 	@rm -f ./executables/*.help
 	@rm -f $(ALLTARGETS) test
 
 print-%:
