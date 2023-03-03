@@ -304,7 +304,9 @@ void BFSStrategyRooted(size_t startPatternSize,
 		currentLevelSupportSets = _getNextLevelRooted(previousLevelSupportSets, previousLevelSearchTree, NULL, threshold, extensionEdges, embeddingOperator, importance, useAprioriPruning, &currentLevelSearchTree, logStream, gp, sgp);
 
 		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
+		fflush(patternStream);
 		printSupportSetsSparse(currentLevelSupportSets, featureStream);
+		fflush(featureStream);
 
 		// garbage collection:
 		// what is now all previousLevel... data structures will not be used at all in the next iteration
@@ -388,7 +390,9 @@ void DFSStrategyRooted(size_t startPatternSize,
 
 			// print frequent patterns
 			printStringsInSearchTree(newFrequentPatternSearchTree, patternStream, sgp);
+			fflush(patternStream);
 			printSupportSetsSparse(newSupportSets, featureStream);
+			fflush(featureStream);
 
 			// add patterns to frequent pattern list and support sets to frontier
 			mergeSearchTrees(levelSearchTrees[currentPatternSize], 

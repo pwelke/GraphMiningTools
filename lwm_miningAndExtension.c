@@ -281,7 +281,9 @@ void BFSStrategy(size_t startPatternSize,
 		currentLevelSupportSets = _BFSgetNextLevel(previousLevelSupportSets, previousLevelSearchTree, threshold, extensionEdges, embeddingOperator, importance, &currentLevelSearchTree, logStream, gp, sgp);
 
 		printStringsInSearchTree(currentLevelSearchTree, patternStream, sgp);
+		fflush(patternStream);
 		printSupportSetsSparse(currentLevelSupportSets, featureStream);
+		fflush(featureStream);
 
 		// garbage collection:
 		// what is now all previousLevel... data structures will not be used at all in the next iteration
