@@ -1,0 +1,15 @@
+Outerplanarity test executable for Fabian.
+
+usage: outerplanaritytest DATAFILE
+
+Outputs JSON, one object per graph, to stdout.
+
+Format:
+
+{graph: int, hamiltonianCycles: List[List[int]], isOuterplanar:Boolean}
+
+hamiltonianCycles gives node ids in the original graph, in order, but with arbitrary starting point.
+Node indexing starts with one and graphs are expected to have no missing node ids.
+
+Note that even if some graph is not outerplanar, the list of HamiltonianCycles of blocks may not be empty.
+It may contain HamiltonCycles of outerplanar blocks.
