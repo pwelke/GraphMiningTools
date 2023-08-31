@@ -7,4 +7,6 @@
 struct ShallowGraph* canonicalStringOfOuterplanarBlock(struct ShallowGraph* hamiltonianCycle, struct ShallowGraph* diagonals, struct ShallowGraphPool* sgp);
 struct ShallowGraph* canonicalStringOfOuterplanarGraph(struct ShallowGraph* original, struct ShallowGraphPool* sgp, struct GraphPool* gp);
 
+struct ShallowGraph* __getCycleAndDiagonals(struct Graph* g, struct ShallowGraphPool* sgp);
+
 #endif

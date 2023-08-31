@@ -94,6 +94,8 @@ struct Graph* shallowGraphToGraphWithIDs(struct ShallowGraph* edgeList, struct G
 
 int main(int argc, char** argv) {
 
+    char isFirstGraph = 1;
+
     /* object pools */
     struct ListPool *lp;
     struct VertexPool *vp;
@@ -103,14 +105,19 @@ int main(int argc, char** argv) {
     /* pointer to the current graph which is returned by the input iterator  */
     struct Graph* g = NULL;
 
+    char extendToHamiltonianBlocks = 0;
+
     /* parse command line arguments */
     int arg;
-    const char* validArgs = "h";
+    const char* validArgs = "hl";
     for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
         switch (arg) {
         case 'h':
             printHelp();
             return EXIT_SUCCESS;
+        case 'l':
+            extendToHamiltonianBlocks = 1;
+            break;
         case '?':
             return EXIT_FAILURE;
             break;
@@ -138,12 +145,22 @@ int main(int argc, char** argv) {
         createStdinIterator(gp);
     }
 
+    printf("[");
+
     /* iterate over all graphs in the database */
     while ((g = iterateFile())) {
+
+        // list handling for graphs
+        if (isFirstGraph) {
+            isFirstGraph = 0;
+        } else {
+            printf(",");
+        }
+
         /* if there was an error reading some graph the returned n will be -1 */
         if (g->n != -1) {
             if (g->m < 1) {
-                // TODO: output yes
+                printf("\n{\"graph\": %i, \"hamiltonianCycles\": [], \"isOuterplanar\": true}", g->number);
             } else {
      
                 /**
@@ -158,7 +175,7 @@ int main(int argc, char** argv) {
                 char isOuterplanar = 1;
                 char isFirstCycle = 1; // for pretty printing
 
-                printf("{graph: %i, hamiltonianCycles: [", g->number);
+                printf("\n{\"graph\": %i, \"hamiltonianCycles\": [", g->number);
 
                 for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
                     if (comp->m > 1) {
@@ -178,26 +195,37 @@ int main(int argc, char** argv) {
                                 printf(", %i", e->startPoint->lowPoint);
                             }
                             printf("]");
+                            
+                            // cleanup
+                            dumpShallowGraphCycle(sgp, hamiltonianCycle);
+
                         } else {
                             isOuterplanar = 0;
+                            if (extendToHamiltonianBlocks) {
+
+                            }
                         }
                         dumpGraph(gp, block);
                     } 	
                 }
 
                 if (isOuterplanar) {
-                    printf("], isOuterplanar: True}\n");
+                    printf("], \"isOuterplanar\": true}");
                 } else {
-                    printf("], isOuterplanar: False}\n");
+                    printf("], \"isOuterplanar\": false}");
                 }
 
                 /* cleanup */
                 dumpShallowGraphCycle(sgp, biconnectedComponents);
             }
         } 
+
         /* garbage collection */
         dumpGraph(gp, g);
     }
+
+
+    printf("\n]");
 
     /* global garbage collection */
     destroyFileIterator();

@@ -6,7 +6,7 @@ Outputs JSON, one object per graph, to stdout.
 
 Format:
 
-{graph: int, hamiltonianCycles: List[List[int]], isOuterplanar:Boolean}
+{"graph": int, "hamiltonianCycles": List[List[int]], "isOuterplanar":Boolean}
 
 hamiltonianCycles gives node ids in the original graph, in order, but with arbitrary starting point.
 Node indexing starts with one and graphs are expected to have no missing node ids.
