@@ -412,3 +412,48 @@ struct ShallowGraph* listCycles(struct Graph *g, struct ShallowGraphPool *sgp) {
 
 	return result;
 }
+
+
+/**
+ * Given a biconnected component, list all contained unique cycles of given length. This is the undirected
+ * version, which lists each undirected cycle twice (once for every direction).
+ *
+ * Input: A graph struct containing the edges of a single biconnected component.
+ * Due to implementation: Some entries in g->vertices may be NULL.
+ *
+ * Output: A ShallowGraph cycle of all contained cycles of length cycleLength.
+ *
+ */
+struct ShallowGraph* listCyclesOfLength(struct Graph *g, int cycleLength, struct ShallowGraphPool *sgp) {
+	struct ShallowGraph* result = listCycles(g, sgp);
+
+	if (result) {
+
+		struct ShallowGraph* last = result->prev;
+		for (struct ShallowGraph* c=result; c!=last; ) {
+			if (c->m != cycleLength) {
+				struct ShallowGraph* dump = c;
+				dump->prev->next = dump->next;
+				dump->next->prev = dump->prev;
+				c = dump->next;
+				dumpShallowGraph(sgp, dump);
+			} else {
+				c = c->next;
+			}
+		}
+		if (last->m != cycleLength) {
+			struct ShallowGraph* c = last;
+			if (c->prev == last) {
+				last = NULL;
+			} else {
+				c->prev->next = c->next;
+				c->next->prev = c->prev;
+				last = c->next;
+			}
+			dumpShallowGraph(sgp, c);
+		}
+		result = last;
+	}
+
+	return result;
+}
