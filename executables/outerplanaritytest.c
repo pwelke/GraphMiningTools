@@ -7,6 +7,7 @@
 #include "../loading.h"
 #include "../cs_Outerplanar.h"
 #include "../listComponents.h"
+#include "../listCycles.h"
 
 
 /**
@@ -174,6 +175,7 @@ int main(int argc, char** argv) {
                 struct ShallowGraph* comp;
                 char isOuterplanar = 1;
                 char isFirstCycle = 1; // for pretty printing
+                int nonOuterplanarHamiltonianCycles = 0;
 
                 printf("\n{\"graph\": %i, \"hamiltonianCycles\": [", g->number);
 
@@ -202,7 +204,32 @@ int main(int argc, char** argv) {
                         } else {
                             isOuterplanar = 0;
                             if (extendToHamiltonianBlocks) {
+                                struct Graph* newBlock = shallowGraphToGraphWithIDs(comp, gp);
+                                struct Graph* blockCopy = cloneGraph(newBlock, gp);
+                                struct ShallowGraph* hamiltonianCycles = listCyclesOfLength(blockCopy, blockCopy->n, sgp);
+                                if (hamiltonianCycles) {
+                                    // listCyclesOfLength returns a cycle of ShallowGraphs which needs to be broken
+                                    hamiltonianCycles->prev->next = NULL;
+                                    rebaseShallowGraphs(hamiltonianCycles, block);
 
+                                    for (struct ShallowGraph* h=hamiltonianCycles; h!=NULL; h=h->next) {
+                                        nonOuterplanarHamiltonianCycles += 1;
+                                        if (isFirstCycle) {
+                                            printf("[%i", h->edges->startPoint->lowPoint);
+                                            isFirstCycle = 0;
+                                        } else {
+                                            printf(", [%i", h->edges->startPoint->lowPoint);
+                                        }
+                                        struct VertexList* e;
+                                        for (e = h->edges->next; e!=NULL; e=e->next) {
+                                            printf(", %i", e->startPoint->lowPoint);
+                                        }
+                                        printf("]");
+                                    }
+                                    // cleanup
+                                    dumpShallowGraphCycle(sgp, hamiltonianCycles);
+                                }  
+                                dumpGraph(gp, blockCopy);
                             }
                         }
                         dumpGraph(gp, block);
@@ -210,10 +237,21 @@ int main(int argc, char** argv) {
                 }
 
                 if (isOuterplanar) {
-                    printf("], \"isOuterplanar\": true}");
+                    printf("], \"isOuterplanar\": true");
                 } else {
-                    printf("], \"isOuterplanar\": false}");
+                    printf("], \"isOuterplanar\": false");
                 }
+
+                if (extendToHamiltonianBlocks) {
+                    if (nonOuterplanarHamiltonianCycles) {
+                        printf(", \"hasNonOuterplanarHamiltonianBlock\": true, \"nonOuterplanarHamiltonianCycles\": %i", nonOuterplanarHamiltonianCycles);
+                    } else {
+                        printf(", \"hasNonOuterplanarHamiltonianBlock\": false, \"nonOuterplanarHamiltonianCycles\": %i", nonOuterplanarHamiltonianCycles);
+                    }
+                }
+
+                putc('}', stdout);
+                fflush(stdout);
 
                 /* cleanup */
                 dumpShallowGraphCycle(sgp, biconnectedComponents);

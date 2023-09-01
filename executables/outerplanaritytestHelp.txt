@@ -1,10 +1,10 @@
 Outerplanarity test executable for Fabian.
 
-usage: outerplanaritytest DATAFILE
+usage: outerplanaritytest [FLAGS] DATAFILE
 
 Outputs JSON, one object per graph, to stdout.
 
-Format:
+Format for call without flags:
 
 {"graph": int, "hamiltonianCycles": List[List[int]], "isOuterplanar":Boolean}
 
@@ -13,3 +13,14 @@ Node indexing starts with one and graphs are expected to have no missing node id
 
 Note that even if some graph is not outerplanar, the list of HamiltonianCycles of blocks may not be empty.
 It may contain HamiltonCycles of outerplanar blocks.
+
+FLAGS:
+
+-l      Also output Hamiltonian cycles for Hamiltonian Non-Outerplanar blocks.
+        This invokes a linear-delay cycle listing algorithm to list *all* cycles in non-outerplanar
+        blocks. It then returns the Hamiltonian cycles. Note that the runtime of this approach
+        depends on the number of cycles in blocks, which may be large (but typically isn't on 
+        molecular graphs).
+        Format:
+        {"graph": int, "hamiltonianCycles": List[List[int]], "isOuterplanar":Boolean, 
+        "hasNonOuterplanarHamiltonianBlock":Boolean, "nonOuterplanarHamiltonianCycles":int}
