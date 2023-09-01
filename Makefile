@@ -20,6 +20,12 @@ OBJECTS = $(patsubst %.c,$(OBJECTFOLDER)/%.o,$(wildcard *.c))
 HELPFILES = $(patsubst ./executables/%.txt, $(COMPILEDHELPFOLDER)/%.help, $(wildcard ./executables/*.txt))
 
 # specify executable names, objects, helpfiles, and compilation recipes
+OTNAME = outerplanaritytest
+OTOBJECTS = $(OBJECTS) $(XOBJECTFOLDER)/outerplanaritytest.o
+OTHELP = $(COMPILEDHELPFOLDER)/outerplanaritytestHelp.help
+$(OTNAME): $(OTHELP) $(OTOBJECTS)
+	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
+
 TPKNAME = tpk
 TPKOBJECTS = $(OBJECTS) $(XOBJECTFOLDER)/main.o
 TPKHELP = 
@@ -129,7 +135,7 @@ L2UHELP = $(COMPILEDHELPFOLDER)/labeled2unlabeledMainHelp.help
 $(L2UNAME): $(L2UHELP) $(L2UOBJECTS)
 	@$(CC) -o $@ $(filter-out %.help, $^) $(CPPLINKFLAGS)
 
-ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(LWGRNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(PENAME) $(GFCNAME)
+ALLTARGETS = ${CGENNAME} $(L2UNAME) $(TPKNAME) $(MTGNAME) $(MGGNAME) $(CPKNAME) $(STSNAME) $(CCDNAME) $(TCINAME) $(GFNAME) $(CSTRNAME) $(LWGNAME) $(LWGRNAME) $(GENNAME) $(NGENNAME) $(WLNAME) $(PENAME) $(GFCNAME) $(OTNAME)
 # $(PERFNAME)
 
 # visualize the include dependencies between the source files.
@@ -145,35 +151,34 @@ main: $(GFNAME)
 	
 all: $(ALLTARGETS)
 
-$(COMPILEDHELPFOLDER)/%.help: ./executables/%.txt $(COMPILEDHELPFOLDER)
+$(COMPILEDHELPFOLDER)/%.help: ./executables/%.txt $(COMPILEDHELPFOLDER)/exists
 	@xxd -i $< > $@
 
-$(COMPILEDHELPFOLDER):
+$(COMPILEDHELPFOLDER)/exists:
 	@mkdir --parents $(COMPILEDHELPFOLDER)
+	@touch $(COMPILEDHELPFOLDER)/exists
 
 help: $(HELPFILES)
 
-$(OBJECTFOLDER)/%.o : %.c %.h $(OBJECTFOLDER)
+$(OBJECTFOLDER)/%.o : %.c %.h $(OBJECTFOLDER)/exists
 	@$(CC) $(CPPFLAGS) -c $< -o $@
 
-$(OBJECTFOLDER):
+$(OBJECTFOLDER)/exists:
 	@mkdir --parents $(OBJECTFOLDER)
+	@touch $(OBJECTFOLDER)/exists
 
-$(XOBJECTFOLDER)/%.o : ./executables/%.c ./executables/%.h $(XOBJECTFOLDER)
+$(XOBJECTFOLDER)/%.o : ./executables/%.c ./executables/%.h $(XOBJECTFOLDER)/exists
 	@$(CC) $(CPPFLAGS) -c $< -o $@
 
-$(XOBJECTFOLDER):
+$(XOBJECTFOLDER)/exists:
 	@mkdir --parents $(XOBJECTFOLDER)
+	@touch $(XOBJECTFOLDER)/exists
+
 
 clean:
-# 	@rm -f $(OBJECTFOLDER)/*.o
 	@rm -rf $(XOBJECTFOLDER)
 	@rm -rf $(COMPILEDHELPFOLDER)
 	@rm -rf $(OBJECTFOLDER)
-
-# 	@rm -f *.o
-# 	@rm -f ./executables/*.o
-# 	@rm -f ./executables/*.help
 	@rm -f $(ALLTARGETS) test
 
 print-%:
