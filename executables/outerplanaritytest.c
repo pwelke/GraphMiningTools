@@ -8,6 +8,8 @@
 #include "../cs_Outerplanar.h"
 #include "../listComponents.h"
 #include "../listCycles.h"
+#include "../outerplanar.h"
+#include "../graphPrinting.h"
 
 
 /**
@@ -93,6 +95,147 @@ struct Graph* shallowGraphToGraphWithIDs(struct ShallowGraph* edgeList, struct G
 } 
 
 
+void listHamiltonianCycles(struct Graph* g, struct ShallowGraph* biconnectedComponents, char extendToHamiltonianBlocks, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+    /**
+    An outerplanar graph is a graph that can be drawn in the plane such that
+    (1) edges only intersect at vertices and
+    (2) each vertex can be reached from the outer face without crossing an edge.
+
+    A graph is outerplanar if and only if each of its biconnected components is outerplanar.
+    */ 
+    struct ShallowGraph* comp;
+    char isOuterplanar = 1;
+    char isFirstCycle = 1; // for pretty printing
+    int nonOuterplanarHamiltonianCycles = 0;
+
+    printf(", \"hamiltonianCycles\": [");
+
+    for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+        if (comp->m > 1) {
+            struct Graph* block = shallowGraphToGraphWithIDs(comp, gp);
+            // returns null if block is not outerplanar
+            struct ShallowGraph* hamiltonianCycle = __getCycleAndDiagonals(block, sgp);
+
+            if (hamiltonianCycle != NULL) {
+                if (isFirstCycle) {
+                    printf("[%i", hamiltonianCycle->edges->startPoint->lowPoint);
+                    isFirstCycle = 0;
+                } else {
+                    printf(", [%i", hamiltonianCycle->edges->startPoint->lowPoint);
+                }
+                struct VertexList* e;
+                for (e = hamiltonianCycle->edges->next; e!=NULL; e=e->next) {
+                    printf(", %i", e->startPoint->lowPoint);
+                }
+                printf("]");
+                
+                // cleanup
+                dumpShallowGraphCycle(sgp, hamiltonianCycle);
+
+            } else {
+                isOuterplanar = 0;
+                if (extendToHamiltonianBlocks) {
+                    struct Graph* newBlock = shallowGraphToGraphWithIDs(comp, gp);
+                    struct Graph* blockCopy = cloneGraph(newBlock, gp);
+                    struct ShallowGraph* hamiltonianCycles = listCyclesOfLength(blockCopy, blockCopy->n, sgp);
+                    if (hamiltonianCycles) {
+                        // listCyclesOfLength returns a cycle of ShallowGraphs which needs to be broken
+                        hamiltonianCycles->prev->next = NULL;
+                        rebaseShallowGraphs(hamiltonianCycles, block);
+
+                        for (struct ShallowGraph* h=hamiltonianCycles; h!=NULL; h=h->next) {
+                            nonOuterplanarHamiltonianCycles += 1;
+                            if (isFirstCycle) {
+                                printf("[%i", h->edges->startPoint->lowPoint);
+                                isFirstCycle = 0;
+                            } else {
+                                printf(", [%i", h->edges->startPoint->lowPoint);
+                            }
+                            struct VertexList* e;
+                            for (e = h->edges->next; e!=NULL; e=e->next) {
+                                printf(", %i", e->startPoint->lowPoint);
+                            }
+                            printf("]");
+                        }
+                        // cleanup
+                        dumpShallowGraphCycle(sgp, hamiltonianCycles);
+                    }  
+                    dumpGraph(gp, blockCopy);
+                }
+            }
+            dumpGraph(gp, block);
+        } 	
+    }
+
+    if (isOuterplanar) {
+        printf("], \"isOuterplanar\": true");
+    } else {
+        printf("], \"isOuterplanar\": false");
+    }
+
+    if (extendToHamiltonianBlocks) {
+        if (nonOuterplanarHamiltonianCycles) {
+            printf(", \"hasNonOuterplanarHamiltonianBlock\": true, \"nonOuterplanarHamiltonianCycles\": %i", nonOuterplanarHamiltonianCycles);
+        } else {
+            printf(", \"hasNonOuterplanarHamiltonianBlock\": false, \"nonOuterplanarHamiltonianCycles\": %i", nonOuterplanarHamiltonianCycles);
+        }
+    }
+}
+
+void addSpiderWebEdges(struct BBTree* bbTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+    printGraphAidsFormat(bbTree->tree, stdout);
+
+}
+
+
+char printShortcutEdges(struct Vertex* lastInteresting, struct Vertex* v, char notFirst, int* originalIDs) {
+    v->visited = 1;
+    if (v->lowPoint) {
+        if (lastInteresting) {
+            if (notFirst) {
+                printf(", ");
+            }
+            printf("[%d, %d]", originalIDs[lastInteresting->number], originalIDs[v->number]);
+            notFirst = 1;
+        }
+    }
+    for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+        if (e->endPoint->visited == 0) {
+            if (v->lowPoint) {
+                notFirst = printShortcutEdges(v, e->endPoint, notFirst, originalIDs);
+            } else {
+                notFirst = printShortcutEdges(lastInteresting, e->endPoint, notFirst, originalIDs);
+            }
+        }
+    }
+    return notFirst;
+}
+
+void addShortcutEdges(struct BBTree* bbTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+    int root;
+    /* mark interesting vertices, keep the last leaf or join as root */
+    for (int v=0; v<bbTree->tree->n; ++v) {
+        bbTree->tree->vertices[v]->visited = 0;
+        if (degree(bbTree->tree->vertices[v]) != 2) {
+            bbTree->tree->vertices[v]->lowPoint = 1;
+            root = v;
+        } else {
+            bbTree->tree->vertices[v]->lowPoint = 0;
+        } 
+    }
+    if (bbTree->blocks) {
+        for (int v=0; v<bbTree->blocks->n; ++v) {
+            bbTree->blocks->vertices[v]->lowPoint = 2;
+        }
+    }
+
+    printf(", \"shortcutEdges\": [");
+    printShortcutEdges(NULL, bbTree->tree->vertices[root], 0, bbTree->originalIDs);
+    printf("]");
+}
+
+
+
 int main(int argc, char** argv) {
 
     char isFirstGraph = 1;
@@ -107,17 +250,25 @@ int main(int argc, char** argv) {
     struct Graph* g = NULL;
 
     char extendToHamiltonianBlocks = 0;
+    char spiderWeb = 0;
+    char shortcutting = 0;
 
     /* parse command line arguments */
     int arg;
-    const char* validArgs = "hl";
+    const char* validArgs = "hlsw";
     for (arg=getopt(argc, argv, validArgs); arg!=-1; arg=getopt(argc, argv, validArgs)) {
         switch (arg) {
-        case 'h':
+        case 'h': // Help
             printHelp();
             return EXIT_SUCCESS;
-        case 'l':
+        case 'l': // List Hamiltonian cycles in non-outerplanar Hamiltonian blocks
             extendToHamiltonianBlocks = 1;
+            break;
+        case 'w': // spider Web connectivity
+            spiderWeb = 1;
+            break;
+        case 's':
+            shortcutting = 1;
             break;
         case '?':
             return EXIT_FAILURE;
@@ -163,105 +314,39 @@ int main(int argc, char** argv) {
             if (g->m < 1) {
                 printf("\n{\"graph\": %i, \"hamiltonianCycles\": [], \"isOuterplanar\": true}", g->number);
             } else {
-     
-                /**
-                An outerplanar graph is a graph that can be drawn in the plane such that
-                (1) edges only intersect at vertices and
-                (2) each vertex can be reached from the outer face without crossing an edge.
-
-                A graph is outerplanar if and only if each of its biconnected components is outerplanar.
-                */ 
+                printf("\n{\"graph\": %i", g->number);
+                
                 struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
-                struct ShallowGraph* comp;
-                char isOuterplanar = 1;
-                char isFirstCycle = 1; // for pretty printing
-                int nonOuterplanarHamiltonianCycles = 0;
+                listHamiltonianCycles(g, biconnectedComponents, extendToHamiltonianBlocks, gp, sgp);
 
-                printf("\n{\"graph\": %i, \"hamiltonianCycles\": [", g->number);
+                if (shortcutting || spiderWeb) {
+                    struct BBTree* bbTree = createFancyBlockAndBridgeTree(biconnectedComponents, g, gp, sgp);
 
-                for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
-                    if (comp->m > 1) {
-                        struct Graph* block = shallowGraphToGraphWithIDs(comp, gp);
-                        // returns null if block is not outerplanar
-                        struct ShallowGraph* hamiltonianCycle = __getCycleAndDiagonals(block, sgp);
+                    // for (int i=0; i<bbTree->tree->n; ++i) {
+                    //     printf("%d ", bbTree->originalIDs[i]);
+                    // }
+                    // putc('\n', stdout);
 
-                        if (hamiltonianCycle != NULL) {
-                            if (isFirstCycle) {
-                                printf("[%i", hamiltonianCycle->edges->startPoint->lowPoint);
-                                isFirstCycle = 0;
-                            } else {
-                                printf(", [%i", hamiltonianCycle->edges->startPoint->lowPoint);
-                            }
-                            struct VertexList* e;
-                            for (e = hamiltonianCycle->edges->next; e!=NULL; e=e->next) {
-                                printf(", %i", e->startPoint->lowPoint);
-                            }
-                            printf("]");
-                            
-                            // cleanup
-                            dumpShallowGraphCycle(sgp, hamiltonianCycle);
-
-                        } else {
-                            isOuterplanar = 0;
-                            if (extendToHamiltonianBlocks) {
-                                struct Graph* newBlock = shallowGraphToGraphWithIDs(comp, gp);
-                                struct Graph* blockCopy = cloneGraph(newBlock, gp);
-                                struct ShallowGraph* hamiltonianCycles = listCyclesOfLength(blockCopy, blockCopy->n, sgp);
-                                if (hamiltonianCycles) {
-                                    // listCyclesOfLength returns a cycle of ShallowGraphs which needs to be broken
-                                    hamiltonianCycles->prev->next = NULL;
-                                    rebaseShallowGraphs(hamiltonianCycles, block);
-
-                                    for (struct ShallowGraph* h=hamiltonianCycles; h!=NULL; h=h->next) {
-                                        nonOuterplanarHamiltonianCycles += 1;
-                                        if (isFirstCycle) {
-                                            printf("[%i", h->edges->startPoint->lowPoint);
-                                            isFirstCycle = 0;
-                                        } else {
-                                            printf(", [%i", h->edges->startPoint->lowPoint);
-                                        }
-                                        struct VertexList* e;
-                                        for (e = h->edges->next; e!=NULL; e=e->next) {
-                                            printf(", %i", e->startPoint->lowPoint);
-                                        }
-                                        printf("]");
-                                    }
-                                    // cleanup
-                                    dumpShallowGraphCycle(sgp, hamiltonianCycles);
-                                }  
-                                dumpGraph(gp, blockCopy);
-                            }
-                        }
-                        dumpGraph(gp, block);
-                    } 	
-                }
-
-                if (isOuterplanar) {
-                    printf("], \"isOuterplanar\": true");
-                } else {
-                    printf("], \"isOuterplanar\": false");
-                }
-
-                if (extendToHamiltonianBlocks) {
-                    if (nonOuterplanarHamiltonianCycles) {
-                        printf(", \"hasNonOuterplanarHamiltonianBlock\": true, \"nonOuterplanarHamiltonianCycles\": %i", nonOuterplanarHamiltonianCycles);
-                    } else {
-                        printf(", \"hasNonOuterplanarHamiltonianBlock\": false, \"nonOuterplanarHamiltonianCycles\": %i", nonOuterplanarHamiltonianCycles);
+                    if (shortcutting) {
+                        addShortcutEdges(bbTree, gp, sgp);
+                    } 
+                    if (spiderWeb) {
+                        addSpiderWebEdges(bbTree, gp, sgp);
                     }
+                    dumpFancyBBTree(gp, sgp, bbTree);
+                } else {
+                    /* cleanup */
+                    dumpShallowGraphCycle(sgp, biconnectedComponents);
                 }
-
-                putc('}', stdout);
-                fflush(stdout);
-
-                /* cleanup */
-                dumpShallowGraphCycle(sgp, biconnectedComponents);
             }
         } 
+
+        putc('}', stdout);
+        fflush(stdout);
 
         /* garbage collection */
         dumpGraph(gp, g);
     }
-
 
     printf("\n]");
 
