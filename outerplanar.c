@@ -403,6 +403,9 @@ void dumpBBTree(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct BBTre
 			dumpShallowGraphCycle(sgp, tree->blockComponents[0]);
 			free(tree->blockComponents);
 		}
+		if (tree->originalIDs) {
+			free(tree->originalIDs);
+		}
 		free(tree);
 	}
 }
@@ -417,11 +420,13 @@ void dumpFancyBBTree(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct 
 	if (tree) {
 		dumpGraph(gp, tree->tree);
 		if (tree->blocks) {
+			free(tree->blocks->vertices);
 			tree->blocks->vertices = NULL;
 			dumpGraph(gp, tree->blocks);
 			dumpShallowGraphCycle(sgp, tree->blockComponents[0]);
 			free(tree->blockComponents);
 		}
+		free(tree->originalIDs);
 		free(tree);
 	}
 }
@@ -664,7 +669,7 @@ int* mergeBBtree(struct Graph* g, struct Graph*h) {
 	/* attach the block vertices to the new tree */
 	for (i=0; i<h->n; ++i) {
 		g->vertices[j] = h->vertices[i];
-		originalIDs[j] = -1 - g->vertices[j]->number;
+		originalIDs[j] = -1 - i;
 		g->vertices[j]->number = j;
 		++j;	
 	}
@@ -679,10 +684,7 @@ int* mergeBBtree(struct Graph* g, struct Graph*h) {
 
 
 struct BBTree* compressedBBTree(struct Graph* tree, struct Graph* blocks, struct ShallowGraph* list, struct GraphPool* gp) {
-	int* originalIDs = NULL;
-	if (blocks->n > 0) {
-		originalIDs = mergeBBtree(tree, blocks);	 
-	} 
+	int* originalIDs = mergeBBtree(tree, blocks);	  
 	return createBBTree(tree, blocks, list, originalIDs, gp);
 }
 
