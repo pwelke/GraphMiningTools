@@ -212,7 +212,7 @@ char printShortcutEdges(struct Vertex* lastInteresting, struct Vertex* v, char n
 }
 
 void addShortcutEdges(struct BBTree* bbTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-    int root;
+    int root = 0;
     /* mark interesting vertices, keep the last leaf or join as root */
     for (int v=0; v<bbTree->tree->n; ++v) {
         bbTree->tree->vertices[v]->visited = 0;
