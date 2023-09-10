@@ -366,11 +366,12 @@ char isOuterplanarBlockShallow(struct ShallowGraph* original, struct ShallowGrap
  * If the underlying graph was a tree i.e. |V(blocks)| = 0, blocks is dumped
  * and bbTree->blocks = bbTree->blockComponents = NULL
  */
-struct BBTree* createBBTree(struct Graph* tree, struct Graph* blocks, struct ShallowGraph* blockList, struct GraphPool* gp) {
+struct BBTree* createBBTree(struct Graph* tree, struct Graph* blocks, struct ShallowGraph* blockList, int* originalIDs, struct GraphPool* gp) {
 	int i;
 	struct BBTree* result = malloc(sizeof(struct BBTree));
 
 	result->tree = tree;
+	result->originalIDs = originalIDs;
 	if (blocks->n > 0) {
 		result->blocks = blocks;
 		result->blockComponents = malloc(blocks->n * sizeof(struct ShallowGraph*));
@@ -405,6 +406,26 @@ void dumpBBTree(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct BBTre
 		free(tree);
 	}
 }
+
+
+/**
+ * Destructor of BBTree structs. Dumps the Graph structs contained in the BBTree,
+ * the ShallowGraph structs representing the components and frees the blockComponents
+ * array before freeing the BBTree struct itself.
+ */
+void dumpFancyBBTree(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct BBTree* tree) {
+	if (tree) {
+		dumpGraph(gp, tree->tree);
+		if (tree->blocks) {
+			tree->blocks->vertices = NULL;
+			dumpGraph(gp, tree->blocks);
+			dumpShallowGraphCycle(sgp, tree->blockComponents[0]);
+			free(tree->blockComponents);
+		}
+		free(tree);
+	}
+}
+
 
 
 struct VertexList* getContainmentEdge(struct ListPool* lp) {
@@ -605,5 +626,214 @@ struct BBTree* createBlockAndBridgeTree(struct ShallowGraph* list, struct Graph 
 		}
 	}
 
-	return createBBTree(bbTree, blocks, list, gp);
+	return createBBTree(bbTree, blocks, list, NULL, gp);
 }
+
+
+int* mergeBBtree(struct Graph* g, struct Graph*h) {
+	struct Vertex** tmp;
+	int i, j, tmpN;
+	int actualVertices = 0;
+	for (i=0; i<g->n; ++i) {
+		if (g->vertices[i]) {
+			++actualVertices;
+		}
+	}
+
+	/* up to this point, there may be elements of copy->vertices, that are NULL */
+	tmp = g->vertices;
+	tmpN = g->n;
+
+	/* set the number of vertices correctly */
+	int newSize = actualVertices + h->n;
+	setVertexNumber(g, newSize);
+	int* originalIDs = malloc(newSize * sizeof(int));
+
+	/* shift the vertices that are there into the new array and
+	 * assign new numbers */
+	j = 0;
+	for (i=0; i<tmpN; ++i) {
+		if (tmp[i]) {
+			g->vertices[j] = tmp[i];
+			originalIDs[j] = g->vertices[j]->number;
+			g->vertices[j]->number = j;
+			++j;
+		}
+	}
+
+	/* attach the block vertices to the new tree */
+	for (i=0; i<h->n; ++i) {
+		g->vertices[j] = h->vertices[i];
+		originalIDs[j] = -1 - g->vertices[j]->number;
+		g->vertices[j]->number = j;
+		++j;	
+	}
+
+	/* set the number of edges correctly */
+	g->m += h->m;
+
+	free(tmp);
+
+	return originalIDs;
+}
+
+
+struct BBTree* compressedBBTree(struct Graph* tree, struct Graph* blocks, struct ShallowGraph* list, struct GraphPool* gp) {
+	int* originalIDs = NULL;
+	if (blocks->n > 0) {
+		originalIDs = mergeBBtree(tree, blocks);	 
+	} 
+	return createBBTree(tree, blocks, list, originalIDs, gp);
+}
+
+
+/**
+ * input: a doubly linked list, which is consumed.
+ * the original graph (which is not consumed)
+ *
+ * This algorithm returns a block an bridge graph as defined in [1] if
+ * the original graph is outerplanar or NULL, if not.
+ *
+ * [1] Horváth, T., Ramon, J., Wrobel, S. [2010]:
+ * Frequent subgraph mining in outerplanar graphs. Data Mining and Knowledge
+ * Discovery 21, p.472-508
+ */
+struct BBTree* createFancyBlockAndBridgeTree(struct ShallowGraph* list, struct Graph *original, struct GraphPool* gp, struct ShallowGraphPool *sgp) {
+	struct ShallowGraph* idx;
+	struct ShallowGraph* tmp;
+	struct Graph* bbTree = getGraph(gp);
+	struct Graph* blocks = getGraph(gp);
+	int blockNo = 0;
+	int i;
+
+	/* copy V(original) */
+	setVertexNumber(bbTree, original->n);
+	for (i=0; i<original->n; ++i) {
+		bbTree->vertices[i] = shallowCopyVertex(original->vertices[i], gp->vertexPool);
+	}
+
+	/* copy all bridges to the new graph and delete them from list;
+	 * count the number of blocks */
+	for (idx=list; idx; idx=tmp) {
+
+		tmp = idx->next;
+		if (idx->m == 1) {
+			struct VertexList* e = getVertexList(gp->listPool);
+
+			/* add the edge to the bbTree */
+			e->startPoint = bbTree->vertices[idx->edges->startPoint->number];
+			e->endPoint = bbTree->vertices[idx->edges->endPoint->number];
+			e->label = idx->edges->label;
+
+			addEdge(bbTree->vertices[idx->edges->startPoint->number], e);
+			addEdge(bbTree->vertices[idx->edges->endPoint->number], inverseEdge(e, gp->listPool));
+
+			++bbTree->m;
+
+			/* cut idx out of list */
+			if (idx->prev) {
+				idx->prev->next = tmp;
+				if (tmp) {
+					tmp->prev = idx->prev;
+				}
+			} else {
+				list = tmp;
+				if (tmp) {
+					tmp->prev = NULL;
+				}
+			}
+
+			/* dump idx */
+			idx->next = NULL;
+			dumpShallowGraph(sgp, idx);
+		} else {
+			/* we have found a block */
+			++blockNo;
+		}
+	}
+
+	/* add blocks */
+	setVertexNumber(blocks, blockNo);
+	for (i=0; i<blockNo; ++i) {
+		blocks->vertices[i] = getVertex(gp->vertexPool);
+		blocks->vertices[i]->number = - (i + 1);
+	}
+
+	for (i=0; i<bbTree->n; ++i) {
+		if (bbTree->vertices[i]->neighborhood) {
+			bbTree->vertices[i]->visited = -1;
+		}
+	}
+
+	/* mark vertices that are in the block and bridge tree */
+	i = 1; // component marker
+	for (struct ShallowGraph* comp=list; comp!=NULL; comp=comp->next) {
+		for (struct VertexList* e=comp->edges; e!=NULL; e=e->next) {
+			struct Vertex* v = bbTree->vertices[e->startPoint->number];
+			if (v->visited == 0) {
+				v->visited = i;
+			} else if (v->visited != i) {
+				v->visited = -1;
+			}
+			v = bbTree->vertices[e->endPoint->number];
+			if (v->visited == 0) {
+				v->visited = i;
+			} else if (v->visited != i) {
+				v->visited = -1;
+			}
+		}
+		++i;
+	}
+
+	/* add edges from block vertices to articulation vertices */
+	i = 1; // component marker
+	for (struct ShallowGraph* comp=list; comp!=NULL; comp=comp->next) {
+		for (struct VertexList* e=comp->edges; e!=NULL; e=e->next) {
+			struct Vertex* v = bbTree->vertices[e->startPoint->number];
+			if ((v->visited == -1) && (v->lowPoint != i)) {
+				v->lowPoint = i;
+				struct Vertex* w = blocks->vertices[i-1];
+				struct VertexList* f = getVertexList(gp->listPool);
+				f->startPoint = v;
+				f->endPoint = w;
+				addEdge(v, f);
+				f = getVertexList(gp->listPool);
+				f->endPoint = v;
+				f->startPoint = w;
+				addEdge(w, f);
+				++blocks->m;
+			}
+			v = bbTree->vertices[e->endPoint->number];
+			if ((v->visited == -1) && (v->lowPoint != i)) {
+				v->lowPoint = i;
+				struct Vertex* w = blocks->vertices[i-1];
+				struct VertexList* f = getVertexList(gp->listPool);
+				f->startPoint = v;
+				f->endPoint = w;
+				addEdge(v, f);
+				f = getVertexList(gp->listPool);
+				f->endPoint = v;
+				f->startPoint = w;
+				addEdge(w, f);
+				++blocks->m;
+			}
+		}
+		++i;
+	}
+
+	/* remove vertices that do not belong to more than one biconnected component
+	 * runtime O(n+m) */
+	for (i=0; i<bbTree->n; ++i) {
+
+		if (bbTree->vertices[i]->visited != -1) {
+			/* check if to remove the vertex. if so, dump vertex and all edges dangling at it.
+			* The corresponding entry in bbTree->vertices will be NULL */
+			dumpVertexListRecursively(gp->listPool, bbTree->vertices[i]->neighborhood);
+			dumpVertex(gp->vertexPool, bbTree->vertices[i]);
+			bbTree->vertices[i] = NULL;
+		}
+	}
+
+	return compressedBBTree(bbTree, blocks, list,  gp);
+}
+

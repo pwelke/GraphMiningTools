@@ -24,6 +24,7 @@ struct BBTree{
 	struct Graph* tree;
 	struct Graph* blocks;
 	struct ShallowGraph** blockComponents;
+	int* originalIDs;
 };
 
 char isOuterplanarBlock(struct Graph* g, struct ShallowGraphPool* sgp);
@@ -36,6 +37,9 @@ char isOuterplanarGraph(struct Graph* g, struct ShallowGraphPool* sgp, struct Gr
 
 
 struct BBTree* createBlockAndBridgeTree(struct ShallowGraph* list, struct Graph *original, struct GraphPool* gp, struct ShallowGraphPool *sgp);
+struct BBTree* createFancyBlockAndBridgeTree(struct ShallowGraph* list, struct Graph *original, struct GraphPool* gp, struct ShallowGraphPool *sgp);
 void dumpBBTree(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct BBTree* tree);
+void dumpFancyBBTree(struct GraphPool* gp, struct ShallowGraphPool* sgp, struct BBTree* tree);
+
 
 #endif /* OUTERPLANAR_H_ */
