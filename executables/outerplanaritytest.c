@@ -95,7 +95,7 @@ struct Graph* shallowGraphToGraphWithIDs(struct ShallowGraph* edgeList, struct G
 } 
 
 
-void listHamiltonianCycles(struct Graph* g, struct ShallowGraph* biconnectedComponents, char extendToHamiltonianBlocks, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void listHamiltonianCycles(struct ShallowGraph* biconnectedComponents, char extendToHamiltonianBlocks, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
     /**
     An outerplanar graph is a graph that can be drawn in the plane such that
     (1) edges only intersect at vertices and
@@ -183,7 +183,6 @@ void listHamiltonianCycles(struct Graph* g, struct ShallowGraph* biconnectedComp
 }
 
 void addSpiderWebEdges(struct BBTree* bbTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
-    printGraphAidsFormat(bbTree->tree, stdout);
 
 }
 
@@ -211,7 +210,7 @@ char printShortcutEdges(struct Vertex* lastInteresting, struct Vertex* v, char n
     return notFirst;
 }
 
-void addShortcutEdges(struct BBTree* bbTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void addShortcutEdges(struct BBTree* bbTree) {
     int root = 0;
     /* mark interesting vertices, keep the last leaf or join as root */
     for (int v=0; v<bbTree->tree->n; ++v) {
@@ -232,6 +231,41 @@ void addShortcutEdges(struct BBTree* bbTree, struct GraphPool* gp, struct Shallo
     printf(", \"shortcutEdges\": [");
     printShortcutEdges(NULL, bbTree->tree->vertices[root], 0, bbTree->originalIDs);
     printf("]");
+}
+
+void printBlockVertices(struct BBTree* bbTree) {
+
+    printf(", \"blocks\": {");
+    if (bbTree->blocks) {
+        for (int i=0; i<bbTree->blocks->n; ++i) {
+            if (i>0) { printf(", "); }
+            printf("\"%d\": [", -1 - i);
+            char start = 1;
+            // init vertices in g (!)
+            for (struct VertexList* e=bbTree->blockComponents[i]->edges; e!=NULL; e=e->next) {
+                e->startPoint->visited = 0;
+                e->endPoint->visited = 0;
+            }
+            for (struct VertexList* e=bbTree->blockComponents[i]->edges; e!=NULL; e=e->next) {
+                if (e->startPoint->visited == 0) {
+                    if (start) { 
+                        start = 0; 
+                    } else { 
+                        printf(", ");
+                    }
+                    printf("%d", e->startPoint->number);
+                    e->startPoint->visited = 1;
+                }
+                if (e->endPoint->visited == 0) {
+                    printf(", ");
+                    printf("%d", e->endPoint->number);
+                    e->endPoint->visited = 1;
+                }
+            }
+            putc(']', stdout);
+        }
+    }
+    putc('}', stdout);
 }
 
 
@@ -312,23 +346,20 @@ int main(int argc, char** argv) {
         /* if there was an error reading some graph the returned n will be -1 */
         if (g->n != -1) {
             if (g->m < 1) {
-                printf("\n{\"graph\": %i, \"hamiltonianCycles\": [], \"isOuterplanar\": true}", g->number);
+                printf("\n{\"graph\": %i, \"hamiltonianCycles\": [], \"isOuterplanar\": true", g->number);
             } else {
                 printf("\n{\"graph\": %i", g->number);
                 
                 struct ShallowGraph* biconnectedComponents = listBiconnectedComponents(g, sgp);
-                listHamiltonianCycles(g, biconnectedComponents, extendToHamiltonianBlocks, gp, sgp);
+                listHamiltonianCycles(biconnectedComponents, extendToHamiltonianBlocks, gp, sgp);
 
                 if (shortcutting || spiderWeb) {
                     struct BBTree* bbTree = createFancyBlockAndBridgeTree(biconnectedComponents, g, gp, sgp);
 
-                    // for (int i=0; i<bbTree->tree->n; ++i) {
-                    //     printf("%d ", bbTree->originalIDs[i]);
-                    // }
-                    // putc('\n', stdout);
+                    printBlockVertices(bbTree);
 
                     if (shortcutting) {
-                        addShortcutEdges(bbTree, gp, sgp);
+                        addShortcutEdges(bbTree);
                     } 
                     if (spiderWeb) {
                         addSpiderWebEdges(bbTree, gp, sgp);
@@ -342,13 +373,15 @@ int main(int argc, char** argv) {
         } 
 
         putc('}', stdout);
-        fflush(stdout);
+        // fflush(stdout);
 
         /* garbage collection */
         dumpGraph(gp, g);
     }
 
-    printf("\n]");
+    printf("\n]\n");
+    // fflush(stdout);
+
 
     /* global garbage collection */
     destroyFileIterator();
