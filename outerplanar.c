@@ -683,9 +683,14 @@ int* mergeBBtree(struct Graph* g, struct Graph*h) {
 }
 
 
-struct BBTree* compressedBBTree(struct Graph* tree, struct Graph* blocks, struct ShallowGraph* list, struct GraphPool* gp) {
-	int* originalIDs = mergeBBtree(tree, blocks);	  
-	return createBBTree(tree, blocks, list, originalIDs, gp);
+struct BBTree* compressedBBTree(struct Graph* tree, struct Graph* blocks, struct ShallowGraph* list, int** originalIDs, struct GraphPool* gp) {
+	int* tmpIDs = mergeBBtree(tree, blocks);
+	if (*originalIDs) {
+		for (int i=0; i<tree->n - blocks->n; ++i) {
+			tmpIDs[i] = (*originalIDs)[tmpIDs[i]];
+		}
+	}	  
+	return createBBTree(tree, blocks, list, tmpIDs, gp);
 }
 
 
@@ -700,7 +705,7 @@ struct BBTree* compressedBBTree(struct Graph* tree, struct Graph* blocks, struct
  * Frequent subgraph mining in outerplanar graphs. Data Mining and Knowledge
  * Discovery 21, p.472-508
  */
-struct BBTree* createFancyBlockAndBridgeTree(struct ShallowGraph* list, struct Graph *original, struct GraphPool* gp, struct ShallowGraphPool *sgp) {
+struct BBTree* createFancyBlockAndBridgeTree(struct ShallowGraph* list, struct Graph *original, int** originalIDs, struct GraphPool* gp, struct ShallowGraphPool *sgp) {
 	struct ShallowGraph* idx;
 	struct ShallowGraph* tmp;
 	struct Graph* bbTree = getGraph(gp);
@@ -836,6 +841,6 @@ struct BBTree* createFancyBlockAndBridgeTree(struct ShallowGraph* list, struct G
 		}
 	}
 
-	return compressedBBTree(bbTree, blocks, list,  gp);
+	return compressedBBTree(bbTree, blocks, list, originalIDs, gp);
 }
 
