@@ -9,7 +9,7 @@
 #include "../listComponents.h"
 #include "../listCycles.h"
 #include "../outerplanar.h"
-#include "../graphPrinting.h"
+#include "../treeCenter.h"
 
 
 /**
@@ -107,10 +107,11 @@ void listHamiltonianCycles(struct ShallowGraph* biconnectedComponents, char exte
     char isOuterplanar = 1;
     char isFirstCycle = 1; // for pretty printing
     int nonOuterplanarHamiltonianCycles = 0;
+    int componentNumber;
 
-    printf(", \"hamiltonianCycles\": [");
+    printf(", \"hamiltonianCycles\": {");
 
-    for (comp = biconnectedComponents; comp!=NULL; comp=comp->next) {
+    for (comp = biconnectedComponents, componentNumber=-1; comp!=NULL; comp=comp->next) {
         if (comp->m > 1) {
             struct Graph* block = shallowGraphToGraphWithIDs(comp, gp);
             // returns null if block is not outerplanar
@@ -118,16 +119,19 @@ void listHamiltonianCycles(struct ShallowGraph* biconnectedComponents, char exte
 
             if (hamiltonianCycle != NULL) {
                 if (isFirstCycle) {
-                    printf("[%i", hamiltonianCycle->edges->startPoint->lowPoint);
                     isFirstCycle = 0;
                 } else {
-                    printf(", [%i", hamiltonianCycle->edges->startPoint->lowPoint);
+                    printf(", ");
                 }
+                printf("%i: [%i", componentNumber, hamiltonianCycle->edges->startPoint->lowPoint);
+
                 struct VertexList* e;
                 for (e = hamiltonianCycle->edges->next; e!=NULL; e=e->next) {
                     printf(", %i", e->startPoint->lowPoint);
                 }
                 printf("]");
+
+                
                 
                 // cleanup
                 dumpShallowGraphCycle(sgp, hamiltonianCycle);
@@ -163,14 +167,15 @@ void listHamiltonianCycles(struct ShallowGraph* biconnectedComponents, char exte
                     dumpGraph(gp, blockCopy);
                 }
             }
+            --componentNumber;
             dumpGraph(gp, block);
         } 	
     }
 
     if (isOuterplanar) {
-        printf("], \"isOuterplanar\": true");
+        printf("}, \"isOuterplanar\": true");
     } else {
-        printf("], \"isOuterplanar\": false");
+        printf("}, \"isOuterplanar\": false");
     }
 
     if (extendToHamiltonianBlocks) {
@@ -182,7 +187,7 @@ void listHamiltonianCycles(struct ShallowGraph* biconnectedComponents, char exte
     }
 }
 
-void addSpiderWebEdges(struct BBTree* bbTree, struct GraphPool* gp, struct ShallowGraphPool* sgp) {
+void addSpiderWebEdges(struct BBTree* bbTree, struct ShallowGraphPool* sgp) {
 
 }
 
@@ -191,11 +196,20 @@ char printShortcutEdges(struct Vertex* lastInteresting, struct Vertex* v, char n
     v->visited = 1;
     if (v->lowPoint) {
         if (lastInteresting) {
-            if (notFirst) {
-                printf(", ");
+            char isNeighbor = 0;
+            for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
+                if (e->endPoint == lastInteresting) {
+                    isNeighbor = 1;
+                    break;
+                }
             }
-            printf("[%d, %d]", originalIDs[lastInteresting->number], originalIDs[v->number]);
-            notFirst = 1;
+            if (!isNeighbor) {
+                if (notFirst) {
+                    printf(", ");
+                }
+                printf("[%d, %d]", originalIDs[lastInteresting->number], originalIDs[v->number]);
+                notFirst = 1;
+            }
         }
     }
     for (struct VertexList* e=v->neighborhood; e!=NULL; e=e->next) {
@@ -269,10 +283,7 @@ void printBlockVertices(struct BBTree* bbTree) {
 }
 
 
-
 int main(int argc, char** argv) {
-
-    char isFirstGraph = 1;
 
     /* object pools */
     struct ListPool *lp;
@@ -286,6 +297,7 @@ int main(int argc, char** argv) {
     char extendToHamiltonianBlocks = 0;
     char spiderWeb = 0;
     char shortcutting = 0;
+    char isFirstGraph = 1;
 
     /* parse command line arguments */
     int arg;
@@ -362,7 +374,7 @@ int main(int argc, char** argv) {
                         addShortcutEdges(bbTree);
                     } 
                     if (spiderWeb) {
-                        addSpiderWebEdges(bbTree, gp, sgp);
+                        addSpiderWebEdges(bbTree, sgp);
                     }
                     dumpFancyBBTree(gp, sgp, bbTree);
                 } else {
@@ -373,15 +385,12 @@ int main(int argc, char** argv) {
         } 
 
         putc('}', stdout);
-        // fflush(stdout);
 
         /* garbage collection */
         dumpGraph(gp, g);
     }
 
     printf("\n]\n");
-    // fflush(stdout);
-
 
     /* global garbage collection */
     destroyFileIterator();
