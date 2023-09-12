@@ -429,7 +429,7 @@ int main(int argc, char** argv) {
                     }
                     free(originalIDs);
                 } else {
-                    printf("\"hamiltonianCycles\": [], \"isOuterplanar\": true");
+                    printf("\"hamiltonianCycles\": {}, \"isOuterplanar\": true");
                     if (shortcutting || spiderWeb) {
                         printf(", \"blocks\": {}, \"CATree\": []");
                         if (shortcutting) {
